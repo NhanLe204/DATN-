@@ -1,7 +1,7 @@
 # Pet-Heaven
  
  
-Project Setup
+##Project Setup
 
 Installation
 
@@ -10,13 +10,13 @@ Clone the repository and navigate into the project directory:
 git clone <repository-url>
 cd <project-folder>
 
-Backend Setup
+#Backend Setup
 
 cd backend
 npm install
 npm run dev
 
-Frontend Setup
+#Frontend Setup
 
 cd frontend
 npm install
