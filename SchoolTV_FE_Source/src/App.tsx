@@ -10,6 +10,7 @@ import Payment from "./pages/payment/payment";
 import Products from "./pages/product/product";
 import DetailProduct from "./pages/detail/detail";
 import PetSpaServices from "./pages/infoservices/infoservices";
+import Cart from "./pages/cart/cart";
 
 function App() {
   const router = createBrowserRouter([
@@ -56,6 +57,10 @@ function App() {
         {
           path: "/info",
           element: <PetSpaServices />,
+        },
+        {
+          path: "/cart",
+          element: <Cart />,
         },
       ],
     },

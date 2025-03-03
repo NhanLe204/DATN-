@@ -66,10 +66,15 @@ export default function SignUp() {
           Đăng Ký
         </Title>
         <Flex justify="center" className="gap-1 sm:gap-2">
-          <span className="text-sm sm:text-base">
-            Trang chủ <span className="px-1 sm:px-2">/</span>
+            <span 
+              onMouseEnter={e => {
+                e.currentTarget.style.cursor = 'pointer';
+              }}
+              onClick={() => window.location.href="/"} className="text-sm sm:text-base">
+              Trang chủ 
+            </span>
+            <span className="px-1 sm:px-2">/</span>
             <span className="text-base sm:text-lg">Đăng ký</span>
-          </span>
         </Flex>
       </div>
 
