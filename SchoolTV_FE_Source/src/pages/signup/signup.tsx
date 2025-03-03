@@ -2,7 +2,7 @@ import React from "react";
 import { useState } from "react";
 import { FaCheckDouble } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
-import { Button, Row, Col, Typography, Input, Flex } from "antd";
+import { Button, Row, Col, Typography, Input, Flex, notification } from "antd";
 
 const { Title, Text } = Typography;
 
@@ -42,7 +42,12 @@ export default function SignUp() {
         throw new Error(data.message || "Đăng ký thất bại!");
       }
 
-      alert("Đăng ký thành công!");
+      notification.success({
+        message: "Đăng ký thành công!",
+        description: "Bạn có thể đăng nhập ngay bây giờ.",
+        placement: "topRight",
+        duration: 5,
+      });
       setFormData({
         fullname: "",
         email: "",
