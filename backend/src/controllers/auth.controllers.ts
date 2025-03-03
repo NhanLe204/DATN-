@@ -87,9 +87,13 @@ export const loginController = async (req: Request, res: Response): Promise<void
     console.log('Password', password);
     const user = await userModel
       .findOne({ email })
-      .select('-reset_password_token -reset_password_expires -refreshToken -role');
+      .select('-reset_password_token -reset_password_expires -refreshToken');
     if (!user) {
       res.status(404).json({ success: false, message: 'user is not defined' });
+      return;
+    }
+    if (user.status === 'inactive') {
+      res.status(401).json({ success: false, message: 'Tài khoản của bạn đã bị khóa' });
       return;
     }
 
@@ -98,7 +102,7 @@ export const loginController = async (req: Request, res: Response): Promise<void
       res.status(401).json({ success: false, message: 'Invalid email and password' });
       return;
     }
-    const { password: pass, ...userData } = user.toObject();
+    const { password: pass, role, ...userData } = user.toObject();
 
     const accessToken = await generateAccessToken(user._id, res);
     const refreshToken = await generateRefreshToken(user._id, res);

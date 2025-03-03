@@ -16,12 +16,14 @@ export const verifyToken = async (req: AuthenticatedRequest, res: Response, next
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       res.status(401).json({ message: 'Unauthorized: No token provided' });
+      return;
     }
     const token = authHeader ? authHeader.split(' ')[1] : '';
 
     if (!ENV_VARS.JWT_SECRET) {
       console.error('JWT_SECRET is not defined in environment variables');
       res.status(500).json({ message: 'Internal Server Error' });
+      return;
     }
 
     if (!ENV_VARS.JWT_SECRET) {
@@ -31,12 +33,14 @@ export const verifyToken = async (req: AuthenticatedRequest, res: Response, next
 
     if (!decoded || !decoded.userId) {
       res.status(401).json({ message: 'Invalid token' });
+      return;
     }
 
     const user = await userModel.findById(decoded.userId).select('-password');
 
     if (!user) {
       res.status(404).json({ message: 'User not found' });
+      return;
     }
 
     req.user = user;
@@ -48,12 +52,15 @@ export const verifyToken = async (req: AuthenticatedRequest, res: Response, next
 
     if (error instanceof jwt.TokenExpiredError) {
       res.status(401).json({ message: 'Token expired' });
+      return;
     }
 
     if (error instanceof jwt.JsonWebTokenError) {
       res.status(401).json({ message: 'Invalid token' });
+      return;
     }
 
     res.status(500).json({ message: 'Internal Server Error' });
+    return;
   }
 };

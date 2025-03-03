@@ -34,8 +34,10 @@ export const getCategoryById = async (req: Request, res: Response): Promise<void
   } catch (error) {
     if (error instanceof Error) {
       console.error(`Error category up: ${error.message}`);
+      return;
     } else {
       console.error('Error category up:', error);
+      return;
     }
   }
 };
