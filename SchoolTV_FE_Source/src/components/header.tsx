@@ -18,6 +18,7 @@ import {
   FaPhoneAlt,
   FaSearch,
   FaBars,
+  FaAngleDown,
 } from "react-icons/fa";
 import { BsGeoAltFill } from "react-icons/bs";
 import { Search } from "lucide-react";
@@ -29,6 +30,7 @@ export default function Header() {
   const [subMenu, setSubMenu] = useState(false);
   interface User {
     fullname: string;
+    avatar?: string;
     // Add other properties as needed
   }
 
@@ -81,8 +83,9 @@ export default function Header() {
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
-    const accountID = localStorage.getItem("userData._id") || "";
-
+    const accountID = localStorage.getItem("accountID") || "";
+    console.log("token nà: ", token);
+    console.log("ID nà: ", accountID);
     if (!token || !accountID) {
       console.error("Không tìm thấy token hoặc accountID trong local");
       return;
@@ -105,8 +108,8 @@ export default function Header() {
         return res.json();
       })
       .then((data) => {
-        setUser(data);
-        localStorage.setItem("userData", JSON.stringify(data));
+        setUser(data.data);
+        localStorage.setItem("userData", JSON.stringify(data.data));
       })
       .catch((err) => {
         console.error("Error fetching user:", err);
@@ -119,13 +122,26 @@ export default function Header() {
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("accountID");
+    localStorage.removeItem("userData");
     setUser(null);
     window.location.href = "/"; // Thay vì dùng router.push
   };
 
-  const toggleDropdown = () => {
-    setShowDropdown((prev) => !prev);
-  };
+  // Menu cho dropdown khi hover
+  const userMenu = (
+    <Menu>
+      <Menu.Item key="1">
+        <a href="#">
+          <i className="fas fa-user mr-2"></i>Tài khoản
+        </a>
+      </Menu.Item>
+      <Menu.Item key="2" onClick={handleLogout}>
+        <a href="#">
+          <i className="fas fa-sign-out-alt mr-2"></i>Đăng xuất
+        </a>
+      </Menu.Item>
+    </Menu>
+  );
 
   return (
     <>
@@ -203,9 +219,22 @@ export default function Header() {
                 <FaShoppingCart className="text-2xl" />
               </Badge>
             </a>
-            <a href="/login">
-              <Avatar icon={<FaUserAlt />} className="bg-[#22A6DF]" />
-            </a>
+            {user ? (
+              <Dropdown overlay={userMenu} trigger={["hover"]}>
+                <div className="flex items-center cursor-pointer">
+                  <Avatar
+                    src={`/images/avatar/${user.avatar}` } 
+                    icon={!user.avatar && <FaUserAlt />} 
+                    className="bg-[#22A6DF]"
+                  />
+                  <FaAngleDown className="ml-1 text-[#22A6DF]" />
+                </div>
+              </Dropdown>
+            ) : (
+              <a href="/login">
+                <Avatar icon={<FaUserAlt />} className="bg-[#22A6DF]" />
+              </a>
+            )}
           </Space>
 
           <Space size={50} className="flex items-center xl:hidden">
@@ -221,26 +250,16 @@ export default function Header() {
               </Badge>
             </a>
             {user ? (
-              <div className="user-profile" onClick={toggleDropdown}>
-                <Title level={5} className="text-sm">
-                  {user.fullname}
-                </Title>
-                {showDropdown && (
-                  <div className="profile-dropdown">
-                    <div className="dropdown-divider"></div>
-                    <a href="/userProfile" className="dropdown-item">
-                      <i className="fas fa-user"></i> Tài khoản
-                    </a>
-                    <a
-                      href="#"
-                      className="dropdown-item"
-                      onClick={handleLogout}
-                    >
-                      <i className="fas fa-sign-out-alt"></i> Đăng xuất
-                    </a>
-                  </div>
-                )}
-              </div>
+              <Dropdown overlay={userMenu} trigger={["hover"]}>
+                <div className="flex items-center cursor-pointer">
+                  <Avatar
+                    src={"/images/avatar/avatar.png" } 
+                    icon={!user.avatar && <FaUserAlt />}
+                    className="bg-[#22A6DF]"
+                  />
+                  <FaAngleDown className="ml-1 text-[#22A6DF]" />
+                </div>
+              </Dropdown>
             ) : (
               <a href="/login">
                 <Avatar icon={<FaUserAlt />} className="bg-[#22A6DF]" />

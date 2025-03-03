@@ -46,12 +46,16 @@ export default function Login() {
           message: "Đăng nhập thành công!",
           description: "Chào mừng bạn quay trở lại!",
           placement: "topRight",
-          duration: 2,
+          duration: 1.5,
+          onClose: () => {
+            localStorage.setItem("accessToken", data.accessToken);
+            localStorage.setItem("accountID", JSON.stringify(data.userData._id));
+            localStorage.setItem("userData", JSON.stringify(data.userData));
+            setTimeout(() => {
+              window.location.href = "/";
+            }, 1000); 
+          },
         });
-        localStorage.setItem("accessToken", data.accessToken);
-        localStorage.setItem("accountID", JSON.stringify(data.userData._id));
-        localStorage.setItem("userData", JSON.stringify(data.userData));
-        window.location.href = "/"; // Thay vì router.push
       } else {
         throw new Error("Đăng nhập thất bại");
       }
@@ -168,10 +172,15 @@ export default function Login() {
           Đăng Nhập
         </Title>
         <Flex justify="center" className="gap-1 sm:gap-2">
-          <span className="text-sm sm:text-base">
-            Trang chủ <span className="px-1 sm:px-2">/</span>
+            <span 
+              onMouseEnter={e => {
+                e.currentTarget.style.cursor = 'pointer';
+              }}
+              onClick={() => window.location.href = "/"} className="text-sm sm:text-base">
+              Trang chủ 
+            </span>
+            <span className="px-1 sm:px-2">/</span>
             <span className="text-base sm:text-lg"> Đăng nhập</span>
-          </span>
         </Flex>
       </div>
 
