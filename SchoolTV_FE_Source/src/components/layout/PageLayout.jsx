@@ -6,7 +6,6 @@ import Footer from "../Footer";
 function PageLayout() {
   return (
     <>
-      <p>dsadasdasdasdas</p>
       <Header />
       <Outlet />
       <Footer />
