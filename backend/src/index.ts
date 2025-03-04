@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import logger from 'morgan';
@@ -29,6 +29,8 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.send('Hello World');
 });
+connectDB();
+
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1', categoryRouter);
 app.use('/api/v1', productRouter);
@@ -36,7 +38,19 @@ app.use('/api/v1', userRouter);
 app.use('/api/v1', brandRouter);
 
 // app.use(errorHandler);
+interface CustomError extends Error {
+  status?: number;
+}
+
+app.use(function (err: CustomError, req: Request, res: Response, next: NextFunction) {
+  // set locals, only providing error in development
+  res.locals.message = err.message;
+  res.locals.error = req.app.get('env') === 'development' ? err : {};
+
+  // render the error page
+  res.status(err.status || 500);
+  res.render('error');
+});
 app.listen(PORT, () => {
   console.log(`Server is running on port http://localhost:${PORT}`);
-  connectDB();
 });
