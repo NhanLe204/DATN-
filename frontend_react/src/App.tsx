@@ -12,7 +12,7 @@ import DetailProduct from "./pages/detail/detail";
 import PetSpaServices from "./pages/infoservices/infoservices";
 import Cart from "./pages/cart/cart";
 import UserProfile from "./pages/userprofile/userprofile";
-
+import ReduxProviders from './redux/Provider'; 
 function App() {
   const router = createBrowserRouter([
     {

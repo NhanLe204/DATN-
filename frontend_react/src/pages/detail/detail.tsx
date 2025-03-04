@@ -1,17 +1,19 @@
 "use client";
-import React, { SetStateAction, useState } from "react";
+import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import { Breadcrumb, Button } from "antd";
 import useSWR from "swr";
 import Loader from "../../components/loader";
+import { useSelector, useDispatch } from "react-redux";
+import { addToCart } from "../../redux/slices/cartslice";
 
 export default function DetailProduct() {
   const params = useParams();
   const [selectedImage, setSelectedImage] = useState("");
   const [quantity, setQuantity] = useState(1);
+  const dispatch = useDispatch(); // Khởi tạo dispatch để gọi action
 
-  const fetcher = (url: string | URL | Request) =>
-    fetch(url).then((res) => res.json());
+  const fetcher = (url) => fetch(url).then((res) => res.json());
   const { data, error } = useSWR(
     `http://localhost:5000/api/v1/products/${params.id}`,
     fetcher,
@@ -29,20 +31,17 @@ export default function DetailProduct() {
       </div>
     );
   if (!data) return <Loader />;
-  if (error)
-    return (
-      <div className="flex min-h-screen items-center justify-center text-red-500">
-        Lỗi load dữ liệu...
-      </div>
-    );
-  if (!data) return <Loader />;
+
+  const product = data.product;
+  if (!product)
+    return <div>Không tìm thấy sản phẩm. Vui lòng kiểm tra lại.</div>;
 
   // Handling functions
-  const handleImageClick = (image: string) => {
+  const handleImageClick = (image) => {
     setSelectedImage(image);
   };
 
-  const handleChange = (event: { target: { value: any } }) => {
+  const handleChange = (event) => {
     const value = event.target.value;
     if (/^\d+$/.test(value)) {
       setQuantity(Math.max(1, Number(value)));
@@ -57,9 +56,17 @@ export default function DetailProduct() {
     setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
   };
 
-  const product = data.product;
-  if (!product)
-    return <div>Không tìm thấy sản phẩm. Vui lòng kiểm tra lại.</div>;
+  // Hàm xử lý thêm vào giỏ hàng
+  const handleAddToCart = () => {
+    const item = {
+      id: product._id || product.id, // Đảm bảo có id từ API
+      name: product.name,
+      price: Number(product.price), // Chuyển price về số
+      image: product.image_url[0], // Lấy ảnh đầu tiên làm ảnh đại diện
+    };
+    dispatch(addToCart({ item, quantity })); // Gọi action addToCart
+    console.log(`Added to cart: ${item.name}, Quantity: ${quantity}`);
+  };
 
   // Breadcrumb items
   const breadcrumbItems = [
@@ -94,7 +101,6 @@ export default function DetailProduct() {
           {/* Hình ảnh sản phẩm */}
           <div className="flex w-full">
             <div className="flex flex-col space-y-6">
-              {/* Render detail images */}
               {product.image_url[0] && (
                 <img
                   src={`/images/products/${product.image_url[0]}`}
@@ -196,7 +202,10 @@ export default function DetailProduct() {
 
             {/* Nút thêm vào giỏ hàng và mua ngay */}
             <div className="flex flex-col gap-4 md:flex-row">
-              <Button className="rounded-lg bg-[#22A6DF] px-6 py-5 text-white">
+              <Button
+                className="rounded-lg bg-[#22A6DF] px-6 py-5 text-white"
+                onClick={handleAddToCart} // Gắn sự kiện thêm vào giỏ hàng
+              >
                 Thêm vào giỏ hàng
               </Button>
               <Button className="rounded-lg bg-[#FF0000] px-6 py-5 text-white">
@@ -213,7 +222,7 @@ export default function DetailProduct() {
           </h2>
           <p className="mt-2 text-[#686868]">{product.description}</p>
           <ul className="mt-2 list-disc pl-6 text-[#686868]">
-            {product.details?.map((detail: string, index: number) => (
+            {product.details?.map((detail, index) => (
               <li key={index}>{detail}</li>
             ))}
           </ul>

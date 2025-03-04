@@ -1,3 +1,4 @@
+"use-client";
 import React, { useState, useEffect } from "react";
 import {
   Input,
@@ -22,9 +23,13 @@ import {
 } from "react-icons/fa";
 import { BsGeoAltFill } from "react-icons/bs";
 import { Search } from "lucide-react";
+import { useContext } from "react";
+import { useSelector } from "react-redux"
 const { Title, Text } = Typography;
 
 export default function Header() {
+  const cartItems=useSelector((state:any)=>state.cart.items);
+  const cartCount=cartItems. reduce((count:any,item:any)=> count +Number(item.quantity),0)
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [subMenu, setSubMenu] = useState(false);
@@ -189,7 +194,7 @@ export default function Header() {
               <span className="text-xs text-gray-500">30 days no hassle</span>
             </div>
             <a href="/cart">
-              <Badge count={1}>
+              <Badge count={cartCount}>
                 <FaShoppingCart className="text-2xl" />
               </Badge>
             </a>
