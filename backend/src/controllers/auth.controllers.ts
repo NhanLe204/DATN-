@@ -89,7 +89,7 @@ export const loginController = async (req: Request, res: Response): Promise<void
       .findOne({ email })
       .select('-reset_password_token -reset_password_expires -refreshToken');
     if (!user) {
-      res.status(404).json({ success: false, message: 'user is not defined' });
+      res.status(404).json({ success: false, message: 'Email này chưa được đăng ký' });
       return;
     }
     if (user.status === 'inactive') {

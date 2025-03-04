@@ -43,7 +43,7 @@ export default function Login() {
         }
       );
 
-      const data = await response.json();
+      var data = await response.json();
       console.log("Phản hồi từ API:", response, data);
 
       if (response.ok) {
@@ -69,7 +69,7 @@ export default function Login() {
       }
     } catch (error) {
       notification.error({
-        message: "Đăng nhập thất bại!",
+        message: `${data.message || "Lỗi!"}`,
         description:
           error.message ||
           "Có lỗi xảy ra trong quá trình đăng nhập, vui lòng thử lại.",
