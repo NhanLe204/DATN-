@@ -8,7 +8,7 @@ import authRouter from './src/routes/auth.routes.js';
 import categoryRouter from './src/routes/category.routes.js';
 import productRouter from './src/routes/product.routes.js';
 import userRouter from './src/routes/user.routes.js';
-import { errorHandler } from './src/middlewares/errorHandler';
+// import { errorHandler } from './src/middlewares/errorHandler';
 import brandRouter from './src/routes/brand.routes.js';
 
 const app = express();
@@ -35,7 +35,7 @@ app.use('/api/v1', productRouter);
 app.use('/api/v1', userRouter);
 app.use('/api/v1', brandRouter);
 
-app.use(errorHandler);
+// app.use(errorHandler);
 app.listen(PORT, () => {
   console.log(`Server is running on port http://localhost:${PORT}`);
   connectDB();
