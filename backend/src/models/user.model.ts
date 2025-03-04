@@ -4,6 +4,10 @@ import { IUser } from '../interfaces/user.interface.js';
 import product from './product.model.js';
 const userSchema: Schema<IUser> = new Schema<IUser>(
   {
+    googleId: {
+      type: String,
+      require: false
+    },
     email: {
       type: String,
       required: true,
@@ -17,7 +21,7 @@ const userSchema: Schema<IUser> = new Schema<IUser>(
     },
     password: {
       type: String,
-      required: true
+      required: false
     },
     phone_number: {
       type: String,
