@@ -10,10 +10,10 @@ import {
   getHotProduct,
   getDogProducts,
   getCatProducts
-} from '../controllers/product.controllers';
-import { protectRoute, requireAdmin } from '../middlewares/protectRoute';
+} from '../controllers/product.controllers.js';
+import { protectRoute, requireAdmin } from '../middlewares/protectRoute.js';
 import { get } from 'http';
-import { verifyToken } from '../middlewares/verifyToken';
+import { verifyToken } from '../middlewares/verifyToken.js';
 
 const productRouter = Router();
 productRouter.get('/products', getAllProduct);

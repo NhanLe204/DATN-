@@ -2,14 +2,14 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import logger from 'morgan';
-import ENV_VARS from './src/config.js';
-import { connectDB } from './src/database/db.js';
-import authRouter from './src/routes/auth.routes.js';
-import categoryRouter from './src/routes/category.routes.js';
-import productRouter from './src/routes/product.routes.js';
-import userRouter from './src/routes/user.routes.js';
+import ENV_VARS from './config.js';
+import { connectDB } from './database/db.js';
+import authRouter from './routes/auth.routes.js';
+import categoryRouter from './routes/category.routes.js';
+import productRouter from './routes/product.routes.js';
+import userRouter from './routes/user.routes.js';
 // import { errorHandler } from './src/middlewares/errorHandler';
-import brandRouter from './src/routes/brand.routes.js';
+import brandRouter from './routes/brand.routes.js';
 
 const app = express();
 

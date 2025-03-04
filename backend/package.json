@@ -1,9 +1,10 @@
 {
 	"name": "backend",
 	"version": "1.0.0",
-	"main": "index.js",
+	"main": "dist/index.js",
+	"type": "module",
 	"scripts": {
-		"dev": "tsx watch index.ts",
+		"dev": "nodemon --exec tsx src/index.ts",
 		"build": "rimraf ./dist && tsc && tsc-alias",
 		"start": "node dist/index.js",
 		"lint": "eslint .",
@@ -12,12 +13,10 @@
 		"prettier:fix": "prettier --write .",
 		"vercel-build": "npm run build"
 	},
-	"type": "module",
 	"author": "",
 	"license": "ISC",
 	"description": "",
 	"dependencies": {
-		"backend": "file:",
 		"bcryptjs": "^2.4.3",
 		"cookie-parser": "^1.4.7",
 		"cors": "^2.8.5",

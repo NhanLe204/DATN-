@@ -1,4 +1,4 @@
-import { CategoryStatus } from '../enums/category.enum';
+import { CategoryStatus } from '../enums/category.enum.js';
 
 export interface ICategory {
   _id: string;

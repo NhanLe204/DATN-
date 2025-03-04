@@ -5,9 +5,9 @@ import {
   insertCategory,
   updateCategory,
   getCategoryById
-} from '../controllers/category.controllers';
-import { protectRoute, requireAdmin } from '../middlewares/protectRoute';
-import { verifyToken } from '../middlewares/verifyToken';
+} from '../controllers/category.controllers.js';
+import { protectRoute, requireAdmin } from '../middlewares/protectRoute.js';
+import { verifyToken } from '../middlewares/verifyToken.js';
 
 const categoryRouter = Router();
 

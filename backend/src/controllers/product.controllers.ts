@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import productModel from '../models/product.model';
-import { ProductStatus, ProductStatusMapping } from '../enums/product.enum';
-import categoryModel from '../models/category.model';
+import productModel from '../models/product.model.js';
+import { ProductStatus, ProductStatusMapping } from '../enums/product.enum.js';
+import categoryModel from '../models/category.model.js';
 
 export const getAllProduct = async (req: Request, res: Response): Promise<void> => {
   try {

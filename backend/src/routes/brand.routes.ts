@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
-import { protectRoute, requireAdmin } from '../middlewares/protectRoute';
-import { verifyToken } from '../middlewares/verifyToken';
-import { getAllBrands, getBrandById, insertBrand, updateBrand } from '../controllers/brand.controllers';
+import { protectRoute, requireAdmin } from '../middlewares/protectRoute.js';
+import { verifyToken } from '../middlewares/verifyToken.js';
+import { getAllBrands, getBrandById, insertBrand, updateBrand } from '../controllers/brand.controllers.js';
 
 const brandRouter = Router();
 

@@ -1,6 +1,6 @@
 import mongoose, { Schema, model } from 'mongoose';
-import { ICategory } from '../interfaces/category.interface';
-import { CategoryStatus } from '../enums/category.enum';
+import { ICategory } from '../interfaces/category.interface.js';
+import { CategoryStatus } from '../enums/category.enum.js';
 
 const categorySchema: Schema<ICategory> = new Schema<ICategory>({
   name: {
