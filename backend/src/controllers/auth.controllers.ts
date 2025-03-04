@@ -2,10 +2,10 @@ import { CookieOptions, Request, Response } from 'express';
 import bcryptjs from 'bcryptjs';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
-import sendEmail from '../utils/sendEmail';
-import userModel from '../models/user.model'; // Adjust the path according to your project structure
+import sendEmail from '../utils/sendEmail.js';
+import userModel from '../models/user.model.js'; // Adjust the path according to your project structure
 import { generateAccessToken, generateRefreshToken } from '../utils/jwt.js'; // Adjust the path according to your project structure
-import ENV_VARS from '../config';
+import ENV_VARS from '../config.js';
 
 export const signupController = async (req: Request, res: Response): Promise<void> => {
   try {

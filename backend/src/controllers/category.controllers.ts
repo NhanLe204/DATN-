@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import { IUser } from '../interfaces/user.interface';
-import categoryModel from '../models/category.model';
-import { CategoryStatus } from '../enums/category.enum';
+import { IUser } from '../interfaces/user.interface.js';
+import categoryModel from '../models/category.model.js';
+import { CategoryStatus } from '../enums/category.enum.js';
 import mongoose from 'mongoose';
 
 interface AuthenticatedRequest extends Request {

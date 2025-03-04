@@ -1,0 +1,11 @@
+import { Request, Response } from 'express';
+export declare const getAllProduct: (req: Request, res: Response) => Promise<void>;
+export declare const getProductById: (req: Request, res: Response) => Promise<void>;
+export declare const insertProduct: (req: Request, res: Response) => Promise<void>;
+export declare const updateProduct: (req: Request, res: Response) => Promise<void>;
+export declare const toggleProduct: (req: Request, res: Response) => Promise<void>;
+export declare const getNewProduct: (req: Request, res: Response) => Promise<void>;
+export declare const getSaleProduct: (req: Request, res: Response) => Promise<void>;
+export declare const getHotProduct: (req: Request, res: Response) => Promise<void>;
+export declare const getDogProducts: (req: Request, res: Response) => Promise<void>;
+export declare const getCatProducts: (req: Request, res: Response) => Promise<void>;

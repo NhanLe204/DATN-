@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
-import { CategoryStatus } from '../enums/category.enum';
+import { CategoryStatus } from '../enums/category.enum.js';
 import mongoose from 'mongoose';
-import brandModel from '../models/brand.model';
-import { IBrand } from '../interfaces/brand.interface';
+import brandModel from '../models/brand.model.js';
+import { IBrand } from '../interfaces/brand.interface.js';
 
 interface AuthenticatedRequest extends Request {
   brand?: IBrand;

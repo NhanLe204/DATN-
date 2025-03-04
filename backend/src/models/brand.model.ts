@@ -1,5 +1,5 @@
 import mongoose, { Schema, model } from 'mongoose';
-import { IBrand } from '../interfaces/brand.interface';
+import { IBrand } from '../interfaces/brand.interface.js';
 
 const brandSchema: Schema<IBrand> = new Schema<IBrand>({
   brand_name: {
