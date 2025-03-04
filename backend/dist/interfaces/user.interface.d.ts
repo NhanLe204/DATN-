@@ -1,11 +1,11 @@
 import { UserRoles, UserStatus } from '../enums/user.enum.js';
 import { IProduct } from './product.interface.js';
-export interface IUser {
-    _id: string;
+import { Document } from 'mongoose';
+export interface IUser extends Document {
+    googleId: string | undefined;
     email: string;
     fullname: string;
-    phoneNumber: string;
-    password: string;
+    password: string | undefined;
     phone_number: string;
     address: string;
     status: UserStatus;
@@ -13,7 +13,7 @@ export interface IUser {
     avatar: string;
     cart: IProduct[];
     reset_password_token: string;
-    reset_password_expires: Date;
+    reset_password_expires: Date | null;
     refreshToken: string;
     createdAt: Date;
     updatedAt: Date;

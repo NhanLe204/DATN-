@@ -1,6 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+
+declare global {
+  interface Window {
+    google: any;
+  }
+}
 import { FcGoogle } from "react-icons/fc";
 import { FaCheckDouble } from "react-icons/fa6";
+import {
+  GoogleOAuthProvider,
+  GoogleLogin,
+  GoogleCredentialResponse,
+} from "@react-oauth/google";
 import {
   Button,
   Row,
@@ -12,9 +23,18 @@ import {
   Modal,
 } from "antd";
 import "antd/dist/reset.css";
-import { progress } from "framer-motion";
+import { EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons';
 import ENV_VARS from "../../../config";
 const { Title, Text } = Typography;
+
+interface User {
+  id: string;
+  email: string;
+  fullname: string;
+  avatar?: string;
+  role: string;
+  status: string;
+}
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -28,7 +48,41 @@ export default function Login() {
   const [newPassword, setNewPassword] = useState("");
   const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] =
     useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
+
+  // Check role & status
+  useEffect(() => {
+    const userData = localStorage.getItem("userData");
+    if (userData) {
+      const parsedUser = JSON.parse(userData) as User;
+      setUser(parsedUser);
+
+      // Kiểm tra status
+      if (parsedUser.status !== "active") {
+        notification.error({
+          message: "Truy cập bị từ chối!",
+          description: "Tài khoản của bạn không hoạt động.",
+          placement: "topRight",
+          duration: 2,
+        });
+        localStorage.removeItem("userData");
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("accountID");
+        setUser(null);
+      }
+
+      // Kiểm tra role 
+      if (parsedUser.role === "admin") {
+        window.location.href = "/admin";
+      } else {
+        window.location.href = "/";
+      }
+    }
+  }, []);
+
+  // handle login
   const handleLogin = async () => {
     setLoading(true);
     try {
@@ -47,12 +101,36 @@ export default function Login() {
       console.log("Phản hồi từ API:", response, data);
 
       if (response.ok) {
+        const { userData, accessToken } = data;
+        setUser(userData);
+        localStorage.setItem("accessToken", accessToken);
+        localStorage.setItem("accountID", JSON.stringify(userData._id));
+        localStorage.setItem("userData", JSON.stringify(userData));
+
+        // Kiểm tra status trước khi điều hướng
+        if (userData.status !== "active") {
+          notification.error({
+            message: "Truy cập bị từ chối!",
+            description: "Tài khoản của bạn không hoạt động.",
+            placement: "topRight",
+            duration: 2,
+          });
+          localStorage.removeItem("userData");
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("accountID");
+          setUser(null);
+          setLoading(false); // Đặt loading về false sau khi xóa dữ liệu
+          return;
+        }
+
+        // Hiển thị thông báo thành công và điều hướng dựa trên role
         notification.success({
           message: "Đăng nhập thành công!",
           description: "Chào mừng bạn quay trở lại!",
           placement: "topRight",
           duration: 1.5,
           onClose: () => {
+
             localStorage.setItem("accessToken", data.accessToken);
             localStorage.setItem(
               "accountID",
@@ -60,7 +138,11 @@ export default function Login() {
             );
             localStorage.setItem("userData", JSON.stringify(data.userData));
             setTimeout(() => {
-              window.location.href = "/";
+              if (data.userData.role === "admin") {
+                window.location.href = "/admin";
+              } else {
+                window.location.href = "/";
+              }
             }, 1000);
           },
         });
@@ -71,8 +153,7 @@ export default function Login() {
       notification.error({
         message: "Đăng nhập thất bại!",
         description:
-          error.message ||
-          "Có lỗi xảy ra trong quá trình đăng nhập, vui lòng thử lại.",
+          error.message || "Có lỗi xảy ra trong quá trình đăng nhập, vui lòng thử lại.",
         placement: "topRight",
         duration: 2,
       });
@@ -172,6 +253,74 @@ export default function Login() {
     }
   };
 
+  // Chức năng đăng nhập GOOGLE
+  const handleGoogleLogin = (credentialResponse: GoogleCredentialResponse) => {
+    const idToken = credentialResponse.credential;
+    console.log("Sending idToken to backend:", idToken);
+    fetch("http://localhost:5000/api/v1/auth/google", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ idToken }),
+    })
+      .then((res) => {
+        console.log("Response status:", res.status);
+        console.log("Response headers:", res.headers);
+        if (!res.ok) {
+          return res.text().then((text) => {
+            throw new Error(`Server error: ${res.status} - ${text}`);
+          });
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (data.success) {
+          setUser({
+            id: data.user.id,
+            email: data.user.email,
+            fullname: data.user.fullname,
+            avatar: data.user.avatar,
+            role: data.user.role,
+            status: data.user.status,
+          });
+          localStorage.setItem("accessToken", data.accessToken);
+          localStorage.setItem("accountID", data.user.id);
+          notification.success({
+            message: "Đăng nhập bằng Google thành công!",
+            description: "Chào mừng bạn quay trở lại!",
+            placement: "topRight",
+            duration: 2,
+            onClose: () => {
+              setTimeout(() => {
+                if (data.user.role === "admin") {
+                  window.location.href = "/admin";
+                } else {
+                  window.location.href = "/";
+                }
+              }, 2000);
+            },
+          });
+        } else {
+          console.error("Login failed:", data.message);
+          notification.error({
+            message: "Đăng nhập thất bại!",
+            description:
+              data.message || "Có lỗi xảy ra khi đăng nhập bằng Google.",
+            placement: "topRight",
+            duration: 2,
+          });
+        }
+      })
+      .catch((err) => {
+        console.error("Error:", err);
+        notification.error({
+          message: "Lỗi!",
+          description: err.message || "Có lỗi xảy ra khi kết nối với Google.",
+          placement: "topRight",
+          duration: 2,
+        });
+      });
+  };
+
   return (
     <div className="px-2 py-4 sm:px-5 sm:py-6">
       {/* Title */}
@@ -232,7 +381,7 @@ export default function Login() {
         </Col>
 
         {/* right */}
-        <Col className="flex w-full flex-col justify-between shadow-inner lg:w-[400px]">
+        <Col className="flex w-full flex-col justify-between shadow-inner lg:w-[400px] overflow-auto">
           <div>
             <div className="mb-3 flex h-10 sm:h-12">
               <button className="h-full w-1/2 rounded-none border-[#22A6DF] bg-[#22A6DF] text-sm text-white sm:text-base">
@@ -245,7 +394,7 @@ export default function Login() {
                 Đăng Ký
               </button>
             </div>
-            <div className="p-3 sm:p-5">
+            <div className="p-3 sm:p-4">
               <div className="mb-2 pb-2 text-sm sm:text-base">
                 <label htmlFor="email" className="font-bold uppercase">
                   Email <span className="text-red-600">*</span>
@@ -264,12 +413,20 @@ export default function Login() {
                   Mật khẩu <span className="text-red-600">*</span>
                 </label>
                 <Input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   id="password"
                   placeholder="Nhập mật khẩu của bạn"
                   className="mt-2 h-9 text-sm sm:h-10 sm:text-base"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  suffix={
+                    <span 
+                      onClick={() => setShowPassword(!showPassword)} 
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {showPassword ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+                    </span>
+                  }
                 />
               </div>
               <div className="mb-3">
@@ -283,27 +440,41 @@ export default function Login() {
             </div>
           </div>
 
-          <div className="flex flex-col items-center px-3 sm:px-5">
-            <Flex justify="space-between" className="mb-2 w-full">
-              <button
-                className="h-9 w-[48%] rounded-md bg-black text-xs text-white hover:bg-[#22A6DF] sm:h-10 sm:text-sm"
+          <div className="flex flex-col items-center px-2 sm:px-4 mb-4">
+            <Flex
+              justify="space-between"
+              className="w-full max-w-[380px] items-center"
+            >
+              <Button
+                type="primary"
+                size="large"
+                className="h-9 w-[46%] rounded-md bg-black text-xs text-white hover:bg-[#22A6DF] sm:h-10 sm:text-sm"
                 onClick={handleLogin}
-                disabled={loading}
+                loading={loading}
               >
                 {loading ? "Đang đăng nhập..." : "Đăng nhập"}
-              </button>
-              <span className="my-auto px-1 text-sm sm:text-base">Hoặc</span>
-              <Button
-                type="default"
-                icon={<FcGoogle className="h-6 w-6 sm:h-8 sm:w-8" />}
-                className="flex h-9 w-[48%] items-center justify-center text-xs sm:h-10 sm:text-sm"
-              >
-                Google
               </Button>
+              <span className="my-auto px-1 text-sm sm:text-base">Hoặc</span>
+              <GoogleOAuthProvider clientId="518751281700-f8vq0pf1792lcv7risc93qd5b6ccb70g.apps.googleusercontent.com">
+                <GoogleLogin
+                  onSuccess={handleGoogleLogin}
+                  size="medium"
+                  width={36}
+                  type="standard"
+                  onError={() => {
+                    notification.error({
+                      message: "Đăng nhập thất bại!",
+                      description: "Có lỗi xảy ra khi đăng nhập bằng Google.",
+                      placement: "topRight",
+                      duration: 2,
+                    });
+                  }}
+                />
+              </GoogleOAuthProvider>
             </Flex>
           </div>
 
-          <div className="px-3 pt-3 text-center sm:px-5 sm:pt-5">
+          <div className="px-3 pt-2 text-center sm:px-4 sm:pt-4">
             <Text type="secondary" className="text-[10px] sm:text-xs">
               Pet Heaven cam kết bảo mật và sẽ không tiết lộ thông tin khách
               hàng khi không có sự cho phép.
