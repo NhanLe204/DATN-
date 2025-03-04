@@ -46,32 +46,6 @@ export default function Header() {
   const showSearch = () => setSearchOpen(true);
   const closeSearch = () => setSearchOpen(false);
 
-  const menu = {
-    items: [
-      {
-        key: "1",
-        label: (
-          <a
-            href="/product"
-            className="flex w-[150px] cursor-pointer justify-between px-1 py-2 text-base font-bold hover:bg-gray-100"
-          >
-            Dành cho chó <span></span>
-          </a>
-        ),
-      },
-      {
-        key: "2",
-        label: (
-          <a
-            href="#"
-            className="flex w-[150px] cursor-pointer justify-between px-1 py-2 text-base font-bold hover:bg-gray-100"
-          >
-            Dành cho mèo <span></span>
-          </a>
-        ),
-      },
-    ],
-  };
 
   const handleProductClick = () => {
     setSubMenu(true);
@@ -131,7 +105,7 @@ export default function Header() {
   const userMenu = (
     <Menu>
       <Menu.Item key="1">
-        <a href="#">
+        <a href={`/userprofile/account}`}>
           <i className="fas fa-user mr-2"></i>Tài khoản
         </a>
       </Menu.Item>
@@ -276,11 +250,11 @@ export default function Header() {
                 Trang chủ
               </Typography.Text>
             </a>
-            <Dropdown menu={menu} placement="bottomLeft">
+            <a href="/product">
               <Typography.Text className="cursor-pointer text-sm font-bold hover:text-[#22A6DF] lg:text-sm xl:text-lg">
                 Sản phẩm
               </Typography.Text>
-            </Dropdown>
+            </a>
             <a href="#">
               <Typography.Text className="whitespace-nowrap text-sm font-bold hover:text-[#22A6DF] lg:text-sm xl:text-lg">
                 Dịch vụ thú cưng
@@ -368,38 +342,19 @@ export default function Header() {
         placement="left"
         onClose={onClose}
         open={open}
-        extra={
-          subMenu && (
-            <button onClick={handleBackClick} className="flex items-center">
-              <span className="mr-2">←</span> Quay lại
-            </button>
-          )
-        }
+
       >
-        {!subMenu ? (
-          <Menu
-            mode="vertical"
-            items={[
-              { key: "home", label: <a href="/">Trang chủ</a> },
-              {
-                key: "products",
-                label: <span onClick={handleProductClick}>Sản phẩm</span>,
-              },
-              { key: "services", label: <a href="#">Dịch vụ thú cưng</a> },
-              { key: "blog", label: <a href="#">Blog</a> },
-              { key: "about", label: <a href="#">Giới thiệu</a> },
-              { key: "contact", label: <a href="#">Liên hệ</a> },
-            ]}
-          />
-        ) : (
-          <Menu
-            mode="vertical"
-            items={[
-              { key: "dogs", label: <a href="/products/dogs">Dành cho chó</a> },
-              { key: "cats", label: <a href="/products/cats">Dành cho mèo</a> },
-            ]}
-          />
-        )}
+        <Menu
+          mode="vertical"
+          items={[
+            { key: "home", label: <a href="/">Trang chủ</a> },
+            { key: "products", label: <a href="/product">Sản phẩm</a> },
+            { key: "services", label: <a href="#">Dịch vụ thú cưng</a> },
+            { key: "blog", label: <a href="#">Blog</a> },
+            { key: "about", label: <a href="#">Giới thiệu</a> },
+            { key: "contact", label: <a href="#">Liên hệ</a> },
+          ]}
+        />
       </Drawer>
     </>
   );

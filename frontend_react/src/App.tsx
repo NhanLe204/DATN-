@@ -11,6 +11,7 @@ import Products from "./pages/product/product";
 import DetailProduct from "./pages/detail/detail";
 import PetSpaServices from "./pages/infoservices/infoservices";
 import Cart from "./pages/cart/cart";
+import UserProfile from "./pages/userprofile/userprofile";
 
 function App() {
   const router = createBrowserRouter([
@@ -61,6 +62,10 @@ function App() {
         {
           path: "/cart",
           element: <Cart />,
+        },
+        {
+          path: "/userprofile/*",
+          element: <UserProfile />,
         },
       ],
     },
