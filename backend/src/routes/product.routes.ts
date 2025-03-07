@@ -10,7 +10,7 @@ import {
   getHotProduct,
   getDogProducts,
   getCatProducts,
-	uploadProductImage
+  uploadProductImage
 } from '../controllers/product.controllers.js';
 import { protectRoute, requireAdmin } from '../middlewares/protectRoute.js';
 import { get } from 'http';
