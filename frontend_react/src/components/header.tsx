@@ -202,7 +202,7 @@ export default function Header() {
               <Dropdown overlay={userMenu} trigger={["hover"]}>
                 <div className="flex items-center cursor-pointer">
                   <Avatar
-                    src={`/images/avatar/${user.avatar}`}
+                    src={`${user.avatar}`}
                     icon={!user.avatar && <FaUserAlt />}
                     className="bg-[#22A6DF]"
                   />
@@ -232,7 +232,7 @@ export default function Header() {
               <Dropdown overlay={userMenu} trigger={["hover"]}>
                 <div className="flex items-center cursor-pointer">
                   <Avatar
-                    src={`/images/avatar/${user.avatar}`}
+                    src={`${user.avatar}`}
                     icon={!user.avatar && <FaUserAlt />}
                     className="bg-[#22A6DF]"
                   />
