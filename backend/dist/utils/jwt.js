@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import ENV_VARS from '../config.js';
+import ENV_VARS from '../config/config.js';
 export const generateAccessToken = async (userId, res) => {
     if (!ENV_VARS.JWT_SECRET) {
         throw new Error('JWT_SECRET is not defined');

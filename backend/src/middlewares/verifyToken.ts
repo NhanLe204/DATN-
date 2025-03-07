@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import ENV_VARS from '../config.js';
+import ENV_VARS from '../config/config.js';
 import { Request, Response, NextFunction } from 'express';
 import userModel from '../models/user.model.js';
 import { IUser } from '../interfaces/user.interface.js';

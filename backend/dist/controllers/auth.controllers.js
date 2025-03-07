@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import sendEmail from '../utils/sendEmail.js';
 import userModel from '../models/user.model.js'; // Adjust the path according to your project structure
 import { generateAccessToken, generateRefreshToken } from '../utils/jwt.js'; // Adjust the path according to your project structure
-import ENV_VARS from '../config.js';
+import ENV_VARS from '../config/config.js';
 import { OAuth2Client } from 'google-auth-library';
 import { UserRoles, UserStatus } from '../enums/user.enum.js';
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -83,7 +83,7 @@ export const loginController = async (req, res) => {
             .findOne({ email })
             .select('-reset_password_token -reset_password_expires -refreshToken');
         if (!user) {
-            res.status(404).json({ success: false, message: 'user is not defined' });
+            res.status(404).json({ success: false, message: 'Email này chưa được đăng ký' });
             return;
         }
         if (user.status === 'inactive') {

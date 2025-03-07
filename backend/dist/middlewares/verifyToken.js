@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import ENV_VARS from '../config.js';
+import ENV_VARS from '../config/config.js';
 import userModel from '../models/user.model.js';
 export const verifyToken = async (req, res, next) => {
     try {
