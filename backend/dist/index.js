@@ -3,7 +3,7 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import logger from 'morgan';
 import dotenv from 'dotenv'; // Thêm import này
-import ENV_VARS from './config.js';
+import ENV_VARS from './config/config.js';
 import { connectDB } from './database/db.js';
 import authRouter from './routes/auth.routes.js';
 import categoryRouter from './routes/category.routes.js';

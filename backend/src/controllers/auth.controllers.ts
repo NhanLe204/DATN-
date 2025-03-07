@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 import sendEmail from '../utils/sendEmail.js';
 import userModel from '../models/user.model.js'; // Adjust the path according to your project structure
 import { generateAccessToken, generateRefreshToken } from '../utils/jwt.js'; // Adjust the path according to your project structure
-import ENV_VARS from '../config.js';
+import ENV_VARS from '../config/config.js';
 import { OAuth2Client, TokenPayload } from 'google-auth-library';
 import { IUser } from '../interfaces/user.interface.js';
 import { UserRoles, UserStatus } from '../enums/user.enum.js';
