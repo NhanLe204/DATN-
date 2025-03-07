@@ -236,4 +236,12 @@ export const getCatProducts = async (req, res) => {
         });
     }
 };
+export const uploadProductImage = async (req, res) => {
+    console.log('Received files:', req.files); // Debug
+    if (!req.files) {
+        res.status(400).json({ message: 'No file uploaded' });
+        return;
+    }
+    res.status(200).json({ message: 'Upload images successfully', files: req.files });
+};
 //# sourceMappingURL=product.controllers.js.map

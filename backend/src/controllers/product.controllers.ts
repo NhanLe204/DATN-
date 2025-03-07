@@ -257,3 +257,13 @@ export const getCatProducts = async (req: Request, res: Response): Promise<void>
     });
   }
 };
+
+export const uploadProductImage = async (req: Request, res: Response): Promise<void> => {
+  console.log('Received files:', req.files); // Debug
+  if (!req.files) {
+    res.status(400).json({ message: 'No file uploaded' });
+    return;
+  }
+
+  res.status(200).json({ message: 'Upload images successfully', files: req.files });
+};
