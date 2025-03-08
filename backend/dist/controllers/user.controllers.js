@@ -41,19 +41,37 @@ export const updateUser = async (req, res) => {
     try {
         const { id } = req.params;
         console.log(id, 'ID');
-        const { email, fullname, phone_number, address, role, avatar } = req.body;
-        if (!email || !fullname || !phone_number || !address || !role || !avatar) {
-            res.status(400).json({
+        const { email, fullname, phone_number, address, role, avatar, status } = req.body;
+        // Không bắt buộc tất cả trường, chỉ cần ít nhất một trường để cập nhật
+        if (!email && !fullname && !phone_number && !address && !role && !avatar && !status) {
+            return res.status(400).json({
                 success: false,
-                message: 'Vui lòng cung cấp đầy đủ thông tin người dùng'
+                message: 'Vui lòng cung cấp ít nhất một thông tin để cập nhật'
             });
         }
-        const updatedUser = await userModel.findByIdAndUpdate(id, { email, fullname, phone_number, address, role, avatar }, { new: true, runValidators: true });
+        const updateData = {};
+        if (email)
+            updateData.email = email;
+        if (fullname)
+            updateData.fullname = fullname;
+        if (phone_number)
+            updateData.phone_number = phone_number;
+        if (address)
+            updateData.address = address;
+        if (role)
+            updateData.role = role;
+        if (avatar)
+            updateData.avatar = avatar;
+        if (status)
+            updateData.status = status;
+        const updatedUser = await userModel.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
         if (!updatedUser) {
-            res.status(404).json({ message: 'Không tìm thấy người dùng' });
-            return;
+            return res.status(404).json({ message: 'Không tìm thấy người dùng' });
         }
-        res.status(200).json({ message: 'Người dùng đã được cập nhật thành công', user: updatedUser });
+        res.status(200).json({
+            message: 'Người dùng đã được cập nhật thành công',
+            user: updatedUser
+        });
     }
     catch (error) {
         if (error instanceof Error) {
