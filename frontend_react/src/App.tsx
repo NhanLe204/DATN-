@@ -12,7 +12,16 @@ import DetailProduct from "./pages/detail/detail";
 import PetSpaServices from "./pages/infoservices/infoservices";
 import Cart from "./pages/cart/cart";
 import UserProfile from "./pages/userprofile/userprofile";
-import ReduxProviders from './redux/Provider'; 
+import AdminLayout from "./components/layout/AdminLayout";
+import Dashboard from "./admin/dashboard/dashboard";
+import ProductList from "./admin/product/product";
+import CategoryList from "./admin/category/category";
+import OrderList from "./admin/order/order";
+import UserList from "./admin/user/user";
+import ServiceList from "./admin/service/service";
+import SystemSettings from "./admin/setting/setting";
+import EmployeeList from "./admin/employee/employee";
+
 function App() {
   const router = createBrowserRouter([
     {
@@ -30,6 +39,21 @@ function App() {
           <SignUp />
         </>
       ),
+    },
+    {
+      path: "/admin",
+      element: <AdminLayout />,
+      children: [
+        { path: "", element: <Dashboard /> },
+        { path: "dashboard", element: <Dashboard /> },
+        { path: "employees", element: <EmployeeList /> },
+        { path: "categories", element: <CategoryList /> },
+        { path: "products", element: <ProductList /> },
+        { path: "orders", element: <OrderList /> },
+        { path: "services", element: <ServiceList /> },
+        { path: "users", element: <UserList /> },
+        { path: "settings", element: <SystemSettings /> },
+      ],
     },
     {
       path: "",

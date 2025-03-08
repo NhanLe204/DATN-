@@ -15,6 +15,7 @@
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
     "@fortawesome/react-fontawesome": "^0.2.2",
     "@headlessui/react": "^2.2.0",
+    "@react-oauth/google": "^0.12.1",
     "@reduxjs/toolkit": "^2.6.0",
     "antd": "^5.23.1",
     "antd-style": "^3.7.1",
@@ -30,6 +31,7 @@
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.1.5",
     "react-youtube": "^10.1.0",
+    "recharts": "^2.15.1",
     "schooltv-fe": "file:",
     "styled-components": "^6.1.15",
     "swr": "^2.3.2"
@@ -39,6 +41,7 @@
     "@types/node": "^22.13.8",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
+    "@types/recharts": "^1.8.29",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.17.0",

@@ -1,10 +1,14 @@
 import React, { useState } from "react";
 import { FaCheckDouble } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
-import { GoogleOAuthProvider, GoogleLogin, GoogleCredentialResponse } from "@react-oauth/google";
+import {
+  GoogleOAuthProvider,
+  GoogleLogin,
+  GoogleCredentialResponse,
+} from "@react-oauth/google";
 import { Button, Row, Col, Typography, Input, Flex, notification } from "antd";
 import "antd/dist/reset.css";
-import { EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons';
+import { EyeInvisibleOutlined, EyeOutlined } from "@ant-design/icons";
 
 const { Title, Text } = Typography;
 
@@ -186,7 +190,8 @@ export default function SignUp() {
           console.error("Login failed:", data.message);
           notification.error({
             message: "Đăng nhập thất bại!",
-            description: data.message || "Có lỗi xảy ra khi đăng nhập bằng Google.",
+            description:
+              data.message || "Có lỗi xảy ra khi đăng nhập bằng Google.",
             placement: "topRight",
             duration: 2,
           });
@@ -211,11 +216,14 @@ export default function SignUp() {
           Đăng Ký
         </Title>
         <Flex justify="center" className="gap-1 sm:gap-2">
-          <span 
-            onMouseEnter={(e) => { e.currentTarget.style.cursor = 'pointer'; }}
-            onClick={() => window.location.href="/"} className="text-sm sm:text-base"
+          <span
+            onMouseEnter={(e) => {
+              e.currentTarget.style.cursor = "pointer";
+            }}
+            onClick={() => (window.location.href = "/")}
+            className="text-sm sm:text-base"
           >
-            Trang chủ 
+            Trang chủ
           </span>
           <span className="px-1 sm:px-2">/</span>
           <span className="text-base sm:text-lg">Đăng ký</span>
@@ -269,46 +277,72 @@ export default function SignUp() {
             </div>
 
             <div className="p-3 sm:p-5">
-            {["fullname", "email", "password", "confirmPassword"].map((field, index) => (
-              <div key={index} className="mb-2 pb-2 text-sm sm:text-base">
-                <label htmlFor={field} className="font-bold uppercase">
-                  {field === "fullname"
-                    ? "Họ và Tên"
-                    : field === "email"
-                    ? "Email"
-                    : field === "password"
-                    ? "Mật khẩu"
-                    : "Xác nhận mật khẩu"}{" "}
-                  <span className="text-red-600">*</span>
-                </label>
-                <Input
-                  type={field === "password" && showPassword ? "text" : field === "confirmPassword" && showConfirmPassword ? "text" : "password"}
-                  id={field}
-                  placeholder={`Nhập ${field === "fullname" ? "họ và tên" : field}`}
-                  value={formData[field as keyof typeof formData]}
-                  onChange={handleChange}
-                  className="mt-2 h-9 text-sm sm:h-10 sm:text-base"
-                  suffix={
-                    (field === "password" || field === "confirmPassword") && (
-                      <span onClick={() => {
-                        if (field === "password") {
-                          setShowPassword(!showPassword);
-                        } else {
-                          setShowConfirmPassword(!showConfirmPassword);
-                        }
-                      }} style={{ cursor: 'pointer' }}>
-                        {field === "password" ? (showPassword ? <EyeOutlined /> : <EyeInvisibleOutlined />) : (showConfirmPassword ? <EyeOutlined /> : <EyeInvisibleOutlined />)}
-                      </span>
-                    )
-                  }
-                />
-              </div>
-            ))}
-
+              {["fullname", "email", "password", "confirmPassword"].map(
+                (field, index) => (
+                  <div key={index} className="mb-2 pb-2 text-sm sm:text-base">
+                    <label htmlFor={field} className="font-bold uppercase">
+                      {field === "fullname"
+                        ? "Họ và Tên"
+                        : field === "email"
+                        ? "Email"
+                        : field === "password"
+                        ? "Mật khẩu"
+                        : "Xác nhận mật khẩu"}{" "}
+                      <span className="text-red-600">*</span>
+                    </label>
+                    <Input
+                      type={
+                        field === "password" && showPassword
+                          ? "text"
+                          : field === "confirmPassword" && showConfirmPassword
+                          ? "text"
+                          : "password"
+                      }
+                      id={field}
+                      placeholder={`Nhập ${
+                        field === "fullname" ? "họ và tên" : field
+                      }`}
+                      value={formData[field as keyof typeof formData]}
+                      onChange={handleChange}
+                      className="mt-2 h-9 text-sm sm:h-10 sm:text-base"
+                      suffix={
+                        (field === "password" ||
+                          field === "confirmPassword") && (
+                          <span
+                            onClick={() => {
+                              if (field === "password") {
+                                setShowPassword(!showPassword);
+                              } else {
+                                setShowConfirmPassword(!showConfirmPassword);
+                              }
+                            }}
+                            style={{ cursor: "pointer" }}
+                          >
+                            {field === "password" ? (
+                              showPassword ? (
+                                <EyeOutlined />
+                              ) : (
+                                <EyeInvisibleOutlined />
+                              )
+                            ) : showConfirmPassword ? (
+                              <EyeOutlined />
+                            ) : (
+                              <EyeInvisibleOutlined />
+                            )}
+                          </span>
+                        )
+                      }
+                    />
+                  </div>
+                )
+              )}
             </div>
 
             <div className="flex flex-col items-center px-3 sm:px-5">
-              <Flex justify="space-between" className="mb-2 w-full items-center">
+              <Flex
+                justify="space-between"
+                className="mb-2 w-full items-center"
+              >
                 <button
                   onClick={handleSubmit}
                   className="h-9 w-[46%] rounded-md bg-black text-xs text-white hover:bg-[#22A6DF] sm:h-10 sm:text-sm"
