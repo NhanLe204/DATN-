@@ -1,7 +1,8 @@
 import { Router } from 'express';
-import { getAllProduct, getNewProduct, getProductById, insertProduct, updateProduct, getSaleProduct, getHotProduct, getDogProducts, getCatProducts } from '../controllers/product.controllers.js';
+import { getAllProduct, getNewProduct, getProductById, insertProduct, updateProduct, getSaleProduct, getHotProduct, getDogProducts, getCatProducts, uploadProductImage } from '../controllers/product.controllers.js';
 import { requireAdmin } from '../middlewares/protectRoute.js';
 import { verifyToken } from '../middlewares/verifyToken.js';
+import uploader from '../config/cloudinary.config.js';
 const productRouter = Router();
 productRouter.get('/products', getAllProduct);
 productRouter.get('/products/:id', getProductById);
@@ -12,6 +13,7 @@ productRouter.get('/dog-products', getDogProducts);
 productRouter.get('/cat-products', getCatProducts);
 productRouter.post('/products', verifyToken, requireAdmin, insertProduct);
 productRouter.patch('/products/:id', verifyToken, requireAdmin, updateProduct);
+productRouter.patch('/products/uploadimage/:id', verifyToken, requireAdmin, uploader.array('images_url', 12), uploadProductImage);
 productRouter.get('/newproducts', getNewProduct);
 productRouter.get('/saleproducts', getSaleProduct);
 productRouter.get('/hotproducts', getHotProduct);

@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import ENV_VARS from '../config.js';
+import ENV_VARS from '../config/config.js';
 import { Response } from 'express';
 
 export const generateAccessToken = async (userId: string, res: Response) => {

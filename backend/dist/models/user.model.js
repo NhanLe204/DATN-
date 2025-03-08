@@ -2,6 +2,10 @@ import mongoose, { Schema, model } from 'mongoose';
 import { UserRoles, UserStatus } from '../enums/user.enum.js';
 import product from './product.model.js';
 const userSchema = new Schema({
+    googleId: {
+        type: String,
+        require: false
+    },
     email: {
         type: String,
         required: true,
@@ -15,7 +19,7 @@ const userSchema = new Schema({
     },
     password: {
         type: String,
-        required: true
+        required: false
     },
     phone_number: {
         type: String,

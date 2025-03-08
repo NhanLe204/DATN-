@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Button, Card, Col, Row } from "antd";
 import { BsHandbag } from "react-icons/bs";
+import { Link } from "react-router-dom";
 
 export default function ListCard({ pros }) {
   return (
@@ -41,13 +42,15 @@ export default function ListCard({ pros }) {
                   </div>
                 )}
 
-                <img
+                  <Link to={`/detail/${product._id}`}>
+              <img
                   src={`/images/products/${currentImage}`}
                   className={`bg-[#EAEAEA] sm:h-48 lg:h-64 w-full transition-opacity duration-300 ${fade}`}
                   alt={product.name}
                   onMouseEnter={handleMouseEnter}
                   onMouseLeave={handleMouseLeave}
                 />
+                </Link>
               </div>
 
               <div className="flex-1 p-2 flex flex-col">
@@ -74,14 +77,16 @@ export default function ListCard({ pros }) {
                     </span>
                   )}
                 </p>
-
+                
                 <div className="relative overflow-hidden">
+                <Link to={`/detail/${product._id}`}>
                   <Button className="w-full uppercase text-[#22A6DF] border border-[#22A6DF] hover:!text-white relative z-10 overflow-hidden before:absolute before:top-0 before:left-[-100%] before:w-full before:h-full before:bg-[#22A6DF] before:transition-all before:duration-300 hover:before:left-0">
                     <div className="flex items-center justify-center gap-2 relative z-10">
                       <BsHandbag />
                       <span>Chọn mua</span>
                     </div>
                   </Button>
+                  </Link>
                 </div>
               </div>
             </Card>
