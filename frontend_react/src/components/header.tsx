@@ -1,32 +1,14 @@
 import React, { useState, useEffect } from "react";
-import {
-  Input,
-  Dropdown,
-  Menu,
-  Space,
-  Typography,
-  Badge,
-  Avatar,
-  Drawer,
-} from "antd";
-import {
-  FaTruck,
-  FaGift,
-  FaCheckCircle,
-  FaShoppingCart,
-  FaUserAlt,
-  FaPhoneAlt,
-  FaSearch,
-  FaBars,
-  FaAngleDown,
-} from "react-icons/fa";
+import { Input, Dropdown, Menu, Space, Typography, Badge, Avatar, Drawer, Button, } from "antd";
+import { FaTruck, FaGift, FaCheckCircle, FaShoppingCart, FaUserAlt, FaPhoneAlt, FaSearch, FaBars, FaAngleDown, FaTimes, } from "react-icons/fa";
 import { BsGeoAltFill } from "react-icons/bs";
 import { Search } from "lucide-react";
-const { Title, Text } = Typography;
+import { useLocation } from "react-router-dom";
 
 export default function Header() {
   const [open, setOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchMobileOpen, setSearchMobileOpen] = useState(false);
+  const [searchDesktopOpen, setSearchDesktopOpen] = useState(false);
   const [subMenu, setSubMenu] = useState(false);
   interface User {
     fullname: string;
@@ -36,6 +18,7 @@ export default function Header() {
 
   const [user, setUser] = useState<User | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [searchHistory, setSearchHistory] = useState<string[]>([]);
 
   const showDrawer = () => setOpen(true);
   const onClose = () => {
@@ -43,8 +26,11 @@ export default function Header() {
     setSubMenu(false);
   };
 
-  const showSearch = () => setSearchOpen(true);
-  const closeSearch = () => setSearchOpen(false);
+  const showSearchMobile = () => setSearchMobileOpen(true);
+  const closeSearchMobile = () => setSearchMobileOpen(false);
+
+  const showSearchDesktop = () => setSearchDesktopOpen(true);
+  const closeSearchDesktop = () => setSearchDesktopOpen(false);
 
 
   const handleProductClick = () => {
@@ -53,6 +39,36 @@ export default function Header() {
 
   const handleBackClick = () => {
     setSubMenu(false);
+  };
+
+  // Load lịch sử tìm kiếm từ localStorage khi component mount
+  useEffect(() => {
+    const storedHistory = localStorage.getItem("searchHistory");
+    if (storedHistory) {
+      setSearchHistory(JSON.parse(storedHistory));
+    }
+  }, []);
+
+  // Lưu lịch sử tìm kiếm vào localStorage khi thay đổi
+  useEffect(() => {
+    localStorage.setItem("searchHistory", JSON.stringify(searchHistory));
+  }, [searchHistory]);
+
+  // Xử lý khi người dùng tìm kiếm
+  const handleSearch = (value: string) => {
+    if (value.trim() && !searchHistory.includes(value.trim())) {
+      // Thêm từ khóa mới, giới hạn tối đa 5 từ khóa
+      const newHistory = [value.trim(), ...searchHistory].slice(0, 5);
+      setSearchHistory(newHistory);
+    }
+    // Có thể thêm logic API tìm kiếm sản phẩm ở đây
+    console.log("Tìm kiếm:", value);
+  };
+
+  // Xóa toàn bộ lịch sử tìm kiếm
+  const clearSearchHistory = () => {
+    setSearchHistory([]);
+    localStorage.removeItem("searchHistory");
   };
 
   useEffect(() => {
@@ -117,6 +133,140 @@ export default function Header() {
     </Menu>
   );
 
+  // Nội dung của Dropdown tìm kiếm (desktop)
+  const searchDesktop = (
+    <div className="w-[100%] bg-white shadow-lg rounded-lg border border-gray-200" style={{ position: "absolute", top: "100%", left: 0, zIndex: 1000, maxHeight: "400px", overflowY: "auto" }}>
+      <div className="p-4">
+        <div className="mb-4">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-lg font-bold">TÌM KIẾM GẦN ĐÂY</h3>
+            <Button
+              type="link"
+              icon={<FaTimes />}
+              onClick={clearSearchHistory}
+              className="text-red-500"
+            >
+              Xóa lịch sử
+            </Button>
+          </div>
+          {searchHistory.length > 0 ? (
+            <Space wrap className="mb-2">
+              {searchHistory.map((item, index) => (
+                <button
+                  key={index}
+                  className="rounded-full bg-gray-100 px-4 py-2 hover:bg-gray-200"
+                  onClick={() => handleSearch(item)}
+                >
+                  {item}
+                </button>
+              ))}
+            </Space>
+          ) : (
+            <p className="text-gray-500">Không có lịch sử tìm kiếm.</p>
+          )}
+        </div>
+        <div>
+          <h3 className="mb-2 text-lg font-bold">SẢN PHẨM NỔI BẬT</h3>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-2">
+            <div className="rounded bg-gray-50 p-4 shadow-md">
+              <div className="mb-2 h-32 w-full bg-gray-200"></div>
+              <p className="font-bold">Nhà Cung Cấp</p>
+              <p>Tiêu Đề Sản Phẩm Mẫu</p>
+              <p className="text-[#22A6DF] font-bold">145.000đ</p>
+            </div>
+            <div className="rounded bg-gray-50 p-4 shadow-md">
+              <div className="mb-2 h-32 w-full bg-gray-200"></div>
+              <p className="font-bold">Nhà Cung Cấp</p>
+              <p>Tiêu Đề Sản Phẩm Mẫu</p>
+              <p className="text-[#22A6DF] font-bold">145.000đ</p>
+            </div>
+            <div className="rounded bg-gray-50 p-4 shadow-md">
+              <div className="mb-2 h-32 w-full bg-gray-200"></div>
+              <p className="font-bold">Nhà Cung Cấp</p>
+              <p>Tiêu Đề Sản Phẩm Mẫu</p>
+              <p className="text-[#22A6DF] font-bold">145.000đ</p>
+            </div>
+            <div className="rounded bg-gray-50 p-4 shadow-md">
+              <div className="mb-2 h-32 w-full bg-gray-200"></div>
+              <p className="font-bold">Nhà Cung Cấp</p>
+              <p>Tiêu Đề Sản Phẩm Mẫu</p>
+              <p className="text-[#22A6DF] font-bold">145.000đ</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Nội dung của Drawer tìm kiếm (mobile)
+  const searchMobile = (
+    <div className="p-4">
+      <Input.Search
+        placeholder="Tìm kiếm..."
+        size="large"
+        className="mb-4"
+        onSearch={handleSearch}
+      />
+      <div className="mb-4">
+        <div className="flex justify-between items-center mb-2">
+          <h3 className="text-lg font-bold">TÌM KIẾM GẦN ĐÂY</h3>
+          <Button
+            type="link"
+            icon={<FaTimes />}
+            onClick={clearSearchHistory}
+            className="text-red-500"
+          >
+            Xóa lịch sử
+          </Button>
+        </div>
+        {searchHistory.length > 0 ? (
+          <Space wrap className="mb-2">
+            {searchHistory.map((item, index) => (
+              <button
+                key={index}
+                className="rounded-full bg-gray-100 px-4 py-2 hover:bg-gray-200"
+                onClick={() => handleSearch(item)}
+              >
+                {item}
+              </button>
+            ))}
+          </Space>
+        ) : (
+          <p className="text-gray-500">Không có lịch sử tìm kiếm.</p>
+        )}
+      </div>
+      <div>
+        <h3 className="mb-2 text-lg font-bold">SẢN PHẨM NỔI BẬT</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="rounded bg-gray-50 p-4">
+            <div className="mb-2 h-32 w-full bg-gray-200"></div>
+            <p className="font-bold">Nhà Cung Cấp</p>
+            <p>Tiêu Đề Sản Phẩm Mẫu</p>
+            <p className="text-[#22A6DF] font-bold">145.000đ</p>
+          </div>
+          <div className="rounded bg-gray-50 p-4">
+            <div className="mb-2 h-32 w-full bg-gray-200"></div>
+            <p className="font-bold">Nhà Cung Cấp</p>
+            <p>Tiêu Đề Sản Phẩm Mẫu</p>
+            <p className="text-[#22A6DF] font-bold">145.000đ</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const location = useLocation();
+  const currentPath = location.pathname;
+
+  const menuItems = [
+    { path: "/", label: "Trang chủ" },
+    { path: "/product", label: "Sản phẩm" },
+    { path: "/info", label: "Dịch vụ thú cưng" },
+    { path: "#", label: "Blog" },
+    { path: "#", label: "Giới thiệu" },
+    { path: "/contact", label: "Liên hệ" },
+  ];
+
   return (
     <>
       <header className="w-full">
@@ -153,27 +303,38 @@ export default function Header() {
             />
           </a>
 
-          <Input.Search
-            placeholder="Tìm kiếm..."
-            enterButton={
-              <button
-                style={{
-                  backgroundColor: "#22A6DF",
-                  borderColor: "#22A6DF",
-                  height: "32px",
-                  width: "32px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderTopRightRadius: "8px",
-                  borderBottomRightRadius: "8px",
-                }}
-              >
-                <FaSearch className="text-white" />
-              </button>
-            }
-            className="custom-search hidden w-1/3 rounded-full md:flex"
-          />
+          <Dropdown
+            overlay={searchDesktop}
+            trigger={["click"]}
+            open={searchDesktopOpen}
+            onOpenChange={setSearchDesktopOpen}
+            placement="bottomLeft"
+            overlayClassName="search-dropdown"
+          >
+            <Input.Search
+              placeholder="Tìm kiếm..."
+              enterButton={
+                <button
+                  style={{
+                    backgroundColor: "#22A6DF",
+                    borderColor: "#22A6DF",
+                    height: "32px",
+                    width: "32px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderTopRightRadius: "8px",
+                    borderBottomRightRadius: "8px",
+                  }}
+                  onClick={showSearchDesktop}
+                >
+                  <FaSearch className="text-white" />
+                </button>
+              }
+              className="custom-search hidden w-1/3 rounded-full md:flex"
+              onSearch={handleSearch}
+            />
+          </Dropdown>
 
           <Space size={50} className="hidden xl:flex">
             <div className="flex flex-col items-center">
@@ -214,7 +375,7 @@ export default function Header() {
           <Space size={50} className="flex items-center xl:hidden">
             <button
               className="rounded-full p-2 hover:bg-gray-100 md:hidden"
-              onClick={showSearch}
+              onClick={showSearchMobile}
             >
               <Search className="h-6 w-6" />
             </button>
@@ -245,36 +406,26 @@ export default function Header() {
         {/* Menu 3 */}
         <nav className="flex items-center justify-between bg-white px-4 text-black sm:px-[40px] lg:px-[154px]">
           <Space className="hidden items-center justify-between py-3 md:flex md:gap-[20px] lg:gap-[27px] xl:gap-[50px]">
-            <a href="/">
-              <Typography.Text className="text-sm font-bold text-[#22A6DF] underline underline-offset-[5px] lg:text-sm xl:text-lg">
-                Trang chủ
-              </Typography.Text>
-            </a>
-            <a href="/product">
-              <Typography.Text className="cursor-pointer text-sm font-bold hover:text-[#22A6DF] lg:text-sm xl:text-lg">
-                Sản phẩm
-              </Typography.Text>
-            </a>
-            <a href="#">
-              <Typography.Text className="whitespace-nowrap text-sm font-bold hover:text-[#22A6DF] lg:text-sm xl:text-lg">
-                Dịch vụ thú cưng
-              </Typography.Text>
-            </a>
-            <a href="#">
-              <Typography.Text className="text-sm font-bold hover:text-[#22A6DF] lg:text-sm xl:text-lg">
-                Blog
-              </Typography.Text>
-            </a>
-            <a href="#">
-              <Typography.Text className="text-sm font-bold hover:text-[#22A6DF] lg:text-sm xl:text-lg">
-                Giới thiệu
-              </Typography.Text>
-            </a>
-            <a href="#">
-              <Typography.Text className="text-sm font-bold hover:text-[#22A6DF] lg:text-sm xl:text-lg">
-                Liên hệ
-              </Typography.Text>
-            </a>
+            {menuItems.map((item) => (
+              <a
+                key={item.path}
+                href={item.path}
+                className="group relative"
+              >
+                <Typography.Text
+                  className={`text-sm font-bold transition-colors duration-300 lg:text-sm xl:text-lg relative z-10 ${currentPath === item.path
+                    ? "text-[#22A6DF]"
+                    : "text-black group-hover:text-[#22A6DF]"
+                    }`}
+                >
+                  {item.label}
+                  <span
+                    className={`absolute bottom-0 left-0 h-[2px] bg-[#22A6DF] transition-all duration-300 ${currentPath === item.path ? "w-full" : "w-0 group-hover:w-full"
+                      }`}
+                  ></span>
+                </Typography.Text>
+              </a>
+            ))}
           </Space>
 
           <FaBars className="cursor-pointer md:hidden" onClick={showDrawer} />
@@ -292,48 +443,11 @@ export default function Header() {
       <Drawer
         title="Tìm Kiếm"
         placement="top"
-        onClose={closeSearch}
-        open={searchOpen}
+        onClose={closeSearchMobile}
+        open={searchMobileOpen}
         height={400}
       >
-        <div className="p-4">
-          <Input.Search
-            placeholder="Tìm kiếm..."
-            size="large"
-            className="mb-4"
-          />
-          <div className="mb-4">
-            <h3 className="mb-2 text-lg font-bold">TÌM KIẾM PHỔ BIẾN</h3>
-            <Space wrap>
-              <button className="rounded-full bg-gray-100 px-4 py-2">
-                royal canin
-              </button>
-              <button className="rounded-full bg-gray-100 px-4 py-2">
-                nutrience
-              </button>
-              <button className="rounded-full bg-gray-100 px-4 py-2">
-                đồ chơi cho mèo
-              </button>
-            </Space>
-          </div>
-          <div>
-            <h3 className="mb-2 text-lg font-bold">SẢN PHẨM NỔI BẬT</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="rounded bg-gray-50 p-4">
-                <div className="mb-2 h-32 w-32 bg-gray-200"></div>
-                <p className="font-bold">Nhà Cung Cấp</p>
-                <p>Tiêu Đề Sản Phẩm Mẫu</p>
-                <p className="text-[#22A6DF]">20đ</p>
-              </div>
-              <div className="rounded bg-gray-50 p-4">
-                <div className="mb-2 h-32 w-32 bg-gray-200"></div>
-                <p className="font-bold">Nhà Cung Cấp</p>
-                <p>Tiêu Đề Sản Phẩm Mẫu</p>
-                <p className="text-[#22A6DF]">20đ</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        {searchMobile}
       </Drawer>
 
       {/* Menu Drawer */}
