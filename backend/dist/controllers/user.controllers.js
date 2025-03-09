@@ -44,10 +44,11 @@ export const updateUser = async (req, res) => {
         const { email, fullname, phone_number, address, role, avatar, status } = req.body;
         // Không bắt buộc tất cả trường, chỉ cần ít nhất một trường để cập nhật
         if (!email && !fullname && !phone_number && !address && !role && !avatar && !status) {
-            return res.status(400).json({
+            res.status(400).json({
                 success: false,
                 message: 'Vui lòng cung cấp ít nhất một thông tin để cập nhật'
             });
+            return;
         }
         const updateData = {};
         if (email)
@@ -66,7 +67,8 @@ export const updateUser = async (req, res) => {
             updateData.status = status;
         const updatedUser = await userModel.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
         if (!updatedUser) {
-            return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+            res.status(404).json({ message: 'Không tìm thấy người dùng' });
+            return;
         }
         res.status(200).json({
             message: 'Người dùng đã được cập nhật thành công',

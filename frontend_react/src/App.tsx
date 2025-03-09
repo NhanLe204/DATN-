@@ -10,6 +10,7 @@ import Payment from "./pages/payment/payment";
 import Products from "./pages/product/product";
 import DetailProduct from "./pages/detail/detail";
 import PetSpaServices from "./pages/infoservices/infoservices";
+import SpaBookingForm from "./pages/services/services";
 import Cart from "./pages/cart/cart";
 import UserProfile from "./pages/userprofile/userprofile";
 import AdminLayout from "./components/layout/AdminLayout";
@@ -82,6 +83,10 @@ function App() {
         {
           path: "/info",
           element: <PetSpaServices />,
+        },
+        {
+          path: "/service",
+          element: <SpaBookingForm />,
         },
         {
           path: "/cart",

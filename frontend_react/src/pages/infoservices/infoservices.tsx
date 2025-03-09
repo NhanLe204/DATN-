@@ -3,7 +3,7 @@ import React from "react";
 import { Table, Card, Breadcrumb, Button, Typography } from "antd";
 const { Title, Text, Paragraph } = Typography;
 import { HomeOutlined } from "@ant-design/icons";
-
+import { useNavigate } from "react-router-dom";
 const PetSpaServices = () => {
   const breadcrumbItems = [
     {
@@ -120,7 +120,10 @@ const PetSpaServices = () => {
     { key: "4", weight: "20 - 40kg", shortFur: "450k" },
     { key: "5", weight: "> 40kg", shortFur: "550k" },
   ];
-
+  const navigate = useNavigate();
+  const handleBookAppointment = () => {
+    navigate("/service");
+  };
   return (
     <div className="min-h-screen bg-white px-4 sm:px-6 lg:px-8">
       <div className="py-4">
@@ -138,6 +141,7 @@ const PetSpaServices = () => {
             type="primary"
             size="large"
             className="bg-[#22A6DF] hover:opacity-90"
+            onClick={handleBookAppointment}
           >
             ĐẶT LỊCH NGAY
           </Button>
