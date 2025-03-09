@@ -5,6 +5,6 @@ interface AuthenticatedRequest extends Request {
 }
 export declare const getAllUser: (req: Request, res: Response) => Promise<void>;
 export declare const getUserById: (req: Request, res: Response) => Promise<void>;
-export declare const updateUser: (req: Request, res: Response) => Promise<Response<any, Record<string, any>> | undefined>;
+export declare const updateUser: (req: Request, res: Response) => Promise<void>;
 export declare const updateCart: (req: AuthenticatedRequest, res: Response) => Promise<void>;
 export {};
