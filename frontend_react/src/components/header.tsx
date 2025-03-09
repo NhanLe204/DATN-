@@ -260,7 +260,7 @@ export default function Header() {
                 Sản phẩm
               </Typography.Text>
             </a>
-            <a href="#">
+            <a href="/info">
               <Typography.Text className="whitespace-nowrap text-sm font-bold hover:text-[#22A6DF] lg:text-sm xl:text-lg">
                 Dịch vụ thú cưng
               </Typography.Text>
@@ -270,12 +270,12 @@ export default function Header() {
                 Blog
               </Typography.Text>
             </a>
-            <a href="#">
+            <a href="/about-us">
               <Typography.Text className="text-sm font-bold hover:text-[#22A6DF] lg:text-sm xl:text-lg">
                 Giới thiệu
               </Typography.Text>
             </a>
-            <a href="#">
+            <a href="/contact">
               <Typography.Text className="text-sm font-bold hover:text-[#22A6DF] lg:text-sm xl:text-lg">
                 Liên hệ
               </Typography.Text>
