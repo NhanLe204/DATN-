@@ -28,7 +28,15 @@ import { Search } from "lucide-react";
 import { useContext } from "react";
 import { useSelector } from "react-redux"
 import { useLocation } from "react-router-dom";
+import { SearchContext } from "./searchContext";
 const { Title, Text } = Typography;
+
+interface Product {
+  _id: string;
+  name: string;
+  image_url: string;
+  price: string;
+}
 
 export default function Header() {
   const cartItems=useSelector((state:any)=>state.cart.items);
@@ -37,6 +45,8 @@ export default function Header() {
   const [searchMobileOpen, setSearchMobileOpen] = useState(false);
   const [searchDesktopOpen, setSearchDesktopOpen] = useState(false);
   const [subMenu, setSubMenu] = useState(false);
+  const { keyword, setKeyword } = useContext(SearchContext);
+
   interface User {
     fullname: string;
     avatar?: string;
@@ -89,6 +99,42 @@ export default function Header() {
     localStorage.removeItem("searchHistory");
   };
 
+  const removeDiacritics = (str: string): string => {
+    return str
+      .normalize("NFD") // Phân tách ký tự thành ký tự gốc và dấu
+      .replace(/[\u0300-\u036f]/g, "") // Xóa các dấu
+      .replace(/đ/g, "d") // Thay 'đ' thành 'd'
+      .replace(/Đ/g, "D"); // Thay 'Đ' thành 'D'
+  };
+
+  const [searchResults, setSearchResults] = useState<Product[]>([]);
+
+  const fetchSearchResults = async (searchTerm: string) => {
+    try {
+      const response = await fetch("http://localhost:5000/api/v1/products");
+      if (!response.ok) {
+        throw new Error("Failed to fetch products");
+      }
+      const data = await response.json();
+      console.log("Dữ liệu từ API:", data);
+
+      // Chuẩn hóa từ khóa tìm kiếm
+      const normalizedSearchTerm = removeDiacritics(searchTerm.toLowerCase());
+
+      // Lọc sản phẩm: bỏ dấu cả tên sản phẩm và từ khóa trước khi so sánh
+      const filteredProducts = data.result.filter((product: Product) => {
+        const normalizedProductName = removeDiacritics(product.name.toLowerCase());
+        return normalizedProductName.includes(normalizedSearchTerm);
+      });
+
+      console.log("Sản phẩm sau lọc:", filteredProducts);
+      setSearchResults(filteredProducts);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      setSearchResults([]);
+    }
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     const accountID = localStorage.getItem("accountID") || "";
@@ -139,7 +185,7 @@ export default function Header() {
   const userMenu = (
     <Menu>
       <Menu.Item key="1">
-        <a href={`/userprofile/account}`}>
+        <a href={`/userprofile/account`}>
           <i className="fas fa-user mr-2"></i>Tài khoản
         </a>
       </Menu.Item>
@@ -184,33 +230,27 @@ export default function Header() {
           )}
         </div>
         <div>
-          <h3 className="mb-2 text-lg font-bold">SẢN PHẨM NỔI BẬT</h3>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-2">
-            <div className="rounded bg-gray-50 p-4 shadow-md">
-              <div className="mb-2 h-32 w-full bg-gray-200"></div>
-              <p className="font-bold">Nhà Cung Cấp</p>
-              <p>Tiêu Đề Sản Phẩm Mẫu</p>
-              <p className="text-[#22A6DF] font-bold">145.000đ</p>
+        <h3 className="mb-2 text-lg font-bold">KẾT QUẢ TÌM KIẾM</h3>
+          {searchResults.length > 0 ? (
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-2">
+              {searchResults.map((product) => (
+                <div key={product._id} className="rounded bg-gray-50 p-4 shadow-md">
+                  <img src={`/images/products/${product.image_url[0]}`} alt="" />
+                  <p>{product.name}</p>
+                  <p className="text-[#22A6DF] font-bold">
+                  {new Intl.NumberFormat("vi-VN", {
+                      style: "currency",
+                      currency: "VND",
+                    }).format(Number(product.price))}
+                  </p>
+                </div>
+              ))}
             </div>
-            <div className="rounded bg-gray-50 p-4 shadow-md">
-              <div className="mb-2 h-32 w-full bg-gray-200"></div>
-              <p className="font-bold">Nhà Cung Cấp</p>
-              <p>Tiêu Đề Sản Phẩm Mẫu</p>
-              <p className="text-[#22A6DF] font-bold">145.000đ</p>
-            </div>
-            <div className="rounded bg-gray-50 p-4 shadow-md">
-              <div className="mb-2 h-32 w-full bg-gray-200"></div>
-              <p className="font-bold">Nhà Cung Cấp</p>
-              <p>Tiêu Đề Sản Phẩm Mẫu</p>
-              <p className="text-[#22A6DF] font-bold">145.000đ</p>
-            </div>
-            <div className="rounded bg-gray-50 p-4 shadow-md">
-              <div className="mb-2 h-32 w-full bg-gray-200"></div>
-              <p className="font-bold">Nhà Cung Cấp</p>
-              <p>Tiêu Đề Sản Phẩm Mẫu</p>
-              <p className="text-[#22A6DF] font-bold">145.000đ</p>
-            </div>
-          </div>
+          ) : keyword.trim() ? (
+            <p className="text-gray-500">Không tìm thấy sản phẩm nào.</p>
+          ) : (
+            <p className="text-gray-500">Nhập từ khóa để tìm kiếm.</p>
+          )}
         </div>
       </div>
     </div>
@@ -224,6 +264,15 @@ export default function Header() {
         size="large"
         className="mb-4"
         onSearch={handleSearch}
+        onChange={(e) => {
+          const value = e.target.value;
+          setKeyword(value);
+          if (value.trim()) {
+            fetchSearchResults(value);
+          } else {
+            setSearchResults([]);
+          }
+        }}
       />
       <div className="mb-4">
         <div className="flex justify-between items-center mb-2">
@@ -254,21 +303,27 @@ export default function Header() {
         )}
       </div>
       <div>
-        <h3 className="mb-2 text-lg font-bold">SẢN PHẨM NỔI BẬT</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="rounded bg-gray-50 p-4">
-            <div className="mb-2 h-32 w-full bg-gray-200"></div>
-            <p className="font-bold">Nhà Cung Cấp</p>
-            <p>Tiêu Đề Sản Phẩm Mẫu</p>
-            <p className="text-[#22A6DF] font-bold">145.000đ</p>
+      <h3 className="mb-2 text-lg font-bold">KẾT QUẢ TÌM KIẾM</h3>
+        {searchResults.length > 0 ? (
+          <div className="grid grid-cols-2 gap-4">
+            {searchResults.map((product) => (
+              <div key={product._id} className="rounded bg-gray-50 p-4">
+                <img src={`/images/products/${product.image_url[0]}`} alt="" />
+                <p>{product.name}</p>
+                <p className="text-[#22A6DF] font-bold">
+                    {new Intl.NumberFormat("vi-VN", {
+                      style: "currency",
+                      currency: "VND",
+                    }).format(Number(product.price))}
+                </p>
+              </div>
+            ))}
           </div>
-          <div className="rounded bg-gray-50 p-4">
-            <div className="mb-2 h-32 w-full bg-gray-200"></div>
-            <p className="font-bold">Nhà Cung Cấp</p>
-            <p>Tiêu Đề Sản Phẩm Mẫu</p>
-            <p className="text-[#22A6DF] font-bold">145.000đ</p>
-          </div>
-        </div>
+        ) : keyword.trim() ? (
+          <p className="text-gray-500">Không tìm thấy sản phẩm nào.</p>
+        ) : (
+          <p className="text-gray-500">Nhập từ khóa để tìm kiếm.</p>
+        )}
       </div>
     </div>
   );
@@ -351,7 +406,16 @@ export default function Header() {
               }
               className="custom-search hidden w-1/3 rounded-full md:flex"
               onSearch={handleSearch}
-              
+              value={keyword}
+              onChange={(e) => {
+                const value = e.target.value;
+                setKeyword(value);
+                if (value.trim()) {
+                  fetchSearchResults(value);
+                } else {
+                  setSearchResults([]);
+                }
+              }}
             />
           </Dropdown>
 
@@ -464,7 +528,7 @@ export default function Header() {
         placement="top"
         onClose={closeSearchMobile}
         open={searchMobileOpen}
-        height={400}
+        height={700}
       >
         {searchMobile}
       </Drawer>
