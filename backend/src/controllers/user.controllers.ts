@@ -45,11 +45,16 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
   try {
     const { id } = req.params;
     console.log(id, 'ID');
-    const { email, fullname, phone_number, address, role, avatar, status } = req.body;
+    const { email, fullname, phone_number, address, role, avatar, status, dateOfBirth } = req.body;
 
     // Không bắt buộc tất cả trường, chỉ cần ít nhất một trường để cập nhật
+
+    if (!email && !fullname && !phone_number && !address && !role && !avatar && !status && !dateOfBirth) {
+      return res.status(400).json({
+
     if (!email && !fullname && !phone_number && !address && !role && !avatar && !status) {
       res.status(400).json({
+
         success: false,
         message: 'Vui lòng cung cấp ít nhất một thông tin để cập nhật'
       });
@@ -64,6 +69,7 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
     if (role) updateData.role = role;
     if (avatar) updateData.avatar = avatar;
     if (status) updateData.status = status;
+    if (dateOfBirth) updateData.dateOfBirth = dateOfBirth;
 
     const updatedUser = await userModel.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
 
