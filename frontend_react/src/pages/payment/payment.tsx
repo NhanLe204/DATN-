@@ -16,7 +16,7 @@ import {
 const Payment = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [provinces, setProvinces] = useState<{ code: string; name: string }[]>([]);
-  const [districts, setDistricts] = useState([]);
+  const [districts, setDistricts] = useState<{ code: string; name: string }[]>([]);
   const [wards, setWards] = useState([]);
   const [selectedProvince, setSelectedProvince] = useState<{ code: string; name: string } | null>(null);
   const [selectedDistrict, setSelectedDistrict] = useState<{ code: string; name: string } | null>(null);

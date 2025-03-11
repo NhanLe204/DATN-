@@ -41,18 +41,24 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
   }
 };
 // Cập nhật user
-export const updateUser = async (req: Request, res: Response) => {
+export const updateUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     console.log(id, 'ID');
     const { email, fullname, phone_number, address, role, avatar, status, dateOfBirth } = req.body;
 
     // Không bắt buộc tất cả trường, chỉ cần ít nhất một trường để cập nhật
+
     if (!email && !fullname && !phone_number && !address && !role && !avatar && !status && !dateOfBirth) {
       return res.status(400).json({
+
+    if (!email && !fullname && !phone_number && !address && !role && !avatar && !status) {
+      res.status(400).json({
+
         success: false,
         message: 'Vui lòng cung cấp ít nhất một thông tin để cập nhật'
       });
+      return;
     }
 
     const updateData: Partial<IUser> = {};
@@ -68,7 +74,8 @@ export const updateUser = async (req: Request, res: Response) => {
     const updatedUser = await userModel.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
 
     if (!updatedUser) {
-      return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+      res.status(404).json({ message: 'Không tìm thấy người dùng' });
+      return;
     }
 
     res.status(200).json({

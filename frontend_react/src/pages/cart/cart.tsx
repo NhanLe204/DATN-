@@ -8,12 +8,14 @@ import {
 import { useSelector, useDispatch } from "react-redux";
 import React from "react";
 import { Button, Card, Input, Breadcrumb, Typography, Divider, Modal } from "antd";
+import { useNavigate } from "react-router-dom";
 
 const { TextArea } = Input;
 const { Title, Text } = Typography;
 
 const Cart: React.FC = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate(); // Sử dụng useNavigate đúng cách
   const cartItems = useSelector((state: { cart: { items: any[] } }) => state.cart.items);
 
   const breadcrumbItems = [
@@ -73,12 +75,60 @@ const Cart: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2">
+          <div className={cartItems.length === 0 ? "lg:col-span-3" : "lg:col-span-2"}>
             {cartItems.length === 0 ? (
-              <Text>Giỏ hàng của bạn đang trống.</Text>
+              <div className="flex flex-col items-center justify-center h-[60vh]">
+                <div className="text-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="100"
+                    height="100"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#d1d5db"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="mx-auto mb-4"
+                  >
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                    <path d="M3 6h18"></path>
+                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                    <path d="M10 14l4 4"></path>
+                    <path d="M14 14l-4 4"></path>
+                  </svg>
+                  <Text className="text-lg text-gray-600">Giỏ hàng trống</Text>
+                  <div className="mt-4">
+                    <Button
+                      size="large"
+                      style={{
+                        border: "1px solid #ccc",
+                        color: "#333",
+                        backgroundColor: "white",
+                        transition: "border 0.3s, color 0.3s",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = "#22A6DF";
+                        e.currentTarget.style.border = "1px solid #22A6DF";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = "#333";
+                        e.currentTarget.style.border = "1px solid #ccc";
+                      }}
+                      onClick={() => navigate("/")} // Sử dụng navigate thay vì window.location.href
+                    >
+                      Tiếp tục mua sắm
+                    </Button>
+                  </div>
+                </div>
+              </div>
             ) : (
               cartItems.map((item) => (
-                <Card key={item.id} className="bg-white shadow-lg mb-4">
+                <Card
+                  key={item.id}
+                  className="bg-white mb-4"
+                  style={{ boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)" }}
+                >
                   <div className="mb-4 border-b pb-4">
                     <div className="flex flex-col items-center gap-4 sm:flex-row">
                       <div className="h-28 w-28 overflow-hidden rounded-lg">
@@ -102,7 +152,7 @@ const Cart: React.FC = () => {
                           <Button
                             type="text"
                             danger
-                            onClick={() => handleRemove(item.id, item.name)} // Truyền thêm tên sản phẩm
+                            onClick={() => handleRemove(item.id, item.name)}
                           >
                             Xóa
                           </Button>
@@ -131,59 +181,66 @@ const Cart: React.FC = () => {
             )}
           </div>
 
-          <div className="lg:col-span-1">
-            <Card className="sticky top-4 bg-white shadow-lg">
-              <Title level={4} className="text-gray-800">
-                Thông tin đơn hàng
-              </Title>
-              <Divider />
-              <div className="mb-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <Text strong className="text-gray-800">
-                    Tạm tính
-                  </Text>
-                  <Text strong className="text-xl text-[#22A6DF]">
-                    {calculateSubtotal().toLocaleString()}đ
-                  </Text>
+          {cartItems.length > 0 && (
+            <div className="lg:col-span-1">
+              <Card
+                className="sticky top-4 bg-white"
+                style={{ boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)" }}
+              >
+                <Title level={4} className="text-gray-800">
+                  Thông tin đơn hàng
+                </Title>
+                <Divider />
+                <div className="mb-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Text strong className="text-gray-800">
+                      Tạm tính
+                    </Text>
+                    <Text strong className="text-xl text-[#22A6DF]">
+                      {calculateSubtotal().toLocaleString()}đ
+                    </Text>
+                  </div>
                 </div>
-              </div>
-              <TextArea
-                placeholder="Ghi chú đơn hàng (không bắt buộc)"
-                className="mb-6 bg-white text-gray-800"
-                rows={4}
-              />
-              <div className="space-y-3">
-                <Button
-                  type="primary"
-                  size="large"
-                  block
-                  style={{ backgroundColor: "#22A6DF", borderColor: "#22A6DF" }}
-                >
-                  Tiến hành đặt hàng
-                </Button>
-                <Button
-                  size="large"
-                  block
-                  style={{
-                    border: "1px solid #ccc",
-                    color: "#333",
-                    backgroundColor: "white",
-                    transition: "border 0.3s, color 0.3s",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = "#22A6DF";
-                    e.currentTarget.style.border = "1px solid #22A6DF";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = "#333";
-                    e.currentTarget.style.border = "1px solid #ccc";
-                  }}
-                >
-                  Tiếp tục mua sắm
-                </Button>
-              </div>
-            </Card>
-          </div>
+                <TextArea
+                  placeholder="Ghi chú đơn hàng (không bắt buộc)"
+                  className="mb-6 bg-white text-gray-800"
+                  rows={4}
+                />
+                <div className="space-y-3">
+                  <Button
+                    type="primary"
+                    size="large"
+                    block
+                    style={{ backgroundColor: "#22A6DF", borderColor: "#22A6DF" }}
+                    onClick={() => navigate("/checkout")} 
+                  >
+                    Tiến hành đặt hàng
+                  </Button>
+                  <Button
+                    size="large"
+                    block
+                    style={{
+                      border: "1px solid #ccc",
+                      color: "#333",
+                      backgroundColor: "white",
+                      transition: "border 0.3s, color 0.3s",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = "#22A6DF";
+                      e.currentTarget.style.border = "1px solid #22A6DF";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = "#333";
+                      e.currentTarget.style.border = "1px solid #ccc";
+                    }}
+                    onClick={() => navigate("/home")} 
+                  >
+                    Tiếp tục mua sắm
+                  </Button>
+                </div>
+              </Card>
+            </div>
+          )}
         </div>
       </div>
     </div>

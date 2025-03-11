@@ -6,10 +6,10 @@ import "@fortawesome/fontawesome-free/css/all.min.css";
 import Login from "./pages/login/login";
 import SignUp from "./pages/signup/signup";
 import ContactPage from "./pages/contact/contact";
-import Payment from "./pages/payment/payment";
 import Products from "./pages/product/product";
 import DetailProduct from "./pages/detail/detail";
 import PetSpaServices from "./pages/infoservices/infoservices";
+import SpaBookingForm from "./pages/services/services";
 import Cart from "./pages/cart/cart";
 import UserProfile from "./pages/userprofile/userprofile";
 import AdminLayout from "./components/layout/AdminLayout";
@@ -21,7 +21,10 @@ import UserList from "./admin/user/user";
 import ServiceList from "./admin/service/service";
 import SystemSettings from "./admin/setting/setting";
 import EmployeeList from "./admin/employee/employee";
-
+import Payment from "./pages/payment/payment";
+import AboutUs from "./pages/about-us/about-us";
+import Contact from "./pages/contact/contact";
+// import infoservices from "./pages/infoservices/infoservices";
 function App() {
   const router = createBrowserRouter([
     {
@@ -84,8 +87,25 @@ function App() {
           element: <PetSpaServices />,
         },
         {
+          path: "/service",
+          element: <SpaBookingForm />,
+        },
+        {
           path: "/cart",
           element: <Cart />,
+        },
+        {
+          path: "/checkout",
+          element: <Payment />,
+        },
+        {
+          path: "/about-us",
+          element: <AboutUs />,
+        },
+
+        {
+          path: "/contact",
+          element: <Contact />,
         },
         {
           path: "/userprofile/*",
