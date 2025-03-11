@@ -26,8 +26,8 @@ const userSchema = new Schema({
         default: ''
     },
     address: {
-        type: String,
-        default: ''
+        type: [String],
+        default: []
     },
     status: {
         type: String,
@@ -62,6 +62,10 @@ const userSchema = new Schema({
         default: null
     },
     refreshToken: {
+        type: String,
+        default: ''
+    },
+    dateOfBirth: {
         type: String,
         default: ''
     }
