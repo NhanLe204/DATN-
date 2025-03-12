@@ -292,11 +292,13 @@ export default function SignUp() {
                     </label>
                     <Input
                       type={
-                        field === "password" && showPassword
-                          ? "text"
-                          : field === "confirmPassword" && showConfirmPassword
-                          ? "text"
-                          : "password"
+                        field === "password" || field === "confirmPassword"
+                          ? showPassword && field === "password"
+                            ? "text"
+                            : showConfirmPassword && field === "confirmPassword"
+                            ? "text"
+                            : "password"
+                          : "text" 
                       }
                       id={field}
                       placeholder={`Nhập ${

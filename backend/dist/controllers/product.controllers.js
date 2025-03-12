@@ -174,7 +174,7 @@ export const getHotProduct = async (req, res) => {
 export const getDogProducts = async (req, res) => {
     try {
         // Tìm category có category_name là "Chó"
-        const dogCategory = await categoryModel.findOne({ category_name: 'Chó' });
+        const dogCategory = await categoryModel.findOne({ name: 'Chó' });
         if (!dogCategory) {
             res.status(404).json({ success: false, message: 'Không tìm thấy danh mục sản phẩm cho chó' });
             return;
@@ -207,7 +207,7 @@ export const getDogProducts = async (req, res) => {
 export const getCatProducts = async (req, res) => {
     try {
         // Tìm category có category_name là "Mèo"
-        const catCategory = await categoryModel.findOne({ category_name: 'Mèo' });
+        const catCategory = await categoryModel.findOne({ name: 'Mèo' });
         if (!catCategory) {
             res.status(404).json({ success: false, message: 'Không tìm thấy danh mục sản phẩm cho mèo' });
             return;

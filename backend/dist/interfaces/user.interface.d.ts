@@ -8,7 +8,7 @@ export interface IUser extends Document {
     fullname: string;
     password: string | undefined;
     phone_number: string;
-    address: string;
+    address: [];
     status: UserStatus;
     role: UserRoles;
     avatar: string;
@@ -16,6 +16,7 @@ export interface IUser extends Document {
     reset_password_token: string;
     reset_password_expires: Date | null;
     refreshToken: string;
+    dateOfBirth: string;
     createdAt: Date;
     updatedAt: Date;
 }

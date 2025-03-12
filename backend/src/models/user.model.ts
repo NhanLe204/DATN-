@@ -28,8 +28,8 @@ const userSchema: Schema<IUser> = new Schema<IUser>(
       default: ''
     },
     address: {
-      type: String,
-      default: ''
+      type: [String],
+      default: []
     },
     status: {
       type: String,
@@ -64,6 +64,10 @@ const userSchema: Schema<IUser> = new Schema<IUser>(
       default: null
     },
     refreshToken: {
+      type: String,
+      default: ''
+    },
+    dateOfBirth: {
       type: String,
       default: ''
     }
