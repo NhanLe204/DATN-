@@ -2,6 +2,7 @@ import { UserRoles, UserStatus } from '../enums/user.enum.js';
 import { IProduct } from './product.interface.js';
 import { Document } from 'mongoose';
 export interface IUser extends Document {
+    _id: string;
     googleId: string | undefined;
     email: string;
     fullname: string;
