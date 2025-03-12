@@ -5,7 +5,8 @@ import orderDetail from './orderdetail.model.js';
 const rateSchema: Schema<IRating> = new Schema<IRating>(
   {
     orderDetailID: {
-      type: Schema.Types.ObjectId,
+      // type: Schema.Types.ObjectId,
+      type: String,
       ref: orderDetail,
       required: true
     },
@@ -16,7 +17,7 @@ const rateSchema: Schema<IRating> = new Schema<IRating>(
       max: 5
     }
   },
-  { timestamps: true, _id: false }
+  { timestamps: true }
 );
 
 const rateModel = mongoose.models.rate || model('rate', rateSchema);
