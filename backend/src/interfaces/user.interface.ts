@@ -1,4 +1,3 @@
-
 import { UserRoles, UserStatus } from '../enums/user.enum.js';
 import { IProduct } from './product.interface.js';
 import { Document } from 'mongoose';
@@ -20,4 +19,3 @@ export interface IUser extends Document {
   createdAt: Date;
   updatedAt: Date;
 }
-
