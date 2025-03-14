@@ -4,9 +4,10 @@ import {
   decreaseQuantity,
   removeProduct,
   clearProduct,
+  setUserId,
 } from "../../redux/slices/cartslice";
 import { useSelector, useDispatch } from "react-redux";
-import React from "react";
+import React, { useEffect } from "react";
 import { Button, Card, Input, Breadcrumb, Typography, Divider, Modal } from "antd";
 import { useNavigate } from "react-router-dom";
 
@@ -15,8 +16,15 @@ const { Title, Text } = Typography;
 
 const Cart: React.FC = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate(); // Sử dụng useNavigate đúng cách
-  const cartItems = useSelector((state: { cart: { items: any[] } }) => state.cart.items);
+  const navigate = useNavigate();
+  const { items: cartItems, userId } = useSelector((state: { cart: { items: any[]; userId: string | null } }) => state.cart);
+
+  useEffect(() => {
+    const storedUserId = localStorage.getItem("accountID"); 
+    if (storedUserId && !userId) {
+      dispatch(setUserId(storedUserId));
+    }
+  }, [dispatch, userId]);
 
   const breadcrumbItems = [
     {
@@ -31,16 +39,40 @@ const Cart: React.FC = () => {
 
   // Hàm xử lý tăng số lượng
   const handleIncrement = (id) => {
+    if (!userId) {
+      Modal.warning({
+        title: "Yêu cầu đăng nhập",
+        content: "Vui lòng đăng nhập để thực hiện thao tác này!",
+        onOk: () => navigate("/login"),
+      });
+      return;
+    }
     dispatch(increaseQuantity({ id }));
   };
 
   // Hàm xử lý giảm số lượng
   const handleDecrement = (id) => {
+    if (!userId) {
+      Modal.warning({
+        title: "Yêu cầu đăng nhập",
+        content: "Vui lòng đăng nhập để thực hiện thao tác này!",
+        onOk: () => navigate("/login"),
+      });
+      return;
+    }
     dispatch(decreaseQuantity({ id }));
   };
 
   // Hàm xóa sản phẩm với modal xác nhận
   const handleRemove = (id, name) => {
+    if (!userId) {
+      Modal.warning({
+        title: "Yêu cầu đăng nhập",
+        content: "Vui lòng đăng nhập để thực hiện thao tác này!",
+        onOk: () => navigate("/login"),
+      });
+      return;
+    }
     Modal.confirm({
       title: "Xác nhận xóa sản phẩm",
       content: `Bạn có chắc muốn xóa "${name}" khỏi giỏ hàng không?`,
@@ -56,6 +88,19 @@ const Cart: React.FC = () => {
   // Tính tổng tiền tạm tính
   const calculateSubtotal = () => {
     return cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+  };
+
+  // Xử lý khi nhấn "Tiến hành đặt hàng"
+  const handleCheckout = () => {
+    if (!userId) {
+      Modal.warning({
+        title: "Yêu cầu đăng nhập",
+        content: "Vui lòng đăng nhập để tiến hành đặt hàng!",
+        onOk: () => navigate("/login"),
+      });
+      return;
+    }
+    navigate("/checkout");
   };
 
   return (
@@ -115,7 +160,7 @@ const Cart: React.FC = () => {
                         e.currentTarget.style.color = "#333";
                         e.currentTarget.style.border = "1px solid #ccc";
                       }}
-                      onClick={() => navigate("/")} // Sử dụng navigate thay vì window.location.href
+                      onClick={() => navigate("/")}
                     >
                       Tiếp tục mua sắm
                     </Button>
@@ -147,7 +192,6 @@ const Cart: React.FC = () => {
                             >
                               {item.name}
                             </Text>
-                            <Text className="block text-[#686868]">{item.size || "2kg"}</Text>
                           </div>
                           <Button
                             type="text"
@@ -212,7 +256,7 @@ const Cart: React.FC = () => {
                     size="large"
                     block
                     style={{ backgroundColor: "#22A6DF", borderColor: "#22A6DF" }}
-                    onClick={() => navigate("/checkout")} 
+                    onClick={handleCheckout}
                   >
                     Tiến hành đặt hàng
                   </Button>
@@ -233,7 +277,7 @@ const Cart: React.FC = () => {
                       e.currentTarget.style.color = "#333";
                       e.currentTarget.style.border = "1px solid #ccc";
                     }}
-                    onClick={() => navigate("/home")} 
+                    onClick={() => navigate("/home")}
                   >
                     Tiếp tục mua sắm
                   </Button>
