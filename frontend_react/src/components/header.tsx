@@ -25,9 +25,10 @@ import {
 import { BsGeoAltFill } from "react-icons/bs";
 import { Search } from "lucide-react";
 import { useContext } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux"; // Thêm useDispatch
 import { useLocation } from "react-router-dom";
 import { SearchContext } from "./searchContext";
+import { addToCart, setUserId } from "../redux/slices/cartslice"; // Thêm setUserId
 const { Title, Text } = Typography;
 
 interface Product {
@@ -37,7 +38,13 @@ interface Product {
   price: string;
 }
 
+interface User {
+  fullname: string;
+  avatar?: string;
+}
+
 export default function Header() {
+  const dispatch = useDispatch(); // Thêm dispatch để gọi setUserId
   const cartItems = useSelector((state: any) => state.cart.items);
   const cartCount = cartItems.reduce(
     (count: any, item: any) => count + Number(item.quantity),
@@ -48,15 +55,7 @@ export default function Header() {
   const [searchDesktopOpen, setSearchDesktopOpen] = useState(false);
   const [subMenu, setSubMenu] = useState(false);
   const { keyword, setKeyword } = useContext(SearchContext);
-
-  interface User {
-    fullname: string;
-    avatar?: string;
-    // Add other properties as needed
-  }
-
   const [user, setUser] = useState<User | null>(null);
-  const [showDropdown, setShowDropdown] = useState(false);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
 
   const showDrawer = () => setOpen(true);
@@ -91,10 +90,8 @@ export default function Header() {
       const newHistory = [trimmedValue, ...searchHistory].slice(0, 5);
       setSearchHistory(newHistory);
     }
-    // Điều hướng sang trang /search với query parameter
-    // window.location.href = `/search?q=${encodeURIComponent(trimmedValue)}`;
-    // setKeyword(""); // Reset keyword sau khi tìm kiếm
   };
+
   // Xóa toàn bộ lịch sử tìm kiếm
   const clearSearchHistory = () => {
     setSearchHistory([]);
@@ -103,10 +100,10 @@ export default function Header() {
 
   const removeDiacritics = (str: string): string => {
     return str
-      .normalize("NFD") // Phân tách ký tự thành ký tự gốc và dấu
-      .replace(/[\u0300-\u036f]/g, "") // Xóa các dấu
-      .replace(/đ/g, "d") // Thay 'đ' thành 'd'
-      .replace(/Đ/g, "D"); // Thay 'Đ' thành 'D'
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/đ/g, "d")
+      .replace(/Đ/g, "D");
   };
 
   const [searchResults, setSearchResults] = useState<Product[]>([]);
@@ -115,19 +112,14 @@ export default function Header() {
     try {
       const response = await fetch("http://localhost:5000/api/v1/products");
       if (!response.ok) {
-        throw new Error("Failed to fetch products");
+        throw new Error(`Failed to fetch products: ${response.statusText}`);
       }
       const data = await response.json();
       console.log("Dữ liệu từ API:", data);
 
-      // Chuẩn hóa từ khóa tìm kiếm
       const normalizedSearchTerm = removeDiacritics(searchTerm.toLowerCase());
-
-      // Lọc sản phẩm: bỏ dấu cả tên sản phẩm và từ khóa trước khi so sánh
       const filteredProducts = data.result.filter((product: Product) => {
-        const normalizedProductName = removeDiacritics(
-          product.name.toLowerCase()
-        );
+        const normalizedProductName = removeDiacritics(product.name.toLowerCase());
         return normalizedProductName.includes(normalizedSearchTerm);
       });
 
@@ -139,50 +131,71 @@ export default function Header() {
     }
   };
 
+  // Lấy thông tin user khi component mount
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     const accountID = localStorage.getItem("accountID") || "";
-    console.log("token nà: ", token);
-    console.log("ID nà: ", accountID);
+
+    // Kiểm tra token và accountID
     if (!token || !accountID) {
-      console.error("Không tìm thấy token hoặc accountID trong local");
+      console.warn("Không tìm thấy token hoặc accountID trong localStorage:", { token, accountID });
       return;
     }
 
+    // Nếu có userData trong localStorage, sử dụng nó trước
     const storedUserData = localStorage.getItem("userData");
     if (storedUserData) {
-      setUser(JSON.parse(storedUserData));
+      try {
+        setUser(JSON.parse(storedUserData));
+      } catch (error) {
+        console.error("Lỗi khi parse userData từ localStorage:", error);
+      }
     }
 
+    // Gọi API để lấy thông tin user mới nhất
     fetch(`http://localhost:5000/api/v1/users/${accountID}`, {
+      method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
       },
     })
       .then((res) => {
         if (!res.ok) {
-          throw new Error("Failed to fetch user data");
+          throw new Error(`Failed to fetch user data: ${res.status} ${res.statusText}`);
         }
         return res.json();
       })
       .then((data) => {
-        setUser(data.data);
-        localStorage.setItem("userData", JSON.stringify(data.data));
+        if (data.data) {
+          setUser(data.data);
+          localStorage.setItem("userData", JSON.stringify(data.data));
+        } else {
+          throw new Error("Không tìm thấy dữ liệu user trong response");
+        }
       })
       .catch((err) => {
-        console.error("Error fetching user:", err);
-        // localStorage.removeItem("accessToken");
-        // localStorage.removeItem("accountID");
-        // localStorage.removeItem("userData");
+        console.error("Error fetching user:", err.message);
+        // Nếu lỗi là 401 (Unauthorized), có thể token đã hết hạn
+        if (err.message.includes("401")) {
+          console.warn("Token có thể đã hết hạn, cần đăng nhập lại");
+          // Không xóa dữ liệu ngay, chỉ hiển thị cảnh báo
+          // localStorage.removeItem("accessToken");
+          // localStorage.removeItem("accountID");
+          // localStorage.removeItem("userData");
+          // setUser(null);
+          // dispatch(setUserId(null));
+        }
       });
-  }, []);
+  }, [dispatch]);
 
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("accountID");
     localStorage.removeItem("userData");
     setUser(null);
-    window.location.href = "/"; // Thay vì dùng router.push
+    dispatch(setUserId(null)); // Reset userId trong Redux
+    window.location.href = "/";
   };
 
   // Menu cho dropdown khi hover
@@ -461,7 +474,7 @@ export default function Header() {
               <Dropdown overlay={userMenu} trigger={["hover"]}>
                 <div className="flex items-center cursor-pointer">
                   <Avatar
-                    src={`${user.avatar}`}
+                    src={user.avatar ? `${user.avatar}` : undefined}
                     icon={!user.avatar && <FaUserAlt />}
                     className="bg-[#22A6DF]"
                   />
@@ -483,7 +496,7 @@ export default function Header() {
               <Search className="h-6 w-6" />
             </button>
             <a href="/cart">
-              <Badge count={1}>
+              <Badge count={cartCount}>
                 <FaShoppingCart className="text-2xl" />
               </Badge>
             </a>
@@ -491,7 +504,7 @@ export default function Header() {
               <Dropdown overlay={userMenu} trigger={["hover"]}>
                 <div className="flex items-center cursor-pointer">
                   <Avatar
-                    src={`${user.avatar}`}
+                    src={user.avatar ? `${user.avatar}` : undefined}
                     icon={!user.avatar && <FaUserAlt />}
                     className="bg-[#22A6DF]"
                   />

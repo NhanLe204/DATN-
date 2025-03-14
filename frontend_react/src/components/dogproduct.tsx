@@ -15,7 +15,7 @@ export default function DogProduct({ data }: { data: APIProduct[] }) {
     <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 md:mt-6 md:gap-[40px] lg:grid-cols-4">
       {data.map((product) => (
         <Card
-          key={product._id} // Dùng _id thay vì index
+          key={product._id.toString()} // Dùng _id thay vì index
           className="group relative overflow-hidden rounded-lg border border-black p-3 text-center hover:border-[#22A6DF] md:p-4"
         >
           <img
