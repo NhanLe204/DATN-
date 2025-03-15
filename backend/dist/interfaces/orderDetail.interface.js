@@ -1,2 +1,2 @@
 export {};
-//# sourceMappingURL=orderDetail.interface.js.map
+//# sourceMappingURL=orderdetail.interface.js.map

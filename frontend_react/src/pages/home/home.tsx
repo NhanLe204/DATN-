@@ -8,9 +8,11 @@ import HotProduct from "../../components/hotproduct";
 import DogProduct from "../../components/dogproduct";
 import CatProduct from "../../components/catproduct";
 import NewProduct from "../../components/newproduct";
+import ENV_VARS from "../../../config";
 
 export default function Home() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [categories, setCategories] = useState<{ _id: string }[]>([]);
   const [newProduct, setNewProduct] = useState([]);
   const [saleProduct, setSaleProduct] = useState([]);
   const [hotProduct, setHotProduct] = useState([]);
@@ -34,63 +36,78 @@ export default function Home() {
   }, [images.length]);
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchInitialData = async () => {
       try {
-        const newProductResponse = await fetch(
-          "http://localhost:5000/api/v1/newproducts",
-          {
+        // Fetch các API không phụ thuộc vào categories song song
+        const [
+          newProductResponse,
+          saleProductResponse,
+          hotProductResponse,
+          categoriesResponse,
+        ] = await Promise.all([
+          fetch("http://localhost:5000/api/v1/newproducts", {
             cache: "no-store",
-          }
-        );
+          }),
+          fetch("http://localhost:5000/api/v1/saleproducts", {
+            cache: "no-store",
+          }),
+          fetch("http://localhost:5000/api/v1/hotproducts", {
+            cache: "no-store",
+          }),
+          fetch(`${ENV_VARS.VITE_API_URL}/api/v1/categories`, {
+            cache: "no-store",
+          }),
+        ]);
+
+        // Parse dữ liệu
         const newProductData = await newProductResponse.json();
-        console.log("API Data in homepage:", newProductData);
-        setNewProduct(newProductData.products || []);
-
-        const saleProductResponse = await fetch(
-          "http://localhost:5000/api/v1/saleproducts",
-          {
-            cache: "no-store",
-          }
-        );
         const saleProductData = await saleProductResponse.json();
-        console.log("API Data in homepage:", saleProductData);
-        setSaleProduct(saleProductData.products || []);
-
-        const hotProductResponse = await fetch(
-          "http://localhost:5000/api/v1/hotproducts",
-          {
-            cache: "no-store",
-          }
-        );
         const hotProductData = await hotProductResponse.json();
-        console.log("API Data in homepage:", hotProductData);
+        const categoriesData = await categoriesResponse.json();
+
+        // Set state cho các dữ liệu cơ bản
+        setNewProduct(newProductData.products || []);
+        setSaleProduct(saleProductData.products || []);
         setHotProduct(hotProductData.products || []);
+        const categoriesList = categoriesData.result || [];
+        setCategories(categoriesList);
 
-        const dogProductResponse = await fetch(
-          "http://localhost:5000/api/v1/dog-products",
-          {
-            cache: "no-store",
-          }
-        );
-        const dogProductData = await dogProductResponse.json();
-        console.log("API Data in homepage:", dogProductData);
-        setDogProduct(dogProductData.products || []);
+        // Fetch dữ liệu products theo category nếu có categories
+        if (categoriesList.length > 0) {
+          const [dogProductResponse, catProductResponse] = await Promise.all([
+            fetch(
+              `http://localhost:5000/api/v1/products/cate/${
+                categoriesList[0]?._id || ""
+              }`,
+              { cache: "no-store" }
+            ),
+            fetch(
+              `http://localhost:5000/api/v1/products/cate/${
+                categoriesList[1]?._id || ""
+              }`,
+              { cache: "no-store" }
+            ),
+          ]);
 
-        const catProductResponse = await fetch(
-          "http://localhost:5000/api/v1/cat-products",
-          {
-            cache: "no-store",
-          }
-        );
-        const catProductData = await catProductResponse.json();
-        console.log("API Data in homepage:", catProductData);
-        setCatProduct(catProductData.products || []);
+          const dogProductData = await dogProductResponse.json();
+          const catProductData = await catProductResponse.json();
+
+          setDogProduct(dogProductData.products || []);
+          setCatProduct(catProductData.products || []);
+        }
       } catch (error) {
-        console.error("Error fetching products:", error);
+        console.error("Error fetching data:", error);
       }
     };
-    fetchProducts();
+
+    fetchInitialData();
   }, []);
+
+  // Nếu bạn muốn thêm loading state
+  const [isLoading, setIsLoading] = useState(true);
+  // Trong try block:
+  // Đầu function: setIsLoading(true)
+  // Cuối function: setIsLoading(false)
 
   return (
     <>

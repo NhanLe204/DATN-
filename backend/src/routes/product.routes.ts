@@ -8,9 +8,8 @@ import {
   updateProduct,
   getSaleProduct,
   getHotProduct,
-  getDogProducts,
-  getCatProducts,
-  uploadProductImage
+  uploadProductImage,
+  getProductByCategoryID
 } from '../controllers/product.controllers.js';
 import { protectRoute, requireAdmin } from '../middlewares/protectRoute.js';
 import { get } from 'http';
@@ -22,8 +21,6 @@ productRouter.get('/products/:id', getProductById);
 productRouter.get('/newproducts', getNewProduct);
 productRouter.get('/saleproducts', getSaleProduct);
 productRouter.get('/hotproducts', getHotProduct);
-productRouter.get('/dog-products', getDogProducts);
-productRouter.get('/cat-products', getCatProducts);
 productRouter.post('/products', verifyToken, requireAdmin, insertProduct);
 productRouter.patch('/products/:id', verifyToken, requireAdmin, updateProduct);
 productRouter.patch(
@@ -33,11 +30,7 @@ productRouter.patch(
   uploader.array('images_url', 12),
   uploadProductImage
 );
-productRouter.get('/newproducts', getNewProduct);
-productRouter.get('/saleproducts', getSaleProduct);
-productRouter.get('/hotproducts', getHotProduct);
-productRouter.get('/dog-products', getDogProducts);
-productRouter.get('/cat-products', getCatProducts);
+productRouter.get('/products/cate/:id', getProductByCategoryID);
 // productRouter.delete('/products/:id', protectRoute, requireAdmin, toggleProduct);
 
 export default productRouter;
