@@ -7,6 +7,5 @@ export declare const toggleProduct: (req: Request, res: Response) => Promise<voi
 export declare const getNewProduct: (req: Request, res: Response) => Promise<void>;
 export declare const getSaleProduct: (req: Request, res: Response) => Promise<void>;
 export declare const getHotProduct: (req: Request, res: Response) => Promise<void>;
-export declare const getDogProducts: (req: Request, res: Response) => Promise<void>;
-export declare const getCatProducts: (req: Request, res: Response) => Promise<void>;
+export declare const getProductByCategoryID: (req: Request, res: Response) => Promise<void>;
 export declare const uploadProductImage: (req: Request, res: Response) => Promise<void>;

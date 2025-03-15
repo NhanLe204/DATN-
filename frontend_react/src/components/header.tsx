@@ -134,7 +134,7 @@ export default function Header() {
   // Lấy thông tin user khi component mount
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
-    const accountID = localStorage.getItem("accountID") || "";
+    const accountID = localStorage.getItem("accountID")?.replace(/^"|"$/g, "")  || "";
 
     // Kiểm tra token và accountID
     if (!token || !accountID) {
