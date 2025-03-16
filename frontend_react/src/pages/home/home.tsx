@@ -2,22 +2,24 @@
 import React from "react";
 import { FaUserEdit, FaCalendarAlt } from "react-icons/fa";
 import { Button, Space } from "antd";
-import { useState, useEffect } from "react";
+import Slider from "react-slick";
+import { useState, useEffect, useRef } from "react";
 import SaleProduct from "../../components/saleproduct";
 import HotProduct from "../../components/hotproduct";
-import DogProduct from "../../components/dogproduct";
-import CatProduct from "../../components/catproduct";
 import NewProduct from "../../components/newproduct";
+import CateProduct from "../../components/cateproduct";
+import "slick-carousel/slick/slick.css"; // Import CSS cho slick
+import "slick-carousel/slick/slick-theme.css"; // Import theme CSS
 import ENV_VARS from "../../../config";
 
 export default function Home() {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [categories, setCategories] = useState<{ _id: string }[]>([]);
   const [newProduct, setNewProduct] = useState([]);
   const [saleProduct, setSaleProduct] = useState([]);
   const [hotProduct, setHotProduct] = useState([]);
-  const [dogProduct, setDogProduct] = useState([]);
-  const [catProduct, setCatProduct] = useState([]);
+  const [productsByCategory, setProductsByCategory] = useState<{
+    [key: string]: any[];
+  }>({}); // Lưu sản phẩm theo danh mục
+  const [categories, setCategories] = useState<{ _id: string; name: string }[]>([]);
 
   const images = [
     "/images/banners/1.png",
@@ -27,99 +29,133 @@ export default function Home() {
     "/images/banners/5.png",
   ];
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [images.length]);
+  const sliderRef = useRef<any>(null); // Ref cho Slider
 
   useEffect(() => {
-    const fetchInitialData = async () => {
+    const fetchProducts = async () => {
       try {
-        // Fetch các API không phụ thuộc vào categories song song
-        const [
-          newProductResponse,
-          saleProductResponse,
-          hotProductResponse,
-          categoriesResponse,
-        ] = await Promise.all([
-          fetch("http://localhost:5000/api/v1/newproducts", {
-            cache: "no-store",
-          }),
-          fetch("http://localhost:5000/api/v1/saleproducts", {
-            cache: "no-store",
-          }),
-          fetch("http://localhost:5000/api/v1/hotproducts", {
-            cache: "no-store",
-          }),
-          fetch(`${ENV_VARS.VITE_API_URL}/api/v1/categories`, {
-            cache: "no-store",
-          }),
-        ]);
-
-        // Parse dữ liệu
-        const newProductData = await newProductResponse.json();
-        const saleProductData = await saleProductResponse.json();
-        const hotProductData = await hotProductResponse.json();
+        // Lấy danh mục
+        const categoriesResponse = await fetch(
+          `${ENV_VARS.VITE_API_URL}/api/v1/categories`,
+          { cache: "no-store" }
+        );
         const categoriesData = await categoriesResponse.json();
-
-        // Set state cho các dữ liệu cơ bản
-        setNewProduct(newProductData.products || []);
-        setSaleProduct(saleProductData.products || []);
-        setHotProduct(hotProductData.products || []);
-        const categoriesList = categoriesData.result || [];
-        setCategories(categoriesList);
-
-        // Fetch dữ liệu products theo category nếu có categories
-        if (categoriesList.length > 0) {
-          const [dogProductResponse, catProductResponse] = await Promise.all([
-            fetch(
-              `http://localhost:5000/api/v1/products/cate/${
-                categoriesList[0]?._id || ""
-              }`,
-              { cache: "no-store" }
-            ),
-            fetch(
-              `http://localhost:5000/api/v1/products/cate/${
-                categoriesList[1]?._id || ""
-              }`,
-              { cache: "no-store" }
-            ),
-          ]);
-
-          const dogProductData = await dogProductResponse.json();
-          const catProductData = await catProductResponse.json();
-
-          setDogProduct(dogProductData.products || []);
-          setCatProduct(catProductData.products || []);
+        console.log("Categories API Data:", categoriesData);
+        if (categoriesData.success) {
+          // Lọc các danh mục có status "active"
+          const activeCategories = categoriesData.result.filter(
+            (cat) => cat.status === "active"
+          );
+          setCategories(activeCategories);
+        } else {
+          console.error("Failed to fetch categories:", categoriesData.message);
+          setCategories([]); // Đảm bảo categories là mảng rỗng nếu lỗi
         }
+
+        const newProductResponse = await fetch(
+          `${ENV_VARS.VITE_API_URL}/api/v1/newproducts`,
+          {
+            cache: "no-store",
+          }
+        );
+        const newProductData = await newProductResponse.json();
+        console.log("API Data in homepage:", newProductData);
+        setNewProduct(newProductData.products || []);
+
+        const saleProductResponse = await fetch(
+          `${ENV_VARS.VITE_API_URL}/api/v1/saleproducts`,
+          {
+            cache: "no-store",
+          }
+        );
+        const saleProductData = await saleProductResponse.json();
+        console.log("API Data in homepage:", saleProductData);
+        setSaleProduct(saleProductData.products || []);
+
+        const hotProductResponse = await fetch(
+          `${ENV_VARS.VITE_API_URL}/api/v1/hotproducts`,
+          {
+            cache: "no-store",
+          }
+        );
+        const hotProductData = await hotProductResponse.json();
+        console.log("API Data in homepage:", hotProductData);
+        setHotProduct(hotProductData.products || []);
+        
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching products:", error);
+        setCategories([]);
       }
     };
-
-    fetchInitialData();
+    fetchProducts();
   }, []);
 
-  // Nếu bạn muốn thêm loading state
-  const [isLoading, setIsLoading] = useState(true);
-  // Trong try block:
-  // Đầu function: setIsLoading(true)
-  // Cuối function: setIsLoading(false)
+  // Lấy sản phẩm theo danh mục sau khi categories được cập nhật
+  useEffect(() => {
+    const fetchProductsByCategory = async () => {
+      if (categories.length === 0) return; // Không làm gì nếu categories rỗng
+
+      try {
+        const categoryPromises = categories.map(async (category) => {
+          const productResponse = await fetch(
+            `${ENV_VARS.VITE_API_URL}/api/v1/products/cate/${category._id}`,
+            { cache: "no-store" }
+          );
+          const productData = await productResponse.json();
+          const limitedProducts = productData.products ? productData.products.slice(0, 8) : [];
+          return { [category.name]: limitedProducts };
+        });
+
+        const categoryProducts = await Promise.all(categoryPromises);
+        const productsMap = categoryProducts.reduce((acc, curr) => {
+          return { ...acc, ...curr };
+        }, {});
+        setProductsByCategory(productsMap);
+      } catch (error) {
+        console.error("Error fetching products by category:", error);
+        setProductsByCategory({}); // Reset nếu lỗi
+      }
+    };
+    fetchProductsByCategory();
+  }, [categories]);
+
+  // Cấu hình settings cho Slider
+  const settings = {
+    dots: true,
+    infinite: true,
+    speed: 1000,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: 2000,
+    arrows: false,
+    fade: true,
+    // Tùy chỉnh style cho dots
+    appendDots: (dots) => (
+      <div className="custom-dots-container flex justify-center py-4">
+        <ul>{dots}</ul>
+      </div>
+    ),
+    customPaging: () => (
+      <div className="w-3 h-3 rounded-full bg-white transition-all duration-300"></div>
+    ),
+  };
 
   return (
     <>
       {/* Banner */}
       <div className="mt-4 px-4 sm:px-[40px] lg:px-[154px]">
-        <img
-          src={images[currentImageIndex]}
-          alt="Banner"
-          width={1420}
-          height={0}
-          className="w-full"
-        />
+        <Slider ref={sliderRef} {...settings}>
+          {images.map((image, index) => (
+            <div key={index} className="relative">
+              <img
+                src={image}
+                alt={`Banner ${index + 1}`}
+                className="w-full object-cover"
+              />
+            </div>
+          ))}
+        </Slider>
       </div>
 
       {/* Sản phẩm mới */}
@@ -137,42 +173,23 @@ export default function Home() {
         <HotProduct data={hotProduct} />
       </div>
 
-      {/* Sản phẩm dành cho chó */}
-      <div className="p-6 px-[154px]">
-        <div className="mx-auto flex h-[50px] w-full max-w-[900px] items-center justify-center rounded-[40px] bg-[#22A6DF] text-base font-medium text-white md:text-lg">
-          MUA SẮM CHO CHÓ
-        </div>
+      {/* Sản phẩm theo danh mục */}
+      {categories.map((category) => (
+        <div key={category._id} className="p-6 px-[154px]">
+          <div className="mx-auto flex h-[50px] w-full max-w-[900px] items-center justify-center rounded-[40px] bg-[#22A6DF] text-base font-medium text-white md:text-lg">
+            MUA SẮM CHO {category.name.toUpperCase()}
+          </div>
 
-        <DogProduct data={dogProduct} />
+          <CateProduct data={productsByCategory[category.name] || []} />
 
-        {/* Nút Xem thêm */}
-        <div className="mt-6 text-center">
-          <a href="/product">
+          <div className="mt-6 text-center">
             <Button className="rounded-md border border-gray-300 px-6 py-5 text-base hover:bg-gray-100">
               Xem thêm sản phẩm{" "}
-              <span className="font-semibold">dành cho chó</span>
+              <span className="font-semibold">dành cho {category.name}</span>
             </Button>
-          </a>
+          </div>
         </div>
-      </div>
-
-      {/* Sản phẩm dành cho mèo */}
-      <div className="p-6 px-[154px]">
-        {/* Tiêu đề */}
-        <div className="mx-auto flex h-[50px] w-full max-w-[900px] items-center justify-center rounded-[40px] bg-[#22A6DF] text-base font-medium text-white md:text-lg">
-          MUA SẮM CHO MÈO
-        </div>
-
-        <CatProduct data={catProduct} />
-
-        {/* Nút Xem thêm */}
-        <div className="mt-6 text-center">
-          <Button className="rounded-md border border-gray-300 px-6 py-5 text-base hover:bg-gray-100">
-            Xem thêm sản phẩm{" "}
-            <span className="font-semibold">dành cho mèo</span>
-          </Button>
-        </div>
-      </div>
+      ))}
 
       {/* PetNews */}
       <div className="bg-white p-4 px-4 sm:p-6 sm:px-[40px] lg:px-[154px]">

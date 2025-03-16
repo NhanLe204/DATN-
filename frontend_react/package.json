@@ -30,9 +30,12 @@
     "react-icons": "^5.4.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.1.5",
+    "react-slick": "^0.30.3",
     "react-youtube": "^10.1.0",
     "recharts": "^2.15.1",
     "schooltv-fe": "file:",
+    "slick-carousel": "^1.8.1",
+    "slick-slider": "^1.8.2",
     "styled-components": "^6.1.15",
     "swr": "^2.3.2"
   },
