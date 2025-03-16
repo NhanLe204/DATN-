@@ -1,71 +1,82 @@
 import React from "react";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { Button, Card } from "antd";
-import { useState, useEffect } from "react";
+import Slider from "react-slick";
+import { useState, useEffect, useRef } from "react";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
+import { Link } from "react-router-dom";
 
-export default function HotProduct({ data }) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [visibleProducts, setVisibleProducts] = useState<any[]>([]);
+interface Product {
+  _id: string;
+  name: string;
+  price: number;
+  image_url: string[];
+  discount: number;
+}
+
+export default function HotProduct({ data }: { data: Product[] }) {
   const [windowWidth, setWindowWidth] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const sliderRef = useRef<any>(null);
 
-  useEffect(() => {
-    const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-    };
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  useEffect(() => {
-    console.log("Data received in NewProduct:", data);
-    const getVisibleCount = () => {
-      if (windowWidth >= 1280) return 4; // xl
-      if (windowWidth >= 1024) return 3; // lg
-      if (windowWidth >= 768) return 2; // md
-      return 1; // sm
-    };
-
-    const visibleCount = getVisibleCount();
-    const start = currentIndex;
-    const end = start + visibleCount;
-
-    // Create circular array for infinite scroll
-    let visibleItems = [...data];
-    if (end > data.length) {
-      visibleItems = [...data, ...data.slice(0, end - data.length)];
+  // Hàm điều hướng
+  const handlePrevSlide = () => {
+    if (sliderRef.current) {
+      sliderRef.current.slickPrev(); // Gọi hàm slickPrev từ ref
     }
-
-    setVisibleProducts(visibleItems.slice(start, end));
-  }, [currentIndex, windowWidth, data]);
-
-  // Thêm useEffect để tự động chuyển slide sau mỗi 5 giây
-  useEffect(() => {
-    const autoSlide = setInterval(() => {
-      if (!isAnimating) {
-        handleNextSlide();
-      }
-    }, 2000); // Tăng thời gian giữa các lần chuyển slide
-
-    return () => clearInterval(autoSlide);
-  }, [data.length, isAnimating]);
+  };
 
   const handleNextSlide = () => {
-    if (!isAnimating) {
-      setIsAnimating(true);
-      setCurrentIndex((prev) => (prev + 1) % data.length);
-      setTimeout(() => setIsAnimating(false), 1000); // Đợi animation hoàn thành
+    if (sliderRef.current) {
+      sliderRef.current.slickNext(); // Gọi hàm slickNext từ ref
     }
   };
 
-  const handlePrevSlide = () => {
-    if (!isAnimating) {
-      setIsAnimating(true);
-      setCurrentIndex((prev) => (prev - 1 + data.length) % data.length);
-      setTimeout(() => setIsAnimating(false), 1000); // Đợi animation hoàn thành
-    }
+  // Cấu hình settings cho react-slick
+  const settings = {
+    dots: true,
+    infinite: true,
+    speed: 1000,
+    slidesToShow: 4,
+    slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: 2000,
+    arrows: false, // Tắt nút điều hướng mặc định
+    responsive: [
+      // {
+      //   breakpoint: 1280, // xl
+      //   settings: {
+      //     slidesToShow: 3,
+      //     slidesToScroll: 1,
+      //   },
+      // },
+      {
+        breakpoint: 1024, // lg
+        settings: {
+          slidesToShow: 2,
+          slidesToScroll: 1,
+        },
+      },
+      {
+        breakpoint: 768, // md
+        settings: {
+          slidesToShow: 1,
+          slidesToScroll: 1,
+        },
+      },
+      {
+        breakpoint: 640, // sm
+        settings: {
+          slidesToShow: 1,
+          slidesToScroll: 1,
+        },
+      },
+    ],
   };
+
+  if (!data || data.length === 0) {
+    return null;
+  }
 
   return (
     <>
@@ -91,48 +102,64 @@ export default function HotProduct({ data }) {
             icon={<FaChevronLeft />}
             onClick={handlePrevSlide}
             className="border-black shadow-md transition-colors duration-300 hover:bg-[#22A6DF] hover:text-white"
-            disabled={isAnimating || data.length === 0}
+            disabled={data.length === 0}
           />
           <Button
             shape="circle"
             icon={<FaChevronRight />}
             onClick={handleNextSlide}
             className="border-black shadow-md transition-colors duration-300 hover:bg-[#22A6DF] hover:text-white"
-            disabled={isAnimating || data.length === 0}
+            disabled={data.length === 0}
           />
         </div>
       </div>
 
       {/* Product List */}
       <div className="overflow-hidden rounded-xl border-2 px-2 py-[25px] sm:rounded-3xl sm:border-4 sm:px-4 sm:py-[50px]">
-        <div className="flex transform gap-4 transition-all duration-1000 ease-in-out">
-          {visibleProducts.map((product, index) => (
+        <Slider ref={sliderRef} {...settings}>
+          {data.map((product: Product, index: number) => (
             <Card
-              key={`${product.id}-${index}`}
-              className={`min-w-0 flex-1 transform border-none shadow-none transition-all duration-1000 ease-in-out ${
-                isAnimating ? "scale-95 opacity-80" : "scale-100 opacity-100"
-              }`}
+              key={`${product._id}-${index}`}
+              className={`min-w-0 flex-1 transform border-none shadow-none transition-all duration-1000 ease-in-out`}
               styles={{ body: { padding: 0 } }}
             >
               <div className="flex">
                 <div className="w-1/4">
-                  <img
-                    src={`/images/products/${product.image_url[0]}`}
-                    alt={product.name}
-                    className="h-full w-full object-cover transition-transform duration-500 hover:scale-110"
-                  />
+                  <Link to={`/detail/${product._id}`}>
+                    <img
+                      src={`/images/products/${product.image_url[0]}`}
+                      alt={product.name}
+                      className="h-full w-full object-cover transition-transform duration-500 hover:scale-110"
+                    />
+                  </Link>
                 </div>
                 <div className="flex w-3/4 flex-col justify-between p-2">
                   <p className="text-xs font-bold sm:text-sm">{product.name}</p>
-                  <p className="text-sm font-bold text-[#22A6DF] sm:text-base">
-                    {new Intl.NumberFormat("vi-VN", {
-                      style: "currency",
-                      currency: "VND",
-                    }).format(Number(product.price))}
-                  </p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <p className="text-sm font-bold text-[#22A6DF] transition-colors duration-300 sm:text-base">
+                      {new Intl.NumberFormat("vi-VN", {
+                        style: "currency",
+                        currency: "VND",
+                      }).format(
+                        Number(product.price * (1 - product.discount / 100))
+                      )}
+                    </p>
+                    {product.discount > 0 && (
+                      <p className="text-sm text-gray-400 line-through sm:text-base">
+                        {new Intl.NumberFormat("vi-VN", {
+                          style: "currency",
+                          currency: "VND",
+                        }).format(Number(product.price))}
+                      </p>
+                    )}
+                    {product.discount > 0 && (
+                      <div className="border border-red-500 px-2 py-1 text-xs font-semibold text-[#FF0000]">
+                        {product.discount}%
+                      </div>
+                    )}
+                  </div>
                   <Button
-                    type="primary"
-                    className="mt-2 w-[90px] border-none bg-[#22A6DF] text-xs sm:w-[120px] sm:text-sm"
+                    className="mt-2 w-[90px] bg-[#22A6DF] hover:bg-[#1890ff] hover:border-[#22A6DF] rounded-lg text-white text-xs sm:w-[120px] sm:text-sm"
                   >
                     Mua ngay
                   </Button>
@@ -140,7 +167,7 @@ export default function HotProduct({ data }) {
               </div>
             </Card>
           ))}
-        </div>
+        </Slider>
       </div>
     </>
   );

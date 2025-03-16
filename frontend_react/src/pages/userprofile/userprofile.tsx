@@ -6,6 +6,7 @@ import { FaUser, FaMoneyCheckAlt, FaEdit, FaTrash } from "react-icons/fa";
 import { UploadOutlined } from "@ant-design/icons";
 import { useParams } from "react-router-dom";
 import dayjs from "dayjs";
+import ENV_VARS from "../../../config";
 
 const { Item } = Form;
 
@@ -54,7 +55,7 @@ export default function UserProfile() {
             return;
         }
 
-        fetch(`http://localhost:5000/api/v1/users/${accountID}`, {
+        fetch(`${ENV_VARS.VITE_API_URL}/api/v1/users/${accountID}`, {
             method: "GET",
             headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         })
@@ -116,7 +117,7 @@ export default function UserProfile() {
         };
 
         try {
-            const response = await fetch(`http://localhost:5000/api/v1/users/${accountID}`, {
+            const response = await fetch(`${ENV_VARS.VITE_API_URL}/api/v1/users/${accountID}`, {
                 method: "PATCH",
                 headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
                 body: JSON.stringify(updatedData),
