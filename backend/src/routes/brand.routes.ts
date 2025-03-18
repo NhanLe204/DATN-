@@ -5,8 +5,8 @@ import { getAllBrands, getBrandById, insertBrand, updateBrand } from '../control
 
 const brandRouter = Router();
 
-brandRouter.get('/brands', getAllBrands);
-brandRouter.get('/brands/:id', getBrandById);
+brandRouter.get('/brands', verifyToken, getAllBrands);
+brandRouter.get('/brands/:id', verifyToken, getBrandById);
 brandRouter.post('/brands', verifyToken, requireAdmin, insertBrand);
 brandRouter.patch('/brands/:id', verifyToken, requireAdmin, updateBrand);
 // categoryRouter.delete('/categories/:id', protectRoute, requireAdmin, toggleCategory);

@@ -14,6 +14,7 @@ import brandRouter from './routes/brand.routes.js';
 import rateRouter from './routes/rate.routes.js';
 import couponRouter from './routes/coupon.routes.js';
 import orderRouter from './routes/order.routes.js';
+import tagRouter from './routes/tag.routes.js';
 dotenv.config(); // Đọc file .env
 console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID);
 console.log('JWT_SECRET:', process.env.JWT_SECRET);
@@ -39,6 +40,7 @@ app.use('/api/v1', brandRouter);
 app.use('/api/v1', rateRouter);
 app.use('/api/v1', couponRouter);
 app.use('/api/v1', orderRouter);
+app.use('/api/v1', tagRouter);
 app.use(errorHandler);
 app.listen(PORT, () => {
     console.log(`Server is running on port http://localhost:${PORT}`);
