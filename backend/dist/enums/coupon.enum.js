@@ -1,6 +1,6 @@
 export var CouponStatus;
 (function (CouponStatus) {
-    CouponStatus["active"] = "active";
-    CouponStatus["inactive"] = "inactive";
+    CouponStatus["ACTIVE"] = "active";
+    CouponStatus["INACTIVE"] = "inactive";
 })(CouponStatus || (CouponStatus = {}));
 //# sourceMappingURL=coupon.enum.js.map

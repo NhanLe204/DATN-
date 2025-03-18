@@ -9,7 +9,9 @@ import {
   getSaleProduct,
   getHotProduct,
   uploadProductImage,
-  getProductByCategoryID
+  getProductByCategoryID,
+  getProductActive,
+  getProductByTagId
 } from '../controllers/product.controllers.js';
 import { protectRoute, requireAdmin } from '../middlewares/protectRoute.js';
 import { get } from 'http';
@@ -31,6 +33,8 @@ productRouter.patch(
   uploadProductImage
 );
 productRouter.get('/products/cate/:id', getProductByCategoryID);
+productRouter.get('/products/status/active', verifyToken, getProductActive);
+productRouter.get('/products/tags/:id', verifyToken, getProductByTagId);
 // productRouter.delete('/products/:id', protectRoute, requireAdmin, toggleProduct);
 
 export default productRouter;

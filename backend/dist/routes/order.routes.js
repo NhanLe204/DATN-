@@ -1,8 +1,11 @@
 import { Router } from 'express';
+import { requireAdmin } from '../middlewares/protectRoute.js';
+import { verifyToken } from '../middlewares/verifyToken.js';
+import { createOrderAfterPayment, getAllOrders, getOrderById } from '../controllers/order.controllers.js';
 const orderRouter = Router();
-// orderRouter.post('/ratings', );
-// orderRouter.get('/ratings', getAllRatings);
-// orderRouter.get('/ratings/:id', getRatingID);
+orderRouter.get('/orders', verifyToken, requireAdmin, getAllOrders);
+orderRouter.post('/orders', verifyToken, createOrderAfterPayment);
+orderRouter.get('/orders/:id', verifyToken, getOrderById);
 // orderRouter.patch('/ratings/:id', updateRating);
 // orderRouter.delete('/ratings/:id', deleteRating);
 // brandRouter.post('/brands', verifyToken, requireAdmin, insertBrand);

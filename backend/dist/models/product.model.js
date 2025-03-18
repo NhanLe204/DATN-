@@ -2,6 +2,7 @@ import mongoose, { Schema, model } from 'mongoose';
 import category from './category.model.js';
 import { ProductStatus } from '../enums/product.enum.js';
 import brand from './brand.model.js';
+import tag from './tag.model.js';
 const productSchema = new Schema({
     name: {
         type: String,
@@ -30,6 +31,10 @@ const productSchema = new Schema({
         ref: brand,
         autoPopulate: true,
         required: [true, 'brand_id is required']
+    },
+    tag_id: {
+        type: Schema.Types.ObjectId,
+        ref: tag
     },
     status: {
         type: String,
