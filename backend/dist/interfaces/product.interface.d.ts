@@ -1,6 +1,7 @@
 import { ProductStatus } from '../enums/product.enum.js';
 import { ICategory } from './category.interface.js';
 import { IBrand } from './brand.interface.js';
+import { ITag } from './tag.interface.js';
 export interface IProduct {
     _id: string;
     name: string;
@@ -9,6 +10,7 @@ export interface IProduct {
     category_id: ICategory;
     image_url: [];
     brand_id: IBrand;
+    tag_id: ITag;
     createdAt: Date;
     updatedAt: Date;
     status: ProductStatus;

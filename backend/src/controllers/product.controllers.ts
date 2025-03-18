@@ -4,10 +4,11 @@ const ObjectId = mongoose.Types.ObjectId;
 import productModel from '../models/product.model.js';
 import { ProductStatus, ProductStatusMapping } from '../enums/product.enum.js';
 import categoryModel from '../models/category.model.js';
+import tagModel from '../models/tag.model.js';
 
 export const getAllProduct = async (req: Request, res: Response): Promise<void> => {
   try {
-    const result = await productModel.find().populate('category_id').populate('brand_id');
+    const result = await productModel.find().populate('category_id').populate('brand_id').populate('tag_id');
     res.status(200).json({ success: true, result });
   } catch (error) {
     if (error instanceof Error) {
@@ -22,7 +23,7 @@ export const getAllProduct = async (req: Request, res: Response): Promise<void> 
 export const getProductById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const product = await productModel.findById(id).populate('category_id');
+    const product = await productModel.findById(id).populate('category_id').populate('brand_id').populate('tag_id');
     if (!product) {
       res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
       return;
@@ -34,7 +35,7 @@ export const getProductById = async (req: Request, res: Response): Promise<void>
 };
 export const insertProduct = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, description, price, category_id, image_url, brand_id, status } = req.body;
+    const { name, description, price, category_id, image_url, tag_id, brand_id, status } = req.body;
     if (!mongoose.Types.ObjectId.isValid(category_id)) {
       res.status(400).json({ message: 'Invalid category_id' });
       return;
@@ -46,6 +47,7 @@ export const insertProduct = async (req: Request, res: Response): Promise<void> 
       price,
       category_id,
       image_url,
+      tag_id,
       brand_id,
       status
     });
@@ -264,4 +266,81 @@ export const uploadProductImage = async (req: Request, res: Response): Promise<v
   }
 
   res.status(200).json({ message: 'Upload images successfully', files: req.files });
+};
+
+export const getProductActive = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const result = await productModel.find({ status: ProductStatus.AVAILABLE });
+    res.status(200).json({ success: true, result });
+  } catch (error) {
+    res.status(500).json({ success: false, error });
+  }
+};
+
+export const getProductByTagId = async (req: Request, res: Response): Promise<void> => {
+  let tagName = 'tag';
+  try {
+    const { id } = req.params;
+    console.log('Received tag_id ID:', id);
+
+    // Kiểm tra id có tồn tại không
+    if (!id) {
+      res.status(400).json({
+        success: false,
+        message: 'Tag ID is required'
+      });
+      return;
+    }
+
+    // Kiểm tra tính hợp lệ của id
+    if (!ObjectId.isValid(id)) {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid Tag ID format'
+      });
+      return;
+    }
+
+    // Parse id thành ObjectId
+    const tagId = new ObjectId(id);
+    console.log('Parsed ObjectId:', tagId); // Log để kiểm tra
+
+    // Lấy thông tin category để lấy name
+    const tag = await tagModel.findById(tagId);
+    if (!tag) {
+      res.status(404).json({
+        success: false,
+        message: `Tag with ID ${id} not found`
+      });
+      return;
+    }
+
+    tagName = tag.tag_name || 'TAG';
+    console.log('Category name:', tagName); // Log để kiểm tra
+
+    // Query sản phẩm
+    const result = await productModel.find({ tag_id: tagId });
+    console.log('Query result:', result); // Log để kiểm tra
+
+    // Kiểm tra kết quả
+    if (!result || result.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: `No products found for tag "${tagName}" (ID: ${id})`
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Lấy sản phẩm dành cho "${tagName}" thành công`,
+      products: result
+    });
+  } catch (error) {
+    console.error('Error fetching products by category:', error);
+    res.status(500).json({
+      success: false,
+      message: `Lỗi khi lấy sản phẩm dành cho ${tagName}`
+    });
+  }
 };
