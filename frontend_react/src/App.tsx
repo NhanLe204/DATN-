@@ -27,10 +27,45 @@ import SystemSettings from "./admin/setting/setting";
 import EmployeeList from "./admin/employee/employee";
 import Payment from "./pages/payment/payment";
 import AboutUs from "./pages/about-us/about-us";
-import Contact from "./pages/contact/contact";
 import BrandManager from "./admin/brand/brand";
 import TagManager from "./admin/tag/tag";
-// import infoservices from "./pages/infoservices/infoservices";
+
+interface User {
+  id: string;
+  email: string;
+  fullname: string;
+  avatar?: string;
+  role: string;
+  status: string;
+}
+// Component bảo vệ route
+const ProtectedRoute = ({
+  children,
+  allowedRole,
+}: {
+  children: JSX.Element;
+  allowedRole?: string;
+}) => {
+  const userData = localStorage.getItem("userData");
+  const user: User | null = userData ? JSON.parse(userData) : null;
+
+  // Nếu không có user hoặc status không phải "active", chuyển về login
+  if (!user || user.status !== "active") {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Nếu có allowedRole và role không khớp, chuyển về trang chính
+  if (allowedRole && user.role !== allowedRole) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+};
+
+// Component cho route công khai
+const PublicRoute = ({ children }: { children: JSX.Element }) => {
+  return children;
+};
 function App() {
   const router = createBrowserRouter([
     {
