@@ -1,5 +1,5 @@
 import React from "react";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
 import Home from "./pages/home/home";
 import PageLayout from "./components/layout/PageLayout";
 import "@fortawesome/fontawesome-free/css/all.min.css";
@@ -24,28 +24,57 @@ import EmployeeList from "./admin/employee/employee";
 import Payment from "./pages/payment/payment";
 import AboutUs from "./pages/about-us/about-us";
 import Contact from "./pages/contact/contact";
-// import infoservices from "./pages/infoservices/infoservices";
+
+// Định nghĩa interface User
+interface User {
+  id: string;
+  email: string;
+  fullname: string;
+  avatar?: string;
+  role: string;
+  status: string;
+}
+
+// Component bảo vệ route
+const ProtectedRoute = ({ children, allowedRole }: { children: JSX.Element; allowedRole?: string }) => {
+  const userData = localStorage.getItem("userData");
+  const user: User | null = userData ? JSON.parse(userData) : null;
+
+  // Nếu không có user hoặc status không phải "active", chuyển về login
+  if (!user || user.status !== "active") {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Nếu có allowedRole và role không khớp, chuyển về trang chính
+  if (allowedRole && user.role !== allowedRole) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+};
+
+// Component cho route công khai
+const PublicRoute = ({ children }: { children: JSX.Element }) => {
+  return children;
+};
+
 function App() {
   const router = createBrowserRouter([
     {
       path: "/login",
-      element: (
-        <>
-          <Login />
-        </>
-      ),
+      element: <PublicRoute><Login /></PublicRoute>,
     },
     {
       path: "/signup",
-      element: (
-        <>
-          <SignUp />
-        </>
-      ),
+      element: <PublicRoute><SignUp /></PublicRoute>,
     },
     {
       path: "/admin",
-      element: <AdminLayout />,
+      element: (
+        <ProtectedRoute allowedRole="admin">
+          <AdminLayout />
+        </ProtectedRoute>
+      ),
       children: [
         { path: "", element: <Dashboard /> },
         { path: "dashboard", element: <Dashboard /> },
@@ -62,54 +91,21 @@ function App() {
       path: "",
       element: <PageLayout />,
       children: [
-        {
-          path: "/",
-          element: <Home />,
-        },
-        {
-          path: "/contact",
-          element: <ContactPage />,
-        },
-        {
-          path: "/checkout",
-          element: <Payment />,
-        },
-        {
-          path: "/product",
-          element: <Products />,
-        },
-        {
-          path: "/detail/:id",
-          element: <DetailProduct />,
-        },
-        {
-          path: "/info",
-          element: <PetSpaServices />,
-        },
-        {
-          path: "/service",
-          element: <SpaBookingForm />,
-        },
-        {
-          path: "/cart",
-          element: <Cart />,
-        },
-        {
-          path: "/checkout",
-          element: <Payment />,
-        },
-        {
-          path: "/about-us",
-          element: <AboutUs />,
-        },
+        // Route công khai (không cần đăng nhập)
+        { path: "/", element: <PublicRoute><Home /></PublicRoute> },
+        { path: "/contact", element: <PublicRoute><ContactPage /></PublicRoute> },
+        { path: "/product", element: <PublicRoute><Products /></PublicRoute> },
+        { path: "/detail/:id", element: <PublicRoute><DetailProduct /></PublicRoute> },
+        { path: "/info", element: <PublicRoute><PetSpaServices /></PublicRoute> },
+        { path: "/about-us", element: <PublicRoute><AboutUs /></PublicRoute> },
+        { path: "/service", element: <PublicRoute><SpaBookingForm /></PublicRoute> },
+        { path: "/cart", element: <PublicRoute><Cart /></PublicRoute> },
+        { path: "/checkout", element: <PublicRoute><Payment /></PublicRoute> },
 
-        {
-          path: "/contact",
-          element: <Contact />,
-        },
+        // Route bảo vệ (yêu cầu đăng nhập và role "user")
         {
           path: "/userprofile/*",
-          element: <UserProfile />,
+          element: <ProtectedRoute allowedRole="user"><UserProfile /></ProtectedRoute>,
         },
       ],
     },
