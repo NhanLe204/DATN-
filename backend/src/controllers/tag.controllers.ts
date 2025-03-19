@@ -88,3 +88,38 @@ export const deleteTag = async (req: Request, res: Response): Promise<void> => {
     }
   }
 };
+export const updateTag = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    console.log(id, 'ID');
+
+    // Kiểm tra xem ID có hợp lệ không
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json({
+        success: false,
+        message: 'ID không hợp lệ'
+      });
+      return;
+    }
+    const { tag_name } = req.body;
+    // Tìm và cập nhật tên thương hiệu
+    const updatedTag = await tagModel.findByIdAndUpdate(id, { tag_name }, { new: true, runValidators: true });
+
+    if (!updatedTag) {
+      res.status(404).json({ success: false, message: 'Tag Name không tồn tại' });
+      return;
+    }
+
+    res
+      .status(200)
+      .json({ success: true, message: 'Tên thương hiệu được cập nhật thành công', updatedTag: updatedTag });
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Lỗi khi cập nhật tag-name: ${error.message}`);
+      res.status(500).json({ success: false, message: 'Lỗi máy chủ' });
+    } else {
+      console.error('Lỗi không xác định khi cập nhật tag-name:', error);
+      res.status(500).json({ success: false, message: 'Lỗi máy chủ' });
+    }
+  }
+};

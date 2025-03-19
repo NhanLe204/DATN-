@@ -74,18 +74,24 @@ const AdminLayout = () => {
         navigate("/admin/products");
         break;
       case "4":
-        navigate("/admin/employees");
+        navigate("/admin/brands");
         break;
       case "5":
-        navigate("/admin/orders");
+        navigate("/admin/tags");
         break;
       case "6":
-        navigate("/admin/services");
+        navigate("/admin/employees");
         break;
       case "7":
-        navigate("/admin/users");
+        navigate("/admin/orders");
         break;
       case "8":
+        navigate("/admin/services");
+        break;
+      case "9":
+        navigate("/admin/users");
+        break;
+      case "10":
         navigate("/admin/settings");
         break;
       default:
@@ -134,11 +140,13 @@ const AdminLayout = () => {
             { key: "1", icon: <PieChartOutlined />, label: "Dashboard" },
             { key: "2", icon: <AppstoreOutlined />, label: "Quản lý danh mục" },
             { key: "3", icon: <ShoppingOutlined />, label: "Quản lý sản phẩm" },
-            { key: "4", icon: <IdcardOutlined />, label: "Quản lý nhân viên" },
-            { key: "5", icon: <FileTextOutlined />, label: "Quản lý đơn hàng" },
-            { key: "6", icon: <ToolOutlined />, label: "Quản lý dịch vụ" },
-            { key: "7", icon: <UserOutlined />, label: "Quản lý người dùng" },
-            { key: "8", icon: <SettingOutlined />, label: "Cài đặt hệ thống" },
+            { key: "4", icon: <ShoppingOutlined />, label: "Quản lý thương hiệu" },
+            { key: "5", icon: <ShoppingOutlined />, label: "Quản lý tags" },
+            { key: "6", icon: <IdcardOutlined />, label: "Quản lý nhân viên" },
+            { key: "7", icon: <FileTextOutlined />, label: "Quản lý đơn hàng" },
+            { key: "8", icon: <ToolOutlined />, label: "Quản lý dịch vụ" },
+            { key: "9", icon: <UserOutlined />, label: "Quản lý người dùng" },
+            { key: "10", icon: <SettingOutlined />, label: "Cài đặt hệ thống" },
           ]}
         />
       </Sider>

@@ -24,40 +24,7 @@ import EmployeeList from "./admin/employee/employee";
 import Payment from "./pages/payment/payment";
 import AboutUs from "./pages/about-us/about-us";
 import Contact from "./pages/contact/contact";
-
-// Định nghĩa interface User
-interface User {
-  id: string;
-  email: string;
-  fullname: string;
-  avatar?: string;
-  role: string;
-  status: string;
-}
-
-// Component bảo vệ route
-const ProtectedRoute = ({ children, allowedRole }: { children: JSX.Element; allowedRole?: string }) => {
-  const userData = localStorage.getItem("userData");
-  const user: User | null = userData ? JSON.parse(userData) : null;
-
-  // Nếu không có user hoặc status không phải "active", chuyển về login
-  if (!user || user.status !== "active") {
-    return <Navigate to="/login" replace />;
-  }
-
-  // Nếu có allowedRole và role không khớp, chuyển về trang chính
-  if (allowedRole && user.role !== allowedRole) {
-    return <Navigate to="/" replace />;
-  }
-
-  return children;
-};
-
-// Component cho route công khai
-const PublicRoute = ({ children }: { children: JSX.Element }) => {
-  return children;
-};
-
+// import infoservices from "./pages/infoservices/infoservices";
 function App() {
   const router = createBrowserRouter([
     {
@@ -81,6 +48,8 @@ function App() {
         { path: "employees", element: <EmployeeList /> },
         { path: "categories", element: <CategoryList /> },
         { path: "products", element: <ProductList /> },
+        { path: "brands", element: <BrandManager /> },
+        { path: "tags", element: <TagManager /> },
         { path: "orders", element: <OrderList /> },
         { path: "services", element: <ServiceList /> },
         { path: "users", element: <UserList /> },

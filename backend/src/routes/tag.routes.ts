@@ -1,15 +1,16 @@
 import { Router, Request, Response } from 'express';
 import { protectRoute, requireAdmin } from '../middlewares/protectRoute.js';
 import { verifyToken } from '../middlewares/verifyToken.js';
-import { getAllTags, getTagById, insertTag, deleteTag } from '../controllers/tag.controllers.js';
+import { getAllTags, getTagById, insertTag, deleteTag, updateTag } from '../controllers/tag.controllers.js';
 import { deleteRating } from '@/controllers/rate.controllers.js';
 
 const tagRouter = Router();
 
-tagRouter.get('/tags', verifyToken, getAllTags);
-tagRouter.get('/tags/:id', verifyToken, getTagById);
+tagRouter.get('/tags', getAllTags);
+tagRouter.get('/tags/:id', getTagById);
 tagRouter.post('/tags', verifyToken, requireAdmin, insertTag);
 tagRouter.delete('/tags/:id', verifyToken, requireAdmin, deleteTag);
+tagRouter.patch('/tags/:id', verifyToken, requireAdmin, updateTag);
 // categoryRouter.delete('/categories/:id', protectRoute, requireAdmin, toggleCategory);
 
 // brandRouter.get('/brands/:id', getBrandById);
