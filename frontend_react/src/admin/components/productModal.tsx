@@ -204,14 +204,18 @@ const ProductModal: React.FC<ProductModalProps> = ({ visible, onClose, onReload,
     try {
       const updatedValues = {
         ...values,
-        image_url: mainImageFileList[0]?.url || values.image_url,
-        extra_images: extraImagesFileList.map((file) => file.url || file.response?.url),
+        image_url: mainImageFileList[0]?.url
+          ? mainImageFileList[0].url.replace("/images/products/", "") 
+          : values.image_url,
+        extra_images: extraImagesFileList.map((file) =>
+          (file.url || file.response?.url)?.replace("/images/products/", "") 
+        ),
         discount: values.discount || 0,
         description: values.description || "",
         tag_id: values.tag_id,
       };
       console.log("Updated values sent to API:", updatedValues);
-
+  
       if (product) {
         await productsApi.update(product._id, updatedValues);
         message.success("Cập nhật sản phẩm thành công!");
@@ -230,7 +234,6 @@ const ProductModal: React.FC<ProductModalProps> = ({ visible, onClose, onReload,
       }
     }
   };
-
   return (
     <Modal
       title={product ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm"}
