@@ -17,6 +17,7 @@ interface Product {
 }
 
 export default function SaleProduct({ data }: { data: Product[] }) {
+  console.warn(data, "Thanh");
   const [windowWidth, setWindowWidth] = useState(0);
   const sliderRef = useRef<any>(null);
 
@@ -168,9 +169,7 @@ export default function SaleProduct({ data }: { data: Product[] }) {
                       </div>
                     )}
                   </div>
-                  <Button
-                    className="mt-2 w-[90px] bg-[#22A6DF] hover:bg-[#1890ff] hover:border-[#22A6DF] rounded-lg text-white text-xs sm:w-[120px] sm:text-sm"
-                  >
+                  <Button className="mt-2 w-[90px] bg-[#22A6DF] hover:bg-[#1890ff] hover:border-[#22A6DF] rounded-lg text-white text-xs sm:w-[120px] sm:text-sm">
                     Mua ngay
                   </Button>
                 </div>

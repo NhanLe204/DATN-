@@ -1,23 +1,23 @@
 import api from "./axios";
-const tagApi = {
+const brandApi = {
   getAll: async () => {
-    const response = await api.get("/api/v1/tags");
+    const response = await api.get("/v1/brands");
     return {
       data: response.data,
     };
   },
   create: async (data) => {
-    const response = await api.post("/api/v1/tags", data);
+    const response = await api.post("/v1/brands", data);
     return response.data;
   },
   update: async (id, data) => {
-    const response = await api.patch(`/api/v1/tags/${id}`, data);
+    const response = await api.patch(`/v1/brands/${id}`, data);
     return response.data;
   },
 
   delete: async (id) => {
-    const response = await api.delete(`/api/v1/tags/${id}`);
+    const response = await api.delete(`/v1/brands/${id}`);
     return response.data;
   },
 };
-export default tagApi;
+export default brandApi;

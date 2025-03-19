@@ -20,7 +20,7 @@ import {
 } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { Typography } from "antd";
-import productsApi from "../api/productsAPI";
+import productsApi from "../../api/productsAPI";
 import ProductModal from "../components/productModal";
 
 const { Title } = Typography;

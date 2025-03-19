@@ -4,6 +4,7 @@ import { Button, Row, Col, Typography, Select, Drawer, Pagination } from "antd";
 import ListCard from "../../components/listcard";
 import Loader from "../../components/loader";
 import LeftProductList from "../../components/LeftProductList";
+import ENV_VARS from "../../../config";
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -51,7 +52,7 @@ export default function Products() {
   const [categories, setCategories] = useState<Category[]>([]);
 
   const itemsPerPage = 12;
-  const API_URL = import.meta.env.VITE_API_URL;
+  const API_URL = ENV_VARS.VITE_API_URL;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -62,7 +63,10 @@ export default function Products() {
         if (categoryData.result && Array.isArray(categoryData.result)) {
           setCategories(categoryData.result);
         } else {
-          console.error("Unexpected category response structure:", categoryData);
+          console.error(
+            "Unexpected category response structure:",
+            categoryData
+          );
         }
 
         const productResponse = await fetch(`${API_URL}/api/v1/products`);
@@ -83,13 +87,17 @@ export default function Products() {
 
   const togglePriceRange = (value: string) => {
     setPriceRanges((prev) =>
-      prev.includes(value) ? prev.filter((range) => range !== value) : [...prev, value]
+      prev.includes(value)
+        ? prev.filter((range) => range !== value)
+        : [...prev, value]
     );
   };
 
   const toggleBrand = (brandId: string) => {
     setSelectedBrands((prev) =>
-      prev.includes(brandId) ? prev.filter((id) => id !== brandId) : [...prev, brandId]
+      prev.includes(brandId)
+        ? prev.filter((id) => id !== brandId)
+        : [...prev, brandId]
     );
   };
 
@@ -145,13 +153,15 @@ export default function Products() {
         ? (item.brand_id as { _id: string })._id
         : null;
     const matchBrand =
-      selectedBrands.length === 0 || (brandId && selectedBrands.includes(brandId));
+      selectedBrands.length === 0 ||
+      (brandId && selectedBrands.includes(brandId));
 
     const categoryId =
       item.category_id && typeof item.category_id === "object"
         ? (item.category_id as { _id: string })._id
         : null;
-    const matchCategory = selectedCategory === "all" || categoryId === selectedCategory;
+    const matchCategory =
+      selectedCategory === "all" || categoryId === selectedCategory;
 
     let matchTags = true;
     if (selectedCategory !== "all" && selectedTags.length > 0) {
@@ -164,7 +174,9 @@ export default function Products() {
       matchTags = itemTags.some((tag) => selectedTags.includes(tag));
     }
 
-    return matchStatus && matchPrice && matchBrand && matchCategory && matchTags;
+    return (
+      matchStatus && matchPrice && matchBrand && matchCategory && matchTags
+    );
   });
 
   const sortedData = [...filteredData].sort((a, b) => {
@@ -190,7 +202,10 @@ export default function Products() {
   return (
     <div className="mx-auto mb-4 mt-4 w-full max-w-full sm:px-3 md:px-7 lg:px-14 xl:px-[154px] bg-[#e8e8e8]/[0.5] py-3">
       <div className="mt-6">
-        <div className="flex flex-wrap lg:flex-nowrap gap-1 w-full" style={{ alignItems: "flex-start" }}>
+        <div
+          className="flex flex-wrap lg:flex-nowrap gap-1 w-full"
+          style={{ alignItems: "flex-start" }}
+        >
           <Col
             xs={24}
             sm={8}
@@ -297,7 +312,9 @@ export default function Products() {
         placement="left"
         onClose={() => setOpenFilter(false)}
         open={openFilter}
-        title={<span className="text-sm font-semibold text-gray-800">Bộ lọc</span>}
+        title={
+          <span className="text-sm font-semibold text-gray-800">Bộ lọc</span>
+        }
         width={250}
         styles={{ body: { padding: "0" } }}
       >
