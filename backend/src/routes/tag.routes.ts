@@ -6,8 +6,8 @@ import { deleteRating } from '@/controllers/rate.controllers.js';
 
 const tagRouter = Router();
 
-tagRouter.get('/tags', verifyToken, getAllTags);
-tagRouter.get('/tags/:id', verifyToken, getTagById);
+tagRouter.get('/tags', getAllTags);
+tagRouter.get('/tags/:id', getTagById);
 tagRouter.post('/tags', verifyToken, requireAdmin, insertTag);
 tagRouter.delete('/tags/:id', verifyToken, requireAdmin, deleteTag);
 // categoryRouter.delete('/categories/:id', protectRoute, requireAdmin, toggleCategory);

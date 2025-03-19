@@ -1,22 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { FaFilter } from "react-icons/fa";
-import {
-  Button,
-  Row,
-  Col,
-  Typography,
-  Select,
-  Drawer,
-  Checkbox,
-  Pagination,
-} from "antd";
+import { Button, Row, Col, Typography, Select, Drawer, Pagination } from "antd";
 import ListCard from "../../components/listcard";
 import Loader from "../../components/loader";
+import LeftProductList from "../../components/LeftProductList";
 
 const { Title } = Typography;
 const { Option } = Select;
 
 interface APIProduct {
+  discount: number;
   _id: object;
   category: string;
   id: any;
@@ -32,62 +25,108 @@ interface APIProduct {
   description: string;
   createdAt: Date;
   updatedAt: Date;
-  brand_id: object;
+  brand_id: object | null;
   status: string;
+  tag_id: object | null;
+}
+
+interface Category {
+  _id: string;
+  name: string;
 }
 
 export default function Products() {
   const [data, setData] = useState<APIProduct[]>([]);
+  const [loading, setLoading] = useState(true);
   const [sort, setSort] = useState<"newest" | "asc" | "desc">("asc");
-  const [category, setCategory] = useState("");
   const [priceRanges, setPriceRanges] = useState<string[]>([]);
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [openFilter, setOpenFilter] = useState(false);
-  const itemsPerPage = 8;
+  const [expandCategories, setExpandCategories] = useState(true);
+  const [expandPrice, setExpandPrice] = useState(true);
+  const [expandBrand, setExpandBrand] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  const itemsPerPage = 12;
+  const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/v1/products");
-        const responseData = await response.json();
-        if (responseData.result && Array.isArray(responseData.result)) {
-          setData(responseData.result);
+        setLoading(true);
+        const categoryResponse = await fetch(`${API_URL}/api/v1/categories`);
+        const categoryData = await categoryResponse.json();
+        if (categoryData.result && Array.isArray(categoryData.result)) {
+          setCategories(categoryData.result);
         } else {
-          console.error("Unexpected response structure:", responseData);
+          console.error("Unexpected category response structure:", categoryData);
+        }
+
+        const productResponse = await fetch(`${API_URL}/api/v1/products`);
+        const productData = await productResponse.json();
+        if (productData.result && Array.isArray(productData.result)) {
+          setData(productData.result);
+        } else {
+          console.error("Unexpected product response structure:", productData);
         }
       } catch (error) {
-        console.error("Error fetching products:", error);
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchData();
-  }, []);
-
-  const handleCategoryClick = (newCategory: string) => {
-    setCategory(newCategory);
-    setCurrentPage(1);
-    setOpenFilter(false);
-  };
+  }, [API_URL]);
 
   const togglePriceRange = (value: string) => {
     setPriceRanges((prev) =>
-      prev.includes(value)
-        ? prev.filter((range) => range !== value)
-        : [...prev, value]
+      prev.includes(value) ? prev.filter((range) => range !== value) : [...prev, value]
     );
+  };
+
+  const toggleBrand = (brandId: string) => {
+    setSelectedBrands((prev) =>
+      prev.includes(brandId) ? prev.filter((id) => id !== brandId) : [...prev, brandId]
+    );
+  };
+
+  const toggleTag = (tagId: string) => {
+    setSelectedTags((prev) => {
+      const updatedTags = prev.includes(tagId)
+        ? prev.filter((id) => id !== tagId)
+        : [...prev, tagId];
+      console.log("Tag được chọn:", updatedTags);
+      return updatedTags;
+    });
+  };
+
+  // Hàm để reset tags khi cần (xử lý trong Products)
+  const handleCategoryChange = (categoryId: string) => {
+    setSelectedCategory(categoryId);
+    if (categoryId === "all") {
+      setSelectedTags([]); // Reset tags khi chọn "Tất cả"
+    } else {
+      setSelectedTags([]); // Reset tags khi chuyển danh mục khác
+    }
   };
 
   const getPriceRangeFilter = (price: number) => {
     if (priceRanges.length === 0) return true;
     return priceRanges.some((range) => {
       switch (range) {
-        case "under200":
-          return price < 200000;
-        case "200to500":
-          return price >= 200000 && price <= 500000;
-        case "500to1000":
-          return price > 500000 && price <= 1000000;
-        case "above1000":
-          return price > 1000000;
+        case "under150":
+          return price < 150000;
+        case "150to300":
+          return price >= 150000 && price <= 300000;
+        case "300to500":
+          return price > 300000 && price <= 500000;
+        case "500to700":
+          return price > 500000 && price <= 700000;
+        case "above700":
+          return price > 700000;
         default:
           return false;
       }
@@ -95,202 +134,202 @@ export default function Products() {
   };
 
   const filteredData = data.filter((item) => {
-    const priceNumber = Number(item.price);
-    const matchCategory = category
-      ? item.category?.toLowerCase() === category.toLowerCase()
-      : true;
-    const matchPrice = getPriceRangeFilter(priceNumber);
-    return matchCategory && matchPrice;
+    const originalPrice = Number(item.price);
+    const discountedPrice = originalPrice * (1 - (item.discount || 0) / 100);
+    const matchPrice = getPriceRangeFilter(discountedPrice);
+
+    const brandId =
+      item.brand_id && typeof item.brand_id === "object"
+        ? (item.brand_id as { _id: string })._id
+        : null;
+    const matchBrand =
+      selectedBrands.length === 0 || (brandId && selectedBrands.includes(brandId));
+
+    const categoryId =
+      item.category_id && typeof item.category_id === "object"
+        ? (item.category_id as { _id: string })._id
+        : null;
+    const matchCategory = selectedCategory === "all" || categoryId === selectedCategory;
+
+    let matchTags = true;
+    if (selectedCategory !== "all" && selectedTags.length > 0) {
+      const itemTags =
+        item.tag_id && typeof item.tag_id === "object"
+          ? [(item.tag_id as { _id: string })._id]
+          : Array.isArray(item.tag_id)
+          ? item.tag_id
+          : [];
+      matchTags = itemTags.some((tag) => selectedTags.includes(tag));
+    }
+
+    return matchPrice && matchBrand && matchCategory && matchTags;
   });
 
   const sortedData = [...filteredData].sort((a, b) => {
+    const priceA = Number(a.price) * (1 - (a.discount || 0) / 100);
+    const priceB = Number(b.price) * (1 - (b.discount || 0) / 100);
     if (sort === "newest") {
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     } else if (sort === "asc") {
-      return Number(a.price) - Number(b.price);
+      return priceA - priceB;
     } else {
-      return Number(b.price) - Number(a.price);
+      return priceB - priceA;
     }
   });
 
-  const [tempPriceRanges, setTempPriceRanges] = useState<string[]>([]);
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [priceRanges, selectedBrands, selectedTags, sort, selectedCategory]);
 
-  const toggleTempPriceRange = (value: string) => {
-    setTempPriceRanges((prev) =>
-      prev.includes(value)
-        ? prev.filter((range) => range !== value)
-        : [...prev, value]
-    );
-  };
-
-  const applyFilters = () => {
-    setPriceRanges(tempPriceRanges);
-    setOpenFilter(false); // Đóng drawer sau khi áp dụng
-  };
-
-  const totalPages = Math.ceil(sortedData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentPageData = sortedData.slice(startIndex, endIndex);
 
   return (
-    <div className="mx-auto mb-4 mt-4 w-full max-w-full sm:px-3 md:px-7 lg:px-14 xl:px-[154px]">
-      {/* Header */}
-      <div className="flex h-[120px] items-center justify-center bg-[#22A6DF] p-4 text-center">
-        <Title level={1} style={{ color: "white" }}>
-          Mua sắm cho chó
-        </Title>
-      </div>
-
-      {/* Bộ lọc và sắp xếp (Mobile & Desktop) */}
-      <Row className="mt-6" style={{ width: "100%" }}>
-        <div className="flex w-full items-center justify-end gap-2 px-4 pb-2">
-          <Button
-            className="flex items-center gap-2 lg:hidden"
-            onClick={() => setOpenFilter(true)}
+    <div className="mx-auto mb-4 mt-4 w-full max-w-full sm:px-3 md:px-7 lg:px-14 xl:px-[154px] bg-[#e8e8e8]/[0.5] py-3">
+      <div className="mt-6">
+        <div className="flex flex-wrap lg:flex-nowrap gap-1 w-full" style={{ alignItems: "flex-start" }}>
+          <Col
+            xs={24}
+            sm={8}
+            md={6}
+            lg={4}
+            className="hidden px-2 lg:block bg-white mr-4 flex-shrink-0 rounded-lg shadow-md"
+            style={{ position: "sticky", top: "20px" }}
           >
-            <FaFilter /> Bộ lọc
-          </Button>
-          <Select
-            className="w-full sm:w-auto"
-            value={sort}
-            onChange={(value) => setSort(value)}
-          >
-            <Option value="newest">Mới nhất</Option>
-            <Option value="asc">Giá tăng dần</Option>
-            <Option value="desc">Giá giảm dần</Option>
-          </Select>
-        </div>
+            <LeftProductList
+              expandCategories={expandCategories}
+              setExpandCategories={setExpandCategories}
+              expandPrice={expandPrice}
+              setExpandPrice={setExpandPrice}
+              expandBrand={expandBrand}
+              setExpandBrand={setExpandBrand}
+              priceRanges={priceRanges}
+              togglePriceRange={togglePriceRange}
+              selectedBrands={selectedBrands}
+              toggleBrand={toggleBrand}
+              selectedTags={selectedTags}
+              toggleTag={toggleTag}
+              selectedCategory={selectedCategory}
+              setSelectedCategory={handleCategoryChange} // Dùng hàm mới để reset tags
+              categories={categories}
+            />
+          </Col>
 
-        {/* Bộ lọc (Desktop) */}
-        <Col xs={24} sm={8} md={6} lg={4} className="hidden px-4 lg:block">
-          <Title level={4} className="mb-4">
-            Danh mục sản phẩm
-          </Title>
-          <ul className="cursor-pointer space-y-2 border-b pb-4">
-            {[
-              "Thức ăn",
-              "Phụ kiện - Đồ chơi",
-              "Chuồng - Vận chuyển",
-              "Sức khoẻ - Vệ sinh",
-            ].map((item) => (
-              <li
-                key={item}
-                className={`hover:text-[#22A6DF] ${
-                  category === item ? "font-bold" : ""
-                }`}
-                onClick={() => handleCategoryClick(item)}
+          <Col
+            className="px-4 py-4 bg-white flex-grow rounded-lg shadow-md"
+            xs={24}
+            sm={24}
+            md={24}
+            lg={20}
+            style={{ height: "fit-content" }}
+          >
+            <div className="flex w-full items-center justify-between pb-4">
+              <div className="flex items-center gap-3">
+                <Button
+                  className="flex items-center gap-2 lg:hidden bg-blue-600 text-white hover:bg-blue-700 text-xs py-1 px-2"
+                  onClick={() => setOpenFilter(true)}
+                >
+                  <FaFilter /> Bộ lọc
+                </Button>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-gray-700">Sắp xếp theo:</span>
+                <Select
+                  className="w-full min-w-[120px] sm:w-auto"
+                  value={sort}
+                  onChange={(value) => setSort(value)}
+                  dropdownStyle={{ borderRadius: "8px" }}
+                  size="small"
+                >
+                  <Option value="newest">Mới nhất</Option>
+                  <Option value="asc">Giá tăng dần</Option>
+                  <Option value="desc">Giá giảm dần</Option>
+                </Select>
+              </div>
+            </div>
+
+            {loading ? (
+              <div className="flex h-60 items-center justify-center">
+                <Loader />
+              </div>
+            ) : currentPageData.length > 0 ? (
+              <div
+                className="gap-3"
+                style={{
+                  height: "auto",
+                  minHeight: currentPageData.length > 0 ? "auto" : "60vh",
+                }}
               >
-                {item}
-              </li>
-            ))}
-          </ul>
-
-          <Title level={4} className="mb-4 mt-6">
-            Giá
-          </Title>
-          <Checkbox
-            onChange={() => togglePriceRange("under200")}
-            checked={priceRanges.includes("under200")}
-          >
-            Dưới 200.000
-          </Checkbox>
-          <Checkbox
-            onChange={() => togglePriceRange("200to500")}
-            checked={priceRanges.includes("200to500")}
-          >
-            200.000 - 500.000
-          </Checkbox>
-          <Checkbox
-            onChange={() => togglePriceRange("500to1000")}
-            checked={priceRanges.includes("500to1000")}
-          >
-            500.000 - 1.000.000
-          </Checkbox>
-          <Checkbox
-            onChange={() => togglePriceRange("above1000")}
-            checked={priceRanges.includes("above1000")}
-          >
-            Trên 1.000.000
-          </Checkbox>
-        </Col>
-
-        {/* Danh sách sản phẩm */}
-        <Col className="px-4" xs={24} sm={24} md={24} lg={20}>
-          <ListCard pros={{ data: currentPageData }} />
-        </Col>
-      </Row>
-      {/* Phân trang */}
-      <div className="mt-6 flex justify-center">
-        <Pagination
-          current={currentPage}
-          total={sortedData.length}
-          pageSize={itemsPerPage}
-          onChange={(page) => setCurrentPage(page)}
-        />
+                <ListCard pros={{ data: currentPageData }} />
+              </div>
+            ) : (
+              <div className="flex h-60 flex-col items-center justify-center text-center">
+                <Title level={4} className="text-gray-600 text-sm">
+                  Không tìm thấy sản phẩm nào
+                </Title>
+                <p className="text-gray-500 text-xs">
+                  Vui lòng thử lại với bộ lọc khác
+                </p>
+              </div>
+            )}
+          </Col>
+        </div>
       </div>
-      {/* Drawer cho Bộ lọc (Mobile) */}
+
+      {sortedData.length > 0 && (
+        <div className="mt-6 flex justify-center">
+          <Pagination
+            current={currentPage}
+            total={sortedData.length}
+            pageSize={itemsPerPage}
+            onChange={(page) => setCurrentPage(page)}
+            showSizeChanger={false}
+            className="ant-pagination-custom"
+            size="small"
+          />
+        </div>
+      )}
+
       <Drawer
         placement="left"
         onClose={() => setOpenFilter(false)}
         open={openFilter}
+        title={<span className="text-sm font-semibold text-gray-800">Bộ lọc</span>}
+        width={250}
+        styles={{ body: { padding: "0" } }}
       >
-        <Title level={4} className="mb-4">
-          Danh mục sản phẩm
-        </Title>
-        {[
-          "Thức ăn",
-          "Phụ kiện - Đồ chơi",
-          "Chuồng - Vận chuyển",
-          "Sức khoẻ - Vệ sinh",
-        ].map((item) => (
-          <p
-            key={item}
-            className={`cursor-pointer text-lg hover:text-[#22A6DF] ${
-              category === item ? "font-bold" : ""
-            }`}
-            onClick={() => handleCategoryClick(item)}
-          >
-            {item}
-          </p>
-        ))}
-
-        <Title level={4} className="mb-4 mt-6">
-          Giá
-        </Title>
-        <Checkbox
-          onChange={() => toggleTempPriceRange("under200")}
-          checked={tempPriceRanges.includes("under200")}
-          className="flex text-lg"
-        >
-          Dưới 200.000
-        </Checkbox>
-        <Checkbox
-          onChange={() => toggleTempPriceRange("200to500")}
-          checked={tempPriceRanges.includes("200to500")}
-          className="flex text-lg"
-        >
-          200.000 - 500.000
-        </Checkbox>
-        <Checkbox
-          onChange={() => toggleTempPriceRange("500to1000")}
-          checked={tempPriceRanges.includes("500to1000")}
-          className="flex text-lg"
-        >
-          500.000 - 1.000.000
-        </Checkbox>
-        <Checkbox
-          onChange={() => toggleTempPriceRange("above1000")}
-          checked={tempPriceRanges.includes("above1000")}
-          className="flex text-lg"
-        >
-          Trên 1.000.000
-        </Checkbox>
-
-        {/* Nút Áp dụng */}
-        <Button type="primary" className="mt-4 w-full" onClick={applyFilters}>
-          Áp dụng
-        </Button>
+        <div className="flex h-full flex-col bg-white">
+          <div className="flex-grow overflow-auto">
+            <LeftProductList
+              expandCategories={expandCategories}
+              setExpandCategories={setExpandCategories}
+              expandPrice={expandPrice}
+              setExpandPrice={setExpandPrice}
+              expandBrand={expandBrand}
+              setExpandBrand={setExpandBrand}
+              priceRanges={priceRanges}
+              togglePriceRange={togglePriceRange}
+              selectedBrands={selectedBrands}
+              toggleBrand={toggleBrand}
+              selectedTags={selectedTags}
+              toggleTag={toggleTag}
+              selectedCategory={selectedCategory}
+              setSelectedCategory={handleCategoryChange} // Dùng hàm mới để reset tags
+              categories={categories}
+            />
+          </div>
+          <div className="mt-auto p-3 border-t">
+            <Button
+              type="primary"
+              className="w-full bg-blue-600 hover:bg-blue-700 rounded-md text-xs"
+              onClick={() => setOpenFilter(false)}
+              size="small"
+            >
+              Áp dụng
+            </Button>
+          </div>
+        </div>
       </Drawer>
     </div>
   );
