@@ -25,8 +25,8 @@ const TagManager: React.FC = () => {
     const fetchTags = async () => {
       try {
         const response = await tagApi.getAll();
-        console.log('Response từ API:', response);
-        console.log('response.data:', response.data);
+        // console.log('Response từ API:', response);
+        // console.log('response.data:', response.data);
         const tagData = response.data.result.map((tag: any) => ({
           key: tag._id,
           id: tag._id,
@@ -135,12 +135,17 @@ const TagManager: React.FC = () => {
     });
   };
 
+  const handleAddModalOpen = () => {
+    form.resetFields(); 
+    setIsAddModalVisible(true);
+  };
+
   const handleAddModalOk = () => {
     form.validateFields().then(async (values) => {
       try {
         const response = await tagApi.create({ tag_name: values.name });
-        console.log('Response từ tagApi.create:', response);
-        console.log('response.tag:', response.tag);
+        // console.log('Response từ tagApi.create:', response);
+        // console.log('response.tag:', response.tag);
         const tagId = response.tag?._id;
         if (!tagId) {
           throw new Error('Không tìm thấy ID trong response.tag');
@@ -174,12 +179,10 @@ const TagManager: React.FC = () => {
         className="shadow-sm"
         extra={
           <div className="space-x-2">
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsAddModalVisible(true)}>
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleAddModalOpen}>
               Thêm Tag
             </Button>
-            <Button danger icon={<DeleteOutlined />} onClick={handleDeleteAll}>
-              Xóa tất cả
-            </Button>
+            
           </div>
         }
       >
@@ -200,7 +203,7 @@ const TagManager: React.FC = () => {
         visible={isEditModalVisible}
         onOk={handleEditModalOk}
         onCancel={() => setIsEditModalVisible(false)}
-        okText="Lưu lại"
+        okText="Lưu & Đóng"
         cancelText="Hủy bỏ"
       >
         {selectedTag && (
@@ -224,7 +227,7 @@ const TagManager: React.FC = () => {
         visible={isAddModalVisible}
         onOk={handleAddModalOk}
         onCancel={() => setIsAddModalVisible(false)}
-        okText="Lưu lại"
+        okText="Thêm mới"
         cancelText="Hủy bỏ"
       >
         <Form form={form} layout="vertical">

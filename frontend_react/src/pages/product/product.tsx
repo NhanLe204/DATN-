@@ -103,13 +103,12 @@ export default function Products() {
     });
   };
 
-  // Hàm để reset tags khi cần (xử lý trong Products)
   const handleCategoryChange = (categoryId: string) => {
     setSelectedCategory(categoryId);
     if (categoryId === "all") {
-      setSelectedTags([]); // Reset tags khi chọn "Tất cả"
+      setSelectedTags([]);
     } else {
-      setSelectedTags([]); // Reset tags khi chuyển danh mục khác
+      setSelectedTags([]);
     }
   };
 
@@ -134,6 +133,9 @@ export default function Products() {
   };
 
   const filteredData = data.filter((item) => {
+    // Chỉ hiển thị sản phẩm có status là "available"
+    const matchStatus = item.status === "available";
+
     const originalPrice = Number(item.price);
     const discountedPrice = originalPrice * (1 - (item.discount || 0) / 100);
     const matchPrice = getPriceRangeFilter(discountedPrice);
@@ -162,7 +164,7 @@ export default function Products() {
       matchTags = itemTags.some((tag) => selectedTags.includes(tag));
     }
 
-    return matchPrice && matchBrand && matchCategory && matchTags;
+    return matchStatus && matchPrice && matchBrand && matchCategory && matchTags;
   });
 
   const sortedData = [...filteredData].sort((a, b) => {
@@ -211,7 +213,7 @@ export default function Products() {
               selectedTags={selectedTags}
               toggleTag={toggleTag}
               selectedCategory={selectedCategory}
-              setSelectedCategory={handleCategoryChange} // Dùng hàm mới để reset tags
+              setSelectedCategory={handleCategoryChange}
               categories={categories}
             />
           </Col>
@@ -315,7 +317,7 @@ export default function Products() {
               selectedTags={selectedTags}
               toggleTag={toggleTag}
               selectedCategory={selectedCategory}
-              setSelectedCategory={handleCategoryChange} // Dùng hàm mới để reset tags
+              setSelectedCategory={handleCategoryChange}
               categories={categories}
             />
           </div>
