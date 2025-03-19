@@ -1,10 +1,21 @@
 import React, { useEffect, useState } from "react";
-import { Modal, Form, Input, Select, Upload, Button, message, InputNumber, Row, Col } from "antd";
+import {
+  Modal,
+  Form,
+  Input,
+  Select,
+  Upload,
+  Button,
+  message,
+  InputNumber,
+  Row,
+  Col,
+} from "antd";
 import { UploadOutlined } from "@ant-design/icons";
-import productsApi from "../api/productsAPI";
-import categoryApi from "../api/categoryApi";
-import brandApi from "../api/brandApi";
-import tagApi from "../api/tagApi";
+import productsApi from "../../api/productsAPI";
+import categoryApi from "../../api/categoryApi";
+import brandApi from "../../api/brandApi";
+import tagApi from "../../api/tagApi";
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -35,7 +46,12 @@ interface ProductModalProps {
   } | null;
 }
 
-const ProductModal: React.FC<ProductModalProps> = ({ visible, onClose, onReload, product }) => {
+const ProductModal: React.FC<ProductModalProps> = ({
+  visible,
+  onClose,
+  onReload,
+  product,
+}) => {
   const [form] = Form.useForm();
   const [mainImageFileList, setMainImageFileList] = useState<any[]>([]);
   const [extraImagesFileList, setExtraImagesFileList] = useState<any[]>([]);
@@ -55,12 +71,16 @@ const ProductModal: React.FC<ProductModalProps> = ({ visible, onClose, onReload,
 
         const brandResponse = await brandApi.getAll();
         console.log("Brand API response:", brandResponse);
-        const brandData = Array.isArray(brandResponse.data.result) ? brandResponse.data.result : [];
+        const brandData = Array.isArray(brandResponse.data.result)
+          ? brandResponse.data.result
+          : [];
         setBrands(brandData);
 
         const tagResponse = await tagApi.getAll();
         console.log("Tag API response result:", tagResponse.data.result);
-        const tagData = Array.isArray(tagResponse.data.result) ? tagResponse.data.result : [];
+        const tagData = Array.isArray(tagResponse.data.result)
+          ? tagResponse.data.result
+          : [];
         setTags(tagData);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -113,9 +133,11 @@ const ProductModal: React.FC<ProductModalProps> = ({ visible, onClose, onReload,
             uid: "-1",
             name: "image.png",
             status: "done",
-            url: imageUrl.startsWith("http") || imageUrl.startsWith("/images/products/")
-              ? imageUrl
-              : `/images/products/${imageUrl}`,
+            url:
+              imageUrl.startsWith("http") ||
+              imageUrl.startsWith("/images/products/")
+                ? imageUrl
+                : `/images/products/${imageUrl}`,
           },
         ]);
       } else {
@@ -124,14 +146,17 @@ const ProductModal: React.FC<ProductModalProps> = ({ visible, onClose, onReload,
 
       // Xử lý hình ảnh phụ
       if (product.extra_images && product.extra_images.length > 0) {
-        const extraImages = product.extra_images.map((url: string, index: number) => ({
-          uid: `-${index + 1}`,
-          name: `extra-image-${index + 1}.png`,
-          status: "done",
-          url: url.startsWith("http") || url.startsWith("/images/products/")
-            ? url
-            : `/images/products/${url}`,
-        }));
+        const extraImages = product.extra_images.map(
+          (url: string, index: number) => ({
+            uid: `-${index + 1}`,
+            name: `extra-image-${index + 1}.png`,
+            status: "done",
+            url:
+              url.startsWith("http") || url.startsWith("/images/products/")
+                ? url
+                : `/images/products/${url}`,
+          })
+        );
         setExtraImagesFileList(extraImages);
       } else {
         setExtraImagesFileList([]);
@@ -205,7 +230,9 @@ const ProductModal: React.FC<ProductModalProps> = ({ visible, onClose, onReload,
       const updatedValues = {
         ...values,
         image_url: mainImageFileList[0]?.url || values.image_url,
-        extra_images: extraImagesFileList.map((file) => file.url || file.response?.url),
+        extra_images: extraImagesFileList.map(
+          (file) => file.url || file.response?.url
+        ),
         discount: values.discount || 0,
         description: values.description || "",
         tag_id: values.tag_id,
@@ -242,7 +269,11 @@ const ProductModal: React.FC<ProductModalProps> = ({ visible, onClose, onReload,
       <Form form={form} layout="vertical" onFinish={handleSubmit}>
         <Row gutter={16}>
           <Col span={12}>
-            <Form.Item name="name" label="Tên sản phẩm" rules={[{ required: true }]}>
+            <Form.Item
+              name="name"
+              label="Tên sản phẩm"
+              rules={[{ required: true }]}
+            >
               <Input placeholder="Nhập tên sản phẩm" />
             </Form.Item>
 
@@ -251,7 +282,11 @@ const ProductModal: React.FC<ProductModalProps> = ({ visible, onClose, onReload,
             </Form.Item>
 
             <Form.Item name="price" label="Giá" rules={[{ required: true }]}>
-              <InputNumber min={1} className="w-full" placeholder="Nhập giá sản phẩm" />
+              <InputNumber
+                min={1}
+                className="w-full"
+                placeholder="Nhập giá sản phẩm"
+              />
             </Form.Item>
 
             <Form.Item
@@ -259,19 +294,32 @@ const ProductModal: React.FC<ProductModalProps> = ({ visible, onClose, onReload,
               label="Giảm giá (%)"
               rules={[{ type: "number", min: 0, max: 100 }]}
             >
-              <InputNumber min={0} max={100} className="w-full" placeholder="Nhập % giảm giá" />
+              <InputNumber
+                min={0}
+                max={100}
+                className="w-full"
+                placeholder="Nhập % giảm giá"
+              />
             </Form.Item>
           </Col>
 
           <Col span={12}>
-            <Form.Item name="status" label="Tình trạng" rules={[{ required: true }]}>
+            <Form.Item
+              name="status"
+              label="Tình trạng"
+              rules={[{ required: true }]}
+            >
               <Select placeholder="Chọn tình trạng">
                 <Option value="available">Còn hàng</Option>
                 <Option value="out_of_stock">Hết hàng</Option>
               </Select>
             </Form.Item>
 
-            <Form.Item name="category_id" label="Danh mục" rules={[{ required: true }]}>
+            <Form.Item
+              name="category_id"
+              label="Danh mục"
+              rules={[{ required: true }]}
+            >
               <Select placeholder="Chọn danh mục">
                 {categories.length > 0 ? (
                   categories

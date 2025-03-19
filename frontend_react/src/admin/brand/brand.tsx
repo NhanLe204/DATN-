@@ -1,9 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { Card, Button, Table, Modal, Form, Input, Space, notification } from 'antd';
-import { PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
-import { motion } from 'framer-motion';
-import { Typography } from 'antd';
-import brandApi from '../api/brandApi';
+import React, { useState, useEffect } from "react";
+import {
+  Card,
+  Button,
+  Table,
+  Modal,
+  Form,
+  Input,
+  Space,
+  notification,
+} from "antd";
+import { PlusOutlined, DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import { motion } from "framer-motion";
+import { Typography } from "antd";
+import brandApi from "../../api/brandApi";
 
 const { Title } = Typography;
 
@@ -31,7 +40,7 @@ const BrandManager: React.FC = () => {
       }));
       setBrands(brandData);
     } catch (error) {
-      console.error('Lỗi khi lấy danh sách brand:', error);
+      console.error("Lỗi khi lấy danh sách brand:", error);
     }
   };
 
@@ -40,15 +49,24 @@ const BrandManager: React.FC = () => {
   }, []);
 
   const columns = [
-    { title: 'ID', dataIndex: 'id', key: 'id' },
-    { title: 'Tên Brand', dataIndex: 'brand_name', key: 'brand_name' },
+    { title: "ID", dataIndex: "id", key: "id" },
+    { title: "Tên Brand", dataIndex: "brand_name", key: "brand_name" },
     {
-      title: 'Chức năng',
-      key: 'action',
+      title: "Chức năng",
+      key: "action",
       render: (_: any, record: Brand) => (
         <Space>
-          <Button icon={<EditOutlined />} onClick={() => handleEdit(record)} size="small" />
-          <Button icon={<DeleteOutlined />} danger onClick={() => handleDelete(record)} size="small" />
+          <Button
+            icon={<EditOutlined />}
+            onClick={() => handleEdit(record)}
+            size="small"
+          />
+          <Button
+            icon={<DeleteOutlined />}
+            danger
+            onClick={() => handleDelete(record)}
+            size="small"
+          />
         </Space>
       ),
     },
@@ -62,23 +80,23 @@ const BrandManager: React.FC = () => {
 
   const handleDelete = (record: Brand) => {
     Modal.confirm({
-      title: 'Xác nhận',
-      content: 'Bạn có chắc muốn xóa brand này?',
-      okText: 'Đồng ý',
-      cancelText: 'Hủy bỏ',
+      title: "Xác nhận",
+      content: "Bạn có chắc muốn xóa brand này?",
+      okText: "Đồng ý",
+      cancelText: "Hủy bỏ",
       onOk: async () => {
         try {
           await brandApi.delete(record.id);
-          setBrands(brands.filter(b => b.key !== record.key));
+          setBrands(brands.filter((b) => b.key !== record.key));
           notification.success({
-            message: 'Thành công',
-            description: 'Brand đã được xóa thành công!',
-            placement: 'topRight',
+            message: "Thành công",
+            description: "Brand đã được xóa thành công!",
+            placement: "topRight",
             duration: 2,
           });
         } catch (error) {
-          console.error('Lỗi khi xóa brand:', error);
-          Modal.error({ title: 'Lỗi', content: 'Không thể xóa brand!' });
+          console.error("Lỗi khi xóa brand:", error);
+          Modal.error({ title: "Lỗi", content: "Không thể xóa brand!" });
         }
       },
     });
@@ -88,18 +106,26 @@ const BrandManager: React.FC = () => {
     form.validateFields().then(async (values) => {
       if (selectedBrand) {
         try {
-          await brandApi.update(selectedBrand.id, { brand_name: values.brand_name });
-          setBrands(brands.map(b => (b.key === selectedBrand.key ? { ...b, brand_name: values.brand_name } : b)));
+          await brandApi.update(selectedBrand.id, {
+            brand_name: values.brand_name,
+          });
+          setBrands(
+            brands.map((b) =>
+              b.key === selectedBrand.key
+                ? { ...b, brand_name: values.brand_name }
+                : b
+            )
+          );
           setIsEditModalVisible(false);
           notification.success({
-            message: 'Thành công',
-            description: 'Brand đã được cập nhật thành công!',
-            placement: 'topRight',
+            message: "Thành công",
+            description: "Brand đã được cập nhật thành công!",
+            placement: "topRight",
             duration: 2,
           });
         } catch (error) {
-          console.error('Lỗi khi cập nhật brand:', error);
-          Modal.error({ title: 'Lỗi', content: 'Không thể cập nhật brand!' });
+          console.error("Lỗi khi cập nhật brand:", error);
+          Modal.error({ title: "Lỗi", content: "Không thể cập nhật brand!" });
         }
       }
     });
@@ -113,11 +139,17 @@ const BrandManager: React.FC = () => {
   const handleAddModalOk = () => {
     form.validateFields().then(async (values) => {
       try {
-        const response = await brandApi.create({ brand_name: values.brand_name });
-        console.log('API Response:', response);
+        const response = await brandApi.create({
+          brand_name: values.brand_name,
+        });
+        console.log("API Response:", response);
 
         // Lấy ID từ response (điều chỉnh dựa trên cấu trúc thực tế của API)
-        const brandId = response?.data?._id || response?._id || response?.id || response?.data?.id;
+        const brandId =
+          response?.data?._id ||
+          response?._id ||
+          response?.id ||
+          response?.data?.id;
 
         if (brandId) {
           const newBrand: Brand = {
@@ -127,7 +159,9 @@ const BrandManager: React.FC = () => {
           };
           setBrands([...brands, newBrand]);
         } else {
-          console.warn('Không tìm thấy ID trong response, làm mới danh sách từ server');
+          console.warn(
+            "Không tìm thấy ID trong response, làm mới danh sách từ server"
+          );
         }
 
         // Làm mới danh sách từ server để đảm bảo ID chính xác
@@ -136,14 +170,14 @@ const BrandManager: React.FC = () => {
         setIsAddModalVisible(false);
         form.resetFields();
         notification.success({
-          message: 'Thành công',
-          description: 'Brand đã được thêm thành công!',
-          placement: 'topRight',
+          message: "Thành công",
+          description: "Brand đã được thêm thành công!",
+          placement: "topRight",
           duration: 2,
         });
       } catch (error) {
-        console.error('Lỗi khi thêm brand:', error);
-        Modal.error({ title: 'Lỗi', content: 'Không thể thêm brand!' });
+        console.error("Lỗi khi thêm brand:", error);
+        Modal.error({ title: "Lỗi", content: "Không thể thêm brand!" });
       }
     });
   };
@@ -155,13 +189,21 @@ const BrandManager: React.FC = () => {
   };
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       <Card
         title={<Title level={4}>Quản lý Brand</Title>}
         bordered={false}
         className="shadow-sm"
         extra={
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleAddModalOpen}>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={handleAddModalOpen}
+          >
             Thêm Brand
           </Button>
         }
@@ -172,7 +214,8 @@ const BrandManager: React.FC = () => {
           pagination={{ pageSize: 10 }}
           rowSelection={{
             selectedRowKeys: selectedRows,
-            onChange: (selectedRowKeys) => setSelectedRows(selectedRowKeys as string[]),
+            onChange: (selectedRowKeys) =>
+              setSelectedRows(selectedRowKeys as string[]),
           }}
           className="overflow-x-auto"
         />
@@ -194,7 +237,7 @@ const BrandManager: React.FC = () => {
             <Form.Item
               label="Tên Brand"
               name="brand_name"
-              rules={[{ required: true, message: 'Vui lòng nhập tên brand!' }]}
+              rules={[{ required: true, message: "Vui lòng nhập tên brand!" }]}
             >
               <Input />
             </Form.Item>
@@ -214,7 +257,7 @@ const BrandManager: React.FC = () => {
           <Form.Item
             label="Tên Brand"
             name="brand_name"
-            rules={[{ required: true, message: 'Vui lòng nhập tên brand!' }]}
+            rules={[{ required: true, message: "Vui lòng nhập tên brand!" }]}
           >
             <Input />
           </Form.Item>

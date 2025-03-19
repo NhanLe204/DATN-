@@ -11,6 +11,8 @@ import CateProduct from "../../components/cateproduct";
 import "slick-carousel/slick/slick.css"; // Import CSS cho slick
 import "slick-carousel/slick/slick-theme.css"; // Import theme CSS
 import ENV_VARS from "../../../config";
+import productsApi from "../../api/productsAPI";
+import categoryApi from "../../api/categoryApi";
 
 export default function Home() {
   const [newProduct, setNewProduct] = useState([]);
@@ -19,7 +21,9 @@ export default function Home() {
   const [productsByCategory, setProductsByCategory] = useState<{
     [key: string]: any[];
   }>({}); // Lưu sản phẩm theo danh mục
-  const [categories, setCategories] = useState<{ _id: string; name: string }[]>([]);
+  const [categories, setCategories] = useState<{ _id: string; name: string }[]>(
+    []
+  );
 
   const images = [
     "/images/banners/1.png",
@@ -35,53 +39,26 @@ export default function Home() {
     const fetchProducts = async () => {
       try {
         // Lấy danh mục
-        const categoriesResponse = await fetch(
-          `${ENV_VARS.VITE_API_URL}/api/v1/categories`,
-          { cache: "no-store" }
-        );
-        const categoriesData = await categoriesResponse.json();
+        const categoriesResponse = await categoryApi.getCategoriesActive();
+        const categoriesData = await categoriesResponse.data.result;
         console.log("Categories API Data:", categoriesData);
-        if (categoriesData.success) {
-          // Lọc các danh mục có status "active"
-          const activeCategories = categoriesData.result.filter(
-            (cat) => cat.status === "active"
-          );
-          setCategories(activeCategories);
-        } else {
-          console.error("Failed to fetch categories:", categoriesData.message);
-          setCategories([]); // Đảm bảo categories là mảng rỗng nếu lỗi
-        }
+        // Set dữ liệu product active ko cần check nữa
+        setCategories(categoriesData);
 
-        const newProductResponse = await fetch(
-          `${ENV_VARS.VITE_API_URL}/api/v1/newproducts`,
-          {
-            cache: "no-store",
-          }
-        );
-        const newProductData = await newProductResponse.json();
-        console.log("API Data in homepage:", newProductData);
-        setNewProduct(newProductData.products || []);
+        const newProductResponse = await productsApi.getNewProducts();
+        const newProductData = newProductResponse.data.result;
+        console.log("API Data newProduct in homepage:", newProductData);
+        setNewProduct(newProductData || []);
 
-        const saleProductResponse = await fetch(
-          `${ENV_VARS.VITE_API_URL}/api/v1/saleproducts`,
-          {
-            cache: "no-store",
-          }
-        );
-        const saleProductData = await saleProductResponse.json();
-        console.log("API Data in homepage:", saleProductData);
-        setSaleProduct(saleProductData.products || []);
+        const saleProductResponse = await productsApi.getSaleproducts();
+        const saleProductData = await saleProductResponse.data.result;
+        console.log("API Data Saleproducts in homepage:", saleProductData);
+        setSaleProduct(saleProductData || []);
 
-        const hotProductResponse = await fetch(
-          `${ENV_VARS.VITE_API_URL}/api/v1/hotproducts`,
-          {
-            cache: "no-store",
-          }
-        );
-        const hotProductData = await hotProductResponse.json();
-        console.log("API Data in homepage:", hotProductData);
-        setHotProduct(hotProductData.products || []);
-        
+        const hotProductResponse = await productsApi.getHotproducts();
+        const hotProductData = await hotProductResponse.data.result;
+        console.log("API Data Hotproducts in homepage:", hotProductData);
+        setHotProduct(hotProductData || []);
       } catch (error) {
         console.error("Error fetching products:", error);
         setCategories([]);
@@ -91,33 +68,35 @@ export default function Home() {
   }, []);
 
   // Lấy sản phẩm theo danh mục sau khi categories được cập nhật
-  useEffect(() => {
-    const fetchProductsByCategory = async () => {
-      if (categories.length === 0) return; // Không làm gì nếu categories rỗng
+  // useEffect(() => {
+  //   const fetchProductsByCategory = async () => {
+  //     if (categories.length === 0) return; // Không làm gì nếu categories rỗng
 
-      try {
-        const categoryPromises = categories.map(async (category) => {
-          const productResponse = await fetch(
-            `${ENV_VARS.VITE_API_URL}/api/v1/products/cate/${category._id}`,
-            { cache: "no-store" }
-          );
-          const productData = await productResponse.json();
-          const limitedProducts = productData.products ? productData.products.slice(0, 8) : [];
-          return { [category.name]: limitedProducts };
-        });
+  //     try {
+  //       const categoryPromises = categories.map(async (category) => {
+  //         const productResponse = await fetch(
+  //           `${ENV_VARS.VITE_API_URL}/v1/products/cate/${category._id}`,
+  //           { cache: "no-store" }
+  //         );
+  //         const productData = await productResponse.json();
+  //         const limitedProducts = productData.products
+  //           ? productData.products.slice(0, 8)
+  //           : [];
+  //         return { [category.name]: limitedProducts };
+  //       });
 
-        const categoryProducts = await Promise.all(categoryPromises);
-        const productsMap = categoryProducts.reduce((acc, curr) => {
-          return { ...acc, ...curr };
-        }, {});
-        setProductsByCategory(productsMap);
-      } catch (error) {
-        console.error("Error fetching products by category:", error);
-        setProductsByCategory({}); // Reset nếu lỗi
-      }
-    };
-    fetchProductsByCategory();
-  }, [categories]);
+  //       const categoryProducts = await Promise.all(categoryPromises);
+  //       const productsMap = categoryProducts.reduce((acc, curr) => {
+  //         return { ...acc, ...curr };
+  //       }, {});
+  //       setProductsByCategory(productsMap);
+  //     } catch (error) {
+  //       console.error("Error fetching products by category:", error);
+  //       setProductsByCategory({}); // Reset nếu lỗi
+  //     }
+  //   };
+  //   fetchProductsByCategory();
+  // }, [categories]);
 
   // Cấu hình settings cho Slider
   const settings = {
