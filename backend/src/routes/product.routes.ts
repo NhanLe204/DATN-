@@ -33,8 +33,8 @@ productRouter.patch(
   uploadProductImage
 );
 productRouter.get('/products/cate/:id', getProductByCategoryID);
-productRouter.get('/products/status/active', verifyToken, getProductActive);
-productRouter.get('/products/tags/:id', verifyToken, getProductByTagId);
+productRouter.get('/products/status/active', getProductActive);
+productRouter.get('/products/tags/:id', getProductByTagId);
 // productRouter.delete('/products/:id', protectRoute, requireAdmin, toggleProduct);
 
 export default productRouter;

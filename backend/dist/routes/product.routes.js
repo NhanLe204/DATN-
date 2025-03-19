@@ -13,8 +13,8 @@ productRouter.post('/products', verifyToken, requireAdmin, insertProduct);
 productRouter.patch('/products/:id', verifyToken, requireAdmin, updateProduct);
 productRouter.patch('/products/uploadimage/:id', verifyToken, requireAdmin, uploader.array('images_url', 12), uploadProductImage);
 productRouter.get('/products/cate/:id', getProductByCategoryID);
-productRouter.get('/products/status/active', verifyToken, getProductActive);
-productRouter.get('/products/tags/:id', verifyToken, getProductByTagId);
+productRouter.get('/products/status/active', getProductActive);
+productRouter.get('/products/tags/:id', getProductByTagId);
 // productRouter.delete('/products/:id', protectRoute, requireAdmin, toggleProduct);
 export default productRouter;
 //# sourceMappingURL=product.routes.js.map

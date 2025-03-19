@@ -61,8 +61,8 @@ export const updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
         console.log(id, 'ID');
-        const { name, description, price, category_id, image_url, brand_id, status } = req.body;
-        if (!name || !description || !price || !category_id || !image_url || !brand_id || !status) {
+        const { name, description, price, category_id, image_url, brand_id, tag_id, status } = req.body;
+        if (!name || !description || !price || !category_id || !image_url || !brand_id || tag_id || !status) {
             res.status(400).json({
                 success: false,
                 message: 'Vui lòng cung cấp đầy đủ các trường của sản phẩm'
@@ -73,7 +73,7 @@ export const updateProduct = async (req, res) => {
             res.status(400).json({ success: false, message: 'Trạng thái sản phẩm không hợp lệ' });
             return;
         }
-        const updatedProduct = await productModel.findByIdAndUpdate(id, { name, description, price, category_id, image_url, brand_id, status }, { new: true, runValidators: true });
+        const updatedProduct = await productModel.findByIdAndUpdate(id, { name, description, price, category_id, image_url, brand_id, tag_id, status }, { new: true, runValidators: true });
         if (!updatedProduct) {
             res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
             return;

@@ -19,7 +19,9 @@ export default function Home() {
   const [productsByCategory, setProductsByCategory] = useState<{
     [key: string]: any[];
   }>({}); // Lưu sản phẩm theo danh mục
-  const [categories, setCategories] = useState<{ _id: string; name: string }[]>([]);
+  const [categories, setCategories] = useState<{ _id: string; name: string }[]>(
+    []
+  );
 
   const images = [
     "/images/banners/1.png",
@@ -81,7 +83,6 @@ export default function Home() {
         const hotProductData = await hotProductResponse.json();
         console.log("API Data in homepage:", hotProductData);
         setHotProduct(hotProductData.products || []);
-        
       } catch (error) {
         console.error("Error fetching products:", error);
         setCategories([]);
@@ -102,7 +103,9 @@ export default function Home() {
             { cache: "no-store" }
           );
           const productData = await productResponse.json();
-          const limitedProducts = productData.products ? productData.products.slice(0, 8) : [];
+          const limitedProducts = productData.products
+            ? productData.products.slice(0, 8)
+            : [];
           return { [category.name]: limitedProducts };
         });
 

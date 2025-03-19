@@ -62,9 +62,9 @@ export const updateProduct = async (req: Request, res: Response): Promise<void> 
   try {
     const { id } = req.params;
     console.log(id, 'ID');
-    const { name, description, price, category_id, image_url, brand_id, status } = req.body;
+    const { name, description, price, category_id, image_url, brand_id, tag_id, status } = req.body;
 
-    if (!name || !description || !price || !category_id || !image_url || !brand_id || !status) {
+    if (!name || !description || !price || !category_id || !image_url || !brand_id || tag_id || !status) {
       res.status(400).json({
         success: false,
         message: 'Vui lòng cung cấp đầy đủ các trường của sản phẩm'
@@ -78,7 +78,7 @@ export const updateProduct = async (req: Request, res: Response): Promise<void> 
 
     const updatedProduct = await productModel.findByIdAndUpdate(
       id,
-      { name, description, price, category_id, image_url, brand_id, status },
+      { name, description, price, category_id, image_url, brand_id, tag_id, status },
       { new: true, runValidators: true }
     );
 
