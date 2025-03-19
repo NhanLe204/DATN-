@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-
 import {
   Card,
   Button,
@@ -62,7 +61,7 @@ const UserList: React.FC = () => {
           email: user.email,
           phone_number: user.phone_number || "Chưa có",
           createdAt: new Date(user.createdAt).toLocaleDateString("vi-VN"),
-          status: user.status === "active" ? "Hoạt động" : "Bị khóa", // Dùng 'active' thay vì 'ACTIVE'
+          status: user.status === "active" ? "Hoạt động" : "Bị khóa",
           role: user.role || "USER",
         }));
         setUsers(fetchedUsers);
@@ -153,10 +152,7 @@ const UserList: React.FC = () => {
       const values = await form.validateFields();
       const token = localStorage.getItem("accessToken");
       const updatedData = {
-        fullname: values.fullname,
-        email: values.email,
-        phone_number: values.phone_number,
-        status: values.status === "Hoạt động" ? "active" : "inactive", // Dùng 'active' và 'inactive'
+        status: values.status === "Hoạt động" ? "active" : "inactive", // Chỉ gửi status
       };
       const response = await axios.patch(
         `${API_BASE_URL}/users/${selectedUser?._id}`,
@@ -166,21 +162,21 @@ const UserList: React.FC = () => {
       setUsers(
         users.map((u) =>
           u.key === selectedUser?.key
-            ? { ...u, ...updatedData, status: values.status }
+            ? { ...u, status: values.status }
             : u
         )
       );
       setIsModalVisible(false);
       notification.success({
         message: "Thành công",
-        description: "Thông tin người dùng đã được cập nhật thành công!",
+        description: "Trạng thái người dùng đã được cập nhật thành công!",
         placement: "topRight",
       });
     } catch (error) {
       console.error("Error updating user:", error);
       notification.error({
         message: "Lỗi",
-        description: "Có lỗi khi cập nhật thông tin người dùng!",
+        description: "Có lỗi khi cập nhật trạng thái người dùng!",
         placement: "topRight",
       });
     }
@@ -219,33 +215,14 @@ const UserList: React.FC = () => {
             <Form.Item label="ID người dùng" name="_id">
               <Input value={selectedUser._id} disabled />
             </Form.Item>
-            <Form.Item
-              label="Tên tài khoản"
-              name="fullname"
-              rules={[
-                { required: true, message: "Vui lòng nhập tên tài khoản!" },
-              ]}
-            >
-              <Input />
+            <Form.Item label="Tên tài khoản" name="fullname">
+              <Input disabled />
             </Form.Item>
-            <Form.Item
-              label="Email"
-              name="email"
-              rules={[
-                { required: true, message: "Vui lòng nhập email!" },
-                { type: "email", message: "Email không hợp lệ!" },
-              ]}
-            >
-              <Input />
+            <Form.Item label="Email" name="email">
+              <Input disabled />
             </Form.Item>
-            <Form.Item
-              label="Số điện thoại"
-              name="phone_number"
-              rules={[
-                { required: true, message: "Vui lòng nhập số điện thoại!" },
-              ]}
-            >
-              <Input />
+            <Form.Item label="Số điện thoại" name="phone_number">
+              <Input disabled />
             </Form.Item>
             <Form.Item label="Ngày đăng ký">
               <Input value={selectedUser.createdAt} disabled />
