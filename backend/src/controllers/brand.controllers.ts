@@ -77,7 +77,23 @@ export const insertBrand = async (req: Request, res: Response): Promise<void> =>
     res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 };
-
+export const deleteBrand = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const result = await brandModel.findByIdAndDelete(id);
+    if (!result) {
+      res.status(404).json({ message: 'Brand not found' });
+      return;
+    }
+    res.status(200).json({ message: 'Brand deleted successfully' });
+  } catch (error) {
+    if (error instanceof Error) {
+      res.status(500).json({ message: 'Server error', error: error.message });
+    } else {
+      res.status(500).json({ message: 'Server error', error });
+    }
+  }
+};
 export const updateBrand = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
