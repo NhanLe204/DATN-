@@ -1,6 +1,4 @@
 import { createSlice } from "@reduxjs/toolkit";
-
-// Hàm helper để lấy accountID từ localStorage
 const getUserIdFromLocal = () => {
   return localStorage.getItem("accountID") || null;
 };
@@ -26,21 +24,20 @@ const cartSlice = createSlice({
   reducers: {
     setUserId: (state, action) => {
       const newUserId = action.payload;
-      state.userId = newUserId;
-
+    state.userId = newUserId;
       if (newUserId) {
         // Khi đăng nhập: lưu userId mới
         localStorage.setItem("accountID", newUserId);
         // Cập nhật state.items với cart của userId mới
         state.items = getCartForUser(newUserId);
       } else {
-        // Khi đăng xuất: chỉ xóa accountID, giữ lại carts của các user khác
+        // Khi đăng xuất: xóa accountID và toàn bộ carts
         localStorage.removeItem("accountID");
+        localStorage.removeItem("carts"); // Xóa toàn bộ carts khi đăng xuất
         state.userId = null;
-        state.items = []; // Reset cart trong state, nhưng không xóa localStorage.carts
+        state.items = [];
       }
     },
-
     addToCart: (state, action) => {
       if (!state.userId) {
         console.log("User must be logged in to add items to cart");
@@ -55,10 +52,8 @@ const cartSlice = createSlice({
       } else {
         state.items.push({ ...item, quantity });
       }
-      // Lưu lại toàn bộ carts vào localStorage
       saveCartsToLocal(state.userId, state.items);
     },
-
     increaseQuantity: (state, action) => {
       if (!state.userId) return;
       const item = state.items.find((cartItem) => cartItem.id === action.payload.id);
@@ -67,8 +62,7 @@ const cartSlice = createSlice({
         saveCartsToLocal(state.userId, state.items);
       }
     },
-
-    decreaseQuantity: (state, action) => {
+   decreaseQuantity: (state, action) => {
       if (!state.userId) return;
       const item = state.items.find((cartItem) => cartItem.id === action.payload.id);
       if (item && item.quantity > 1) {
@@ -76,27 +70,54 @@ const cartSlice = createSlice({
         saveCartsToLocal(state.userId, state.items);
       }
     },
-
     removeProduct: (state, action) => {
       if (!state.userId) return;
+      // Lọc bỏ sản phẩm có id tương ứng
       state.items = state.items.filter((cartItem) => cartItem.id !== action.payload.id);
-      saveCartsToLocal(state.userId, state.items);
+      // Cập nhật localStorage
+      const allCarts = getAllCartsFromLocal();
+    
+      // Nếu giỏ hàng của userId hiện tại rỗng, xóa nó khỏi allCarts
+      if (state.items.length === 0) {
+        delete allCarts[state.userId];
+        // Nếu không còn user nào trong allCarts, xóa key "carts"
+        if (Object.keys(allCarts).length === 0) {
+          localStorage.removeItem("carts");
+        } else {
+          localStorage.setItem("carts", JSON.stringify(allCarts));
+        }
+      } else {
+        // Nếu vẫn còn sản phẩm, lưu lại bình thường
+        saveCartsToLocal(state.userId, state.items);
+      }
     },
-
     clearProduct: (state) => {
       if (!state.userId) return;
       state.items = [];
-      saveCartsToLocal(state.userId, state.items);
+      // Xóa giỏ hàng của userId hiện tại khỏi localStorage
+      const allCarts = getAllCartsFromLocal();
+      delete allCarts[state.userId];
+      // Nếu không còn user nào trong allCarts, xóa key "carts"
+      if (Object.keys(allCarts).length === 0) {
+        localStorage.removeItem("carts");
+      } else {
+        localStorage.setItem("carts", JSON.stringify(allCarts));
+      }
     },
   },
 });
-
 // Hàm helper để lưu carts vào localStorage
 const saveCartsToLocal = (userId, items) => {
   const allCarts = getAllCartsFromLocal();
   allCarts[userId] = items;
-  localStorage.setItem("carts", JSON.stringify(allCarts));
-};
 
+  // Nếu không có sản phẩm nào trong allCarts, xóa key "carts"
+  const hasItems = Object.values(allCarts).some(cart => cart.length > 0);
+  if (!hasItems) {
+    localStorage.removeItem("carts");
+  } else {
+    localStorage.setItem("carts", JSON.stringify(allCarts));
+  }
+};
 export const { addToCart, increaseQuantity, decreaseQuantity, removeProduct, clearProduct, setUserId } = cartSlice.actions;
 export default cartSlice;
