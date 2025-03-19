@@ -24,6 +24,8 @@ import EmployeeList from "./admin/employee/employee";
 import Payment from "./pages/payment/payment";
 import AboutUs from "./pages/about-us/about-us";
 import Contact from "./pages/contact/contact";
+import TagManager from "./admin/tag/tag";
+import BrandManager from "./admin/brand/brand";
 // import infoservices from "./pages/infoservices/infoservices";
 function App() {
   const router = createBrowserRouter([
@@ -52,6 +54,8 @@ function App() {
         { path: "employees", element: <EmployeeList /> },
         { path: "categories", element: <CategoryList /> },
         { path: "products", element: <ProductList /> },
+        { path: "brands", element: <BrandManager /> },
+        { path: "tags", element: <TagManager /> },
         { path: "orders", element: <OrderList /> },
         { path: "services", element: <ServiceList /> },
         { path: "users", element: <UserList /> },

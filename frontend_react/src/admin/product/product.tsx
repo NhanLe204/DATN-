@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { 
-  Card, 
-  Button, 
-  Table, 
+import React, { useEffect, useState } from "react";
+import {
+  Card,
+  Button,
+  Table,
   Modal,
   Form,
   Input,
@@ -10,21 +10,24 @@ import {
   Space,
   Tag,
   Upload,
-} from 'antd';
+  message,
+} from "antd";
 import {
   PlusOutlined,
   DeleteOutlined,
   EditOutlined,
   UploadOutlined,
-} from '@ant-design/icons';
-import { motion } from 'framer-motion';
-import { Typography } from 'antd';
-
+} from "@ant-design/icons";
+import { motion } from "framer-motion";
+import { Typography } from "antd";
+import productsApi from "../api/productsAPI";
+import ProductModal from "../components/productModal";
 const { Title } = Typography;
 const { Option } = Select;
 
 interface Product {
   key: string;
+  _id: string;
   productCode: string;
   name: string;
   image: string;
@@ -32,306 +35,179 @@ interface Product {
   status: string;
   price: string;
   category: string;
+  brand?: string;
+  tag?: string;
+  category_id?: string | { _id: string; name?: string };
+  brand_id?: string | { _id: string; brand_name?: string };
+  tag_id?: string | { _id: string; tag_name?: string };
+  discount?: number;
+  image_url?: string[];
+  extra_images?: string[];
+  description?: string; // Added description field
 }
 
 const ProductList: React.FC = () => {
-  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-  const [isAddModalVisible, setIsAddModalVisible] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [selectedRows, setSelectedRows] = useState<string[]>([]);
-  const [products, setProducts] = useState<Product[]>([
-    {
-      key: '1',
-      productCode: '71309005',
-      name: 'Hạt thức ăn cho mèo',
-      image: 'https://kinpetshop.com/wp-content/uploads/thuc-an-hat-cho-meo-kit-cat-kitten-pregnant-cat-1-2kg.jpg',
-      quantity: 40,
-      status: 'Còn hàng',
-      price: '120.000 VNĐ',
-      category: 'Thức ăn cho mèo',
-    },
-    {
-      key: '2',
-      productCode: '61304005',
-      name: 'Sữa tắm hương bạc hà cho chó mèo',
-      image: 'https://tienthangvet.vn/wp-content/uploads/sua-tam-Modern-Pet-Gel-Plus-tri-ve-ran-bo-chet.jpg',
-      quantity: 70,
-      status: 'Còn hàng',
-      price: '70.000 VNĐ',
-      category: 'Sức khỏe - vệ sinh',
-    },
-  ]);
-  const [form] = Form.useForm();
-  const [fileList, setFileList] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+
+  const showModal = (product?: Product) => {
+    setEditingProduct(product || null);
+    setIsModalVisible(true);
+  };
+
+  const closeModal = () => {
+    setIsModalVisible(false);
+    setEditingProduct(null);
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      const response = await productsApi.getAll();
+      const productList = response.data.result || [];
+
+      if (!Array.isArray(productList)) {
+        throw new Error("Dữ liệu không hợp lệ từ API");
+      }
+
+      const formattedProducts = productList.map((product: any) => ({
+        key: product._id,
+        _id: product._id,
+        productCode: product._id,
+        name: product.name,
+        image: product.image_url?.[0] || "placeholder.jpg",
+        quantity: product.quantity || 0,
+        status: product.status,
+        price: product.price,
+        category: product.category_id?.name || "Không xác định",
+        brand: product.brand_id?.brand_name || "Không có thương hiệu",
+        tag: product.tag_id?.tag_name || "Không có thẻ",
+        category_id: product.category_id,
+        brand_id: product.brand_id,
+        tag_id: product.tag_id,
+        discount: product.discount,
+        image_url: product.image_url,
+        extra_images: product.image_url?.slice(1),
+        description: product.description || "Không có mô tả", // Map description from API
+      }));
+
+      setProducts(formattedProducts);
+    } catch (error) {
+      message.error("Lỗi khi tải danh sách sản phẩm!");
+      console.error("Fetch products error:", error);
+    }
+    setLoading(false);
+  };
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   const columns = [
-    { title: 'Mã sản phẩm', dataIndex: 'productCode', key: 'productCode' },
-    { title: 'Tên sản phẩm', dataIndex: 'name', key: 'name' },
-    { 
-      title: 'Ảnh', 
-      dataIndex: 'image', 
-      key: 'image',
-      render: (text: string) => <img src={text} alt="Product" className="w-16 h-16 object-cover" />
+    {
+      title: "STT",
+      key: "index",
+      width: 30,
+      render: (_: any, __: Product, index: number) =>
+        (currentPage - 1) * pageSize + index + 1,
     },
-    { title: 'Số lượng', dataIndex: 'quantity', key: 'quantity' },
-    { 
-      title: 'Tình trạng', 
-      dataIndex: 'status', 
-      key: 'status',
+    {
+      title: "Mã sản phẩm",
+      dataIndex: "productCode",
+      key: "productCode",
+      width: 50,
+    },
+    { title: "Tên sản phẩm", dataIndex: "name", key: "name", width: 200 },
+    {
+      title: "Ảnh",
+      dataIndex: "image",
+      key: "image",
+      width: 180,
+      render: (text: string) => (
+        <img src={text} alt="Product" className="w-24 h-24 object-cover" />
+      ),
+    },
+    { title: "Số lượng", dataIndex: "quantity", key: "quantity" },
+    {
+      title: "Tình trạng",
+      dataIndex: "status",
+      key: "status",
       render: (status: string) => (
-        <Tag color={status === 'Còn hàng' ? 'success' : 'error'}>{status}</Tag>
-      )
+        <Tag color={status === "available" ? "success" : "error"}>
+          {status === "available" ? "Còn hàng" : "Hết hàng"}
+        </Tag>
+      ),
     },
-    { title: 'Giá tiền', dataIndex: 'price', key: 'price' },
-    { title: 'Danh mục', dataIndex: 'category', key: 'category' },
-    { 
-      title: 'Chức năng', 
-      key: 'action',
+    { title: "Giá tiền", dataIndex: "price", key: "price" },
+    { title: "Danh mục", dataIndex: "category", key: "category" },
+    { title: "Thương hiệu", dataIndex: "brand", key: "brand" },
+    {
+      title: "Tags",
+      dataIndex: "tag",
+      key: "tag",
+      render: (tag: string) => (tag ? <Tag color="blue">{tag}</Tag> : null),
+    },
+    
+    {
+      title: "Chức năng",
+      key: "action",
       render: (_: any, record: Product) => (
         <Space>
           <Button
             icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
             size="small"
+            onClick={() => showModal(record)}
           />
-          <Button
-            icon={<DeleteOutlined />}
-            danger
-            onClick={() => handleDelete(record)}
-            size="small"
-          />
+          <Button icon={<DeleteOutlined />} danger size="small" />
         </Space>
-      )
+      ),
     },
   ];
 
-  const handleEdit = (record: Product) => {
-    setSelectedProduct(record);
-    setIsEditModalVisible(true);
-  };
-
-  const handleDelete = (record: Product) => {
-    Modal.confirm({
-      title: 'Cảnh báo',
-      content: 'Bạn có chắc chắn muốn xóa sản phẩm này?',
-      okText: 'Đồng ý',
-      cancelText: 'Hủy bỏ',
-      onOk: () => {
-        setProducts(products.filter(p => p.key !== record.key));
-      },
-    });
-  };
-
-  const handleDeleteAll = () => {
-    if (selectedRows.length === 0) {
-      Modal.warning({
-        title: 'Cảnh báo',
-        content: 'Vui lòng chọn ít nhất một sản phẩm để xóa!',
-      });
-      return;
-    }
-    Modal.confirm({
-      title: 'Cảnh báo',
-      content: 'Bạn có chắc chắn muốn xóa tất cả sản phẩm đã chọn?',
-      okText: 'Đồng ý',
-      cancelText: 'Hủy bỏ',
-      onOk: () => {
-        setProducts(products.filter(p => !selectedRows.includes(p.key)));
-        setSelectedRows([]);
-      },
-    });
-  };
-
-  const handleEditModalOk = () => {
-    setIsEditModalVisible(false);
-  };
-
-  const handleAddModalOk = () => {
-    form.validateFields().then(values => {
-      const newProduct: Product = {
-        key: Date.now().toString(),
-        productCode: values.productCode,
-        name: values.name,
-        image: fileList[0] ? URL.createObjectURL(fileList[0]) : '',
-        quantity: values.quantity,
-        status: values.status,
-        price: values.price,
-        category: values.category,
-      };
-      setProducts([...products, newProduct]);
-      setIsAddModalVisible(false);
-      setFileList([]);
-      form.resetFields();
-    });
-  };
-
-  const uploadProps = {
-    onRemove: () => setFileList([]),
-    beforeUpload: (file: any) => {
-      setFileList([file]);
-      return false;
-    },
-    fileList,
-  };
-
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Card 
+      <Card
         title={<Title level={4}>Danh sách sản phẩm</Title>}
         bordered={false}
         className="shadow-sm"
         extra={
-          <div className="space-x-2">
-            <Button 
-              type="primary" 
-              icon={<PlusOutlined />}
-              onClick={() => setIsAddModalVisible(true)}
-            >
-              Tạo mới sản phẩm
-            </Button>
-            <Button 
-              danger 
-              icon={<DeleteOutlined />}
-              onClick={handleDeleteAll}
-            >
-              Xóa tất cả
-            </Button>
-          </div>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => showModal()}
+          >
+            Thêm sản phẩm
+          </Button>
         }
       >
-        <Table 
-          columns={columns} 
-          dataSource={products} 
-          pagination={{ pageSize: 10 }}
-          rowSelection={{
-            selectedRowKeys: selectedRows,
-            onChange: (selectedRowKeys) => setSelectedRows(selectedRowKeys as string[]),
+        <Table
+          columns={columns}
+          dataSource={products}
+          loading={loading}
+          pagination={{
+            current: currentPage,
+            pageSize,
+            onChange: (page) => setCurrentPage(page),
           }}
-          className="overflow-x-auto"
         />
       </Card>
 
-      {/* Edit Modal */}
-      <Modal
-        title="Chỉnh sửa thông tin sản phẩm"
-        visible={isEditModalVisible}
-        onOk={handleEditModalOk}
-        onCancel={() => setIsEditModalVisible(false)}
-        okText="Lưu lại"
-        cancelText="Hủy bỏ"
-      >
-        {selectedProduct && (
-          <div className="space-y-4">
-            <Input addonBefore="Mã sản phẩm" value={selectedProduct.productCode} disabled />
-            <Input addonBefore="Tên sản phẩm" defaultValue={selectedProduct.name} />
-            <Input addonBefore="Số lượng" type="number" defaultValue={selectedProduct.quantity} />
-            <Select defaultValue={selectedProduct.status} className="w-full">
-              <Option value="Còn hàng">Còn hàng</Option>
-              <Option value="Hết hàng">Hết hàng</Option>
-              <Option value="Đang nhập hàng">Đang nhập hàng</Option>
-            </Select>
-            <Input addonBefore="Giá bán" defaultValue={selectedProduct.price} />
-            <Select defaultValue={selectedProduct.category} className="w-full">
-              <Option value="Thức ăn cho mèo">Thức ăn cho mèo</Option>
-              <Option value="Sức khỏe - vệ sinh">Sức khỏe - vệ sinh</Option>
-            </Select>
-          </div>
-        )}
-      </Modal>
-
-      {/* Add Modal */}
-      <Modal
-        title="Tạo mới sản phẩm"
-        visible={isAddModalVisible}
-        onOk={handleAddModalOk}
-        onCancel={() => setIsAddModalVisible(false)}
-        okText="Lưu lại"
-        cancelText="Hủy bỏ"
-        width={800}
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          className="grid grid-cols-1 md:grid-cols-2 gap-4"
-        >
-          <Form.Item
-            label="Mã sản phẩm"
-            name="productCode"
-            rules={[{ required: true, message: 'Vui lòng nhập mã sản phẩm!' }]}
-          >
-            <Input type="number" />
-          </Form.Item>
-          <Form.Item
-            label="Tên sản phẩm"
-            name="name"
-            rules={[{ required: true, message: 'Vui lòng nhập tên sản phẩm!' }]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            label="Số lượng"
-            name="quantity"
-            rules={[{ required: true, message: 'Vui lòng nhập số lượng!' }]}
-          >
-            <Input type="number" />
-          </Form.Item>
-          <Form.Item
-            label="Tình trạng"
-            name="status"
-            rules={[{ required: true, message: 'Vui lòng chọn tình trạng!' }]}
-          >
-            <Select>
-              <Option value="Còn hàng">Còn hàng</Option>
-              <Option value="Hết hàng">Hết hàng</Option>
-            </Select>
-          </Form.Item>
-          <Form.Item
-            label="Danh mục"
-            name="category"
-            rules={[{ required: true, message: 'Vui lòng chọn danh mục!' }]}
-          >
-            <Select>
-              <Option value="Thức ăn cho mèo">Thức ăn cho mèo</Option>
-              <Option value="Sức khỏe - vệ sinh">Sức khỏe - vệ sinh</Option>
-              <Option value="Phụ kiện">Phụ kiện</Option>
-            </Select>
-          </Form.Item>
-          <Form.Item
-            label="Giá bán"
-            name="price"
-            rules={[{ required: true, message: 'Vui lòng nhập giá bán!' }]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            label="Giá vốn"
-            name="costPrice"
-            rules={[{ required: true, message: 'Vui lòng nhập giá vốn!' }]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            label="Ảnh sản phẩm"
-            name="image"
-            rules={[{ required: true, message: 'Vui lòng tải lên ảnh sản phẩm!' }]}
-          >
-            <Upload {...uploadProps} listType="picture">
-              <Button icon={<UploadOutlined />}>Chọn ảnh</Button>
-            </Upload>
-          </Form.Item>
-          <Form.Item
-            label="Mô tả sản phẩm"
-            name="description"
-            className="col-span-1 md:col-span-2"
-          >
-            <Input.TextArea rows={4} />
-          </Form.Item>
-        </Form>
-      </Modal>
+      <ProductModal
+        visible={isModalVisible}
+        onClose={closeModal}
+        onReload={fetchProducts}
+        product={editingProduct}
+      />
     </motion.div>
   );
 };
