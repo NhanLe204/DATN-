@@ -22,6 +22,7 @@ import { motion } from "framer-motion";
 import { Typography } from "antd";
 import productsApi from "../api/productsAPI";
 import ProductModal from "../components/productModal";
+
 const { Title } = Typography;
 const { Option } = Select;
 
@@ -43,7 +44,7 @@ interface Product {
   discount?: number;
   image_url?: string[];
   extra_images?: string[];
-  description?: string; // Added description field
+  description?: string;
 }
 
 const ProductList: React.FC = () => {
@@ -82,7 +83,9 @@ const ProductList: React.FC = () => {
         _id: product._id,
         productCode: product._id,
         name: product.name,
-        image: product.image_url?.[0] || "placeholder.jpg",
+        image: product.image_url?.[0]
+          ? `/images/products/${product.image_url[0]}`
+          : "/images/products/placeholder.jpg",
         quantity: product.quantity || 0,
         status: product.status,
         price: product.price,
@@ -95,15 +98,27 @@ const ProductList: React.FC = () => {
         discount: product.discount,
         image_url: product.image_url,
         extra_images: product.image_url?.slice(1),
-        description: product.description || "Không có mô tả", // Map description from API
+        description: product.description || "Không có mô tả",
       }));
 
       setProducts(formattedProducts);
     } catch (error) {
       message.error("Lỗi khi tải danh sách sản phẩm!");
-      console.error("Fetch products error:", error);
+      console.error("Lỗi khi lấy sản phẩm:", error);
     }
     setLoading(false);
+  };
+
+  // Thêm hàm handleHide để ẩn sản phẩm
+  const handleHide = async (id: string) => {
+    try {
+      await productsApi.hide(id);
+      message.success("Sản phẩm đã được ẩn thành công!");
+      fetchProducts(); // Làm mới danh sách sản phẩm
+    } catch (error) {
+      message.error("Lỗi khi ẩn sản phẩm!");
+      console.error("Hide product error:", error);
+    }
   };
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -153,7 +168,6 @@ const ProductList: React.FC = () => {
       key: "tag",
       render: (tag: string) => (tag ? <Tag color="blue">{tag}</Tag> : null),
     },
-    
     {
       title: "Chức năng",
       key: "action",
@@ -164,7 +178,12 @@ const ProductList: React.FC = () => {
             size="small"
             onClick={() => showModal(record)}
           />
-          <Button icon={<DeleteOutlined />} danger size="small" />
+          <Button
+            icon={<DeleteOutlined />}
+            danger
+            size="small"
+            onClick={() => handleHide(record._id)} // Gắn hàm handleHide
+          />
         </Space>
       ),
     },

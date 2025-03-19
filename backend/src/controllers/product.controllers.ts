@@ -58,11 +58,12 @@ export const insertProduct = async (req: Request, res: Response): Promise<void> 
     res.status(500).json({ message: 'Error creating product', error });
   }
 };
+
 export const updateProduct = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     console.log(id, 'ID');
-    const { name, description, price, category_id, image_url, brand_id, status } = req.body;
+    const { name, description, price, category_id, image_url, brand_id, status, tag_id } = req.body;
 
     if (!name || !description || !price || !category_id || !image_url || !brand_id || !status) {
       res.status(400).json({
@@ -78,7 +79,7 @@ export const updateProduct = async (req: Request, res: Response): Promise<void> 
 
     const updatedProduct = await productModel.findByIdAndUpdate(
       id,
-      { name, description, price, category_id, image_url, brand_id, status },
+      { name, description, price, category_id, image_url, brand_id, status, tag_id },
       { new: true, runValidators: true }
     );
 
@@ -94,6 +95,7 @@ export const updateProduct = async (req: Request, res: Response): Promise<void> 
     } else {
       console.error('Error product up:', error);
     }
+    res.status(500).json({ success: false, message: 'Lỗi server khi cập nhật sản phẩm' });
   }
 };
 export const toggleProduct = async (req: Request, res: Response): Promise<void> => {
@@ -342,5 +344,60 @@ export const getProductByTagId = async (req: Request, res: Response): Promise<vo
       success: false,
       message: `Lỗi khi lấy sản phẩm dành cho ${tagName}`
     });
+  }
+};
+
+export const hideProduct = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      res.status(400).json({ success: false, message: 'Vui lòng cung cấp ID sản phẩm' });
+      return;
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json({ success: false, message: 'ID sản phẩm không hợp lệ' });
+      return;
+    }
+
+    const product = await productModel
+      .findById(id)
+      .populate('category_id')
+      .populate('brand_id')
+      .populate('tag_id');
+    if (!product) {
+      res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm' });
+      return;
+    }
+
+    if (product.status === ProductStatus.OUT_OF_STOCK) {
+      res.status(400).json({ success: false, message: 'Sản phẩm đã bị ẩn (trạng thái: Hết hàng)' });
+      return;
+    }
+
+    if (product.status === ProductStatus.AVAILABLE) {
+      product.status = ProductStatus.OUT_OF_STOCK;
+      await product.save();
+
+      res.status(200).json({
+        success: true,
+        message: 'Sản phẩm đã được chuyển sang trạng thái Hết hàng',
+        product,
+      });
+      return;
+    }
+
+    res.status(400).json({
+      success: false,
+      message: `Không thể ẩn sản phẩm với trạng thái hiện tại: ${product.status}`,
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Lỗi khi ẩn sản phẩm: ${error.message}`);
+    } else {
+      console.error('Lỗi khi ẩn sản phẩm:', error);
+    }
+    res.status(500).json({ success: false, message: 'Lỗi server khi ẩn sản phẩm' });
   }
 };

@@ -14,15 +14,21 @@ interface ProductModalProps {
   onClose: () => void;
   onReload: () => void;
   product?: {
+    key: string;
     _id: string;
+    productCode: string;
     name: string;
+    image: string;
     quantity: number;
-    price: string;
-    discount?: number;
     status: string;
-    category_id?: string | { _id: string; name: string };
-    brand_id?: string | { _id: string; brand_name: string };
-    tag_id?: string | string[] | { _id: string; tag_name: string }; // Cập nhật để hỗ trợ mảng
+    price: string;
+    category: string;
+    brand?: string;
+    tag?: string;
+    category_id?: string | { _id: string; name?: string };
+    brand_id?: string | { _id: string; brand_name?: string };
+    tag_id?: string | { _id: string; tag_name?: string };
+    discount?: number;
     image_url?: string | string[];
     extra_images?: string[];
     description?: string;
@@ -53,7 +59,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ visible, onClose, onReload,
         setBrands(brandData);
 
         const tagResponse = await tagApi.getAll();
-        console.log("Tag API response result:", tagResponse.data.result); // Kiểm tra chi tiết
+        console.log("Tag API response result:", tagResponse.data.result);
         const tagData = Array.isArray(tagResponse.data.result) ? tagResponse.data.result : [];
         setTags(tagData);
       } catch (error) {
@@ -74,6 +80,17 @@ const ProductModal: React.FC<ProductModalProps> = ({ visible, onClose, onReload,
     if (product && visible) {
       console.log("Product received in ProductModal:", product);
       console.log("Product tag_id:", product.tag_id);
+
+      // Xử lý tag_id chỉ lấy 1 giá trị
+      let tagId: string | undefined;
+      if (product.tag_id) {
+        if (typeof product.tag_id === "string") {
+          tagId = product.tag_id;
+        } else if (product.tag_id._id) {
+          tagId = product.tag_id._id;
+        }
+      }
+
       form.setFieldsValue({
         name: product.name,
         quantity: product.quantity,
@@ -82,29 +99,38 @@ const ProductModal: React.FC<ProductModalProps> = ({ visible, onClose, onReload,
         status: product.status,
         category_id: product.category_id?._id || product.category_id,
         brand_id: product.brand_id?._id || product.brand_id || undefined,
-        tag_id: Array.isArray(product.tag_id) ? product.tag_id : product.tag_id ? [product.tag_id] : [], // Hỗ trợ mảng
+        tag_id: tagId,
         description: product.description || "",
       });
 
+      // Xử lý hình ảnh chính
       if (product.image_url) {
+        const imageUrl = Array.isArray(product.image_url)
+          ? product.image_url[0]
+          : product.image_url;
         setMainImageFileList([
           {
             uid: "-1",
             name: "image.png",
             status: "done",
-            url: Array.isArray(product.image_url) ? product.image_url[0] : product.image_url,
+            url: imageUrl.startsWith("http") || imageUrl.startsWith("/images/products/")
+              ? imageUrl
+              : `/images/products/${imageUrl}`,
           },
         ]);
       } else {
         setMainImageFileList([]);
       }
 
+      // Xử lý hình ảnh phụ
       if (product.extra_images && product.extra_images.length > 0) {
         const extraImages = product.extra_images.map((url: string, index: number) => ({
           uid: `-${index + 1}`,
           name: `extra-image-${index + 1}.png`,
           status: "done",
-          url: url,
+          url: url.startsWith("http") || url.startsWith("/images/products/")
+            ? url
+            : `/images/products/${url}`,
         }));
         setExtraImagesFileList(extraImages);
       } else {
@@ -117,7 +143,64 @@ const ProductModal: React.FC<ProductModalProps> = ({ visible, onClose, onReload,
     }
   }, [product, visible, form]);
 
+  const handleMainImageChange = async ({ fileList }: any) => {
+    const updatedFileList = await Promise.all(
+      fileList.map(async (file: any) => {
+        if (!file.url && file.originFileObj) {
+          try {
+            const formData = new FormData();
+            formData.append("image", file.originFileObj);
+            const response = await productsApi.uploadImage(formData);
+            return {
+              ...file,
+              status: "done",
+              url: `/images/products/${response.url}`,
+            };
+          } catch (error) {
+            console.error("Lỗi khi tải ảnh chính:", error);
+            message.error("Lỗi khi tải ảnh chính!");
+            return {
+              ...file,
+              status: "error",
+            };
+          }
+        }
+        return file;
+      })
+    );
+    setMainImageFileList(updatedFileList);
+  };
+
+  const handleExtraImagesChange = async ({ fileList }: any) => {
+    const updatedFileList = await Promise.all(
+      fileList.map(async (file: any) => {
+        if (!file.url && file.originFileObj) {
+          try {
+            const formData = new FormData();
+            formData.append("image", file.originFileObj);
+            const response = await productsApi.uploadImage(formData);
+            return {
+              ...file,
+              status: "done",
+              url: `/images/products/${response.url}`,
+            };
+          } catch (error) {
+            console.error("Lỗi khi tải ảnh phụ:", error);
+            message.error("Lỗi khi tải ảnh phụ!");
+            return {
+              ...file,
+              status: "error",
+            };
+          }
+        }
+        return file;
+      })
+    );
+    setExtraImagesFileList(updatedFileList);
+  };
+
   const handleSubmit = async (values: any) => {
+    console.log("Form values before submit:", values);
     try {
       const updatedValues = {
         ...values,
@@ -125,7 +208,9 @@ const ProductModal: React.FC<ProductModalProps> = ({ visible, onClose, onReload,
         extra_images: extraImagesFileList.map((file) => file.url || file.response?.url),
         discount: values.discount || 0,
         description: values.description || "",
+        tag_id: values.tag_id,
       };
+      console.log("Updated values sent to API:", updatedValues);
 
       if (product) {
         await productsApi.update(product._id, updatedValues);
@@ -137,38 +222,13 @@ const ProductModal: React.FC<ProductModalProps> = ({ visible, onClose, onReload,
       onReload();
       onClose();
     } catch (error) {
+      console.error("Submit error:", error);
       if (error.response?.status === 401) {
         message.error("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại!");
       } else {
         message.error("Lỗi khi lưu sản phẩm!");
       }
     }
-  };
-
-  const handleMainImageChange = ({ fileList }: any) => {
-    const updatedFileList = fileList.map((file: any) => {
-      if (!file.url && file.originFileObj) {
-        return {
-          ...file,
-          url: URL.createObjectURL(file.originFileObj),
-        };
-      }
-      return file;
-    });
-    setMainImageFileList(updatedFileList);
-  };
-
-  const handleExtraImagesChange = ({ fileList }: any) => {
-    const updatedFileList = fileList.map((file: any) => {
-      if (!file.url && file.originFileObj) {
-        return {
-          ...file,
-          url: URL.createObjectURL(file.originFileObj),
-        };
-      }
-      return file;
-    });
-    setExtraImagesFileList(updatedFileList);
   };
 
   return (
@@ -215,7 +275,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ visible, onClose, onReload,
               <Select placeholder="Chọn danh mục">
                 {categories.length > 0 ? (
                   categories
-                    .filter(category => category._id)
+                    .filter((category) => category._id)
                     .map((category) => (
                       <Option key={category._id} value={category._id}>
                         {category.name || "Không có tên"}
@@ -231,7 +291,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ visible, onClose, onReload,
               <Select placeholder="Chọn thương hiệu" allowClear>
                 {brands.length > 0 ? (
                   brands
-                    .filter(brand => brand._id)
+                    .filter((brand) => brand._id)
                     .map((brand) => (
                       <Option key={brand._id} value={brand._id}>
                         {brand.brand_name || "Không có tên"}
@@ -244,13 +304,17 @@ const ProductModal: React.FC<ProductModalProps> = ({ visible, onClose, onReload,
             </Form.Item>
 
             <Form.Item name="tag_id" label="Tag">
-              <Select mode="multiple" placeholder="Chọn tag">
+              <Select
+                placeholder="Chọn tag"
+                onChange={(value) => console.log("Selected tag:", value)}
+                allowClear
+              >
                 {tags.length > 0 ? (
                   tags
-                    .filter(tag => tag._id)
+                    .filter((tag) => tag._id)
                     .map((tag) => (
                       <Option key={tag._id} value={tag._id}>
-                        {tag.tag_name || "Không có tên"} {/* Sử dụng tag_name thay vì name */}
+                        {tag.tag_name || "Không có tên"}
                       </Option>
                     ))
                 ) : (

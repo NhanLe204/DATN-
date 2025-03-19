@@ -25,10 +25,15 @@ const productsApi = {
     return response.data;
   },
 
-  delete: async (id) => {
-    const response = await api.delete(`/api/v1/products/${id}`);
-    return response.data;
-  }
+  hide: async (id) => {
+    try {
+      const response = await api.patch(`/api/v1/products/hide/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error hiding product:", error.response?.data || error.message);
+      throw error;
+    }
+  },
 };
 
 export default productsApi;
