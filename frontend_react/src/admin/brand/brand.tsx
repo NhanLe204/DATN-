@@ -3,14 +3,14 @@ import { Card, Button, Table, Modal, Form, Input, Space, notification } from 'an
 import { PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import { Typography } from 'antd';
-import brandApi from '../api/brandApi'; // Sử dụng brandApi thay vì tagApi
+import brandApi from '../api/brandApi';
 
 const { Title } = Typography;
 
 interface Brand {
   key: string;
   id: string;
-  name: string;
+  brand_name: string;
 }
 
 const BrandManager: React.FC = () => {
@@ -21,28 +21,27 @@ const BrandManager: React.FC = () => {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [form] = Form.useForm();
 
+  const fetchBrands = async () => {
+    try {
+      const response = await brandApi.getAll();
+      const brandData = response.data.result.map((brand: any) => ({
+        key: brand._id,
+        id: brand._id,
+        brand_name: brand.brand_name,
+      }));
+      setBrands(brandData);
+    } catch (error) {
+      console.error('Lỗi khi lấy danh sách brand:', error);
+    }
+  };
+
   useEffect(() => {
-    const fetchBrands = async () => {
-      try {
-        const response = await brandApi.getAll();
-        console.log('Response từ API:', response);
-        console.log('response.data:', response.data);
-        const brandData = response.data.result.map((brand: any) => ({
-          key: brand._id,
-          id: brand._id,
-          name: brand.brand_name || brand.name, // Điều chỉnh theo trường dữ liệu từ API
-        }));
-        setBrands(brandData);
-      } catch (error) {
-        console.error('Lỗi khi lấy danh sách brand:', error);
-      }
-    };
     fetchBrands();
   }, []);
 
   const columns = [
     { title: 'ID', dataIndex: 'id', key: 'id' },
-    { title: 'Tên Brand', dataIndex: 'name', key: 'name' },
+    { title: 'Tên Brand', dataIndex: 'brand_name', key: 'brand_name' },
     {
       title: 'Chức năng',
       key: 'action',
@@ -57,7 +56,7 @@ const BrandManager: React.FC = () => {
 
   const handleEdit = (record: Brand) => {
     setSelectedBrand(record);
-    form.setFieldsValue({ name: record.name });
+    form.setFieldsValue({ brand_name: record.brand_name });
     setIsEditModalVisible(true);
   };
 
@@ -85,41 +84,12 @@ const BrandManager: React.FC = () => {
     });
   };
 
-  const handleDeleteAll = () => {
-    if (selectedRows.length === 0) {
-      Modal.warning({ title: 'Cảnh báo', content: 'Vui lòng chọn ít nhất một brand để xóa!' });
-      return;
-    }
-    Modal.confirm({
-      title: 'Xác nhận',
-      content: 'Bạn có chắc muốn xóa các brand đã chọn?',
-      okText: 'Đồng ý',
-      cancelText: 'Hủy bỏ',
-      onOk: async () => {
-        try {
-          await Promise.all(selectedRows.map(id => brandApi.delete(id)));
-          setBrands(brands.filter(b => !selectedRows.includes(b.key)));
-          setSelectedRows([]);
-          notification.success({
-            message: 'Thành công',
-            description: 'Các brand đã được xóa thành công!',
-            placement: 'topRight',
-            duration: 2,
-          });
-        } catch (error) {
-          console.error('Lỗi khi xóa nhiều brand:', error);
-          Modal.error({ title: 'Lỗi', content: 'Không thể xóa các brand!' });
-        }
-      },
-    });
-  };
-
   const handleEditModalOk = () => {
     form.validateFields().then(async (values) => {
       if (selectedBrand) {
         try {
-          await brandApi.update(selectedBrand.id, { brand_name: values.name }); // Điều chỉnh theo API
-          setBrands(brands.map(b => (b.key === selectedBrand.key ? { ...b, name: values.name } : b)));
+          await brandApi.update(selectedBrand.id, { brand_name: values.brand_name });
+          setBrands(brands.map(b => (b.key === selectedBrand.key ? { ...b, brand_name: values.brand_name } : b)));
           setIsEditModalVisible(false);
           notification.success({
             message: 'Thành công',
@@ -135,21 +105,34 @@ const BrandManager: React.FC = () => {
     });
   };
 
+  const handleAddModalOpen = () => {
+    form.resetFields();
+    setIsAddModalVisible(true);
+  };
+
   const handleAddModalOk = () => {
     form.validateFields().then(async (values) => {
       try {
-        const response = await brandApi.create({ brand_name: values.name }); // Điều chỉnh theo API
-        console.log('Response từ brandApi.create:', response);
-        const brandId = response.brand?._id; // Điều chỉnh theo cấu trúc response từ API
-        if (!brandId) {
-          throw new Error('Không tìm thấy ID trong response');
+        const response = await brandApi.create({ brand_name: values.brand_name });
+        console.log('API Response:', response);
+
+        // Lấy ID từ response (điều chỉnh dựa trên cấu trúc thực tế của API)
+        const brandId = response?.data?._id || response?._id || response?.id || response?.data?.id;
+
+        if (brandId) {
+          const newBrand: Brand = {
+            key: brandId,
+            id: brandId,
+            brand_name: values.brand_name,
+          };
+          setBrands([...brands, newBrand]);
+        } else {
+          console.warn('Không tìm thấy ID trong response, làm mới danh sách từ server');
         }
-        const newBrand: Brand = { 
-          key: brandId, 
-          id: brandId, 
-          name: values.name 
-        };
-        setBrands([...brands, newBrand]);
+
+        // Làm mới danh sách từ server để đảm bảo ID chính xác
+        await fetchBrands();
+
         setIsAddModalVisible(false);
         form.resetFields();
         notification.success({
@@ -165,6 +148,12 @@ const BrandManager: React.FC = () => {
     });
   };
 
+  const handleModalCancel = () => {
+    setIsEditModalVisible(false);
+    setIsAddModalVisible(false);
+    form.resetFields();
+  };
+
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
       <Card
@@ -172,14 +161,9 @@ const BrandManager: React.FC = () => {
         bordered={false}
         className="shadow-sm"
         extra={
-          <div className="space-x-2">
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsAddModalVisible(true)}>
-              Thêm Brand
-            </Button>
-            <Button danger icon={<DeleteOutlined />} onClick={handleDeleteAll}>
-              Xóa tất cả
-            </Button>
-          </div>
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleAddModalOpen}>
+            Thêm Brand
+          </Button>
         }
       >
         <Table
@@ -196,10 +180,10 @@ const BrandManager: React.FC = () => {
 
       <Modal
         title="Chỉnh sửa Brand"
-        visible={isEditModalVisible}
+        open={isEditModalVisible}
         onOk={handleEditModalOk}
-        onCancel={() => setIsEditModalVisible(false)}
-        okText="Lưu lại"
+        onCancel={handleModalCancel}
+        okText="Lưu & Đóng"
         cancelText="Hủy bỏ"
       >
         {selectedBrand && (
@@ -209,7 +193,7 @@ const BrandManager: React.FC = () => {
             </Form.Item>
             <Form.Item
               label="Tên Brand"
-              name="name"
+              name="brand_name"
               rules={[{ required: true, message: 'Vui lòng nhập tên brand!' }]}
             >
               <Input />
@@ -219,17 +203,17 @@ const BrandManager: React.FC = () => {
       </Modal>
 
       <Modal
-        title="Thêm mới Brand"
-        visible={isAddModalVisible}
+        title="Thêm Brand"
+        open={isAddModalVisible}
         onOk={handleAddModalOk}
-        onCancel={() => setIsAddModalVisible(false)}
-        okText="Lưu lại"
+        onCancel={handleModalCancel}
+        okText="Thêm"
         cancelText="Hủy bỏ"
       >
         <Form form={form} layout="vertical">
           <Form.Item
             label="Tên Brand"
-            name="name"
+            name="brand_name"
             rules={[{ required: true, message: 'Vui lòng nhập tên brand!' }]}
           >
             <Input />

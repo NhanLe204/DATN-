@@ -29,13 +29,7 @@ const productsApi = {
   delete: async (id) => {
     const response = await api.delete(`/api/v1/products/${id}`);
     return response.data;
-  },
-  getProductActive: async () => {
-    const response = await api.get("/api/v1/products/status/active");
-    return {
-      data: response.data,
-    };
-  },
+  }
 };
 
 export default productsApi;

@@ -11,7 +11,8 @@ import {
   uploadProductImage,
   getProductByCategoryID,
   getProductActive,
-  getProductByTagId
+  getProductByTagId,
+  hideProduct
 } from '../controllers/product.controllers.js';
 import { protectRoute, requireAdmin } from '../middlewares/protectRoute.js';
 import { get } from 'http';
@@ -25,6 +26,7 @@ productRouter.get('/saleproducts', getSaleProduct);
 productRouter.get('/hotproducts', getHotProduct);
 productRouter.post('/products', verifyToken, requireAdmin, insertProduct);
 productRouter.patch('/products/:id', verifyToken, requireAdmin, updateProduct);
+productRouter.patch('/products/hide/:id', verifyToken, requireAdmin, hideProduct);
 productRouter.patch(
   '/products/uploadimage/:id',
   verifyToken,
