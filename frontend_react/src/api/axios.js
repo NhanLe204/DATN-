@@ -1,7 +1,8 @@
 import axios from "axios";
+import ENV_VARS from "../../config";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: ENV_VARS.VITE_API_URL,
   headers: {
     "Content-Type": "application/json",
   },
@@ -10,7 +11,7 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("accessToken"); 
+    const token = localStorage.getItem("accessToken");
     // console.log("Token trước khi gửi request:", token);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

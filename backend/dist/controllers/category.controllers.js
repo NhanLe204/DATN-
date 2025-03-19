@@ -73,6 +73,7 @@ export const insertCategory = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
+// vẫn để nó hoạt động ( những chuyển qua api khác)
 export const updateCategory = async (req, res) => {
     try {
         const { id } = req.params;
@@ -121,19 +122,29 @@ export const toggleCategory = async (req, res) => {
         const { id } = req.params;
         const { status } = req.query;
         console.log('ID Category:', id);
-        console.log('Status Category:', Number(status));
+        console.log('Status Category:', status);
         if (!id) {
             res.status(400).json({ message: 'Vui lòng cung cấp ID danh mục' });
+            return;
+        }
+        // Kiểm tra status có hợp lệ không
+        const statusString = String(status).toLowerCase();
+        if (!Object.values(CategoryStatus).includes(statusString)) {
+            res.status(400).json({
+                message: 'Trạng thái không hợp lệ. Chỉ chấp nhận "active" hoặc "inactive"'
+            });
+            return;
         }
         // Tìm danh mục theo ID
         const category = await categoryModel.findById(id);
         if (!category) {
             res.status(404).json({ message: 'Danh mục không tồn tại' });
+            return;
         }
-        // Chuyển đổi status sang boolean (1 = true, 0 = false)
-        const isHidden = Number(status) == 1;
+        // Chuyển đổi status sang boolean (inactive = true, active = false)
+        const isHidden = statusString === CategoryStatus.INACTIVE;
         // Cập nhật trạng thái `isHidden`
-        category.is_hidden = isHidden;
+        category.status = isHidden ? 'inactive' : 'active';
         await category.save();
         res.status(200).json({
             message: isHidden ? 'Danh mục đã được ẩn thành công' : 'Danh mục đã mở lại thành công',
@@ -142,6 +153,17 @@ export const toggleCategory = async (req, res) => {
     }
     catch (error) {
         res.status(500).json({ message: 'Lỗi khi cập nhật trạng thái danh mục', error });
+        return;
     }
 };
+export const getCategoriesActive = async (req, res) => {
+    try {
+        const result = await categoryModel.find({ status: CategoryStatus.ACTIVE });
+        res.status(200).json({ success: true, result });
+    }
+    catch (error) {
+        res.status(500).json({ success: false, error });
+    }
+};
+// export const
 //# sourceMappingURL=category.controllers.js.map

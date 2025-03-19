@@ -98,43 +98,6 @@ export const updateProduct = async (req: Request, res: Response): Promise<void> 
     res.status(500).json({ success: false, message: 'Lỗi server khi cập nhật sản phẩm' });
   }
 };
-export const toggleProduct = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { id } = req.params;
-    const { status } = req.query;
-
-    console.log('ID Product:', id);
-    console.log('Status Product:', status);
-
-    if (!id) {
-      res.status(400).json({ message: 'Vui lòng cung cấp ID sản phẩm' });
-      return;
-    }
-
-    if (!status || typeof status !== 'string' || !(status.toUpperCase() in ProductStatusMapping)) {
-      res.status(400).json({ message: 'Trạng thái sản phẩm không hợp lệ' });
-      return;
-    }
-
-    const mappedStatus = ProductStatusMapping[status as keyof typeof ProductStatusMapping];
-
-    const product = await productModel.findById(id);
-    if (!product) {
-      res.status(404).json({ message: 'Sản phẩm không tồn tại' });
-      return;
-    }
-
-    product.status = mappedStatus;
-    await product.save();
-
-    res.status(200).json({
-      message: `Trạng thái sản phẩm đã được cập nhật thành công: ${mappedStatus}`,
-      product
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Lỗi khi cập nhật trạng thái sản phẩm', error });
-  }
-};
 
 export const getNewProduct = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -149,7 +112,7 @@ export const getNewProduct = async (req: Request, res: Response): Promise<void> 
       res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm mới' });
       return;
     }
-    res.status(200).json({ success: true, message: 'Lấy sản phẩm mới thành công', products: result });
+    res.status(200).json({ success: true, message: 'Lấy sản phẩm mới thành công', result });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Lỗi khi lấy sản phẩm mới', error });
   }
@@ -166,7 +129,7 @@ export const getSaleProduct = async (req: Request, res: Response): Promise<void>
       res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm giảm giá' });
       return;
     }
-    res.status(200).json({ success: true, message: 'Lấy sản phẩm giảm giá thành công', products: result });
+    res.status(200).json({ success: true, message: 'Lấy sản phẩm giảm giá thành công', result: result });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Lỗi khi lấy sản phẩm giảm giá', error });
   }
@@ -185,7 +148,7 @@ export const getHotProduct = async (req: Request, res: Response): Promise<void> 
       res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm bán chạy' });
       return;
     }
-    res.status(200).json({ success: true, message: 'Lấy sản phẩm bán chạy thành công', products: result });
+    res.status(200).json({ success: true, message: 'Lấy sản phẩm bán chạy thành công', result: result });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Lỗi khi lấy sản phẩm bán chạy', error });
   }
@@ -347,57 +310,43 @@ export const getProductByTagId = async (req: Request, res: Response): Promise<vo
   }
 };
 
-export const hideProduct = async (req: Request, res: Response): Promise<void> => {
+export const toggleProduct = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const { status } = req.query;
+
+    console.log('ID Product:', id);
+    console.log('Status Product:', status);
 
     if (!id) {
-      res.status(400).json({ success: false, message: 'Vui lòng cung cấp ID sản phẩm' });
+      res.status(400).json({ message: 'Vui lòng cung cấp ID sản phẩm' });
       return;
     }
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      res.status(400).json({ success: false, message: 'ID sản phẩm không hợp lệ' });
-      return;
-    }
-
-    const product = await productModel
-      .findById(id)
-      .populate('category_id')
-      .populate('brand_id')
-      .populate('tag_id');
-    if (!product) {
-      res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm' });
-      return;
-    }
-
-    if (product.status === ProductStatus.OUT_OF_STOCK) {
-      res.status(400).json({ success: false, message: 'Sản phẩm đã bị ẩn (trạng thái: Hết hàng)' });
-      return;
-    }
-
-    if (product.status === ProductStatus.AVAILABLE) {
-      product.status = ProductStatus.OUT_OF_STOCK;
-      await product.save();
-
-      res.status(200).json({
-        success: true,
-        message: 'Sản phẩm đã được chuyển sang trạng thái Hết hàng',
-        product,
+    // Kiểm tra status có hợp lệ không
+    const statusString = String(status).toLowerCase();
+    if (!Object.values(ProductStatus).includes(statusString as ProductStatus)) {
+      res.status(400).json({
+        message: `Trạng thái không hợp lệ. Chỉ chấp nhận ${ProductStatus.AVAILABLE}, ${ProductStatus.DISCONTINUED}, ${ProductStatus.OUT_OF_STOCK}  `
       });
       return;
     }
 
-    res.status(400).json({
-      success: false,
-      message: `Không thể ẩn sản phẩm với trạng thái hiện tại: ${product.status}`,
+    // Tìm sản phẩm theo ID
+    const product = await productModel.findById(id);
+    if (!product) {
+      res.status(404).json({ message: 'Sản phẩm không tồn tại' });
+      return;
+    }
+    product.status = statusString;
+    await product.save();
+
+    res.status(200).json({
+      message: `Sản phẩm đã được chuyển trạng thái ${statusString} thành công`,
+      product
     });
   } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Lỗi khi ẩn sản phẩm: ${error.message}`);
-    } else {
-      console.error('Lỗi khi ẩn sản phẩm:', error);
-    }
-    res.status(500).json({ success: false, message: 'Lỗi server khi ẩn sản phẩm' });
+    res.status(500).json({ message: 'Lỗi khi cập nhật trạng thái sản phẩm', error });
+    return;
   }
 };
