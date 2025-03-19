@@ -61,7 +61,9 @@ export default function LeftProductList({
   const [loadingTags, setLoadingTags] = useState(false);
   const [loadingBrands, setLoadingBrands] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [expandedTagCategory, setExpandedTagCategory] = useState<string | null>(null);
+  const [expandedTagCategory, setExpandedTagCategory] = useState<string | null>(
+    null
+  );
 
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -70,12 +72,20 @@ export default function LeftProductList({
       try {
         setLoadingTags(true);
         setError(null);
-        const response = await fetch(`${API_URL}/api/v1/tags?category_id=${categoryId}`, {
-          headers: { Accept: "application/json", "Content-Type": "application/json" },
-        });
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const response = await fetch(
+          `${API_URL}/api/v1/tags?category_id=${categoryId}`,
+          {
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        if (!response.ok)
+          throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
-        const tagsArray = data.result && Array.isArray(data.result) ? data.result : [];
+        const tagsArray =
+          data.result && Array.isArray(data.result) ? data.result : [];
         setTags((prev) => ({ ...prev, [categoryId]: tagsArray }));
       } catch (error) {
         console.error(`Error fetching tags for category ${categoryId}:`, error);
@@ -91,11 +101,16 @@ export default function LeftProductList({
       try {
         setLoadingBrands(true);
         const response = await fetch(`${API_URL}/api/v1/brands`, {
-          headers: { Accept: "application/json", "Content-Type": "application/json" },
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
         });
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response.ok)
+          throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
-        const brandsArray = data.result && Array.isArray(data.result) ? data.result : [];
+        const brandsArray =
+          data.result && Array.isArray(data.result) ? data.result : [];
         setBrands(brandsArray);
       } catch (error) {
         console.error("Error fetching brands:", error);
@@ -113,7 +128,9 @@ export default function LeftProductList({
       setExpandedTagCategory(categoryId);
       // Không reset tags ở đây nữa, để Products xử lý nếu cần
     } else {
-      setExpandedTagCategory(expandedTagCategory === categoryId ? null : categoryId);
+      setExpandedTagCategory(
+        expandedTagCategory === categoryId ? null : categoryId
+      );
     }
   };
 
@@ -169,7 +186,9 @@ export default function LeftProductList({
                 {expandedTagCategory === category._id && (
                   <ul className="ml-4 mt-1 space-y-1">
                     {loadingTags ? (
-                      <li className="text-xs text-gray-500">Đang tải tags...</li>
+                      <li className="text-xs text-gray-500">
+                        Đang tải tags...
+                      </li>
                     ) : error ? (
                       <li className="text-xs text-red-500">{error}</li>
                     ) : tags[category._id]?.length > 0 ? (

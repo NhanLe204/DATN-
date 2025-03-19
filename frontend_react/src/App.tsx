@@ -1,5 +1,9 @@
 import React from "react";
-import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
+import {
+  createBrowserRouter,
+  RouterProvider,
+  Navigate,
+} from "react-router-dom";
 import Home from "./pages/home/home";
 import PageLayout from "./components/layout/PageLayout";
 import "@fortawesome/fontawesome-free/css/all.min.css";
@@ -24,16 +28,26 @@ import EmployeeList from "./admin/employee/employee";
 import Payment from "./pages/payment/payment";
 import AboutUs from "./pages/about-us/about-us";
 import Contact from "./pages/contact/contact";
+import BrandManager from "./admin/brand/brand";
+import TagManager from "./admin/tag/tag";
 // import infoservices from "./pages/infoservices/infoservices";
 function App() {
   const router = createBrowserRouter([
     {
       path: "/login",
-      element: <PublicRoute><Login /></PublicRoute>,
+      element: (
+        <PublicRoute>
+          <Login />
+        </PublicRoute>
+      ),
     },
     {
       path: "/signup",
-      element: <PublicRoute><SignUp /></PublicRoute>,
+      element: (
+        <PublicRoute>
+          <SignUp />
+        </PublicRoute>
+      ),
     },
     {
       path: "/admin",
@@ -61,20 +75,87 @@ function App() {
       element: <PageLayout />,
       children: [
         // Route công khai (không cần đăng nhập)
-        { path: "/", element: <PublicRoute><Home /></PublicRoute> },
-        { path: "/contact", element: <PublicRoute><ContactPage /></PublicRoute> },
-        { path: "/product", element: <PublicRoute><Products /></PublicRoute> },
-        { path: "/detail/:id", element: <PublicRoute><DetailProduct /></PublicRoute> },
-        { path: "/info", element: <PublicRoute><PetSpaServices /></PublicRoute> },
-        { path: "/about-us", element: <PublicRoute><AboutUs /></PublicRoute> },
-        { path: "/service", element: <PublicRoute><SpaBookingForm /></PublicRoute> },
-        { path: "/cart", element: <PublicRoute><Cart /></PublicRoute> },
-        { path: "/checkout", element: <PublicRoute><Payment /></PublicRoute> },
+        {
+          path: "/",
+          element: (
+            <PublicRoute>
+              <Home />
+            </PublicRoute>
+          ),
+        },
+        {
+          path: "/contact",
+          element: (
+            <PublicRoute>
+              <ContactPage />
+            </PublicRoute>
+          ),
+        },
+        {
+          path: "/product",
+          element: (
+            <PublicRoute>
+              <Products />
+            </PublicRoute>
+          ),
+        },
+        {
+          path: "/detail/:id",
+          element: (
+            <PublicRoute>
+              <DetailProduct />
+            </PublicRoute>
+          ),
+        },
+        {
+          path: "/info",
+          element: (
+            <PublicRoute>
+              <PetSpaServices />
+            </PublicRoute>
+          ),
+        },
+        {
+          path: "/about-us",
+          element: (
+            <PublicRoute>
+              <AboutUs />
+            </PublicRoute>
+          ),
+        },
+        {
+          path: "/service",
+          element: (
+            <PublicRoute>
+              <SpaBookingForm />
+            </PublicRoute>
+          ),
+        },
+        {
+          path: "/cart",
+          element: (
+            <PublicRoute>
+              <Cart />
+            </PublicRoute>
+          ),
+        },
+        {
+          path: "/checkout",
+          element: (
+            <PublicRoute>
+              <Payment />
+            </PublicRoute>
+          ),
+        },
 
         // Route bảo vệ (yêu cầu đăng nhập và role "user")
         {
           path: "/userprofile/*",
-          element: <ProtectedRoute allowedRole="user"><UserProfile /></ProtectedRoute>,
+          element: (
+            <ProtectedRoute allowedRole="user">
+              <UserProfile />
+            </ProtectedRoute>
+          ),
         },
       ],
     },
