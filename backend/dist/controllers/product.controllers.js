@@ -93,7 +93,7 @@ export const updateProduct = async (req, res) => {
 export const getNewProduct = async (req, res) => {
     try {
         const result = await productModel
-            .find()
+            .find({ status: ProductStatus.AVAILABLE })
             .sort({ updatedAt: -1 })
             .limit(10)
             .populate('category_id')
@@ -111,7 +111,7 @@ export const getNewProduct = async (req, res) => {
 export const getSaleProduct = async (req, res) => {
     try {
         const result = await productModel
-            .find({ discount: { $gt: 0 } })
+            .find({ discount: { $gt: 0 }, status: ProductStatus.AVAILABLE })
             .populate('category_id')
             .populate('brand_id')
             .limit(10);
@@ -128,7 +128,7 @@ export const getSaleProduct = async (req, res) => {
 export const getHotProduct = async (req, res) => {
     try {
         const result = await productModel
-            .find()
+            .find({ status: ProductStatus.AVAILABLE })
             .sort({ quantity_sold: -1 })
             .limit(10)
             .populate('category_id')

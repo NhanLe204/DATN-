@@ -1,38 +1,53 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Breadcrumb, Button } from "antd";
 import useSWR from "swr";
 import Loader from "../../components/loader";
 import { useSelector, useDispatch } from "react-redux";
 import { addToCart } from "../../redux/slices/cartslice";
+import productsApi from "../../api/productsAPI";
 
 export default function DetailProduct() {
   const params = useParams();
   const [selectedImage, setSelectedImage] = useState("");
   const [quantity, setQuantity] = useState(1);
+  const [productsDetail, setProductDetail] = useState<{
+    _id?: string;
+    id?: string;
+    name: string;
+    price: string | number;
+    image_url: string[];
+    oldPrice?: string | number;
+    discount?: number;
+    description?: string;
+    details?: string[];
+  } | null>(null);
   const dispatch = useDispatch(); // Khởi tạo dispatch để gọi action
 
   const fetcher = (url) => fetch(url).then((res) => res.json());
-  const { data, error } = useSWR(
-    `http://localhost:5000/api/v1/products/${params.id}`,
-    fetcher,
-    {
-      refreshInterval: 15000,
-    }
-  );
 
-  console.log("API Data:", data);
+  useEffect(() => {
+    const fetchProductDetail = async () => {
+      const productDetailResponse = await productsApi.getProductByID(params.id);
+      const productDetailData = await productDetailResponse.data.product;
+      setProductDetail(productDetailData);
+    };
+    fetchProductDetail();
+  }, [params.id]);
 
-  if (error)
-    return (
-      <div className="flex min-h-screen items-center justify-center text-red-500">
-        Lỗi load dữ liệu...
-      </div>
-    );
-  if (!data) return <Loader />;
+  // const { data, error } = useSWR(
+  //   `http://localhost:5000/api/v1/products/${params.id}`,
+  //   fetcher,
+  //   {
+  //     refreshInterval: 15000,
+  //   }
+  // );
 
-  const product = data.product;
+  // console.log("API Data:", data);
+  // if (!productsDetail) return <Loader />;
+  const product = productsDetail;
+  console.log(product, "SSS");
   if (!product)
     return <div>Không tìm thấy sản phẩm. Vui lòng kiểm tra lại.</div>;
 

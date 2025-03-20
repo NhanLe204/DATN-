@@ -1,62 +1,62 @@
+import mongoose from 'mongoose';
 import orderModel from '../models/order.model.js';
 import userModel from '../models/user.model.js';
 import PaymentType from '../models/paymentType.model.js';
 import deliveryModel from '../models/delivery.model.js';
 import couponModel from '../models/coupon.model.js';
 import { CouponStatus } from '../enums/coupon.enum.js';
+import orderDetailModel from '@/models/orderdetail.model.js';
+import ServiceModel from '@/models/service.model.js';
+import productModel from '@/models/product.model.js';
 export const createOrderAfterPayment = async (req, res) => {
+    // Start a MongoDB transaction
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
-        const { userID, payment_typeID, deliveryID, couponID, orderdate, total_price, shipping_address, payment_status, transaction_id, booking_date } = req.body;
-        // 1. Validate dữ liệu đầu vào
+        const { userID, payment_typeID, deliveryID, couponID, orderdate, total_price, shipping_address, payment_status, transaction_id, booking_date, orderDetails } = req.body;
+        // 1. Validate input data
         if (!userID ||
             !payment_typeID ||
             !deliveryID ||
             !total_price ||
             !shipping_address ||
             !payment_status ||
-            !transaction_id) {
-            res.status(400).json({ success: false, message: 'Thiếu các trường bắt buộc' });
-            return;
+            !transaction_id ||
+            !orderDetails ||
+            !Array.isArray(orderDetails)) {
+            throw new Error('Missing required fields');
         }
-        // 2. Kiểm tra sự tồn tại của userID
-        const user = await userModel.findById(userID);
-        if (!user) {
-            res.status(404).json({ success: false, message: 'Không tìm thấy người dùng với userID này' });
-            return;
-        }
-        // 3. Kiểm tra sự tồn tại của payment_typeID
-        const paymentType = await PaymentType.findById(payment_typeID);
-        if (!paymentType) {
-            res.status(404).json({ success: false, message: 'Không tìm thấy phương thức thanh toán với payment_typeID này' });
-            return;
-        }
-        // 4. Kiểm tra sự tồn tại của deliveryID và lấy delivery_name
-        const delivery = await deliveryModel.findById(deliveryID);
-        if (!delivery) {
-            res.status(404).json({ success: false, message: 'Không tìm thấy phương thức giao hàng với deliveryID này' });
-            return;
-        }
-        // 5. Kiểm tra sự tồn tại và tính hợp lệ của couponID (nếu có)
-        let coupon = null;
+        // 2. Validate user existence
+        const user = await userModel.findById(userID).session(session);
+        if (!user)
+            throw new Error('User not found');
+        // 3. Validate payment type
+        const paymentType = await PaymentType.findById(payment_typeID).session(session);
+        if (!paymentType)
+            throw new Error('Payment type not found');
+        // 4. Validate delivery
+        const delivery = await deliveryModel.findById(deliveryID).session(session);
+        if (!delivery)
+            throw new Error('Delivery method not found');
+        // 5. Handle coupon validation and discount calculation
         let discount = 0;
         if (couponID) {
-            coupon = await couponModel.findById(couponID);
-            if (!coupon) {
-                res.status(404).json({ success: false, message: 'Không tìm thấy coupon với couponID này' });
-                return;
-            }
+            const coupon = await couponModel.findById(couponID).session(session);
+            if (!coupon)
+                throw new Error('Coupon not found');
             const currentDate = new Date();
             if (coupon.status !== CouponStatus.ACTIVE ||
                 currentDate < coupon.start_date ||
                 currentDate > coupon.end_date ||
                 coupon.used_count >= coupon.usage_limit) {
-                res.status(400).json({ success: false, message: 'Coupon không hợp lệ hoặc đã hết hạn' });
-                return;
+                throw new Error('Invalid or expired coupon');
             }
-            discount = Math.min(coupon.discount_value, coupon.max_discount); // Áp dụng giảm giá
+            discount = Math.min(coupon.discount_value, coupon.max_discount);
+            // Update coupon usage
+            await couponModel.findByIdAndUpdate(couponID, { $inc: { used_count: 1 } }, { session });
         }
-        // 7. Tạo Order mới
-        const newOrder = new orderModel({
+        // 6. Create and save order
+        const order = new orderModel({
             userID,
             payment_typeID,
             deliveryID,
@@ -70,23 +70,70 @@ export const createOrderAfterPayment = async (req, res) => {
             transaction_id,
             booking_date: booking_date ? new Date(booking_date) : null
         });
-        // 8. Lưu Order vào database
-        const savedOrder = await newOrder.save();
-        // 9. Cập nhật used_count của Coupon (nếu có)
-        if (coupon) {
-            await couponModel.findByIdAndUpdate(couponID, { $inc: { used_count: 1 } });
-        }
-        // 10. Trả về kết quả
+        const savedOrder = await order.save({ session });
+        // 7. Process order details
+        const orderDetailsPromises = orderDetails.map(async (detail) => {
+            const { productID, serviceID, quantity, product_price } = detail;
+            if (!quantity || !product_price || (!productID && !serviceID)) {
+                throw new Error('Invalid order detail data');
+            }
+            // Validate product if exists
+            if (productID) {
+                const product = await productModel.findById(productID).session(session);
+                if (!product)
+                    throw new Error(`Product not found: ${productID}`);
+                // Optional: Check product stock
+                if (product.stock < quantity) {
+                    throw new Error(`Insufficient stock for product: ${productID}`);
+                }
+                // Update product stock
+                await productModel.findByIdAndUpdate(productID, { $inc: { stock: -quantity } }, { session });
+            }
+            // Validate service if exists
+            if (serviceID) {
+                const service = await ServiceModel.findById(serviceID).session(session);
+                if (!service)
+                    throw new Error(`Service not found: ${serviceID}`);
+            }
+            // Calculate total price for this detail
+            const detailTotalPrice = quantity * product_price;
+            return new orderDetailModel({
+                orderID: savedOrder._id,
+                productID: productID || null,
+                serviceID: serviceID || null,
+                quantity,
+                product_price,
+                total_price: detailTotalPrice
+            });
+        });
+        // Save all order details
+        const savedOrderDetails = await Promise.all(orderDetailsPromises.map((detail) => detail.then((d) => d.save({ session }))));
+        // Commit transaction
+        await session.commitTransaction();
+        // Send response
         res.status(201).json({
             success: true,
-            message: 'Tạo đơn hàng thành công',
-            order: savedOrder
+            message: 'Order and order details created successfully',
+            data: {
+                order: savedOrder,
+                orderDetails: savedOrderDetails
+            }
         });
     }
     catch (error) {
+        // Rollback transaction on error
+        await session.abortTransaction();
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        console.error(`Error creating order: ${errorMessage}`);
-        res.status(500).json({ success: false, message: 'Internal Server Error', details: errorMessage });
+        console.error('Error in createOrderAfterPayment:', errorMessage);
+        res.status(400).json({
+            success: false,
+            message: errorMessage,
+            error: error instanceof Error ? error.stack : 'Unknown error stack'
+        });
+    }
+    finally {
+        // End session
+        session.endSession();
     }
 };
 export const getAllOrders = async (req, res) => {

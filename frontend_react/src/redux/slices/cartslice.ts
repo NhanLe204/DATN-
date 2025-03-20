@@ -61,7 +61,9 @@ const cartSlice = createSlice({
 
     increaseQuantity: (state, action) => {
       if (!state.userId) return;
-      const item = state.items.find((cartItem) => cartItem.id === action.payload.id);
+      const item = state.items.find(
+        (cartItem) => cartItem.id === action.payload.id
+      );
       if (item) {
         item.quantity += 1;
         saveCartsToLocal(state.userId, state.items);
@@ -70,7 +72,9 @@ const cartSlice = createSlice({
 
     decreaseQuantity: (state, action) => {
       if (!state.userId) return;
-      const item = state.items.find((cartItem) => cartItem.id === action.payload.id);
+      const item = state.items.find(
+        (cartItem) => cartItem.id === action.payload.id
+      );
       if (item && item.quantity > 1) {
         item.quantity -= 1;
         saveCartsToLocal(state.userId, state.items);
@@ -79,7 +83,9 @@ const cartSlice = createSlice({
 
     removeProduct: (state, action) => {
       if (!state.userId) return;
-      state.items = state.items.filter((cartItem) => cartItem.id !== action.payload.id);
+      state.items = state.items.filter(
+        (cartItem) => cartItem.id !== action.payload.id
+      );
       saveCartsToLocal(state.userId, state.items);
     },
 
@@ -98,5 +104,12 @@ const saveCartsToLocal = (userId, items) => {
   localStorage.setItem("carts", JSON.stringify(allCarts));
 };
 
-export const { addToCart, increaseQuantity, decreaseQuantity, removeProduct, clearProduct, setUserId } = cartSlice.actions;
+export const {
+  addToCart,
+  increaseQuantity,
+  decreaseQuantity,
+  removeProduct,
+  clearProduct,
+  setUserId,
+} = cartSlice.actions;
 export default cartSlice;
