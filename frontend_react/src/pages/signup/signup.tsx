@@ -54,11 +54,42 @@ export default function SignUp() {
       });
       return;
     }
-
+    if (
+      !formData.fullname.trim() &&
+      !formData.email.trim() &&
+      !formData.password.trim() &&
+      !formData.confirmPassword.trim()
+    ) {
+      notification.warning({
+        message: "Lỗi!",
+        description: "Các thông tin không được để trống !",
+        placement: "topRight",
+        duration: 2,
+      });
+      return;
+    }
     if (!formData.fullname.trim()) {
       notification.warning({
         message: "Lỗi!",
         description: "Họ và tên không được để trống!",
+        placement: "topRight",
+        duration: 2,
+      });
+      return;
+    }
+    if (!formData.email.trim()) {
+      notification.warning({
+        message: "Lỗi!",
+        description: "Email không được để trống!",
+        placement: "topRight",
+        duration: 2,
+      });
+      return;
+    }
+    if (!formData.password.trim()) {
+      notification.warning({
+        message: "Lỗi!",
+        description: "Mật khẩu không được để trống!",
         placement: "topRight",
         duration: 2,
       });
@@ -298,7 +329,7 @@ export default function SignUp() {
                             : showConfirmPassword && field === "confirmPassword"
                             ? "text"
                             : "password"
-                          : "text" 
+                          : "text"
                       }
                       id={field}
                       placeholder={`Nhập ${
