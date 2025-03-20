@@ -25,23 +25,37 @@ const breadcrumbItems = [
 const SpaBookingForm: React.FC = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
-  const [petForms, setPetForms] = useState<number[]>([0]); // State để quản lý số lượng form (mặc định 1 form)
+  const [petForms, setPetForms] = useState<number[]>([0]); // State to manage the number of pet forms (default is 1)
 
   const handleInfoClick = () => {
     navigate('/info');
   };
 
   const addPetForm = () => {
-    if (petForms.length < 2) { // Giới hạn tối đa 2 thú cưng theo yêu cầu
+    if (petForms.length < 2) { // Limit to a maximum of 2 pets
       setPetForms([...petForms, petForms.length]);
     } else {
       alert('Pet Heaven chỉ nhận tối đa 2 thú cưng cho 1 lịch hẹn!');
     }
   };
 
+  const removePetForm = (indexToRemove: number) => {
+    if (petForms.length > 1) { // Only allow removal if there's more than 1 form
+      setPetForms(petForms.filter((_, index) => index !== indexToRemove));
+      // Reset form fields for the removed pet
+      form.setFields(
+        petForms.map((_, index) =>
+          index === indexToRemove
+            ? { name: ['pets', index], value: undefined }
+            : { name: ['pets', index], value: form.getFieldValue(['pets', index]) }
+        ).filter(field => field.value !== undefined)
+      );
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      {/* Breadcrumb và Tiêu đề nằm ngoài form */}
+      {/* Breadcrumb and Title */}
       <div className="mb-6">
         <Breadcrumb items={breadcrumbItems} />
       </div>
@@ -55,7 +69,7 @@ const SpaBookingForm: React.FC = () => {
 
       {/* Form */}
       <div className="max-w-2xl mx-auto bg-white shadow-md rounded-lg p-6">
-        {/* Section 1: Thông tin khách hàng */}
+        {/* Section 1: Customer Information */}
         <div className="border border-gray-200 p-6 rounded-md mb-6">
           <h2 className="text-lg font-semibold text-center mb-4">THÔNG TIN KHÁCH HÀNG</h2>
           <Form form={form} layout="vertical">
@@ -81,16 +95,25 @@ const SpaBookingForm: React.FC = () => {
           </Form>
         </div>
 
-        {/* Section 2: Thông tin thú cưng */}
+        {/* Section 2: Pet Information + Appointment Time */}
         <div className="border border-gray-200 p-6 rounded-md mb-6">
           <h2 className="text-lg font-semibold text-center mb-4">THÔNG TIN THÚ CƯNG</h2>
-          <p className="text-red-500 mb-4">
-            Lưu ý: Pet Heaven chỉ nhận tối đa 2 thú cưng cho 1 lịch hẹn
-          </p>
           <Form form={form} layout="vertical">
             {petForms.map((index) => (
-              <div key={index} className="mb-6 border-b pb-4">
-                <h3 className="text-md font-medium mb-2">Thú cưng {index + 1}</h3>
+              <div key={index} className="mb-6 border-b pb-4 relative">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-md font-medium mb-2">Thú cưng {index + 1}</h3>
+                  {petForms.length > 1 && index === 1 && (
+                    <div
+                      className="text-red-500 cursor-pointer hover:underline"
+                      onClick={() => removePetForm(index)}
+                    >
+                      Xóa thú cưng
+                    </div>
+                  )}
+                </div>
+
+                {/* Pet Information */}
                 <Form.Item
                   label={<span>Tên thú cưng <span className="text-red-500">*</span></span>}
                   name={['pets', index, 'petName']}
@@ -127,35 +150,44 @@ const SpaBookingForm: React.FC = () => {
                   </Form.Item>
                 </div>
 
+                {/* Appointment Time */}
+                <h3 className="text-md font-medium mb-2">Thời gian đặt hẹn</h3>
                 <div className="flex space-x-4 mb-4">
                   <Form.Item
-                    label={<span>Khối lượng <span className="text-red-500">*</span></span>}
-                    name={['pets', index, 'weight']}
-                    rules={[{ required: true, message: 'Vui lòng chọn khối lượng!' }]}
+                    label={<span>Chọn ngày hẹn <span className="text-red-500">*</span></span>}
+                    name={['pets', index, 'date']}
+                    rules={[{ required: true, message: 'Vui lòng chọn ngày hẹn!' }]}
                     className="w-1/2"
                   >
-                    <Select placeholder="Kg" className="w-full">
-                      <Option value="under-5">&lt; 5kg</Option>
-                      <Option value="5-10">5 - 10kg</Option>
-                      <Option value="10-20">10 - 20kg</Option>
-                      <Option value="20-40">20 - 40kg</Option>
-                      <Option value="over-40">&gt; 40kg</Option>
-                    </Select>
+                    <DatePicker
+                      suffixIcon={<CalendarOutlined />}
+                      className="w-full"
+                      placeholder="21/01/2025"
+                    />
                   </Form.Item>
 
-                  <Form.Item label="Chọn nhân viên" name={['pets', index, 'staff']}>
-                    <Select placeholder="Nhân viên" className="w-full">
-                      <Option value="ngoc-thanh">Ngọc Thanh</Option>
-                      <Option value="ngoc-phuoc">Ngọc Phước</Option>
-                      <Option value="le-nhan">Lê Nhân</Option>
-                      <Option value="van-quyet">Văn Quyết</Option>
-                      <Option value="thai-thuan">Thái Thuận</Option>
+                  <Form.Item
+                    label={<span>Chọn giờ hẹn <span className="text-red-500">*</span></span>}
+                    name={['pets', index, 'time']}
+                    rules={[{ required: true, message: 'Vui lòng chọn giờ hẹn!' }]}
+                    className="w-1/2"
+                  >
+                    <Select placeholder="Khung giờ" className="w-full">
+                      <Option value="8h">8h</Option>
+                      <Option value="9h">9h</Option>
+                      <Option value="10h">10h</Option>
+                      <Option value="11h">11h</Option>
+                      <Option value="13h">13h</Option>
+                      <Option value="14h">14h</Option>
+                      <Option value="15h">15h</Option>
+                      <Option value="16h">16h</Option>
+                      <Option value="17h">17h</Option>
                     </Select>
                   </Form.Item>
                 </div>
               </div>
             ))}
-            {petForms.length < 2 && ( // Ẩn nút khi đã có 2 form
+            {petForms.length < 2 && (
               <div className="text-[#22A6DF] cursor-pointer mb-4" onClick={addPetForm}>
                 + Thêm thú cưng
               </div>
@@ -163,45 +195,7 @@ const SpaBookingForm: React.FC = () => {
           </Form>
         </div>
 
-        {/* Section 3: Thời gian đặt hẹn */}
-        <div className="border border-gray-200 p-6 rounded-md mb-6">
-          <h2 className="text-lg font-semibold text-center mb-4">THỜI GIAN ĐẶT HẸN</h2>
-          <div className="flex space-x-4">
-            <Form.Item
-              label={<span>Chọn ngày hẹn <span className="text-red-500">*</span></span>}
-              name="date"
-              rules={[{ required: true, message: 'Vui lòng chọn ngày hẹn!' }]}
-              className="w-1/2"
-            >
-              <DatePicker
-                suffixIcon={<CalendarOutlined />}
-                className="w-full"
-                placeholder="21/01/2025"
-              />
-            </Form.Item>
-
-            <Form.Item
-              label={<span>Chọn giờ hẹn <span className="text-red-500">*</span></span>}
-              name="time"
-              rules={[{ required: true, message: 'Vui lòng chọn giờ hẹn!' }]}
-              className="w-1/2"
-            >
-              <Select placeholder="Khung giờ" className="w-full">
-                <Option value="8h">8h</Option>
-                <Option value="9h">9h</Option>
-                <Option value="10h">10h</Option>
-                <Option value="11h">11h</Option>
-                <Option value="13h">13h</Option>
-                <Option value="14h">14h</Option>
-                <Option value="15h">15h</Option>
-                <Option value="16h">16h</Option>
-                <Option value="17h">17h</Option>
-              </Select>
-            </Form.Item>
-          </div>
-        </div>
-
-        {/* Nút Đặt lịch ngay */}
+        {/* Submit Button */}
         <Form.Item>
           <Button
             type="primary"
@@ -209,7 +203,7 @@ const SpaBookingForm: React.FC = () => {
             className="w-full h-12 bg-[#22A6DF] hover:bg-[#1A8ABF] text-white font-semibold"
             onClick={() => form.submit()}
           >
-            ĐẶT LICH NGAY
+            ĐẶT LỊCH NGAY
           </Button>
         </Form.Item>
       </div>

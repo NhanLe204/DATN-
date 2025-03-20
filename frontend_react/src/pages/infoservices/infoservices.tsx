@@ -25,25 +25,19 @@ const PetSpaServices = () => {
       render: (text: any) => <span style={{ color: "#22A6DF" }}>{text}</span>,
     },
     {
-      title: "Lông ngắn",
-      dataIndex: "shortFur",
-      key: "shortFur",
+      title: "Lông ngắn/dài",
+      dataIndex: "price",
+      key: "price",
       render: (text: any) => <span style={{ color: "#22A6DF" }}>{text}</span>,
-    },
-    {
-      title: "Lông dài",
-      dataIndex: "longFur",
-      key: "longFur",
-      render: (text: any) => <span style={{ color: "#22A6DF" }}>{text}</span>,
-    },
+    }
   ];
 
   const dogBathData = [
-    { key: "1", weight: "< 5kg", shortFur: "100k", longFur: "150k" },
-    { key: "2", weight: "5 - 10kg", shortFur: "150k", longFur: "250k" },
-    { key: "3", weight: "10 - 20kg", shortFur: "250k", longFur: "350k" },
-    { key: "4", weight: "20 - 40kg", shortFur: "350k", longFur: "500k" },
-    { key: "5", weight: "> 40kg", shortFur: "500k", longFur: "650k" },
+    { key: "1", weight: "< 5kg", price: "150k" }, 
+    { key: "2", weight: "5 - 10kg", price: "200k" },
+    { key: "3", weight: "10 - 20kg", price: "250k" }, 
+    { key: "4", weight: "20 - 40kg", price: "300k" }, 
+    { key: "5", weight: "> 40kg", price: "350k" }, 
   ];
 
   // Bảng giá tắm cho mèo
@@ -63,8 +57,8 @@ const PetSpaServices = () => {
   ];
 
   const catBathData = [
-    { key: "1", weight: "< 5kg", price: "200k" },
-    { key: "2", weight: "5 - 10kg", price: "300k" },
+    { key: "1", weight: "< 5kg", price: "150k" },
+    { key: "2", weight: "5 - 10kg", price: "200k" },
   ];
 
   // Bảng giá combo
@@ -115,10 +109,10 @@ const PetSpaServices = () => {
 
   const serviceBathData = [
     { key: "1", weight: "< 5kg", shortFur: "150k" },
-    { key: "2", weight: "5 - 10kg", shortFur: "250k" },
-    { key: "3", weight: "10 - 20kg", shortFur: "350k" },
-    { key: "4", weight: "20 - 40kg", shortFur: "450k" },
-    { key: "5", weight: "> 40kg", shortFur: "550k" },
+    { key: "2", weight: "5 - 10kg", shortFur: "180k" },
+    { key: "3", weight: "10 - 20kg", shortFur: "210k" },
+    { key: "4", weight: "20 - 40kg", shortFur: "240k" },
+    { key: "5", weight: "> 40kg", shortFur: "270k" },
   ];
   const navigate = useNavigate();
   const handleBookAppointment = () => {
@@ -133,19 +127,9 @@ const PetSpaServices = () => {
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-12 text-center">
-          <h1 className="mb-4 text-3xl font-bold text-gray-800">
+          <h1 className="mb-8 text-3xl font-bold text-gray-800 text-center">
             DỊCH VỤ SPA CHUYÊN NGHIỆP CHO THÚ CƯNG TẠI PET HEAVEN
           </h1>
-          <Button
-            type="primary"
-            size="large"
-            className="bg-[#22A6DF] hover:opacity-90"
-            onClick={handleBookAppointment}
-          >
-            ĐẶT LỊCH NGAY
-          </Button>
-        </div>
 
         <Card className="mb-7">
           <h2 className="mb-6 text-xl font-semibold">
@@ -197,7 +181,7 @@ const PetSpaServices = () => {
             nhiệm với công việc:
           </strong>
           <Paragraph className="ml-2 text-base text-gray-700">
-            - Với tiêu chí đặt khách hàng lên hàng đầu, Pet Haven cố gắng để tất
+            - Với tiêu chí đặt khách hàng lên hàng đầu, Pet Heaven cố gắng để tất
             cả Khách hàng đều cảm thấy thoải mái và hài lòng khi đến trải nghiệm
             dịch vụ.
             <br />- Bên cạnh việc tư vấn dịch vụ spa, các bạn nhân viên luôn sẵn
@@ -206,7 +190,7 @@ const PetSpaServices = () => {
             luôn được cam kết về chất lượng, trách nhiệm khi đến tay Khách hàng.
           </Paragraph>
           <strong className="ml-2 text-lg">
-            2. Giá dịch vụ rẻ và vẫn chất lượng nhất:
+            2. Giá dịch vụ rẻ mà vẫn chất lượng nhất:
           </strong>
           <Paragraph className="ml-2 text-base text-gray-700">
             - Chi phí cho dịch vụ spa chó mèo tại Pet Heaven luôn đảm bảo hợp lý
@@ -285,6 +269,16 @@ const PetSpaServices = () => {
             hotline, fanpage Pet Heaven để được hỗ trợ.
           </Paragraph>
         </Text>
+        <div className="text-center">
+          <Button
+              type="primary"
+              size="large"
+              className="bg-[#22A6DF] hover:opacity-90 mt-4"
+              onClick={handleBookAppointment}
+            >
+              ĐẶT LỊCH NGAY
+          </Button>
+        </div>
       </div>
     </div>
   );
