@@ -192,7 +192,7 @@ export const getProductByCategoryID = async (req, res) => {
         res.status(200).json({
             success: true,
             message: `Lấy sản phẩm dành cho ${categoryName} thành công`,
-            products: result
+            result
         });
     }
     catch (error) {

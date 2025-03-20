@@ -68,35 +68,32 @@ export default function Home() {
   }, []);
 
   // Lấy sản phẩm theo danh mục sau khi categories được cập nhật
-  // useEffect(() => {
-  //   const fetchProductsByCategory = async () => {
-  //     if (categories.length === 0) return; // Không làm gì nếu categories rỗng
+  useEffect(() => {
+    const fetchProductsByCategory = async () => {
+      if (categories.length === 0) return; // Không làm gì nếu categories rỗng
 
-  //     try {
-  //       const categoryPromises = categories.map(async (category) => {
-  //         const productResponse = await fetch(
-  //           `${ENV_VARS.VITE_API_URL}/v1/products/cate/${category._id}`,
-  //           { cache: "no-store" }
-  //         );
-  //         const productData = await productResponse.json();
-  //         const limitedProducts = productData.products
-  //           ? productData.products.slice(0, 8)
-  //           : [];
-  //         return { [category.name]: limitedProducts };
-  //       });
+      try {
+        const categoryPromises = categories.map(async (category) => {
+          const productResponse = await productsApi.getProductByCategoryID(category._id)
+          const productData = await productResponse.data.result;
+          const limitedProducts = productData
+            ? productData.slice(0, 8)
+            : [];
+          return { [category.name]: limitedProducts };
+        });
 
-  //       const categoryProducts = await Promise.all(categoryPromises);
-  //       const productsMap = categoryProducts.reduce((acc, curr) => {
-  //         return { ...acc, ...curr };
-  //       }, {});
-  //       setProductsByCategory(productsMap);
-  //     } catch (error) {
-  //       console.error("Error fetching products by category:", error);
-  //       setProductsByCategory({}); // Reset nếu lỗi
-  //     }
-  //   };
-  //   fetchProductsByCategory();
-  // }, [categories]);
+        const categoryProducts = await Promise.all(categoryPromises);
+        const productsMap = categoryProducts.reduce((acc, curr) => {
+          return { ...acc, ...curr };
+        }, {});
+        setProductsByCategory(productsMap);
+      } catch (error) {
+        console.error("Error fetching products by category:", error);
+        setProductsByCategory({}); // Reset nếu lỗi
+      }
+    };
+    fetchProductsByCategory();
+  }, [categories]);
 
   // Cấu hình settings cho Slider
   const settings = {

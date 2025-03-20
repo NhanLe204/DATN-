@@ -20,6 +20,7 @@ import {
 import { motion } from 'framer-motion';
 import { Typography } from 'antd';
 import axios from 'axios';
+import categoryApi from '../../api/categoryApi';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -41,8 +42,6 @@ const CategoryList: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
 
-  const API_BASE_URL = "http://localhost:5000/api/v1";
-
   useEffect(() => {
     const fetchCategories = async () => {
       setLoading(true);
@@ -52,11 +51,7 @@ const CategoryList: React.FC = () => {
           console.error("No token found in localStorage");
           return;
         }
-        const response = await axios.get(`${API_BASE_URL}/categories`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await categoryApi.getAll();
         const fetchedCategories = response.data.result.map((category: any) => ({
           key: category._id,
           _id: category._id,
@@ -148,11 +143,7 @@ const CategoryList: React.FC = () => {
         description: values.description,
         status: values.status === "Hoạt động" ? "active" : "inactive", // Dùng 'active' và 'inactive'
       };
-      const response = await axios.patch(
-        `${API_BASE_URL}/categories/${selectedCategory?._id}`,
-        updatedData,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await categoryApi.update(selectedCategory?._id, updatedData)
       setCategories(
         categories.map((u) =>
           u.key === selectedCategory?.key
@@ -199,28 +190,22 @@ const CategoryList: React.FC = () => {
       }
 
       // Gửi POST request với header Authorization
-      const response = await axios.post(
-        `${API_BASE_URL}/categories`,
-        newCategory,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
-        }
-      );
+      const response = await categoryApi.create(newCategory);
+
+      console.log("API Response:", response);
 
       // Kiểm tra response từ API
-      if (!response.data.success) {
-        throw new Error(response.data.message || "Tạo danh mục thất bại!");
+      if (!response.success) {
+        throw new Error(response.message || "Tạo danh mục thất bại!");
       }
 
       // Kiểm tra response.data.user có tồn tại không
-      if (!response.data.user || !response.data.user._id) {
+      if (!response.user || !response.user._id) {
         throw new Error("Không tìm thấy ID danh mục trong response!");
       }
 
       // Lấy danh mục mới từ response.data.user
-      const addedCategoryData = response.data.user;
+      const addedCategoryData = response.user;
 
       // Thêm danh mục mới vào state categories
       const addedCategory = {
