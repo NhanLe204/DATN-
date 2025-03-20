@@ -29,6 +29,7 @@ import { useSelector, useDispatch } from "react-redux"; // Thêm useDispatch
 import { useLocation } from "react-router-dom";
 import { SearchContext } from "./searchContext";
 import { addToCart, setUserId } from "../redux/slices/cartslice"; // Thêm setUserId
+import productsApi from "../api/productsAPI";
 const { Title, Text } = Typography;
 
 interface Product {
@@ -110,15 +111,12 @@ export default function Header() {
 
   const fetchSearchResults = async (searchTerm: string) => {
     try {
-      const response = await fetch("http://localhost:5000/api/v1/products");
-      if (!response.ok) {
-        throw new Error(`Failed to fetch products: ${response.statusText}`);
-      }
-      const data = await response.json();
+      const response = await productsApi.getProductActive();
+      const data = await response.data.result;
       console.log("Dữ liệu từ API:", data);
 
       const normalizedSearchTerm = removeDiacritics(searchTerm.toLowerCase());
-      const filteredProducts = data.result.filter((product: Product) => {
+      const filteredProducts = data.filter((product: Product) => {
         const normalizedProductName = removeDiacritics(product.name.toLowerCase());
         return normalizedProductName.includes(normalizedSearchTerm);
       });
