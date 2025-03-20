@@ -6,7 +6,6 @@ import { Link } from "react-router-dom";
 export default function ListCard({ pros }) {
   const [imageStates, setImageStates] = useState({});
 
-  // Đồng bộ imageStates khi pros.data thay đổi
   useEffect(() => {
     setImageStates(
       pros.data.reduce((acc, product, index) => {
