@@ -166,7 +166,7 @@ export default function Login() {
             if (userData.role === "admin") {
               navigate("/admin"); // Thay window.location.href
             } else {
-              navigate("/"); // Thay window.location.href
+              window.location.href = "/";
             }
           },
         });
@@ -241,14 +241,14 @@ export default function Login() {
       return;
     }
     if (newPassword.length < 6) {
-          notification.warning({
-            message: "Lỗi!",
-            description: "Mật khẩu phải có ít nhất 6 ký tự!",
-            placement: "topRight",
-            duration: 2,
-          });
-          return;
-        }
+      notification.warning({
+        message: "Lỗi!",
+        description: "Mật khẩu phải có ít nhất 6 ký tự!",
+        placement: "topRight",
+        duration: 2,
+      });
+      return;
+    }
 
     setIsSending(true);
     try {

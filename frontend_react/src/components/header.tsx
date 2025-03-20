@@ -117,7 +117,9 @@ export default function Header() {
 
       const normalizedSearchTerm = removeDiacritics(searchTerm.toLowerCase());
       const filteredProducts = data.filter((product: Product) => {
-        const normalizedProductName = removeDiacritics(product.name.toLowerCase());
+        const normalizedProductName = removeDiacritics(
+          product.name.toLowerCase()
+        );
         return normalizedProductName.includes(normalizedSearchTerm);
       });
 
@@ -132,11 +134,15 @@ export default function Header() {
   // Lấy thông tin user khi component mount
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
-    const accountID = localStorage.getItem("accountID")?.replace(/^"|"$/g, "")  || "";
+    const accountID =
+      localStorage.getItem("accountID")?.replace(/^"|"$/g, "") || "";
 
     // Kiểm tra token và accountID
     if (!token || !accountID) {
-      console.warn("Không tìm thấy token hoặc accountID trong localStorage:", { token, accountID });
+      console.warn("Không tìm thấy token hoặc accountID trong localStorage:", {
+        token,
+        accountID,
+      });
       return;
     }
 
@@ -160,7 +166,9 @@ export default function Header() {
     })
       .then((res) => {
         if (!res.ok) {
-          throw new Error(`Failed to fetch user data: ${res.status} ${res.statusText}`);
+          throw new Error(
+            `Failed to fetch user data: ${res.status} ${res.statusText}`
+          );
         }
         return res.json();
       })
