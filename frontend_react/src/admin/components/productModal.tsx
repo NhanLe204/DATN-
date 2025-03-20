@@ -229,6 +229,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
     try {
       const updatedValues = {
         ...values,
+
         image_url: mainImageFileList[0]?.url || values.image_url,
         extra_images: extraImagesFileList.map(
           (file) => file.url || file.response?.url
@@ -238,7 +239,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
         tag_id: values.tag_id,
       };
       console.log("Updated values sent to API:", updatedValues);
-
+  
       if (product) {
         await productsApi.update(product._id, updatedValues);
         message.success("Cập nhật sản phẩm thành công!");
@@ -257,7 +258,6 @@ const ProductModal: React.FC<ProductModalProps> = ({
       }
     }
   };
-
   return (
     <Modal
       title={product ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm"}
