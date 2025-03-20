@@ -26,12 +26,14 @@ export const signupController = async (req, res) => {
                 success: false,
                 message: 'Password must be at least 6 characters'
             });
+            return;
         }
         if (fullname.length < 3) {
             res.status(400).json({
                 success: false,
-                message: 'Username must be at least 3 characters'
+                message: 'Họ và tên phải có ít nhất 3 ký tự'
             });
+            return;
         }
         const existingUserByEmail = await userModel.findOne({ email });
         if (existingUserByEmail) {
@@ -83,16 +85,16 @@ export const loginController = async (req, res) => {
             .findOne({ email })
             .select('-reset_password_token -reset_password_expires -refreshToken');
         if (!user) {
-            res.status(404).json({ success: false, message: 'Email này chưa được đăng ký' });
+            res.status(404).json({ success: false, message: 'Email này chưa được đăng ký!' });
             return;
         }
         if (user.status === 'inactive') {
-            res.status(401).json({ success: false, message: 'Tài khoản của bạn đã bị khóa' });
+            res.status(401).json({ success: false, message: 'Tài khoản của bạn đã bị khóa!' });
             return;
         }
         const isPasswordValid = await bcryptjs.compare(password, user.password);
         if (!isPasswordValid) {
-            res.status(401).json({ success: false, message: 'Invalid email and password' });
+            res.status(401).json({ success: false, message: 'Mật khẩu không đúng!' });
             return;
         }
         const { password: pass, ...userData } = user.toObject();

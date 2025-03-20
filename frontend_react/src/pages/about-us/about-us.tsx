@@ -54,27 +54,27 @@ const Introduction = () => {
   );
 
   const teamMembers = [
-    { name: "Thái Thuận", image: "https://picsum.photos/id/1/200/200" },
-    { name: "Ngọc Thanh", image: "https://picsum.photos/id/2/200/200" },
-    { name: "Văn Quyết", image: "https://picsum.photos/id/3/200/200" },
-    { name: "Hồng Phước", image: "https://picsum.photos/id/4/200/200" },
-    { name: "Lê Nhân", image: "https://picsum.photos/id/5/200/200" },
+    { name: "Thái Thuận", image: "images/about-us/thuan.jpg" },
+    { name: "Ngọc Thanh", image: "images/about-us/thanh.png" },
+    { name: "Văn Quyết", image: "images/about-us/quyt.png" },
+    { name: "Hồng Phước", image: "images/about-us/phuoc.png" },
+    { name: "Lê Nhân", image: "images/about-us/nhan.png" },
   ];
 
   // Customer testimonials data
   const testimonials = [
     {
-      name: "Nguyễn Văn A",
+      name: "Nguyễn Thị Thu Huyền",
       feedback: "Dịch vụ tại Pet Heaven thật tuyệt vời! Chó của tôi được chăm sóc rất kỹ lưỡng, nhân viên thân thiện và chuyên nghiệp.",
       image: "https://picsum.photos/id/1010/200/200", // Replace with customer photo
     },
     {
-      name: "Trần Thị B",
+      name: "Nguyễn Thanh Tùng",
       feedback: "Tôi rất hài lòng với gói SPA cho mèo của mình. Mèo nhà tôi giờ sạch sẽ và khỏe mạnh hơn bao giờ hết!",
       image: "https://picsum.photos/id/1011/200/200", // Replace with customer photo
     },
     {
-      name: "Lê Văn C",
+      name: "Hoàng Thùy Linh",
       feedback: "Thức ăn và đồ dùng tại đây chất lượng cao, giá cả hợp lý. Cảm ơn Pet Heaven đã giúp thú cưng của tôi hạnh phúc!",
       image: "https://picsum.photos/id/1012/200/200", // Replace with customer photo
     },
@@ -82,11 +82,11 @@ const Introduction = () => {
 
   // Pet gallery images from the provided image
   const petGallery = [
-    "https://example.com/pet1.jpg", // Replace with actual URL of the first dog in the field
-    "https://example.com/pet2.jpg", // Replace with actual URL of the two dogs in snow
-    "https://example.com/pet3.jpg", // Replace with actual URL of the dog and cat
-    "https://example.com/pet4.jpg", // Replace with actual URL of the orange cat
-    "https://example.com/pet5.jpg", // Replace with actual URL of the white cat
+    "images/about-us/cat1.jpg", 
+    "images/about-us/cat2.jpg", 
+    "images/about-us/pet.jpg", 
+    "images/about-us/dog1.jpg", 
+    "images/about-us/dog2.jpg", 
   ];
 
   return (
@@ -208,12 +208,12 @@ const Introduction = () => {
             </motion.h3>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <ServiceCard title="SPA" imageSrc="https://picsum.photos/id/659/300/300" />
+              <ServiceCard title="SPA" imageSrc="images/about-us/spa.jpg" />
               <ServiceCard
                 title="THỰC PHẨM"
-                imageSrc="https://picsum.photos/id/582/300/300"
+                imageSrc="images/about-us/food.jpg"
               />
-              <ServiceCard title="ĐỒ DÙNG" imageSrc="https://picsum.photos/id/837/300/300" />
+              <ServiceCard title="ĐỒ DÙNG" imageSrc="images/about-us/equip.jpg" />
             </div>
           </div>
 
@@ -308,7 +308,7 @@ const Introduction = () => {
               <div className="text-center mb-8">
                 <TeamOutlined className={`text-4xl ${darkMode ? 'text-blue-300' : 'text-blue-500'} mb-4`} />
                 <Title level={2} className={`${darkMode ? 'text-blue-300' : 'text-blue-500'} mb-2`}>
-                  ĐỘI NGŦ PHÁT TRIỂN
+                  ĐỘI NGŨ PHÁT TRIỂN
                 </Title>
                 <Paragraph className={`${darkMode ? 'text-gray-400' : 'text-gray-600'} text-lg max-w-3xl mx-auto`}>
                   Đội ngũ chuyên nghiệp của chúng tôi luôn tận tâm phát triển và cải tiến dịch vụ để đem lại trải nghiệm tuyệt vời nhất cho khách hàng và thú cưng của họ.
