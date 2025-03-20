@@ -212,7 +212,7 @@ export const getProductByCategoryID = async (req: Request, res: Response): Promi
     res.status(200).json({
       success: true,
       message: `Lấy sản phẩm dành cho ${categoryName} thành công`,
-      products: result
+      result
     });
   } catch (error) {
     console.error('Error fetching products by category:', error);
