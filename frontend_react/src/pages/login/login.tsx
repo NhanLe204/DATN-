@@ -5,7 +5,7 @@ declare global {
     google: any;
   }
 }
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom"; // Thêm useNavigate
 import { FcGoogle } from "react-icons/fc";
 import { FaCheckDouble } from "react-icons/fa6";
 import {
@@ -25,6 +25,7 @@ import {
 } from "antd";
 import "antd/dist/reset.css";
 import { EyeInvisibleOutlined, EyeOutlined } from "@ant-design/icons";
+import loginApi from "../../api/login";// Điều chỉnh đường dẫn theo dự án
 import ENV_VARS from "../../../config";
 const { Title, Text } = Typography;
 
@@ -51,7 +52,7 @@ export default function Login() {
     useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const navigate = useNavigate();
+  const navigate = useNavigate(); // Thêm navigate
 
   // Check role & status
   useEffect(() => {
@@ -79,17 +80,7 @@ export default function Login() {
 
   // handle login
   const handleLogin = async () => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      notification.warning({
-        message: "Lỗi!",
-        description: "Vui lòng nhập email hợp lệ!",
-        placement: "topRight",
-        duration: 2,
-      });
-      return;
-    }
-
+    
     if (!email.trim() && !password.trim()) {
       notification.error({
         message: "Lỗi!",
@@ -126,18 +117,23 @@ export default function Login() {
       setLoading(false);
       return;
     }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      notification.warning({
+        message: "Lỗi!",
+        description: "Vui lòng nhập email hợp lệ!",
+        placement: "topRight",
+        duration: 2,
+      });
+      return;
+    }
     setLoading(true);
     try {
-      const response = await fetch(`${ENV_VARS.VITE_API_URL}/v1/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      const { data } = await loginApi.login({ email, password }); // Thay fetch bằng loginApi.login
 
-      const data = await response.json();
-      console.log("Phản hồi từ API:", response, data);
+      console.log("Phản hồi từ API:", data); // Giữ nguyên console.log (đổi response thành data)
 
-      if (response.ok) {
+      if (data.success) { // Kiểm tra data.success thay vì response.ok
         const { userData, accessToken } = data;
         setUser(userData);
         localStorage.setItem("accessToken", accessToken);
@@ -197,17 +193,9 @@ export default function Login() {
     }
     setIsSending(true);
     try {
-      const response = await fetch(
-        "http://localhost:5000/api/v1/auth/forgotPassword",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: forgotEmail }),
-        }
-      );
+      const { data } = await loginApi.forgotPassword(forgotEmail); // Thay fetch bằng loginApi.forgotPassword
 
-      const data = await response.json();
-      if (response.ok) {
+      if (data.success) { // Kiểm tra data.success thay vì response.ok
         notification.success({
           message: "Kiểm tra email!",
           description: "Hãy kiểm tra hộp thư của bạn để đặt lại mật khẩu.",
@@ -252,16 +240,9 @@ export default function Login() {
 
     setIsSending(true);
     try {
-      const response = await fetch(
-        "http://localhost:5000/api/v1/auth/resetPassword",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ resetToken, newPassword }),
-        }
-      );
-      const data = await response.json();
-      if (response.ok) {
+      const { data } = await loginApi.resetPassword({ resetToken, newPassword }); // Thay fetch bằng loginApi.resetPassword
+      
+      if (data.success) { // Kiểm tra data.success thay vì response.ok
         notification.success({
           message: "Mật khẩu đã được đặt lại thành công!",
           placement: "topRight",
@@ -289,54 +270,36 @@ export default function Login() {
   // Chức năng đăng nhập GOOGLE
   const handleGoogleLogin = (credentialResponse: GoogleCredentialResponse) => {
     const idToken = credentialResponse.credential;
-    fetch("http://localhost:5000/api/v1/auth/google", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ idToken }),
-    })
-      .then((res) => {
-        if (!res.ok) {
-          return res.text().then((text) => {
-            throw new Error(`Server error: ${res.status} - ${text}`);
-          });
+    loginApi.googleLogin(idToken) // Thay fetch bằng loginApi.googleLogin
+      .then((response) => {
+        const data = response.data; // Lấy data từ response
+        if (!data.success) {
+          return Promise.reject(new Error(`Server error: ${data.message || "Unknown error"}`));
         }
-        return res.json();
-      })
-      .then((data) => {
-        if (data.success) {
-          setUser({
-            id: data.user.id,
-            email: data.user.email,
-            fullname: data.user.fullname,
-            avatar: data.user.avatar,
-            role: data.user.role,
-            status: data.user.status,
-          });
-          localStorage.setItem("accessToken", data.accessToken);
-          localStorage.setItem("accountID", data.user.id);
-          localStorage.setItem("userData", JSON.stringify(data.user));
-          notification.success({
-            message: "Đăng nhập bằng Google thành công!",
-            description: "Chào mừng bạn quay trở lại!",
-            placement: "topRight",
-            duration: 2,
-            onClose: () => {
-              if (data.user.role === "admin") {
-                navigate("/admin"); // Thay window.location.href
-              } else {
-                navigate("/"); // Thay window.location.href
-              }
-            },
-          });
-        } else {
-          notification.error({
-            message: "Đăng nhập thất bại!",
-            description:
-              data.message || "Có lỗi xảy ra khi đăng nhập bằng Google.",
-            placement: "topRight",
-            duration: 2,
-          });
-        }
+        setUser({
+          id: data.user.id,
+          email: data.user.email,
+          fullname: data.user.fullname,
+          avatar: data.user.avatar,
+          role: data.user.role,
+          status: data.user.status,
+        });
+        localStorage.setItem("accessToken", data.accessToken);
+        localStorage.setItem("accountID", data.user.id);
+        localStorage.setItem("userData", JSON.stringify(data.user));
+        notification.success({
+          message: "Đăng nhập bằng Google thành công!",
+          description: "Chào mừng bạn quay trở lại!",
+          placement: "topRight",
+          duration: 2,
+          onClose: () => {
+            if (data.user.role === "admin") {
+              navigate("/admin"); // Thay window.location.href
+            } else {
+              navigate("/"); // Thay window.location.href
+            }
+          },
+        });
       })
       .catch((err) => {
         notification.error({
@@ -414,7 +377,7 @@ export default function Login() {
                 Đăng Nhập
               </button>
               <button
-                onClick={() => navigate("/signup")}
+                onClick={() => navigate("/signup")} // Thay window.location.href
                 className="h-full w-1/2 rounded-none border border-[#686868] text-sm hover:border-[#22A6DF] hover:text-[#22A6DF] sm:text-base"
               >
                 Đăng Ký
@@ -581,4 +544,4 @@ export default function Login() {
       </Modal>
     </div>
   );
-}
+};

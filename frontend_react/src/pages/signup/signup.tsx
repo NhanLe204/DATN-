@@ -9,6 +9,8 @@ import {
 import { Button, Row, Col, Typography, Input, Flex, notification } from "antd";
 import "antd/dist/reset.css";
 import { EyeInvisibleOutlined, EyeOutlined } from "@ant-design/icons";
+import { useNavigate } from "react-router-dom"; // Thêm useNavigate
+import signupApi from "../../api/signupApi"; // Điều chỉnh đường dẫn
 
 const { Title, Text } = Typography;
 
@@ -39,6 +41,7 @@ export default function SignUp() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const navigate = useNavigate(); // Thêm navigate
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
@@ -119,20 +122,15 @@ export default function SignUp() {
 
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/api/v1/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fullname: formData.fullname,
-          email: formData.email,
-          password: formData.password,
-        }),
-      });
+      const { data } = await signupApi.signup({
+        fullname: formData.fullname,
+        email: formData.email,
+        password: formData.password,
+      }); // Thay fetch bằng signupApi.signup
 
-      const data = await response.json();
-      console.log("Response:", data);
+      console.log("Response:", data); // Giữ nguyên console.log
 
-      if (!response.ok) {
+      if (!data.success) { // Kiểm tra success thay vì response.ok
         throw new Error(data.message || "Đăng ký thất bại!");
       }
 
@@ -149,12 +147,12 @@ export default function SignUp() {
             confirmPassword: "",
           });
           setTimeout(() => {
-            window.location.href = "/login";
+            navigate("/login"); // Dùng navigate thay window.location.href
           }, 2000);
         },
       });
-    } catch (error: any) {
-      console.error("Lỗi:", error);
+    } catch (error) {
+      console.error("Lỗi:", error); // Giữ nguyên console.log
       notification.error({
         message: "Đăng ký thất bại!",
         description: `Đã xảy ra lỗi: ${error.message}`,
@@ -168,57 +166,15 @@ export default function SignUp() {
 
   const handleGoogleLogin = (credentialResponse: GoogleCredentialResponse) => {
     const idToken = credentialResponse.credential;
-    console.log("Sending idToken to backend:", idToken);
-    fetch("http://localhost:5000/api/v1/auth/google", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ idToken }),
-    })
-      .then((res) => {
-        console.log("Response status:", res.status);
-        console.log("Response headers:", res.headers);
-        if (!res.ok) {
-          return res.text().then((text) => {
-            throw new Error(`Server error: ${res.status} - ${text}`);
-          });
-        }
-        return res.json();
-      })
-      .then((data) => {
-        if (data.success) {
-          setUser({
-            id: data.user.id,
-            email: data.user.email,
-            fullname: data.user.fullname,
-            avatar: data.user.avatar,
-            role: data.user.role,
-            status: data.user.status,
-          });
-          localStorage.setItem("accessToken", data.accessToken);
-          localStorage.setItem("accountID", data.user.id);
-          notification.success({
-            message: "Đăng ký/Đăng nhập bằng Google thành công!",
-            description: "Chào mừng bạn quay trở lại!",
-            placement: "topRight",
-            duration: 2,
-            onClose: () => {
-              setTimeout(() => {
-                if (data.user.role === "admin") {
-                  window.location.href = "/admin";
-                } else {
-                  window.location.href = "/";
-                }
-              }, 2000);
-            },
-          });
-          setFormData({
-            fullname: "",
-            email: "",
-            password: "",
-            confirmPassword: "",
-          });
-        } else {
-          console.error("Login failed:", data.message);
+    console.log("Sending idToken to backend:", idToken); // Giữ nguyên console.log
+    signupApi.googleSignup(idToken) // Thay fetch bằng signupApi.googleSignup
+      .then((response) => {
+        const data = response.data; // Lấy data từ response
+        console.log("Response status:", response.status); // Không có res.status trực tiếp, giữ log này để tương thích với ý định gốc
+        console.log("Response headers:", response.headers); // Không có res.headers trực tiếp, giữ log này để tương thích với ý định gốc
+
+        if (!data.success) {
+          console.error("Login failed:", data.message); // Giữ nguyên console.log
           notification.error({
             message: "Đăng nhập thất bại!",
             description:
@@ -226,10 +182,43 @@ export default function SignUp() {
             placement: "topRight",
             duration: 2,
           });
+          return;
         }
+
+        setUser({
+          id: data.user.id,
+          email: data.user.email,
+          fullname: data.user.fullname,
+          avatar: data.user.avatar,
+          role: data.user.role,
+          status: data.user.status,
+        });
+        localStorage.setItem("accessToken", data.accessToken);
+        localStorage.setItem("accountID", data.user.id);
+        notification.success({
+          message: "Đăng ký/Đăng nhập bằng Google thành công!",
+          description: "Chào mừng bạn quay trở lại!",
+          placement: "topRight",
+          duration: 2,
+          onClose: () => {
+            setTimeout(() => {
+              if (data.user.role === "admin") {
+                navigate("/admin"); // Dùng navigate thay window.location.href
+              } else {
+                navigate("/"); // Dùng navigate thay window.location.href
+              }
+            }, 2000);
+          },
+        });
+        setFormData({
+          fullname: "",
+          email: "",
+          password: "",
+          confirmPassword: "",
+        });
       })
       .catch((err) => {
-        console.error("Error:", err);
+        console.error("Error:", err); // Giữ nguyên console.log
         notification.error({
           message: "Lỗi!",
           description: err.message || "Có lỗi xảy ra khi kết nối với Google.",
@@ -251,7 +240,7 @@ export default function SignUp() {
             onMouseEnter={(e) => {
               e.currentTarget.style.cursor = "pointer";
             }}
-            onClick={() => (window.location.href = "/")}
+            onClick={() => navigate("/")} // Dùng navigate thay window.location.href
             className="text-sm sm:text-base"
           >
             Trang chủ
@@ -297,7 +286,7 @@ export default function SignUp() {
           <div>
             <div className="mb-3 flex h-10 sm:h-12">
               <button
-                onClick={() => (window.location.href = "/login")}
+                onClick={() => navigate("/login")} // Dùng navigate thay window.location.href
                 className="h-full w-1/2 border border-[#686868] text-sm hover:border-[#22A6DF] hover:text-[#22A6DF] sm:text-base"
               >
                 Đăng Nhập
@@ -413,4 +402,4 @@ export default function SignUp() {
       </Row>
     </div>
   );
-}
+};

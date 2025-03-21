@@ -1,6 +1,12 @@
 import api from "./axios";
 
 const userApi = {
+    getAllUsers: async () => {
+        const response = await api.get("/v1/users");
+        return {
+            data: response.data,
+        };
+    },
     getUserById: async (id) => {
         const response = await api.get(`/v1/users/${id}`);
         return {
@@ -8,7 +14,7 @@ const userApi = {
         };
     },
     update: async (id, data) => {
-        const response = await api.get(`/v1/users/${id}`, data);
+        const response = await api.patch(`/v1/users/${id}`, data);
         return {
             data: response.data,
         };
