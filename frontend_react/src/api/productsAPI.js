@@ -25,6 +25,12 @@ const productsApi = {
       data: response.data,
     };
   },
+  getProductByID: async (id) => {
+    const response = await api.get(`/v1/products/${id}`);
+    return {
+      data: response.data,
+    };
+  },
   getProductByCategoryID: async (id) => {
     const response = await api.get(`/v1/products/cate/${id}`);
     return {
