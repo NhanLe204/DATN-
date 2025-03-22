@@ -78,28 +78,30 @@ const ProductList: React.FC = () => {
         throw new Error("Dữ liệu không hợp lệ từ API");
       }
 
-      const formattedProducts = productList.map((product: any) => ({
-        key: product._id,
-        _id: product._id,
-        productCode: product._id,
-        name: product.name,
-        image: product.image_url?.[0]
-          ? `/images/products/${product.image_url[0]}`
-          : "/images/products/placeholder.jpg",
-        quantity: product.quantity || 0,
-        status: product.status,
-        price: product.price,
-        category: product.category_id?.name || "Không xác định",
-        brand: product.brand_id?.brand_name || "Không có thương hiệu",
-        tag: product.tag_id?.tag_name || "Không có thẻ",
-        category_id: product.category_id,
-        brand_id: product.brand_id,
-        tag_id: product.tag_id,
-        discount: product.discount,
-        image_url: product.image_url,
-        extra_images: product.image_url?.slice(1),
-        description: product.description || "Không có mô tả",
-      }));
+      const formattedProducts = productList.map((product: any) => {
+        const imageUrl = product.image_url?.[0];
+        const formattedImageUrl = imageUrl;
+        return {
+          key: product._id,
+          _id: product._id,
+          productCode: product._id,
+          name: product.name,
+          image: formattedImageUrl,
+          quantity: product.quantity || 0,
+          status: product.status,
+          price: product.price,
+          category: product.category_id?.name || "Không xác định",
+          brand: product.brand_id?.brand_name || "Không có thương hiệu",
+          tag: product.tag_id?.tag_name || "Không có thẻ",
+          category_id: product.category_id,
+          brand_id: product.brand_id,
+          tag_id: product.tag_id,
+          discount: product.discount,
+          image_url: product.image_url,
+          extra_images: product.image_url?.slice(1),
+          description: product.description || "Không có mô tả",
+        };
+      });
 
       setProducts(formattedProducts);
     } catch (error) {
@@ -182,7 +184,7 @@ const ProductList: React.FC = () => {
             icon={<DeleteOutlined />}
             danger
             size="small"
-            onClick={() => handleHide(record._id)} // Gắn hàm handleHide
+            onClick={() => handleHide(record._id)}
           />
         </Space>
       ),

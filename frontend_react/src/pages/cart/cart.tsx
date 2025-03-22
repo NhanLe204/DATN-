@@ -8,7 +8,15 @@ import {
 } from "../../redux/slices/cartslice";
 import { useSelector, useDispatch } from "react-redux";
 import React, { useEffect } from "react";
-import { Button, Card, Input, Breadcrumb, Typography, Divider, Modal } from "antd";
+import {
+  Button,
+  Card,
+  Input,
+  Breadcrumb,
+  Typography,
+  Divider,
+  Modal,
+} from "antd";
 import { useNavigate } from "react-router-dom";
 
 const { TextArea } = Input;
@@ -17,10 +25,12 @@ const { Title, Text } = Typography;
 const Cart: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { items: cartItems, userId } = useSelector((state: { cart: { items: any[]; userId: string | null } }) => state.cart);
+  const { items: cartItems, userId } = useSelector(
+    (state: { cart: { items: any[]; userId: string | null } }) => state.cart
+  );
 
   useEffect(() => {
-    const storedUserId = localStorage.getItem("accountID"); 
+    const storedUserId = localStorage.getItem("accountID");
     if (storedUserId && !userId) {
       dispatch(setUserId(storedUserId));
     }
@@ -87,7 +97,10 @@ const Cart: React.FC = () => {
 
   // Tính tổng tiền tạm tính
   const calculateSubtotal = () => {
-    return cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+    return cartItems.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0
+    );
   };
 
   // Xử lý khi nhấn "Tiến hành đặt hàng"
@@ -120,7 +133,11 @@ const Cart: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className={cartItems.length === 0 ? "lg:col-span-3" : "lg:col-span-2"}>
+          <div
+            className={
+              cartItems.length === 0 ? "lg:col-span-3" : "lg:col-span-2"
+            }
+          >
             {cartItems.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-[60vh]">
                 <div className="text-center">
@@ -178,7 +195,7 @@ const Cart: React.FC = () => {
                     <div className="flex flex-col items-center gap-4 sm:flex-row">
                       <div className="h-28 w-28 overflow-hidden rounded-lg">
                         <img
-                          src={`/images/products/${item.image}`}
+                          src={`${item.image}`}
                           alt={item.name}
                           className="h-full w-full object-cover"
                         />
@@ -206,7 +223,9 @@ const Cart: React.FC = () => {
                             {(item.price * item.quantity).toLocaleString()}đ
                           </Text>
                           <div className="flex items-center gap-2">
-                            <Button onClick={() => handleDecrement(item.id)}>-</Button>
+                            <Button onClick={() => handleDecrement(item.id)}>
+                              -
+                            </Button>
                             <input
                               type="number"
                               className="w-4 border-none bg-white text-center text-gray-800 md:w-7"
@@ -214,7 +233,9 @@ const Cart: React.FC = () => {
                               value={item.quantity}
                               readOnly
                             />
-                            <Button onClick={() => handleIncrement(item.id)}>+</Button>
+                            <Button onClick={() => handleIncrement(item.id)}>
+                              +
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -255,7 +276,10 @@ const Cart: React.FC = () => {
                     type="primary"
                     size="large"
                     block
-                    style={{ backgroundColor: "#22A6DF", borderColor: "#22A6DF" }}
+                    style={{
+                      backgroundColor: "#22A6DF",
+                      borderColor: "#22A6DF",
+                    }}
                     onClick={handleCheckout}
                   >
                     Tiến hành đặt hàng

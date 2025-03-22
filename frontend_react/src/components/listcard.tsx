@@ -6,7 +6,6 @@ import { Link } from "react-router-dom";
 export default function ListCard({ pros }) {
   const [imageStates, setImageStates] = useState({});
 
-  // Đồng bộ imageStates khi pros.data thay đổi
   useEffect(() => {
     setImageStates(
       pros.data.reduce((acc, product, index) => {
@@ -80,8 +79,12 @@ export default function ListCard({ pros }) {
 
               <Link to={`/detail/${product._id}`}>
                 <img
-                  src={`/images/products/${imageStates[index]?.currentImage || product.image_url[0]}`}
-                  className={`bg-[#EAEAEA] w-full h-[160px] object-cover transition-opacity duration-300 ${imageStates[index]?.fade || "opacity-100"}`}
+                  src={`${
+                    imageStates[index]?.currentImage || product.image_url[0]
+                  }`}
+                  className={`bg-[#EAEAEA] w-full h-[160px] object-cover transition-opacity duration-300 ${
+                    imageStates[index]?.fade || "opacity-100"
+                  }`}
                   alt={product.name}
                   onMouseEnter={() => handleMouseEnter(index)}
                   onMouseLeave={() => handleMouseLeave(index)}
@@ -100,9 +103,7 @@ export default function ListCard({ pros }) {
                 {new Intl.NumberFormat("vi-VN", {
                   style: "currency",
                   currency: "VND",
-                }).format(
-                  Number(product.price * (1 - product.discount / 100))
-                )}
+                }).format(Number(product.price * (1 - product.discount / 100)))}
 
                 {product.discount > 0 && (
                   <span className="ml-1 text-gray-500 line-through text-[10px]">

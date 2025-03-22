@@ -5,7 +5,7 @@ declare global {
     google: any;
   }
 }
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom"; // Thêm useNavigate
 import { FcGoogle } from "react-icons/fc";
 import { FaCheckDouble } from "react-icons/fa6";
 import {
@@ -24,7 +24,8 @@ import {
   Modal,
 } from "antd";
 import "antd/dist/reset.css";
-import { EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons';
+import { EyeInvisibleOutlined, EyeOutlined } from "@ant-design/icons";
+import loginApi from "../../api/login";// Điều chỉnh đường dẫn theo dự án
 import ENV_VARS from "../../../config";
 const { Title, Text } = Typography;
 
@@ -51,7 +52,7 @@ export default function Login() {
     useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const navigate = useNavigate();
+  const navigate = useNavigate(); // Thêm navigate
 
   // Check role & status
   useEffect(() => {
@@ -79,18 +80,60 @@ export default function Login() {
 
   // handle login
   const handleLogin = async () => {
+    
+    if (!email.trim() && !password.trim()) {
+      notification.error({
+        message: "Lỗi!",
+        description: "Các thông tin không được bỏ trống!",
+        placement: "topRight",
+        duration: 2,
+      });
+      localStorage.clear();
+      setUser(null);
+      setLoading(false);
+      return;
+    }
+    if (!email.trim()) {
+      notification.error({
+        message: "Lỗi!",
+        description: "Email không được bỏ trống!",
+        placement: "topRight",
+        duration: 2,
+      });
+      localStorage.clear();
+      setUser(null);
+      setLoading(false);
+      return;
+    }
+    if (!password.trim()) {
+      notification.error({
+        message: "Lỗi!",
+        description: "Mật khẩu không được bỏ trống!",
+        placement: "topRight",
+        duration: 2,
+      });
+      localStorage.clear();
+      setUser(null);
+      setLoading(false);
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      notification.warning({
+        message: "Lỗi!",
+        description: "Vui lòng nhập email hợp lệ!",
+        placement: "topRight",
+        duration: 2,
+      });
+      return;
+    }
     setLoading(true);
     try {
-      const response = await fetch(`${ENV_VARS.VITE_API_URL}/v1/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      const { data } = await loginApi.login({ email, password }); // Thay fetch bằng loginApi.login
 
-      const data = await response.json();
-      console.log("Phản hồi từ API:", response, data);
+      console.log("Phản hồi từ API:", data); // Giữ nguyên console.log (đổi response thành data)
 
-      if (response.ok) {
+      if (data.success) { // Kiểm tra data.success thay vì response.ok
         const { userData, accessToken } = data;
         setUser(userData);
         localStorage.setItem("accessToken", accessToken);
@@ -119,7 +162,7 @@ export default function Login() {
             if (userData.role === "admin") {
               navigate("/admin"); // Thay window.location.href
             } else {
-              navigate("/"); // Thay window.location.href
+              window.location.href = "/";
             }
           },
         });
@@ -129,7 +172,8 @@ export default function Login() {
     } catch (error) {
       notification.error({
         message: "Lỗi!",
-        description: error.message || "Có lỗi xảy ra trong quá trình đăng nhập.",
+        description:
+          error.message || "Có lỗi xảy ra trong quá trình đăng nhập.",
         placement: "topRight",
         duration: 2,
       });
@@ -149,17 +193,9 @@ export default function Login() {
     }
     setIsSending(true);
     try {
-      const response = await fetch(
-        "http://localhost:5000/api/v1/auth/forgotPassword",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: forgotEmail }),
-        }
-      );
+      const { data } = await loginApi.forgotPassword(forgotEmail); // Thay fetch bằng loginApi.forgotPassword
 
-      const data = await response.json();
-      if (response.ok) {
+      if (data.success) { // Kiểm tra data.success thay vì response.ok
         notification.success({
           message: "Kiểm tra email!",
           description: "Hãy kiểm tra hộp thư của bạn để đặt lại mật khẩu.",
@@ -174,7 +210,7 @@ export default function Login() {
     } catch (error) {
       notification.error({
         message: "Lỗi!",
-        description: "Không thể gửi yêu cầu quên mật khẩu.",
+        description: "Email không tồn tại!",
         placement: "topRight",
         duration: 2,
       });
@@ -192,19 +228,21 @@ export default function Login() {
       });
       return;
     }
+    if (newPassword.length < 6) {
+      notification.warning({
+        message: "Lỗi!",
+        description: "Mật khẩu phải có ít nhất 6 ký tự!",
+        placement: "topRight",
+        duration: 2,
+      });
+      return;
+    }
 
     setIsSending(true);
     try {
-      const response = await fetch(
-        "http://localhost:5000/api/v1/auth/resetPassword",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ resetToken, newPassword }),
-        }
-      );
-      const data = await response.json();
-      if (response.ok) {
+      const { data } = await loginApi.resetPassword({ resetToken, newPassword }); // Thay fetch bằng loginApi.resetPassword
+      
+      if (data.success) { // Kiểm tra data.success thay vì response.ok
         notification.success({
           message: "Mật khẩu đã được đặt lại thành công!",
           placement: "topRight",
@@ -232,53 +270,36 @@ export default function Login() {
   // Chức năng đăng nhập GOOGLE
   const handleGoogleLogin = (credentialResponse: GoogleCredentialResponse) => {
     const idToken = credentialResponse.credential;
-    fetch("http://localhost:5000/api/v1/auth/google", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ idToken }),
-    })
-      .then((res) => {
-        if (!res.ok) {
-          return res.text().then((text) => {
-            throw new Error(`Server error: ${res.status} - ${text}`);
-          });
+    loginApi.googleLogin(idToken) // Thay fetch bằng loginApi.googleLogin
+      .then((response) => {
+        const data = response.data; // Lấy data từ response
+        if (!data.success) {
+          return Promise.reject(new Error(`Server error: ${data.message || "Unknown error"}`));
         }
-        return res.json();
-      })
-      .then((data) => {
-        if (data.success) {
-          setUser({
-            id: data.user.id,
-            email: data.user.email,
-            fullname: data.user.fullname,
-            avatar: data.user.avatar,
-            role: data.user.role,
-            status: data.user.status,
-          });
-          localStorage.setItem("accessToken", data.accessToken);
-          localStorage.setItem("accountID", data.user.id);
-          localStorage.setItem("userData", JSON.stringify(data.user));
-          notification.success({
-            message: "Đăng nhập bằng Google thành công!",
-            description: "Chào mừng bạn quay trở lại!",
-            placement: "topRight",
-            duration: 2,
-            onClose: () => {
-              if (data.user.role === "admin") {
-                navigate("/admin"); // Thay window.location.href
-              } else {
-                navigate("/"); // Thay window.location.href
-              }
-            },
-          });
-        } else {
-          notification.error({
-            message: "Đăng nhập thất bại!",
-            description: data.message || "Có lỗi xảy ra khi đăng nhập bằng Google.",
-            placement: "topRight",
-            duration: 2,
-          });
-        }
+        setUser({
+          id: data.user.id,
+          email: data.user.email,
+          fullname: data.user.fullname,
+          avatar: data.user.avatar,
+          role: data.user.role,
+          status: data.user.status,
+        });
+        localStorage.setItem("accessToken", data.accessToken);
+        localStorage.setItem("accountID", data.user.id);
+        localStorage.setItem("userData", JSON.stringify(data.user));
+        notification.success({
+          message: "Đăng nhập bằng Google thành công!",
+          description: "Chào mừng bạn quay trở lại!",
+          placement: "topRight",
+          duration: 2,
+          onClose: () => {
+            if (data.user.role === "admin") {
+              navigate("/admin"); // Thay window.location.href
+            } else {
+              navigate("/"); // Thay window.location.href
+            }
+          },
+        });
       })
       .catch((err) => {
         notification.error({
@@ -299,7 +320,9 @@ export default function Login() {
         </Title>
         <Flex justify="center" className="gap-1 sm:gap-2">
           <span
-            onMouseEnter={(e) => { e.currentTarget.style.cursor = "pointer"; }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.cursor = "pointer";
+            }}
             onClick={() => navigate("/")} // Thay window.location.href
             className="text-sm sm:text-base"
           >
@@ -310,18 +333,38 @@ export default function Login() {
         </Flex>
       </div>
 
-      <Row justify="center" className="mx-auto min-h-[450px] w-full max-w-[830px] flex-col gap-4 overflow-hidden px-2 sm:gap-7 sm:px-0 lg:flex-row">
+      <Row
+        justify="center"
+        className="mx-auto min-h-[450px] w-full max-w-[830px] flex-col gap-4 overflow-hidden px-2 sm:gap-7 sm:px-0 lg:flex-row"
+      >
         {/* Left */}
         <Col className="flex w-full flex-col justify-between gap-4 sm:gap-0 lg:w-[400px]">
           <div className="h-[200px] sm:h-1/2">
-            <img src="https://picsum.photos/300/200" alt="Login form" className="h-full w-full bg-[#EAEAEA] object-cover" />
+            <img
+              src="https://picsum.photos/300/200"
+              alt="Login form"
+              className="h-full w-full bg-[#EAEAEA] object-cover"
+            />
           </div>
           <div className="h-auto bg-[#EAEAEA] p-3 text-xs sm:h-1/2 sm:p-4 sm:text-sm">
-            <Title level={5} className="text-sm sm:text-base">Quyền lợi thành viên</Title>
+            <Title level={5} className="text-sm sm:text-base">
+              Quyền lợi thành viên
+            </Title>
             <ul className="list-disc space-y-2 pl-4 sm:space-y-4">
-              <li className="flex items-center gap-2"><FaCheckDouble className="h-3 w-3 shrink-0 text-[#22A6DF] sm:h-4 sm:w-4" /><span>Mua hàng nhanh chóng, dễ dàng</span></li>
-              <li className="flex items-center gap-2"><FaCheckDouble className="h-3 w-3 shrink-0 text-[#22A6DF] sm:h-4 sm:w-4" /><span>Theo dõi chi tiết đơn hàng, địa chỉ thanh toán dễ dàng</span></li>
-              <li className="flex items-center gap-2"><FaCheckDouble className="h-3 w-3 shrink-0 text-[#22A6DF] sm:h-4 sm:w-4" /><span>Nhận nhiều chương trình ưu đãi từ chúng tôi</span></li>
+              <li className="flex items-center gap-2">
+                <FaCheckDouble className="h-3 w-3 shrink-0 text-[#22A6DF] sm:h-4 sm:w-4" />
+                <span>Mua hàng nhanh chóng, dễ dàng</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <FaCheckDouble className="h-3 w-3 shrink-0 text-[#22A6DF] sm:h-4 sm:w-4" />
+                <span>
+                  Theo dõi chi tiết đơn hàng, địa chỉ thanh toán dễ dàng
+                </span>
+              </li>
+              <li className="flex items-center gap-2">
+                <FaCheckDouble className="h-3 w-3 shrink-0 text-[#22A6DF] sm:h-4 sm:w-4" />
+                <span>Nhận nhiều chương trình ưu đãi từ chúng tôi</span>
+              </li>
             </ul>
           </div>
         </Col>
@@ -330,16 +373,34 @@ export default function Login() {
         <Col className="flex w-full flex-col justify-between shadow-inner lg:w-[400px] overflow-auto">
           <div>
             <div className="mb-3 flex h-10 sm:h-12">
-              <button className="h-full w-1/2 rounded-none border-[#22A6DF] bg-[#22A6DF] text-sm text-white sm:text-base">Đăng Nhập</button>
-              <button onClick={() => navigate("/signup")} className="h-full w-1/2 rounded-none border border-[#686868] text-sm hover:border-[#22A6DF] hover:text-[#22A6DF] sm:text-base">Đăng Ký</button>
+              <button className="h-full w-1/2 rounded-none border-[#22A6DF] bg-[#22A6DF] text-sm text-white sm:text-base">
+                Đăng Nhập
+              </button>
+              <button
+                onClick={() => navigate("/signup")} // Thay window.location.href
+                className="h-full w-1/2 rounded-none border border-[#686868] text-sm hover:border-[#22A6DF] hover:text-[#22A6DF] sm:text-base"
+              >
+                Đăng Ký
+              </button>
             </div>
             <div className="p-3 sm:p-4">
               <div className="mb-2 pb-2 text-sm sm:text-base">
-                <label htmlFor="email" className="font-bold uppercase">Email <span className="text-red-600">*</span></label>
-                <Input type="email" id="email" placeholder="Nhập email của bạn" className="mt-2 h-9 text-sm sm:h-10 sm:text-base" value={email} onChange={(e) => setEmail(e.target.value)} />
+                <label htmlFor="email" className="font-bold uppercase">
+                  Email <span className="text-red-600">*</span>
+                </label>
+                <Input
+                  type="email"
+                  id="email"
+                  placeholder="Nhập email của bạn"
+                  className="mt-2 h-9 text-sm sm:h-10 sm:text-base"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
               </div>
               <div className="mb-2 pb-2 text-sm sm:text-base">
-                <label htmlFor="password" className="font-bold uppercase">Mật khẩu <span className="text-red-600">*</span></label>
+                <label htmlFor="password" className="font-bold uppercase">
+                  Mật khẩu <span className="text-red-600">*</span>
+                </label>
                 <Input
                   type={showPassword ? "text" : "password"}
                   id="password"
@@ -347,53 +408,140 @@ export default function Login() {
                   className="mt-2 h-9 text-sm sm:h-10 sm:text-base"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  suffix={<span onClick={() => setShowPassword(!showPassword)} style={{ cursor: "pointer" }}>{showPassword ? <EyeOutlined /> : <EyeInvisibleOutlined />}</span>}
+                  suffix={
+                    <span
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      {showPassword ? (
+                        <EyeOutlined />
+                      ) : (
+                        <EyeInvisibleOutlined />
+                      )}
+                    </span>
+                  }
                 />
               </div>
               <div className="mb-3">
-                <a className="cursor-pointer text-sm sm:text-base" onClick={() => setIsForgotPasswordModalOpen(true)}>Quên mật khẩu?</a>
+                <a
+                  className="cursor-pointer text-sm sm:text-base"
+                  onClick={() => setIsForgotPasswordModalOpen(true)}
+                >
+                  Quên mật khẩu?
+                </a>
               </div>
             </div>
           </div>
 
           <div className="flex flex-col items-center px-2 sm:px-4 mb-4">
-            <Flex justify="space-between" className="w-full max-w-[380px] items-center">
-              <Button type="primary" size="large" className="h-9 w-[46%] rounded-md bg-black text-xs text-white hover:bg-[#22A6DF] sm:h-10 sm:text-sm" onClick={handleLogin} loading={loading}>
+            <Flex
+              justify="space-between"
+              className="w-full max-w-[380px] items-center"
+            >
+              <Button
+                type="primary"
+                size="large"
+                className="h-9 w-[46%] rounded-md bg-black text-xs text-white hover:bg-[#22A6DF] sm:h-10 sm:text-sm"
+                onClick={handleLogin}
+                loading={loading}
+              >
                 {loading ? "Đang đăng nhập..." : "Đăng nhập"}
               </Button>
               <span className="my-auto px-1 text-sm sm:text-base">Hoặc</span>
               <GoogleOAuthProvider clientId="518751281700-f8vq0pf1792lcv7risc93qd5b6ccb70g.apps.googleusercontent.com">
-                <GoogleLogin onSuccess={handleGoogleLogin} size="medium" width={36} type="standard" onError={() => {
-                  notification.error({ message: "Đăng nhập thất bại!", description: "Có lỗi xảy ra khi đăng nhập bằng Google.", placement: "topRight", duration: 2 });
-                }} />
+                <GoogleLogin
+                  onSuccess={handleGoogleLogin}
+                  size="medium"
+                  width={36}
+                  type="standard"
+                  onError={() => {
+                    notification.error({
+                      message: "Đăng nhập thất bại!",
+                      description: "Có lỗi xảy ra khi đăng nhập bằng Google.",
+                      placement: "topRight",
+                      duration: 2,
+                    });
+                  }}
+                />
               </GoogleOAuthProvider>
             </Flex>
           </div>
 
           <div className="px-3 pt-2 text-center sm:px-4 sm:pt-4">
             <Text type="secondary" className="text-[10px] sm:text-xs">
-              Pet Heaven cam kết bảo mật và sẽ không tiết lộ thông tin khách hàng khi không có sự cho phép.
+              Pet Heaven cam kết bảo mật và sẽ không tiết lộ thông tin khách
+              hàng khi không có sự cho phép.
             </Text>
           </div>
         </Col>
       </Row>
 
-      <Modal title="Quên Mật Khẩu" open={isForgotPasswordModalOpen} onCancel={() => setIsForgotPasswordModalOpen(false)} footer={[
-        <Button key="cancel" onClick={() => setIsForgotPasswordModalOpen(false)}>Hủy</Button>,
-        <Button key="submit" type="primary" loading={isSending} onClick={handleForgotPassword}>Gửi</Button>,
-      ]}>
+      <Modal
+        title="Quên Mật Khẩu"
+        open={isForgotPasswordModalOpen}
+        onCancel={() => setIsForgotPasswordModalOpen(false)}
+        footer={[
+          <Button
+            key="cancel"
+            onClick={() => setIsForgotPasswordModalOpen(false)}
+          >
+            Hủy
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            loading={isSending}
+            onClick={handleForgotPassword}
+          >
+            Gửi
+          </Button>,
+        ]}
+      >
         <p>Nhập email của bạn để nhận hướng dẫn đặt lại mật khẩu.</p>
-        <Input type="email" placeholder="Nhập email" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} />
+        <Input
+          type="email"
+          placeholder="Nhập email"
+          value={forgotEmail}
+          onChange={(e) => setForgotEmail(e.target.value)}
+        />
       </Modal>
 
-      <Modal title="Đặt Lại Mật Khẩu" open={isResetPasswordModalOpen} onCancel={() => setIsResetPasswordModalOpen(false)} footer={[
-        <Button key="cancel" onClick={() => setIsResetPasswordModalOpen(false)}>Hủy</Button>,
-        <Button key="submit" type="primary" loading={isSending} onClick={handleResetPassword}>Đặt lại</Button>,
-      ]}>
+      <Modal
+        title="Đặt Lại Mật Khẩu"
+        open={isResetPasswordModalOpen}
+        onCancel={() => setIsResetPasswordModalOpen(false)}
+        footer={[
+          <Button
+            key="cancel"
+            onClick={() => setIsResetPasswordModalOpen(false)}
+          >
+            Hủy
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            loading={isSending}
+            onClick={handleResetPassword}
+          >
+            Đặt lại
+          </Button>,
+        ]}
+      >
         <p>Nhập mã xác nhận và mật khẩu mới của bạn.</p>
-        <Input className="mb-2" type="text" placeholder="Mã xác nhận" value={resetToken} onChange={(e) => setResetToken(e.target.value)} />
-        <Input type="password" placeholder="Mật khẩu mới" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+        <Input
+          className="mb-2"
+          type="text"
+          placeholder="Mã xác nhận"
+          value={resetToken}
+          onChange={(e) => setResetToken(e.target.value)}
+        />
+        <Input
+          type="password"
+          placeholder="Mật khẩu mới"
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+        />
       </Modal>
     </div>
   );
-}
+};

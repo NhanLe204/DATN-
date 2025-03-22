@@ -175,8 +175,15 @@ const Payment = () => {
         {darkMode ? <Sun size={20} /> : <Moon size={20} />}
       </motion.button>
 
-      <div className="container mx-auto px-4 py-8">
-        <nav className={`mb-6 rounded-xl p-4 ${darkMode ? "bg-gray-800" : "bg-white"}`}>
+      <div className="container mx-auto px-[154px] py-8">
+        {/* Breadcrumb */}
+        <nav
+          className={`mb-6 rounded-xl p-4 ${
+            darkMode
+              ? "bg-gray-800 shadow-[inset_-2px_-2px_5px_rgba(255,255,255,0.05),inset_2px_2px_5px_rgba(0,0,0,0.3)]"
+              : "bg-white shadow-[inset_-2px_-2px_5px_rgba(255,255,255,0.7),inset_2px_2px_5px_rgba(0,0,0,0.05)]"
+          }`}
+        >
           <div className="flex items-center gap-2">
             <span className={darkMode ? "text-gray-400 hover:text-white" : "text-gray-600 hover:text-gray-900"}>Trang chủ</span>
             <ChevronRight size={16} className={darkMode ? "text-gray-600" : "text-gray-400"} />

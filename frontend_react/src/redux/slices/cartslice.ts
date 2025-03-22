@@ -56,7 +56,9 @@ const cartSlice = createSlice({
     },
     increaseQuantity: (state, action) => {
       if (!state.userId) return;
-      const item = state.items.find((cartItem) => cartItem.id === action.payload.id);
+      const item = state.items.find(
+        (cartItem) => cartItem.id === action.payload.id
+      );
       if (item) {
         item.quantity += 1;
         saveCartsToLocal(state.userId, state.items);
@@ -64,7 +66,9 @@ const cartSlice = createSlice({
     },
    decreaseQuantity: (state, action) => {
       if (!state.userId) return;
-      const item = state.items.find((cartItem) => cartItem.id === action.payload.id);
+      const item = state.items.find(
+        (cartItem) => cartItem.id === action.payload.id
+      );
       if (item && item.quantity > 1) {
         item.quantity -= 1;
         saveCartsToLocal(state.userId, state.items);
@@ -72,24 +76,10 @@ const cartSlice = createSlice({
     },
     removeProduct: (state, action) => {
       if (!state.userId) return;
-      // Lọc bỏ sản phẩm có id tương ứng
-      state.items = state.items.filter((cartItem) => cartItem.id !== action.payload.id);
-      // Cập nhật localStorage
-      const allCarts = getAllCartsFromLocal();
-    
-      // Nếu giỏ hàng của userId hiện tại rỗng, xóa nó khỏi allCarts
-      if (state.items.length === 0) {
-        delete allCarts[state.userId];
-        // Nếu không còn user nào trong allCarts, xóa key "carts"
-        if (Object.keys(allCarts).length === 0) {
-          localStorage.removeItem("carts");
-        } else {
-          localStorage.setItem("carts", JSON.stringify(allCarts));
-        }
-      } else {
-        // Nếu vẫn còn sản phẩm, lưu lại bình thường
-        saveCartsToLocal(state.userId, state.items);
-      }
+      state.items = state.items.filter(
+        (cartItem) => cartItem.id !== action.payload.id
+      );
+      saveCartsToLocal(state.userId, state.items);
     },
     clearProduct: (state) => {
       if (!state.userId) return;
@@ -119,5 +109,13 @@ const saveCartsToLocal = (userId, items) => {
     localStorage.setItem("carts", JSON.stringify(allCarts));
   }
 };
-export const { addToCart, increaseQuantity, decreaseQuantity, removeProduct, clearProduct, setUserId } = cartSlice.actions;
+
+export const {
+  addToCart,
+  increaseQuantity,
+  decreaseQuantity,
+  removeProduct,
+  clearProduct,
+  setUserId,
+} = cartSlice.actions;
 export default cartSlice;

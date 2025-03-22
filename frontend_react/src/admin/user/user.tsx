@@ -15,7 +15,8 @@ import {
 import { EditOutlined } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { Typography } from "antd";
-import axios from "axios";
+import userApi from "../../api/userApi"; // Import userApi
+
 const { Title } = Typography;
 const { Option } = Select;
 
@@ -38,23 +39,12 @@ const UserList: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
 
-  const API_BASE_URL = "http://localhost:5000/api/v1";
-
   useEffect(() => {
     const fetchUsers = async () => {
       setLoading(true);
       try {
-        const token = localStorage.getItem("accessToken");
-        if (!token) {
-          console.error("No token found in localStorage");
-          return;
-        }
-        const response = await axios.get(`${API_BASE_URL}/users`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const fetchedUsers = response.data.result.map((user: any) => ({
+        const { data } = await userApi.getAllUsers(); // Sử dụng userApi thay vì axios
+        const fetchedUsers = data.result.map((user: any) => ({
           key: user._id,
           _id: user._id,
           fullname: user.fullname || "Chưa đặt tên",
@@ -150,20 +140,13 @@ const UserList: React.FC = () => {
   const handleModalOk = async () => {
     try {
       const values = await form.validateFields();
-      const token = localStorage.getItem("accessToken");
       const updatedData = {
-        status: values.status === "Hoạt động" ? "active" : "inactive", // Chỉ gửi status
+        status: values.status === "Hoạt động" ? "active" : "inactive",
       };
-      const response = await axios.patch(
-        `${API_BASE_URL}/users/${selectedUser?._id}`,
-        updatedData,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const { data } = await userApi.update(selectedUser?._id, updatedData); // Sử dụng userApi.update
       setUsers(
         users.map((u) =>
-          u.key === selectedUser?.key
-            ? { ...u, status: values.status }
-            : u
+          u.key === selectedUser?.key ? { ...u, status: values.status } : u
         )
       );
       setIsModalVisible(false);

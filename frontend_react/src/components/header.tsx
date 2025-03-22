@@ -29,6 +29,7 @@ import { useSelector, useDispatch } from "react-redux"; // Thêm useDispatch
 import { useLocation } from "react-router-dom";
 import { SearchContext } from "./searchContext";
 import { addToCart, setUserId } from "../redux/slices/cartslice"; // Thêm setUserId
+import productsApi from "../api/productsAPI";
 const { Title, Text } = Typography;
 
 interface Product {
@@ -110,16 +111,15 @@ export default function Header() {
 
   const fetchSearchResults = async (searchTerm: string) => {
     try {
-      const response = await fetch("http://localhost:5000/api/v1/products");
-      if (!response.ok) {
-        throw new Error(`Failed to fetch products: ${response.statusText}`);
-      }
-      const data = await response.json();
+      const response = await productsApi.getProductActive();
+      const data = await response.data.result;
       console.log("Dữ liệu từ API:", data);
 
       const normalizedSearchTerm = removeDiacritics(searchTerm.toLowerCase());
-      const filteredProducts = data.result.filter((product: Product) => {
-        const normalizedProductName = removeDiacritics(product.name.toLowerCase());
+      const filteredProducts = data.filter((product: Product) => {
+        const normalizedProductName = removeDiacritics(
+          product.name.toLowerCase()
+        );
         return normalizedProductName.includes(normalizedSearchTerm);
       });
 
@@ -134,11 +134,15 @@ export default function Header() {
   // Lấy thông tin user khi component mount
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
-    const accountID = localStorage.getItem("accountID")?.replace(/^"|"$/g, "")  || "";
+    const accountID =
+      localStorage.getItem("accountID")?.replace(/^"|"$/g, "") || "";
 
     // Kiểm tra token và accountID
     if (!token || !accountID) {
-      console.warn("Không tìm thấy token hoặc accountID trong localStorage:", { token, accountID });
+      console.warn("Không tìm thấy token hoặc accountID trong localStorage:", {
+        token,
+        accountID,
+      });
       return;
     }
 
@@ -162,7 +166,9 @@ export default function Header() {
     })
       .then((res) => {
         if (!res.ok) {
-          throw new Error(`Failed to fetch user data: ${res.status} ${res.statusText}`);
+          throw new Error(
+            `Failed to fetch user data: ${res.status} ${res.statusText}`
+          );
         }
         return res.json();
       })
@@ -265,10 +271,7 @@ export default function Header() {
                   key={product._id}
                   className="rounded bg-gray-50 p-4 shadow-md"
                 >
-                  <img
-                    src={`/images/products/${product.image_url[0]}`}
-                    alt=""
-                  />
+                  <img src={`${product.image_url[0]}`} alt="" />
                   <p>{product.name}</p>
                   <p className="text-[#22A6DF] font-bold">
                     {new Intl.NumberFormat("vi-VN", {
@@ -341,7 +344,7 @@ export default function Header() {
           <div className="grid grid-cols-2 gap-4">
             {searchResults.map((product) => (
               <div key={product._id} className="rounded bg-gray-50 p-4">
-                <img src={`/images/products/${product.image_url[0]}`} alt="" />
+                <img src={`${product.image_url[0]}`} alt="" />
                 <p>{product.name}</p>
                 <p className="text-[#22A6DF] font-bold">
                   {new Intl.NumberFormat("vi-VN", {

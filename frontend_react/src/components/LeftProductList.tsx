@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Checkbox, Typography } from "antd";
 import { FaChevronUp, FaChevronDown } from "react-icons/fa";
+import tagApi from "../api/tagApi";
+import brandApi from "../api/brandApi";
 
 const { Title } = Typography;
 
@@ -32,8 +34,8 @@ interface LeftProductListProps {
   togglePriceRange: (value: string) => void;
   selectedBrands: string[];
   toggleBrand: (brandId: string) => void;
-  selectedTags: string[]; // Chỉ nhận selectedTags
-  toggleTag: (tagId: string) => void; // Dùng toggleTag để cập nhật
+  selectedTags: string[];
+  toggleTag: (tagId: string) => void;
   selectedCategory: string;
   setSelectedCategory: (value: string) => void;
   categories: Category[];
@@ -56,61 +58,40 @@ export default function LeftProductList({
   setSelectedCategory,
   categories,
 }: LeftProductListProps) {
-  const [tags, setTags] = useState<{ [key: string]: Tag[] }>({});
+  const [tags, setTags] = useState<Tag[]>([]); 
   const [brands, setBrands] = useState<Brand[]>([]);
   const [loadingTags, setLoadingTags] = useState(false);
   const [loadingBrands, setLoadingBrands] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [expandedTagCategory, setExpandedTagCategory] = useState<string | null>(
-    null
-  );
-
-  const API_URL = import.meta.env.VITE_API_URL;
+  const [expandedTagCategory, setExpandedTagCategory] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchTags = async (categoryId: string) => {
+    const fetchTags = async () => {
       try {
         setLoadingTags(true);
         setError(null);
-        const response = await fetch(
-          `${API_URL}/api/v1/tags?category_id=${categoryId}`,
-          {
-            headers: {
-              Accept: "application/json",
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        if (!response.ok)
-          throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.json();
+        const response = await tagApi.getAll();
+        const tagsData = response.data;
         const tagsArray =
-          data.result && Array.isArray(data.result) ? data.result : [];
-        setTags((prev) => ({ ...prev, [categoryId]: tagsArray }));
+          tagsData.result && Array.isArray(tagsData.result) ? tagsData.result : [];
+        setTags(tagsArray);
       } catch (error) {
-        console.error(`Error fetching tags for category ${categoryId}:`, error);
+        console.error("Error fetching tags:", error);
         setError("Không thể tải danh sách tags");
       } finally {
         setLoadingTags(false);
       }
     };
 
-    categories.forEach((category) => fetchTags(category._id));
-
     const fetchBrands = async () => {
       try {
         setLoadingBrands(true);
-        const response = await fetch(`${API_URL}/api/v1/brands`, {
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-        });
-        if (!response.ok)
-          throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.json();
+        const response = await brandApi.getAll();
+        const brandsData = response.data;
         const brandsArray =
-          data.result && Array.isArray(data.result) ? data.result : [];
+          brandsData.result && Array.isArray(brandsData.result)
+            ? brandsData.result
+            : [];
         setBrands(brandsArray);
       } catch (error) {
         console.error("Error fetching brands:", error);
@@ -119,14 +100,15 @@ export default function LeftProductList({
         setLoadingBrands(false);
       }
     };
+
+    fetchTags();
     fetchBrands();
-  }, [API_URL, categories]);
+  }, [categories]); 
 
   const handleCategoryClick = (categoryId: string) => {
     if (selectedCategory !== categoryId) {
       setSelectedCategory(categoryId);
       setExpandedTagCategory(categoryId);
-      // Không reset tags ở đây nữa, để Products xử lý nếu cần
     } else {
       setExpandedTagCategory(
         expandedTagCategory === categoryId ? null : categoryId
@@ -161,7 +143,6 @@ export default function LeftProductList({
               onClick={() => {
                 setSelectedCategory("all");
                 setExpandedTagCategory(null);
-                // Không reset tags ở đây nữa, để Products xử lý nếu cần
               }}
             >
               Tất cả sản phẩm
@@ -186,13 +167,11 @@ export default function LeftProductList({
                 {expandedTagCategory === category._id && (
                   <ul className="ml-4 mt-1 space-y-1">
                     {loadingTags ? (
-                      <li className="text-xs text-gray-500">
-                        Đang tải tags...
-                      </li>
+                      <li className="text-xs text-gray-500">Đang tải tags...</li>
                     ) : error ? (
                       <li className="text-xs text-red-500">{error}</li>
-                    ) : tags[category._id]?.length > 0 ? (
-                      tags[category._id].map((tag) => (
+                    ) : tags.length > 0 ? (
+                      tags.map((tag) => (
                         <li key={tag._id} className="flex items-center">
                           <Checkbox
                             onChange={() => toggleTag(tag._id)}
@@ -293,7 +272,7 @@ export default function LeftProductList({
               <div className="text-xs text-gray-500">Đang tải brands...</div>
             ) : error ? (
               <div className="text-xs text-red-500">{error}</div>
-            ) : (
+            ) : brands.length > 0 ? (
               brands.map((brand) => (
                 <div key={brand._id}>
                   <Checkbox
@@ -301,10 +280,12 @@ export default function LeftProductList({
                     checked={selectedBrands.includes(brand._id)}
                     className="text-gray-700 text-xs"
                   >
-                    {brand.brand_name}
+                    {brand.brand_name || brand.name}
                   </Checkbox>
                 </div>
               ))
+            ) : (
+              <div className="text-xs text-gray-500">Không có brands</div>
             )}
           </div>
         )}

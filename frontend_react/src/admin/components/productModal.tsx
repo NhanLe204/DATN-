@@ -133,11 +133,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
             uid: "-1",
             name: "image.png",
             status: "done",
-            url:
-              imageUrl.startsWith("http") ||
-              imageUrl.startsWith("/images/products/")
-                ? imageUrl
-                : `/images/products/${imageUrl}`,
+            url: imageUrl,
           },
         ]);
       } else {
@@ -151,10 +147,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
             uid: `-${index + 1}`,
             name: `extra-image-${index + 1}.png`,
             status: "done",
-            url:
-              url.startsWith("http") || url.startsWith("/images/products/")
-                ? url
-                : `/images/products/${url}`,
+            url: url,
           })
         );
         setExtraImagesFileList(extraImages);
@@ -179,7 +172,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
             return {
               ...file,
               status: "done",
-              url: `/images/products/${response.url}`,
+              url: `${response.url}`,
             };
           } catch (error) {
             console.error("Lỗi khi tải ảnh chính:", error);
@@ -207,7 +200,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
             return {
               ...file,
               status: "done",
-              url: `/images/products/${response.url}`,
+              url: `${response.url}`,
             };
           } catch (error) {
             console.error("Lỗi khi tải ảnh phụ:", error);
@@ -229,6 +222,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
     try {
       const updatedValues = {
         ...values,
+
         image_url: mainImageFileList[0]?.url || values.image_url,
         extra_images: extraImagesFileList.map(
           (file) => file.url || file.response?.url
@@ -257,7 +251,6 @@ const ProductModal: React.FC<ProductModalProps> = ({
       }
     }
   };
-
   return (
     <Modal
       title={product ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm"}

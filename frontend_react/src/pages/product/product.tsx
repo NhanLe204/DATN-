@@ -4,18 +4,19 @@ import { Button, Row, Col, Typography, Select, Drawer, Pagination } from "antd";
 import ListCard from "../../components/listcard";
 import Loader from "../../components/loader";
 import LeftProductList from "../../components/LeftProductList";
-import ENV_VARS from "../../../config";
+import productsApi from "../../api/productsAPI";
+import categoryApi from "../../api/categoryApi";
 
 const { Title } = Typography;
 const { Option } = Select;
 
 interface APIProduct {
   discount: number;
-  _id: object;
+  _id: object | string;
   category: string;
   id: any;
   name: string;
-  category_id: object;
+  category_id: object | string | null;
   image: string;
   image_url: string;
   detail1: string;
@@ -26,9 +27,9 @@ interface APIProduct {
   description: string;
   createdAt: Date;
   updatedAt: Date;
-  brand_id: object | null;
+  brand_id: object | string | null;
   status: string;
-  tag_id: object | null;
+  tag_id: object | string | null | (string | object)[];
 }
 
 interface Category {
@@ -52,25 +53,22 @@ export default function Products() {
   const [categories, setCategories] = useState<Category[]>([]);
 
   const itemsPerPage = 12;
-  const API_URL = ENV_VARS.VITE_API_URL;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const categoryResponse = await fetch(`${API_URL}/api/v1/categories`);
-        const categoryData = await categoryResponse.json();
+
+        const categoryResponse = await categoryApi.getCategoriesActive();
+        const categoryData = categoryResponse.data;
         if (categoryData.result && Array.isArray(categoryData.result)) {
           setCategories(categoryData.result);
         } else {
-          console.error(
-            "Unexpected category response structure:",
-            categoryData
-          );
+          console.error("Unexpected category response structure:", categoryData);
         }
 
-        const productResponse = await fetch(`${API_URL}/api/v1/products`);
-        const productData = await productResponse.json();
+        const productResponse = await productsApi.getProductActive();
+        const productData = productResponse.data;
         if (productData.result && Array.isArray(productData.result)) {
           setData(productData.result);
         } else {
@@ -83,21 +81,17 @@ export default function Products() {
       }
     };
     fetchData();
-  }, [API_URL]);
+  }, []);
 
   const togglePriceRange = (value: string) => {
     setPriceRanges((prev) =>
-      prev.includes(value)
-        ? prev.filter((range) => range !== value)
-        : [...prev, value]
+      prev.includes(value) ? prev.filter((range) => range !== value) : [...prev, value]
     );
   };
 
   const toggleBrand = (brandId: string) => {
     setSelectedBrands((prev) =>
-      prev.includes(brandId)
-        ? prev.filter((id) => id !== brandId)
-        : [...prev, brandId]
+      prev.includes(brandId) ? prev.filter((id) => id !== brandId) : [...prev, brandId]
     );
   };
 
@@ -141,42 +135,54 @@ export default function Products() {
   };
 
   const filteredData = data.filter((item) => {
-    // Chỉ hiển thị sản phẩm có status là "available"
-    const matchStatus = item.status === "available";
-
     const originalPrice = Number(item.price);
     const discountedPrice = originalPrice * (1 - (item.discount || 0) / 100);
     const matchPrice = getPriceRangeFilter(discountedPrice);
 
     const brandId =
-      item.brand_id && typeof item.brand_id === "object"
+      typeof item.brand_id === "string"
+        ? item.brand_id
+        : item.brand_id && typeof item.brand_id === "object"
         ? (item.brand_id as { _id: string })._id
         : null;
     const matchBrand =
-      selectedBrands.length === 0 ||
-      (brandId && selectedBrands.includes(brandId));
+      selectedBrands.length === 0 || (brandId && selectedBrands.includes(brandId));
 
     const categoryId =
-      item.category_id && typeof item.category_id === "object"
+      typeof item.category_id === "string"
+        ? item.category_id
+        : item.category_id && typeof item.category_id === "object"
         ? (item.category_id as { _id: string })._id
         : null;
     const matchCategory =
-      selectedCategory === "all" || categoryId === selectedCategory;
+      selectedCategory === "all" || (categoryId && categoryId === selectedCategory);
 
     let matchTags = true;
     if (selectedCategory !== "all" && selectedTags.length > 0) {
-      const itemTags =
-        item.tag_id && typeof item.tag_id === "object"
-          ? [(item.tag_id as { _id: string })._id]
-          : Array.isArray(item.tag_id)
-          ? item.tag_id
-          : [];
-      matchTags = itemTags.some((tag) => selectedTags.includes(tag));
+      let itemTags: string[] = [];
+      if (typeof item.tag_id === "string") {
+        itemTags = [item.tag_id];
+      } else if (item.tag_id && typeof item.tag_id === "object" && "_id" in item.tag_id) {
+        itemTags = [(item.tag_id as { _id: string })._id];
+      } else if (Array.isArray(item.tag_id)) {
+        itemTags = item.tag_id.map((tag) =>
+          typeof tag === "string" ? tag : (tag as { _id: string })._id
+        );
+      }
+      matchTags = itemTags.length > 0 && itemTags.some((tag) => selectedTags.includes(tag));
     }
 
-    return (
-      matchStatus && matchPrice && matchBrand && matchCategory && matchTags
-    );
+    console.log("Filtering item:", {
+      name: item.name,
+      matchPrice,
+      matchBrand,
+      matchCategory,
+      matchTags,
+      brandId,
+      categoryId,
+    }); 
+
+    return matchPrice && matchBrand && matchCategory && matchTags;
   });
 
   const sortedData = [...filteredData].sort((a, b) => {
@@ -202,10 +208,7 @@ export default function Products() {
   return (
     <div className="mx-auto mb-4 mt-4 w-full max-w-full sm:px-3 md:px-7 lg:px-14 xl:px-[154px] bg-[#e8e8e8]/[0.5] py-3">
       <div className="mt-6">
-        <div
-          className="flex flex-wrap lg:flex-nowrap gap-1 w-full"
-          style={{ alignItems: "flex-start" }}
-        >
+        <div className="flex flex-wrap lg:flex-nowrap gap-1 w-full" style={{ alignItems: "flex-start" }}>
           <Col
             xs={24}
             sm={8}
@@ -285,9 +288,7 @@ export default function Products() {
                 <Title level={4} className="text-gray-600 text-sm">
                   Không tìm thấy sản phẩm nào
                 </Title>
-                <p className="text-gray-500 text-xs">
-                  Vui lòng thử lại với bộ lọc khác
-                </p>
+                <p className="text-gray-500 text-xs">Vui lòng thử lại với bộ lọc khác</p>
               </div>
             )}
           </Col>
@@ -312,9 +313,7 @@ export default function Products() {
         placement="left"
         onClose={() => setOpenFilter(false)}
         open={openFilter}
-        title={
-          <span className="text-sm font-semibold text-gray-800">Bộ lọc</span>
-        }
+        title={<span className="text-sm font-semibold text-gray-800">Bộ lọc</span>}
         width={250}
         styles={{ body: { padding: "0" } }}
       >

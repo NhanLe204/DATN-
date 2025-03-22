@@ -5,6 +5,7 @@ import productModel from '../models/product.model.js';
 import { ProductStatus, ProductStatusMapping } from '../enums/product.enum.js';
 import categoryModel from '../models/category.model.js';
 import tagModel from '../models/tag.model.js';
+import { IProduct } from '@/interfaces/product.interface.js';
 
 export const getAllProduct = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -35,18 +36,30 @@ export const getProductById = async (req: Request, res: Response): Promise<void>
 };
 export const insertProduct = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, description, price, category_id, image_url, tag_id, brand_id, status } = req.body;
+    if (!req.files) {
+      res.status(400).json({ message: 'No file uploaded' });
+      return;
+    }
+    const images: string[] = [];
+    const fileData = req.files;
+    if (Array.isArray(fileData) && fileData.length > 0) {
+      fileData.map((file) => {
+        images.push(file?.path);
+      });
+    }
+    console.log(fileData);
+    const { name, description, price, category_id, tag_id, brand_id, status } = req.body;
     if (!mongoose.Types.ObjectId.isValid(category_id)) {
-      res.status(400).json({ message: 'Invalid category_id' });
+      res.status(400).json({ message: 'Required field' });
       return;
     }
 
-    const newProduct = new productModel({
+    const newProduct = new productModel<IProduct>({
       name,
       description,
       price,
       category_id,
-      image_url,
+      image_url: images,
       tag_id,
       brand_id,
       status
@@ -54,6 +67,7 @@ export const insertProduct = async (req: Request, res: Response): Promise<void> 
 
     await newProduct.save();
     res.status(201).json({ message: 'Product created successfully', product: newProduct });
+    return;
   } catch (error) {
     res.status(500).json({ message: 'Error creating product', error });
   }
@@ -102,7 +116,7 @@ export const updateProduct = async (req: Request, res: Response): Promise<void> 
 export const getNewProduct = async (req: Request, res: Response): Promise<void> => {
   try {
     const result = await productModel
-      .find()
+      .find({ status: ProductStatus.AVAILABLE })
       .sort({ updatedAt: -1 })
       .limit(10)
       .populate('category_id')
@@ -121,7 +135,7 @@ export const getNewProduct = async (req: Request, res: Response): Promise<void> 
 export const getSaleProduct = async (req: Request, res: Response): Promise<void> => {
   try {
     const result = await productModel
-      .find({ discount: { $gt: 0 } })
+      .find({ discount: { $gt: 0 }, status: ProductStatus.AVAILABLE })
       .populate('category_id')
       .populate('brand_id')
       .limit(10);
@@ -138,7 +152,7 @@ export const getSaleProduct = async (req: Request, res: Response): Promise<void>
 export const getHotProduct = async (req: Request, res: Response): Promise<void> => {
   try {
     const result = await productModel
-      .find()
+      .find({ status: ProductStatus.AVAILABLE })
       .sort({ quantity_sold: -1 })
       .limit(10)
       .populate('category_id')
@@ -212,7 +226,7 @@ export const getProductByCategoryID = async (req: Request, res: Response): Promi
     res.status(200).json({
       success: true,
       message: `Lấy sản phẩm dành cho ${categoryName} thành công`,
-      products: result
+      result
     });
   } catch (error) {
     console.error('Error fetching products by category:', error);
