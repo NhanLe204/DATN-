@@ -25,12 +25,6 @@ const productsApi = {
       data: response.data,
     };
   },
-  getProductByID: async (id) => {
-    const response = await api.get(`/v1/products/${id}`);
-    return {
-      data: response.data,
-    };
-  },
   getProductByCategoryID: async (id) => {
     const response = await api.get(`/v1/products/cate/${id}`);
     return {
@@ -45,24 +39,37 @@ const productsApi = {
   },
   create: async (data) => {
     try {
-      const response = await api.post("/v1/products", data);
+      const response = await api.post("/v1/products", data, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
       return response.data;
     } catch (error) {
-      console.error(
-        "Error creating product:",
-        error.response?.data || error.message
-      );
+      console.error("Error creating product:", error.response?.data || error);
       throw error;
     }
   },
   update: async (id, data) => {
-    const response = await api.patch(`/v1/products/${id}`, data);
-    return response.data;
+    try {
+      const response = await api.patch(`/v1/products/${id}`, data, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error updating product:", error.response?.data || error);
+      throw error;
+    }
   },
   delete: async (id) => {
     const response = await api.delete(`/v1/products/${id}`);
     return response.data;
   },
+  
 };
 
 export default productsApi;

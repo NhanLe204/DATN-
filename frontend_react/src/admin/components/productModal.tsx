@@ -40,8 +40,7 @@ interface ProductModalProps {
     brand_id?: string | { _id: string; brand_name?: string };
     tag_id?: string | { _id: string; tag_name?: string };
     discount?: number;
-    image_url?: string | string[];
-    extra_images?: string[];
+    images?: string[];
     description?: string;
   } | null;
 }
@@ -53,8 +52,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
   product,
 }) => {
   const [form] = Form.useForm();
-  const [mainImageFileList, setMainImageFileList] = useState<any[]>([]);
-  const [extraImagesFileList, setExtraImagesFileList] = useState<any[]>([]);
+  const [imageFileList, setImageFileList] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [brands, setBrands] = useState<any[]>([]);
   const [tags, setTags] = useState<any[]>([]);
@@ -98,15 +96,14 @@ const ProductModal: React.FC<ProductModalProps> = ({
 
   useEffect(() => {
     if (product && visible) {
-      console.log("Product received in ProductModal:", product);
-      console.log("Product tag_id:", product.tag_id);
+      console.log("Product data received:", product);
+      console.log("Product images:", product.images);
 
-      // Xử lý tag_id chỉ lấy 1 giá trị
       let tagId: string | undefined;
       if (product.tag_id) {
         if (typeof product.tag_id === "string") {
           tagId = product.tag_id;
-        } else if (product.tag_id._id) {
+        } else if (product.tag_id?._id) {
           tagId = product.tag_id._id;
         }
       }
@@ -123,134 +120,74 @@ const ProductModal: React.FC<ProductModalProps> = ({
         description: product.description || "",
       });
 
-      // Xử lý hình ảnh chính
-      if (product.image_url) {
-        const imageUrl = Array.isArray(product.image_url)
-          ? product.image_url[0]
-          : product.image_url;
-        setMainImageFileList([
-          {
-            uid: "-1",
-            name: "image.png",
-            status: "done",
-            url: imageUrl,
-          },
-        ]);
+      if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+        const formattedImages = product.images.map((url: string, index: number) => ({
+          uid: `-${index + 1}`,
+          name: `image-${index + 1}.png`,
+          status: "done",
+          url: url,
+        }));
+        console.log("Formatted images for Upload:", formattedImages);
+        setImageFileList(formattedImages);
       } else {
-        setMainImageFileList([]);
-      }
-
-      // Xử lý hình ảnh phụ
-      if (product.extra_images && product.extra_images.length > 0) {
-        const extraImages = product.extra_images.map(
-          (url: string, index: number) => ({
-            uid: `-${index + 1}`,
-            name: `extra-image-${index + 1}.png`,
-            status: "done",
-            url: url,
-          })
-        );
-        setExtraImagesFileList(extraImages);
-      } else {
-        setExtraImagesFileList([]);
+        console.log("No images found for this product.");
+        setImageFileList([]);
       }
     } else {
       form.resetFields();
-      setMainImageFileList([]);
-      setExtraImagesFileList([]);
+      setImageFileList([]);
     }
   }, [product, visible, form]);
 
-  const handleMainImageChange = async ({ fileList }: any) => {
-    const updatedFileList = await Promise.all(
-      fileList.map(async (file: any) => {
-        if (!file.url && file.originFileObj) {
-          try {
-            const formData = new FormData();
-            formData.append("image", file.originFileObj);
-            const response = await productsApi.uploadImage(formData);
-            return {
-              ...file,
-              status: "done",
-              url: `${response.url}`,
-            };
-          } catch (error) {
-            console.error("Lỗi khi tải ảnh chính:", error);
-            message.error("Lỗi khi tải ảnh chính!");
-            return {
-              ...file,
-              status: "error",
-            };
-          }
-        }
-        return file;
-      })
-    );
-    setMainImageFileList(updatedFileList);
-  };
-
-  const handleExtraImagesChange = async ({ fileList }: any) => {
-    const updatedFileList = await Promise.all(
-      fileList.map(async (file: any) => {
-        if (!file.url && file.originFileObj) {
-          try {
-            const formData = new FormData();
-            formData.append("image", file.originFileObj);
-            const response = await productsApi.uploadImage(formData);
-            return {
-              ...file,
-              status: "done",
-              url: `${response.url}`,
-            };
-          } catch (error) {
-            console.error("Lỗi khi tải ảnh phụ:", error);
-            message.error("Lỗi khi tải ảnh phụ!");
-            return {
-              ...file,
-              status: "error",
-            };
-          }
-        }
-        return file;
-      })
-    );
-    setExtraImagesFileList(updatedFileList);
+  const handleImageChange = ({ fileList }: any) => {
+    // Chỉ cập nhật imageFileList mà không upload ngay
+    setImageFileList(fileList);
   };
 
   const handleSubmit = async (values: any) => {
-    console.log("Form values before submit:", values);
     try {
-      const updatedValues = {
-        ...values,
-
-        image_url: mainImageFileList[0]?.url || values.image_url,
-        extra_images: extraImagesFileList.map(
-          (file) => file.url || file.response?.url
-        ),
-        discount: values.discount || 0,
-        description: values.description || "",
-        tag_id: values.tag_id,
-      };
-      console.log("Updated values sent to API:", updatedValues);
-
+      const formData = new FormData();
+  
+      // Append tất cả các trường bắt buộc
+      formData.append("name", values.name || "");
+      formData.append("price", values.price?.toString() || "");
+      formData.append("category_id", values.category_id || "");
+      formData.append("status", values.status || "");
+      formData.append("quantity", values.quantity?.toString() || "0");
+      formData.append("description", values.description || "");
+      formData.append("discount", values.discount?.toString() || "0");
+      if (values.brand_id) formData.append("brand_id", values.brand_id);
+      if (values.tag_id) formData.append("tag_id", values.tag_id);
+  
+      // Append ảnh (mới hoặc cũ)
+      imageFileList.forEach((file) => {
+        if (file.originFileObj) {
+          formData.append("images_url", file.originFileObj); // Ảnh mới
+        } else if (file.url) {
+          formData.append("images_url", file.url); // Ảnh cũ
+        }
+      });
+  
+      // Debug FormData
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}: ${value}`);
+      }
+  
       if (product) {
-        await productsApi.update(product._id, updatedValues);
+        await productsApi.update(product._id, formData);
         message.success("Cập nhật sản phẩm thành công!");
       } else {
-        await productsApi.create(updatedValues);
+        await productsApi.create(formData);
         message.success("Thêm sản phẩm thành công!");
       }
       onReload();
       onClose();
     } catch (error) {
       console.error("Submit error:", error);
-      if (error.response?.status === 401) {
-        message.error("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại!");
-      } else {
-        message.error("Lỗi khi lưu sản phẩm!");
-      }
+      message.error("Lỗi khi lưu sản phẩm!");
     }
   };
+
   return (
     <Modal
       title={product ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm"}
@@ -265,7 +202,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
             <Form.Item
               name="name"
               label="Tên sản phẩm"
-              rules={[{ required: true }]}
+              rules={[{ required: true, message: "Vui lòng nhập tên sản phẩm!" }]}
             >
               <Input placeholder="Nhập tên sản phẩm" />
             </Form.Item>
@@ -274,7 +211,11 @@ const ProductModal: React.FC<ProductModalProps> = ({
               <InputNumber min={0} max={9999} className="w-full" />
             </Form.Item>
 
-            <Form.Item name="price" label="Giá" rules={[{ required: true }]}>
+            <Form.Item
+              name="price"
+              label="Giá"
+              rules={[{ required: true, message: "Vui lòng nhập giá sản phẩm!" }]}
+            >
               <InputNumber
                 min={1}
                 className="w-full"
@@ -300,7 +241,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
             <Form.Item
               name="status"
               label="Tình trạng"
-              rules={[{ required: true }]}
+              rules={[{ required: true, message: "Vui lòng chọn tình trạng!" }]}
             >
               <Select placeholder="Chọn tình trạng">
                 <Option value="available">Còn hàng</Option>
@@ -311,7 +252,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
             <Form.Item
               name="category_id"
               label="Danh mục"
-              rules={[{ required: true }]}
+              rules={[{ required: true, message: "Vui lòng chọn danh mục!" }]}
             >
               <Select placeholder="Chọn danh mục">
                 {categories.length > 0 ? (
@@ -375,33 +316,15 @@ const ProductModal: React.FC<ProductModalProps> = ({
         </Row>
 
         <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item name="image_url" label="Ảnh chính">
+          <Col span={24}>
+            <Form.Item name="images" label="Ảnh sản phẩm">
               <Upload
                 listType="picture-card"
-                fileList={mainImageFileList}
-                onChange={handleMainImageChange}
+                fileList={imageFileList}
+                onChange={handleImageChange}
                 beforeUpload={() => false}
-                maxCount={1}
               >
-                {mainImageFileList.length < 1 && (
-                  <Button icon={<UploadOutlined />}>Tải ảnh lên</Button>
-                )}
-              </Upload>
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item name="extra_images" label="Ảnh phụ">
-              <Upload
-                listType="picture-card"
-                fileList={extraImagesFileList}
-                onChange={handleExtraImagesChange}
-                beforeUpload={() => false}
-                maxCount={4}
-              >
-                {extraImagesFileList.length < 4 && (
-                  <Button icon={<UploadOutlined />}>Tải ảnh lên</Button>
-                )}
+                <Button icon={<UploadOutlined />}>Tải ảnh lên</Button>
               </Upload>
             </Form.Item>
           </Col>
@@ -410,5 +333,4 @@ const ProductModal: React.FC<ProductModalProps> = ({
     </Modal>
   );
 };
-
 export default ProductModal;
