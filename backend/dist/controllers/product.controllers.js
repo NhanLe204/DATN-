@@ -35,9 +35,21 @@ export const getProductById = async (req, res) => {
 };
 export const insertProduct = async (req, res) => {
     try {
-        const { name, description, price, category_id, image_url, tag_id, brand_id, status } = req.body;
+        if (!req.files) {
+            res.status(400).json({ message: 'No file uploaded' });
+            return;
+        }
+        const images = [];
+        const fileData = req.files;
+        if (Array.isArray(fileData) && fileData.length > 0) {
+            fileData.map((file) => {
+                images.push(file?.path);
+            });
+        }
+        console.log(fileData);
+        const { name, description, price, category_id, tag_id, brand_id, status } = req.body;
         if (!mongoose.Types.ObjectId.isValid(category_id)) {
-            res.status(400).json({ message: 'Invalid category_id' });
+            res.status(400).json({ message: 'Required field' });
             return;
         }
         const newProduct = new productModel({
@@ -45,13 +57,14 @@ export const insertProduct = async (req, res) => {
             description,
             price,
             category_id,
-            image_url,
+            image_url: images,
             tag_id,
             brand_id,
             status
         });
         await newProduct.save();
         res.status(201).json({ message: 'Product created successfully', product: newProduct });
+        return;
     }
     catch (error) {
         res.status(500).json({ message: 'Error creating product', error });

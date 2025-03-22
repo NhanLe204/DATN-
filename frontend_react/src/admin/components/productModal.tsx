@@ -239,7 +239,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
         tag_id: values.tag_id,
       };
       console.log("Updated values sent to API:", updatedValues);
-  
+
       if (product) {
         await productsApi.update(product._id, updatedValues);
         message.success("Cập nhật sản phẩm thành công!");

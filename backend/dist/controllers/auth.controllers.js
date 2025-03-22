@@ -8,18 +8,30 @@ import ENV_VARS from '../config/config.js';
 import { OAuth2Client } from 'google-auth-library';
 import { UserRoles, UserStatus } from '../enums/user.enum.js';
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+// Hàm tạo mã màu hex ngẫu nhiên
+const getRandomHexColor = () => {
+    const letters = '0123456789ABCDEF';
+    let color = '';
+    for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+};
 export const signupController = async (req, res) => {
     try {
         const { email, password, fullname } = req.body;
+        // Kiểm tra đầu vào
         if (!email || !password || !fullname) {
             res.status(400).json({
                 success: false,
                 message: 'Please provide an email, password and fullname'
             });
+            return;
         }
         const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!regexEmail.test(email)) {
             res.status(400).json({ success: false, message: 'Please provide a valid email' });
+            return;
         }
         if (password.length < 6) {
             res.status(400).json({
@@ -35,29 +47,27 @@ export const signupController = async (req, res) => {
             });
             return;
         }
+        // Kiểm tra email đã tồn tại
         const existingUserByEmail = await userModel.findOne({ email });
         if (existingUserByEmail) {
             res.status(400).json({
                 success: false,
                 message: 'User with this email already exists'
             });
+            return;
         }
-        // const existingUserByName = await userModel.findOne({ username });
-        // if (existingUserByName) {
-        //   res.status(400).json({
-        //     success: false,
-        //     message: 'User with this username already exists'
-        //   });
-        // }
+        // Mã hóa mật khẩu
         const salt = await bcryptjs.genSalt(10);
         const hashedPassword = await bcryptjs.hash(password, salt);
-        const PROFILE_PIC = ['avatar1.png', 'avatar2.png', 'avatar3.png'];
-        const avatar = Math.floor(Math.random() * PROFILE_PIC.length);
+        // Tạo URL avatar từ ui-avatars với màu nền ngẫu nhiên
+        const randomBackgroundColor = getRandomHexColor(); // Sinh màu ngẫu nhiên
+        const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullname)}&background=${randomBackgroundColor}&color=fff&size=256`;
+        // Tạo user mới
         const newUser = new userModel({
             email,
             password: hashedPassword,
             fullname,
-            avatar: PROFILE_PIC[avatar]
+            avatar: avatarUrl // Lưu URL avatar
         });
         await newUser.save();
         generateAccessToken(newUser._id, res);
