@@ -2,6 +2,13 @@ import mongoose, { Schema, model } from 'mongoose';
 import { UserRoles, UserStatus } from '../enums/user.enum.js';
 import { IUser } from '../interfaces/user.interface.js';
 import product from './product.model.js';
+
+const addressSchema = new Schema({
+  name: { type: String, required: true },
+  phone: { type: String, required: true },
+  address: { type: String, required: true } // Chuỗi địa chỉ đầy đủ
+});
+
 const userSchema: Schema<IUser> = new Schema<IUser>(
   {
     googleId: {
@@ -28,7 +35,7 @@ const userSchema: Schema<IUser> = new Schema<IUser>(
       default: ''
     },
     address: {
-      type: [String],
+      type: [addressSchema],
       default: []
     },
     status: {

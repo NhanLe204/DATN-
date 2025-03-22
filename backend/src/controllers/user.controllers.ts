@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import userModel from '../models/user.model.js';
 import mongoose from 'mongoose';
-import { IUser } from '../interfaces/user.interface.js';
+import { IAddress, IUser } from '../interfaces/user.interface.js';
 
 interface AuthenticatedRequest extends Request {
   user?: IUser;
@@ -139,5 +139,46 @@ export const updateCart = async (req: AuthenticatedRequest, res: Response) => {
   } catch (error) {
     console.error('Error updating cart:', error);
     res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+
+export const addUserAddress = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const newAddress: IAddress = req.body;
+
+    // Validate dữ liệu địa chỉ mới
+    if (!newAddress || typeof newAddress !== 'object' || !newAddress.name || !newAddress.phone || !newAddress.address) {
+      res.status(400).json({
+        success: false,
+        message: 'Dữ liệu địa chỉ không hợp lệ! Yêu cầu các trường name, phone, address.'
+      });
+      return;
+    }
+
+    // Tìm user và thêm địa chỉ mới vào mảng address
+    const user = await userModel.findById(id);
+    if (!user) {
+      res.status(404).json({ message: 'Không tìm thấy người dùng' });
+      return;
+    }
+
+    user.address = user.address || [];
+    user.address.push(newAddress);
+
+    const updatedUser = await user.save();
+
+    res.status(200).json({
+      message: 'Thêm địa chỉ thành công',
+      user: updatedUser
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error adding address: ${error.message}`);
+      res.status(500).json({ success: false, message: `Lỗi server: ${error.message}` });
+    } else {
+      console.error('Error adding address:', error);
+      res.status(500).json({ success: false, message: 'Lỗi server không xác định' });
+    }
   }
 };
