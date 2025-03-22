@@ -118,7 +118,7 @@ export default function DetailProduct() {
             <div className="flex flex-col space-y-6">
               {product.image_url[0] && (
                 <img
-                  src={`/images/products/${product.image_url[0]}`}
+                  src={`${product.image_url[0]}`}
                   alt="Detail 1"
                   className={`w-20 cursor-pointer rounded-lg border transition-all duration-300 ${
                     selectedImage === product.image_url[0]
@@ -130,7 +130,7 @@ export default function DetailProduct() {
               )}
               {product.image_url[1] && (
                 <img
-                  src={`/images/products/${product.image_url[1]}`}
+                  src={`${product.image_url[1]}`}
                   alt="Detail 2"
                   className={`w-20 cursor-pointer rounded-lg border transition-all duration-300 ${
                     selectedImage === product.image_url[1]
@@ -142,7 +142,7 @@ export default function DetailProduct() {
               )}
               {product.image_url[2] && (
                 <img
-                  src={`/images/products/${product.image_url[2]}`}
+                  src={`${product.image_url[2]}`}
                   alt="Detail 3"
                   className={`w-20 cursor-pointer rounded-lg border transition-all duration-300 ${
                     selectedImage === product.image_url[2]
@@ -154,7 +154,7 @@ export default function DetailProduct() {
               )}
               {product.image_url[3] && (
                 <img
-                  src={`/images/products/${product.image_url[3]}`}
+                  src={`${product.image_url[3]}`}
                   alt="Detail 4"
                   className={`w-20 cursor-pointer rounded-lg border transition-all duration-300 ${
                     selectedImage === product.image_url[3]
@@ -168,9 +168,7 @@ export default function DetailProduct() {
             <div className="ml-10 w-full md:w-96">
               <img
                 src={
-                  selectedImage
-                    ? `/images/products/${selectedImage}`
-                    : `/images/products/${product.image_url[0]}`
+                  selectedImage ? `${selectedImage}` : `${product.image_url[0]}`
                 }
                 alt="Main product"
                 className="w-full rounded-lg border border-[#EAEAEA] shadow-md transition-all duration-300"

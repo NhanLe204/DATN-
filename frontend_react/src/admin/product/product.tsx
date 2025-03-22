@@ -73,19 +73,14 @@ const ProductList: React.FC = () => {
     try {
       const response = await productsApi.getAll();
       const productList = response.data.result || [];
-  
+
       if (!Array.isArray(productList)) {
         throw new Error("Dữ liệu không hợp lệ từ API");
       }
-  
+
       const formattedProducts = productList.map((product: any) => {
         const imageUrl = product.image_url?.[0];
-        const formattedImageUrl = imageUrl
-          ? imageUrl.startsWith("/images/products/")
-            ? imageUrl // Đã có tiền tố, không cần thêm
-            : `/images/products/${imageUrl}` // Chưa có tiền tố, thêm vào
-          : "/images/products/placeholder.jpg";
-  
+        const formattedImageUrl = imageUrl;
         return {
           key: product._id,
           _id: product._id,
@@ -107,7 +102,7 @@ const ProductList: React.FC = () => {
           description: product.description || "Không có mô tả",
         };
       });
-  
+
       setProducts(formattedProducts);
     } catch (error) {
       message.error("Lỗi khi tải danh sách sản phẩm!");
@@ -189,7 +184,7 @@ const ProductList: React.FC = () => {
             icon={<DeleteOutlined />}
             danger
             size="small"
-            onClick={() => handleHide(record._id)} 
+            onClick={() => handleHide(record._id)}
           />
         </Space>
       ),

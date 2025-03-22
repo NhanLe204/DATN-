@@ -188,7 +188,7 @@ const Payment = () => {
         {darkMode ? <Sun size={20} /> : <Moon size={20} />}
       </motion.button>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-[154px] py-8">
         {/* Breadcrumb */}
         <nav
           className={`mb-6 rounded-xl p-4 ${

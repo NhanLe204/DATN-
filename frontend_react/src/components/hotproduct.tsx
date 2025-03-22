@@ -127,7 +127,7 @@ export default function HotProduct({ data }: { data: Product[] }) {
                 <div className="w-1/4">
                   <Link to={`/detail/${product._id}`}>
                     <img
-                      src={`/images/products/${product.image_url[0]}`}
+                      src={`${product.image_url[0]}`}
                       alt={product.name}
                       className="h-full w-full object-cover transition-transform duration-500 hover:scale-110"
                     />
