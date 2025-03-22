@@ -182,17 +182,26 @@ export default function DetailProduct() {
               {product.name}
             </h1>
             <div className="mb-6 mt-2 text-lg font-bold text-[#22A6DF]">
-              {new Intl.NumberFormat("vi-VN", {
-                style: "currency",
-                currency: "VND",
-              }).format(Number(product.price))}
-              <span className="ml-2 text-sm text-[#686868] line-through">
-                {product.oldPrice}
-              </span>
-              <span className="ml-2 rounded border border-[#FF0000] px-2 py-1 font-medium text-[#FF0000]">
-                {product.discount}%
-              </span>
-            </div>
+  {new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  }).format(
+    Number(Number(product.price) * (1 - Number(product.discount) / 100))
+  )}
+  {(product.discount ?? 0) > 0 && (
+    <>
+      <span className="ml-2 text-sm text-[#686868] line-through">
+        {new Intl.NumberFormat("vi-VN", {
+          style: "currency",
+          currency: "VND",
+        }).format(Number(product.price))}
+      </span>
+      <span className="ml-2 rounded border border-[#FF0000] px-2 py-1 font-medium text-[#FF0000]">
+        -{product.discount}%
+      </span>
+    </>
+  )}
+</div>
 
             {/* Số lượng */}
             <div className="mb-6 mt-4 flex gap-4">
