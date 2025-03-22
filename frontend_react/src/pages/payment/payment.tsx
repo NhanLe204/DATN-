@@ -1,6 +1,8 @@
+"use client";
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import axios from "axios";
+import { useSelector } from "react-redux";
 import {
   Sun,
   Moon,
@@ -16,17 +18,36 @@ import {
 
 const Payment = () => {
   const [darkMode, setDarkMode] = useState(false);
-  const [provinces, setProvinces] = useState([]);
-  const [districts, setDistricts] = useState([]);
-  const [wards, setWards] = useState([]);
-  const [selectedProvince, setSelectedProvince] = useState(null);
-  const [selectedDistrict, setSelectedDistrict] = useState(null);
-  const [selectedWard, setSelectedWard] = useState(null);
+  interface Province {
+    code: Key | null | undefined;
+    packge: string;
+    name: string;
+  }
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  interface District {
+    code: string;
+    name: string;
+  }
+  const [districts, setDistricts] = useState<District[]>([]);
+  interface Ward {
+    code: string;
+    name: string;
+  }
+  const [wards, setWards] = useState<Ward[]>([]);
+  const [selectedProvince, setSelectedProvince] = useState<Province | null>(null);
+  const [selectedDistrict, setSelectedDistrict] = useState<District | null>(null);
+  const [selectedWard, setSelectedWard] = useState<Ward | null>(null);
   const [showProvinceDropdown, setShowProvinceDropdown] = useState(false);
   const [showDistrictDropdown, setShowDistrictDropdown] = useState(false);
   const [showWardDropdown, setShowWardDropdown] = useState(false);
-  const [shippingMethods, setShippingMethods] = useState<{ id: number; name: string; price: number; days: string }[]>([]);
-  const [selectedShippingMethod, setSelectedShippingMethod] = useState(null);
+  interface ShippingMethod {
+    id: number;
+    name: string;
+    price: number;
+    days: string;
+  }
+  const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([]);
+  const [selectedShippingMethod, setSelectedShippingMethod] = useState<ShippingMethod | null>(null);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -35,21 +56,19 @@ const Payment = () => {
   });
   const [selectedPayment, setSelectedPayment] = useState("cod");
 
+  // Lấy dữ liệu giỏ hàng từ Redux store
+  interface CartState {
+    items: { id: number; name: string; price: number; quantity: number; image: string }[];
+    userId: string | null;
+  }
+  const { items: cartItems, userId } = useSelector((state: { cart: CartState }) => state.cart);
+
   // Payment methods data
   const paymentMethods = [
     { id: "cod", label: "Thanh toán khi nhận hàng (COD)", icon: <DollarSign className="text-blue-500" /> },
     { id: "bank_transfer", label: "Chuyển khoản qua ngân hàng", icon: <CreditCard className="text-green-500" /> },
     { id: "card", label: "Thanh toán qua thẻ ngân hàng", icon: <CreditCard className="text-purple-500" /> },
   ];
-
-  // Mock product data
-  const product = {
-    name: "Thức ăn cho mèo con và mèo mẹ",
-    brand: "ROYAL CANIN Mother & Babycat",
-    weight: "2kg",
-    price: 100500,
-    image: "https://picsum.photos/300/200",
-  };
 
   // Fetch provinces on component mount
   useEffect(() => {
@@ -114,48 +133,64 @@ const Payment = () => {
     }
   }, [selectedDistrict]);
 
-  // Handle form input changes
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  // Toggle dark mode
   const toggleDarkMode = () => setDarkMode(!darkMode);
 
-  // Calculate total price
   const calculateTotal = () => {
-    let total = product.price;
+    let total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     if (selectedShippingMethod) total += selectedShippingMethod.price;
     return total;
   };
 
-  // Format price as VND
-  const formatPrice = (price) => new Intl.NumberFormat("vi-VN").format(price) + "₫";
+  const formatPrice = (price: number) => new Intl.NumberFormat("vi-VN").format(price) + "₫";
 
-  // Handle checkout and send data to backend
   const handleCheckout = async () => {
+    if (!userId) {
+      alert("Vui lòng đăng nhập để tiến hành đặt hàng!");
+      return;
+    }
     if (!formData.fullName || !formData.email || !formData.phone || !formData.address || !selectedProvince || !selectedDistrict || !selectedWard || !selectedShippingMethod) {
       alert("Vui lòng điền đầy đủ thông tin giao hàng và chọn phương thức vận chuyển!");
+      return;
+    }
+    if (cartItems.length === 0) {
+      alert("Giỏ hàng của bạn đang trống!");
       return;
     }
 
     try {
       const shippingAddress = `${formData.address}, ${selectedWard.name}, ${selectedDistrict.name}, ${selectedProvince.name}`;
       const orderData = {
-        userID: "66f8b123456789abcdef1234", // Thay bằng userID thực tế từ hệ thống đăng nhập
-        payment_typeID: selectedPayment, // Giả định ID trùng với giá trị trong frontend
+        userID: userId,
+        payment_typeID: selectedPayment,
         deliveryID: selectedShippingMethod.id,
-        couponID: null, // Nếu có mã giảm giá, thêm logic ở đây
+        couponID: null,
         orderdate: new Date().toISOString(),
         total_price: calculateTotal(),
         shipping_address: shippingAddress,
         payment_status: selectedPayment === "cod" ? "pending" : "completed",
         transaction_id: `TRANS_${Date.now()}`,
+        items: cartItems.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image,
+        })),
       };
 
-      const response = await axios.post("http://localhost:5000/api/orders", orderData); // Thay URL bằng API thực tế
+      const response = await axios.post("http://localhost:5000/api/orders", orderData);
       console.log("Order created:", response.data);
+
+      // Lưu đơn hàng vào localStorage
+      const existingOrders = JSON.parse(localStorage.getItem("orders") || "[]");
+      existingOrders.push(orderData);
+      localStorage.setItem("orders", JSON.stringify(existingOrders));
+
       alert("Đơn hàng của bạn đã được tạo thành công!");
     } catch (error) {
       console.error("Error creating order:", error);
@@ -176,7 +211,6 @@ const Payment = () => {
       </motion.button>
 
       <div className="container mx-auto px-[154px] py-8">
-        {/* Breadcrumb */}
         <nav
           className={`mb-6 rounded-xl p-4 ${
             darkMode
@@ -200,7 +234,6 @@ const Payment = () => {
 
         <div className="flex flex-col gap-8 lg:flex-row">
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="w-full lg:w-3/5">
-            {/* Shipping Information */}
             <div className={`mb-8 rounded-xl p-6 ${darkMode ? "bg-gray-800" : "bg-white"}`}>
               <h2 className="mb-6 text-xl font-semibold flex items-center">
                 <MapPin className="mr-2" size={20} /> Thông tin giao hàng
@@ -409,17 +442,22 @@ const Payment = () => {
             <div className={`sticky top-8 rounded-xl p-6 ${darkMode ? "bg-gray-800" : "bg-white"}`}>
               <h2 className="mb-6 text-xl font-semibold">Đơn hàng của bạn</h2>
               <div className="mb-6 border-b pb-6">
-                <div className="flex gap-4">
-                  <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl">
-                    <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium">{product.name}</h3>
-                    <p className={darkMode ? "text-gray-400" : "text-gray-500"}>{product.brand}</p>
-                    <p className="mt-1 text-sm text-gray-500">{product.weight}</p>
-                    <p className="mt-2 font-semibold text-blue-500">{formatPrice(product.price)}</p>
-                  </div>
-                </div>
+                {cartItems.length === 0 ? (
+                  <p className="text-center text-gray-500">Giỏ hàng trống</p>
+                ) : (
+                  cartItems.map((item) => (
+                    <div key={item.id} className="flex gap-4 mb-4">
+                      <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl">
+                        <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                      </div>
+                      <div>
+                        <h3 className="font-medium">{item.name}</h3>
+                        <p className={darkMode ? "text-gray-400" : "text-gray-500"}>Số lượng: {item.quantity}</p>
+                        <p className="mt-2 font-semibold text-blue-500">{formatPrice(item.price * item.quantity)}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
               <div className="mb-6">
                 <div className="flex gap-2">
@@ -436,7 +474,7 @@ const Payment = () => {
               <div className="mb-6 space-y-3 border-b pb-6">
                 <div className="flex justify-between">
                   <span className={darkMode ? "text-gray-300" : "text-gray-600"}>Tạm tính</span>
-                  <span className="font-medium">{formatPrice(product.price)}</span>
+                  <span className="font-medium">{formatPrice(cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0))}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className={darkMode ? "text-gray-300" : "text-gray-600"}>Phí vận chuyển</span>

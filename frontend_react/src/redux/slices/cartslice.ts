@@ -4,7 +4,7 @@ const getUserIdFromLocal = () => {
 };
 
 // Lấy toàn bộ cart từ localStorage, nếu không có thì trả về object rỗng
-const getAllCartsFromLocal = () => {
+const getAllCartsFromLocal = (): Record<string, { id: string; quantity: number }[]> => {
   const savedCarts = localStorage.getItem("carts");
   return savedCarts ? JSON.parse(savedCarts) : {};
 };
@@ -33,7 +33,7 @@ const cartSlice = createSlice({
       } else {
         // Khi đăng xuất: xóa accountID và toàn bộ carts
         localStorage.removeItem("accountID");
-        localStorage.removeItem("carts"); // Xóa toàn bộ carts khi đăng xuất
+        // localStorage.removeItem("carts"); // Xóa toàn bộ carts khi đăng xuất
         state.userId = null;
         state.items = [];
       }
@@ -102,7 +102,7 @@ const saveCartsToLocal = (userId, items) => {
   allCarts[userId] = items;
 
   // Nếu không có sản phẩm nào trong allCarts, xóa key "carts"
-  const hasItems = Object.values(allCarts).some(cart => cart.length > 0);
+  const hasItems = Object.values(allCarts).some((cart: { id: string; quantity: number }[]) => cart.length > 0);
   if (!hasItems) {
     localStorage.removeItem("carts");
   } else {

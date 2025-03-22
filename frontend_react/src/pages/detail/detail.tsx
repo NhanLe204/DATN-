@@ -186,9 +186,9 @@ export default function DetailProduct() {
     style: "currency",
     currency: "VND",
   }).format(
-    Number(product.price * (1 - product.discount / 100))
+    Number(Number(product.price) * (1 - Number(product.discount) / 100))
   )}
-  {product.discount > 0 && (
+  {(product.discount ?? 0) > 0 && (
     <>
       <span className="ml-2 text-sm text-[#686868] line-through">
         {new Intl.NumberFormat("vi-VN", {
