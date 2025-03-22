@@ -271,10 +271,7 @@ export default function Header() {
                   key={product._id}
                   className="rounded bg-gray-50 p-4 shadow-md"
                 >
-                  <img
-                    src={`/images/products/${product.image_url[0]}`}
-                    alt=""
-                  />
+                  <img src={`${product.image_url[0]}`} alt="" />
                   <p>{product.name}</p>
                   <p className="text-[#22A6DF] font-bold">
                     {new Intl.NumberFormat("vi-VN", {
@@ -347,7 +344,7 @@ export default function Header() {
           <div className="grid grid-cols-2 gap-4">
             {searchResults.map((product) => (
               <div key={product._id} className="rounded bg-gray-50 p-4">
-                <img src={`/images/products/${product.image_url[0]}`} alt="" />
+                <img src={`${product.image_url[0]}`} alt="" />
                 <p>{product.name}</p>
                 <p className="text-[#22A6DF] font-bold">
                   {new Intl.NumberFormat("vi-VN", {

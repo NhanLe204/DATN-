@@ -133,7 +133,7 @@ export default function NewProduct({ data }: { data: Product[] }) {
                 <div className="w-1/4 overflow-hidden">
                   <Link to={`/detail/${product._id}`}>
                     <img
-                      src={`/images/products/${product.image_url[0]}`}
+                      src={`${product.image_url[0]}`}
                       alt={product.name}
                       className="h-full w-full object-cover transition-transform duration-500 hover:scale-110"
                     />
@@ -166,9 +166,7 @@ export default function NewProduct({ data }: { data: Product[] }) {
                       </div>
                     )}
                   </div>
-                  <Button
-                    className="mt-2 w-[90px] bg-[#22A6DF] hover:bg-[#1890ff] hover:border-[#22A6DF] rounded-lg text-white text-xs sm:w-[120px] sm:text-sm"
-                  >
+                  <Button className="mt-2 w-[90px] bg-[#22A6DF] hover:bg-[#1890ff] hover:border-[#22A6DF] rounded-lg text-white text-xs sm:w-[120px] sm:text-sm">
                     Mua ngay
                   </Button>
                 </div>
