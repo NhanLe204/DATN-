@@ -50,7 +50,6 @@ interface Product {
 const ProductList: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
-
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
@@ -80,15 +79,15 @@ const ProductList: React.FC = () => {
 
       const formattedProducts = productList.map((product: any) => {
         const imageUrl = product.image_url?.[0];
-        const formattedImageUrl = imageUrl;
         return {
           key: product._id,
           _id: product._id,
           productCode: product._id,
           name: product.name,
-          image: formattedImageUrl,
+          image: imageUrl,
+          images: product.image_url || [],
           quantity: product.quantity || 0,
-          status: product.status,
+          status: product.status, 
           price: product.price,
           category: product.category_id?.name || "Không xác định",
           brand: product.brand_id?.brand_name || "Không có thương hiệu",
@@ -97,8 +96,6 @@ const ProductList: React.FC = () => {
           brand_id: product.brand_id,
           tag_id: product.tag_id,
           discount: product.discount,
-          image_url: product.image_url,
-          extra_images: product.image_url?.slice(1),
           description: product.description || "Không có mô tả",
         };
       });
@@ -111,15 +108,25 @@ const ProductList: React.FC = () => {
     setLoading(false);
   };
 
-  // Thêm hàm handleHide để ẩn sản phẩm
-  const handleHide = async (id: string) => {
+  const handleStatusChange = async (productId: string, newStatus: string) => {
     try {
-      await productsApi.hide(id);
-      message.success("Sản phẩm đã được ẩn thành công!");
-      fetchProducts(); // Làm mới danh sách sản phẩm
+      await productsApi.toggleStatus(productId, newStatus);
+      message.success("Cập nhật trạng thái sản phẩm thành công!");
+      fetchProducts(); 
     } catch (error) {
-      message.error("Lỗi khi ẩn sản phẩm!");
-      console.error("Hide product error:", error);
+      message.error("Lỗi khi cập nhật trạng thái sản phẩm!");
+      console.error("Toggle status error:", error);
+    }
+  };
+
+  const getStatusDisplayName = (status: string) => {
+    switch (status) {
+      case "available":
+        return "Còn hàng";
+      case "out_of_stock":
+        return "Hết hàng";
+      default:
+        return status; 
     }
   };
 
@@ -134,13 +141,7 @@ const ProductList: React.FC = () => {
       render: (_: any, __: Product, index: number) =>
         (currentPage - 1) * pageSize + index + 1,
     },
-    {
-      title: "Mã sản phẩm",
-      dataIndex: "productCode",
-      key: "productCode",
-      width: 50,
-    },
-    { title: "Tên sản phẩm", dataIndex: "name", key: "name", width: 200 },
+    { title: "Tên sản phẩm", dataIndex: "name", key: "name", width: 400 },
     {
       title: "Ảnh",
       dataIndex: "image",
@@ -150,19 +151,24 @@ const ProductList: React.FC = () => {
         <img src={text} alt="Product" className="w-24 h-24 object-cover" />
       ),
     },
-    { title: "Số lượng", dataIndex: "quantity", key: "quantity" },
     {
       title: "Tình trạng",
       dataIndex: "status",
       key: "status",
-      render: (status: string) => (
-        <Tag color={status === "available" ? "success" : "error"}>
-          {status === "available" ? "Còn hàng" : "Hết hàng"}
-        </Tag>
+      width: 150,
+      render: (status: string, record: Product) => (
+        <Select
+          value={status}
+          style={{ width: 120 }}
+          onChange={(value) => handleStatusChange(record._id, value)}
+        >
+          <Option value="available">Còn hàng</Option>
+          <Option value="out_of_stock">Hết hàng</Option>
+        </Select>
       ),
     },
-    { title: "Giá tiền", dataIndex: "price", key: "price" },
-    { title: "Danh mục", dataIndex: "category", key: "category" },
+    { title: "Giá tiền", dataIndex: "price", key: "price", width: 100 },
+    { title: "Danh mục", dataIndex: "category", key: "category", width: 100 },
     { title: "Thương hiệu", dataIndex: "brand", key: "brand" },
     {
       title: "Tags",
@@ -179,12 +185,6 @@ const ProductList: React.FC = () => {
             icon={<EditOutlined />}
             size="small"
             onClick={() => showModal(record)}
-          />
-          <Button
-            icon={<DeleteOutlined />}
-            danger
-            size="small"
-            onClick={() => handleHide(record._id)}
           />
         </Space>
       ),

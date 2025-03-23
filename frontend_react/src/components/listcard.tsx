@@ -68,11 +68,11 @@ export default function ListCard({ pros }) {
             className="group relative flex cursor-pointer flex-col justify-between bg-white transition-all border-0 hover:shadow-lg"
             hoverable
             bodyStyle={{ padding: 0 }}
-            style={{ width: 200, height: 314 }}
+            style={{ width: 220, height: 340 }} // Tăng kích thước card
           >
             <div className="relative mb-1 flex items-center justify-center">
               {product.discount > 0 && (
-                <div className="absolute top-1 left-1 bg-red-600 text-white px-1 py-0.5 z-10 font-bold text-[10px]">
+                <div className="absolute top-1 left-1 bg-red-600 text-white px-1 py-0.5 z-10 font-bold text-[11px]">
                   -{product.discount}%
                 </div>
               )}
@@ -82,7 +82,7 @@ export default function ListCard({ pros }) {
                   src={`${
                     imageStates[index]?.currentImage || product.image_url[0]
                   }`}
-                  className={`bg-[#EAEAEA] w-full h-[160px] object-cover transition-opacity duration-300 ${
+                  className={`bg-[#EAEAEA] w-full h-[180px] object-cover transition-opacity duration-300 ${
                     imageStates[index]?.fade || "opacity-100"
                   }`}
                   alt={product.name}
@@ -92,21 +92,21 @@ export default function ListCard({ pros }) {
               </Link>
             </div>
 
-            <div className="flex-1 p-2 flex flex-col">
-              <div className="h-8 mb-1">
-                <p className="text-left leading-tight text-[#686868] transition-colors duration-300 group-hover:text-[#333] line-clamp-2 text-xs">
+            <div className="flex-1 p-3 flex flex-col">
+              <div className="h-9 mb-1">
+                <p className="text-left leading-tight text-[#686868] transition-colors duration-300 group-hover:text-[#333] line-clamp-2 text-sm">
                   {product.name}
                 </p>
               </div>
 
-              <p className="text-sm font-semibold text-[#22A6DF] transition-colors duration-300 group-hover:text-[#1890ff]">
+              <p className="text-base font-semibold text-[#22A6DF] transition-colors duration-300 group-hover:text-[#1890ff]">
                 {new Intl.NumberFormat("vi-VN", {
                   style: "currency",
                   currency: "VND",
                 }).format(Number(product.price * (1 - product.discount / 100)))}
 
                 {product.discount > 0 && (
-                  <span className="ml-1 text-gray-500 line-through text-[10px]">
+                  <span className="ml-1 text-gray-500 line-through text-[11px]">
                     {new Intl.NumberFormat("vi-VN", {
                       style: "currency",
                       currency: "VND",
@@ -115,14 +115,14 @@ export default function ListCard({ pros }) {
                 )}
               </p>
 
-              <div className="relative overflow-hidden mt-1">
+              <div className="relative overflow-hidden mt-2">
                 <Link to={`/detail/${product._id}`}>
                   <Button
-                    className="w-full uppercase text-[#22A6DF] border border-[#22A6DF] hover:!text-white relative z-10 overflow-hidden before:absolute before:top-0 before:left-[-100%] before:w-full before:h-full before:bg-[#22A6DF] before:transition-all before:duration-300 hover:before:left-0 text-xs"
+                    className="w-full uppercase text-[#22A6DF] border border-[#22A6DF] hover:!text-white relative z-10 overflow-hidden before:absolute before:top-0 before:left-[-100%] before:w-full before:h-full before:bg-[#22A6DF] before:transition-all before:duration-300 hover:before:left-0 text-sm"
                     size="small"
                   >
                     <div className="flex items-center justify-center gap-1 relative z-10">
-                      <BsHandbag size={12} />
+                      <BsHandbag size={14} />
                       <span>Chọn mua</span>
                     </div>
                   </Button>

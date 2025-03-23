@@ -71,11 +71,26 @@ const productsApi = {
       throw error;
     }
   },
-  delete: async (id) => {
-    const response = await api.delete(`/v1/products/${id}`);
-    return response.data;
+  toggleStatus: async (id, status) => {
+    try {
+      const response = await api.patch(
+        `/v1/products/toggle-status/${id}`,
+        { status },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error(
+        "Error toggling product status:",
+        error.response?.data || error
+      );
+      throw error;
+    }
   },
-  
 };
 
 export default productsApi;
