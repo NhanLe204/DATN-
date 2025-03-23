@@ -73,20 +73,20 @@ const ProductList: React.FC = () => {
     try {
       const response = await productsApi.getAll();
       const productList = response.data.result || [];
-
+  
       if (!Array.isArray(productList)) {
         throw new Error("Dữ liệu không hợp lệ từ API");
       }
-
+  
       const formattedProducts = productList.map((product: any) => {
         const imageUrl = product.image_url?.[0];
-        const formattedImageUrl = imageUrl;
         return {
           key: product._id,
           _id: product._id,
           productCode: product._id,
           name: product.name,
-          image: formattedImageUrl,
+          image: imageUrl, // Ảnh chính để hiển thị trong bảng
+          images: product.image_url || [], // Toàn bộ mảng ảnh cho modal
           quantity: product.quantity || 0,
           status: product.status,
           price: product.price,
@@ -97,12 +97,10 @@ const ProductList: React.FC = () => {
           brand_id: product.brand_id,
           tag_id: product.tag_id,
           discount: product.discount,
-          image_url: product.image_url,
-          extra_images: product.image_url?.slice(1),
           description: product.description || "Không có mô tả",
         };
       });
-
+  
       setProducts(formattedProducts);
     } catch (error) {
       message.error("Lỗi khi tải danh sách sản phẩm!");
@@ -134,13 +132,13 @@ const ProductList: React.FC = () => {
       render: (_: any, __: Product, index: number) =>
         (currentPage - 1) * pageSize + index + 1,
     },
-    {
-      title: "Mã sản phẩm",
-      dataIndex: "productCode",
-      key: "productCode",
-      width: 50,
-    },
-    { title: "Tên sản phẩm", dataIndex: "name", key: "name", width: 200 },
+    // {
+    //   title: "Mã sản phẩm",
+    //   dataIndex: "productCode",
+    //   key: "productCode",
+    //   width: 50,
+    // },
+    { title: "Tên sản phẩm", dataIndex: "name", key: "name", width: 400 },
     {
       title: "Ảnh",
       dataIndex: "image",
@@ -150,19 +148,20 @@ const ProductList: React.FC = () => {
         <img src={text} alt="Product" className="w-24 h-24 object-cover" />
       ),
     },
-    { title: "Số lượng", dataIndex: "quantity", key: "quantity" },
+    // { title: "Số lượng", dataIndex: "quantity", key: "quantity" },
     {
       title: "Tình trạng",
       dataIndex: "status",
       key: "status",
+      width: 100,
       render: (status: string) => (
         <Tag color={status === "available" ? "success" : "error"}>
           {status === "available" ? "Còn hàng" : "Hết hàng"}
         </Tag>
       ),
     },
-    { title: "Giá tiền", dataIndex: "price", key: "price" },
-    { title: "Danh mục", dataIndex: "category", key: "category" },
+    { title: "Giá tiền", dataIndex: "price", key: "price",width: 100 },
+    { title: "Danh mục", dataIndex: "category", key: "category", width: 100},
     { title: "Thương hiệu", dataIndex: "brand", key: "brand" },
     {
       title: "Tags",
@@ -180,12 +179,7 @@ const ProductList: React.FC = () => {
             size="small"
             onClick={() => showModal(record)}
           />
-          <Button
-            icon={<DeleteOutlined />}
-            danger
-            size="small"
-            onClick={() => handleHide(record._id)}
-          />
+          
         </Space>
       ),
     },

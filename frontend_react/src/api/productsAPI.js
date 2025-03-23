@@ -71,10 +71,7 @@ const productsApi = {
       throw error;
     }
   },
-  delete: async (id) => {
-    const response = await api.delete(`/v1/products/${id}`);
-    return response.data;
-  },
+ 
   
 };
 

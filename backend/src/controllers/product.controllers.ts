@@ -77,15 +77,51 @@ export const updateProduct = async (req: Request, res: Response): Promise<void> 
   try {
     const { id } = req.params;
     console.log(id, 'ID');
-    const { name, description, price, category_id, image_url, brand_id, status, tag_id } = req.body;
+    const { name, description, price, category_id, status, quantity, discount, brand_id, tag_id, existing_images, new_images } = req.body;
 
-    if (!name || !description || !price || !category_id || !image_url || !brand_id || tag_id || !status) {
+    if (!name || !price || !category_id || !status) {
       res.status(400).json({
         success: false,
-        message: 'Vui lòng cung cấp đầy đủ các trường của sản phẩm'
+        message: 'Vui lòng cung cấp đầy đủ các trường bắt buộc: name, price, category_id, status'
       });
       return;
     }
+
+    const currentProduct = await productModel.findById(id);
+    if (!currentProduct) {
+      res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
+      return;
+    }
+
+    // Khởi tạo danh sách ảnh từ dữ liệu hiện tại
+    let images_url: string[] = currentProduct.image_url || [];
+
+    // Cập nhật ảnh cũ còn lại từ existing_images
+    if (existing_images) {
+      const parsedExistingImages = typeof existing_images === 'string' ? JSON.parse(existing_images) : existing_images;
+      images_url = Array.isArray(parsedExistingImages) ? parsedExistingImages : [];
+    }
+
+    // Xử lý ảnh mới từ req.files và new_images
+    if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+      const newImagesPaths = req.files.map((file) => file.path);
+      let newImagesIndices = [];
+      if (new_images) {
+        newImagesIndices = typeof new_images === 'string' ? JSON.parse(new_images) : new_images;
+      }
+
+      newImagesPaths.forEach((path, i) => {
+        const index = newImagesIndices[i]?.index;
+        if (index !== undefined && index < images_url.length) {
+          // Thay thế ảnh cũ tại vị trí chỉ định
+          images_url[index] = path;
+        } else {
+          // Thêm ảnh mới vào cuối nếu không có vị trí chỉ định
+          images_url.push(path);
+        }
+      });
+    }
+
     if (!Object.values(ProductStatus).includes(status as ProductStatus)) {
       res.status(400).json({ success: false, message: 'Trạng thái sản phẩm không hợp lệ' });
       return;
@@ -93,7 +129,18 @@ export const updateProduct = async (req: Request, res: Response): Promise<void> 
 
     const updatedProduct = await productModel.findByIdAndUpdate(
       id,
-      { name, description, price, category_id, image_url, brand_id, status, tag_id },
+      {
+        name,
+        description,
+        price,
+        category_id,
+        image_url: images_url,
+        brand_id,
+        status,
+        tag_id,
+        quantity,
+        discount
+      },
       { new: true, runValidators: true }
     );
 
@@ -364,3 +411,4 @@ export const toggleProduct = async (req: Request, res: Response) => {
     return;
   }
 };
+
