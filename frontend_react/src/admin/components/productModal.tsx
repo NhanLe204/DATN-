@@ -58,7 +58,6 @@ const ProductModal: React.FC<ProductModalProps> = ({
   const [brands, setBrands] = useState<any[]>([]);
   const [tags, setTags] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [replacedIndices, setReplacedIndices] = useState<Map<string, number>>(new Map()); // Theo dõi vị trí ảnh bị thay thế
 
   useEffect(() => {
     const fetchData = async () => {
@@ -119,16 +118,14 @@ const ProductModal: React.FC<ProductModalProps> = ({
         name: `image-${index + 1}.png`,
         status: "done",
         url: url,
-        index: index, // Lưu vị trí gốc
+        index: index,
       }));
 
       console.log("Formatted images:", formattedImages);
       setImageFileList(formattedImages);
-      setReplacedIndices(new Map()); // Reset khi mở modal
     } else {
       form.resetFields();
       setImageFileList([]);
-      setReplacedIndices(new Map());
     }
   }, [product, visible, form]);
 
@@ -150,13 +147,12 @@ const ProductModal: React.FC<ProductModalProps> = ({
             status: "done",
             originFileObj: newFile,
             url: URL.createObjectURL(newFile),
-            index: file.index, // Giữ vị trí gốc của ảnh bị thay thế
+            index: file.index, // Giữ vị trí gốc
           };
           const newFileList = imageFileList.map((item) =>
             item.uid === file.uid ? newFileObj : item
           );
           setImageFileList(newFileList);
-          setReplacedIndices((prev) => new Map(prev).set(file.uid, file.index)); // Ghi nhận vị trí thay thế
         }
       };
       input.click();
@@ -177,30 +173,39 @@ const ProductModal: React.FC<ProductModalProps> = ({
       formData.append("brand_id", values.brand_id || "");
       formData.append("tag_id", values.tag_id || "");
 
-      // Gửi danh sách ảnh cũ còn lại (sau khi xóa) dưới dạng JSON string
-      const existingImages = (product?.images || []).filter((url) =>
-        imageFileList.some((file) => file.url === url && !file.originFileObj)
-      );
-      if (existingImages.length > 0) {
-        formData.append("existing_images", JSON.stringify(existingImages));
-      }
+      const originalImages = product?.images || [];
+      const existingImages: string[] = [];
+      const newImages: { file: any; index: number }[] = [];
 
-      // Thêm ảnh mới từ imageFileList kèm vị trí mong muốn
-      const newImagesWithIndex: { file: any; index?: number }[] = [];
+      // Duyệt imageFileList để phân loại ảnh cũ và ảnh mới
       imageFileList.forEach((file) => {
-        if (file.originFileObj) {
-          const replacedIndex = replacedIndices.get(file.uid); // Vị trí ảnh cũ bị thay thế
-          newImagesWithIndex.push({
+        if (file.url && !file.originFileObj) {
+          // Ảnh cũ giữ lại
+          if (originalImages.includes(file.url)) {
+            existingImages.push(file.url);
+          }
+        } else if (file.originFileObj) {
+          // Ảnh mới (thay thế hoặc thêm)
+          newImages.push({
             file: file.originFileObj,
-            index: replacedIndex !== undefined ? replacedIndex : imageFileList.length, // Nếu không thay thế, thêm vào cuối
+            index: file.index !== undefined ? file.index : originalImages.length + newImages.length,
           });
         }
       });
 
-      if (newImagesWithIndex.length > 0) {
-        formData.append("new_images", JSON.stringify(newImagesWithIndex.map((item) => ({ index: item.index }))));
-        newImagesWithIndex.forEach((item) => formData.append("images_url", item.file));
+      // Gửi existing_images
+      if (existingImages.length > 0) {
+        formData.append("existing_images", JSON.stringify(existingImages));
       }
+
+      // Gửi new_images
+      if (newImages.length > 0) {
+        formData.append("new_images", JSON.stringify(newImages.map((img) => ({ index: img.index }))));
+        newImages.forEach((img) => formData.append("images_url", img.file));
+      }
+
+      console.log("existingImages:", existingImages);
+      console.log("newImages:", newImages);
 
       if (product) {
         await productsApi.update(product._id, formData);

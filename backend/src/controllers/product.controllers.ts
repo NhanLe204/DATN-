@@ -94,12 +94,13 @@ export const updateProduct = async (req: Request, res: Response): Promise<void> 
     }
 
     // Khởi tạo danh sách ảnh từ dữ liệu hiện tại
-    let images_url: string[] = currentProduct.image_url || [];
+    let images_url: string[] = [...(currentProduct.image_url || [])];
 
-    // Cập nhật ảnh cũ còn lại từ existing_images
+    // Xử lý ảnh cũ còn lại từ existing_images
+    let keptImages: string[] = [];
     if (existing_images) {
-      const parsedExistingImages = typeof existing_images === 'string' ? JSON.parse(existing_images) : existing_images;
-      images_url = Array.isArray(parsedExistingImages) ? parsedExistingImages : [];
+      keptImages = typeof existing_images === 'string' ? JSON.parse(existing_images) : existing_images;
+      if (!Array.isArray(keptImages)) keptImages = [];
     }
 
     // Xử lý ảnh mới từ req.files và new_images
@@ -110,17 +111,30 @@ export const updateProduct = async (req: Request, res: Response): Promise<void> 
         newImagesIndices = typeof new_images === 'string' ? JSON.parse(new_images) : new_images;
       }
 
-      newImagesPaths.forEach((path, i) => {
-        const index = newImagesIndices[i]?.index;
-        if (index !== undefined && index < images_url.length) {
-          // Thay thế ảnh cũ tại vị trí chỉ định
-          images_url[index] = path;
-        } else {
-          // Thêm ảnh mới vào cuối nếu không có vị trí chỉ định
-          images_url.push(path);
+      // Tạo danh sách ảnh cuối cùng
+      const finalImages: string[] = [];
+      const maxIndex = Math.max(images_url.length, ...newImagesIndices.map((ni: any) => ni.index));
+
+      // Điền ảnh cũ và ảnh mới vào vị trí tương ứng
+      for (let i = 0; i <= maxIndex; i++) {
+        const newImageIndex = newImagesIndices.findIndex((ni: any) => ni.index === i);
+        if (newImageIndex !== -1) {
+          // Thay thế hoặc thêm ảnh mới tại vị trí chỉ định
+          finalImages[i] = newImagesPaths[newImageIndex];
+        } else if (i < images_url.length && keptImages.includes(images_url[i])) {
+          // Giữ lại ảnh cũ nếu có trong keptImages
+          finalImages[i] = images_url[i];
         }
-      });
+      }
+
+      // Cập nhật images_url
+      images_url = finalImages.filter((img) => img !== undefined);
+    } else {
+      // Nếu không có ảnh mới, chỉ giữ lại ảnh trong existing_images
+      images_url = keptImages;
     }
+
+    console.log("Final images_url:", images_url);
 
     if (!Object.values(ProductStatus).includes(status as ProductStatus)) {
       res.status(400).json({ success: false, message: 'Trạng thái sản phẩm không hợp lệ' });
