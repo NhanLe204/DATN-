@@ -426,3 +426,41 @@ export const toggleProduct = async (req: Request, res: Response) => {
   }
 };
 
+export const toggleProductStatus = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    console.log('ID Product:', id);
+    console.log('New Status:', status);
+
+    if (!id) {
+      res.status(400).json({ message: 'Vui lòng cung cấp ID sản phẩm' });
+      return;
+    }
+
+    if (!Object.values(ProductStatus).includes(status as ProductStatus)) {
+      res.status(400).json({
+        message: `Trạng thái không hợp lệ. Chỉ chấp nhận ${Object.values(ProductStatus).join(', ')}`
+      });
+      return;
+    }
+
+    const product = await productModel.findById(id);
+    if (!product) {
+      res.status(404).json({ message: 'Sản phẩm không tồn tại' });
+      return;
+    }
+
+    product.status = status;
+    await product.save();
+
+    res.status(200).json({
+      message: `Trạng thái sản phẩm đã được cập nhật thành ${status} thành công`,
+      product
+    });
+  } catch (error) {
+    console.error('Error toggling product status:', error);
+    res.status(500).json({ message: 'Lỗi khi cập nhật trạng thái sản phẩm', error });
+  }
+};

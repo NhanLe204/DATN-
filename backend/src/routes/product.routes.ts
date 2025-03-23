@@ -12,7 +12,7 @@ import {
   getProductActive,
   getProductByTagId,
   toggleProduct,
-  // toggleProductStatus,
+  toggleProductStatus,
 } from '../controllers/product.controllers.js';
 import { protectRoute, requireAdmin } from '../middlewares/protectRoute.js';
 import { get } from 'http';
@@ -29,6 +29,7 @@ productRouter.get('/hotproducts', getHotProduct);
 productRouter.post('/products', verifyToken, requireAdmin, uploader.array('images_url', 12), insertProduct);
 productRouter.patch('/products/:id', verifyToken, requireAdmin, uploader.array('images_url', 12), updateProduct);
 productRouter.patch('/products/status/:id', verifyToken, requireAdmin, toggleProduct);
+productRouter.patch('/products/toggle-status/:id', verifyToken, requireAdmin, toggleProductStatus); // Thêm route mới
 productRouter.patch(
   '/products/uploadimage/:id',
   verifyToken,
