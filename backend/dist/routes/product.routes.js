@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getAllProduct, getNewProduct, getProductById, insertProduct, updateProduct, getSaleProduct, getHotProduct, uploadProductImage, getProductByCategoryID, getProductActive, getProductByTagId, toggleProduct } from '../controllers/product.controllers.js';
+import { getAllProduct, getNewProduct, getProductById, insertProduct, updateProduct, getSaleProduct, getHotProduct, uploadProductImage, getProductByCategoryID, getProductActive, getProductByTagId, toggleProduct, getProductRelated } from '../controllers/product.controllers.js';
 import { requireAdmin } from '../middlewares/protectRoute.js';
 import { verifyToken } from '../middlewares/verifyToken.js';
 import uploader from '../config/cloudinary.config.js';
@@ -16,6 +16,7 @@ productRouter.patch('/products/uploadimage/:id', verifyToken, requireAdmin, uplo
 productRouter.get('/products/cate/:id', getProductByCategoryID);
 productRouter.get('/products/status/active', getProductActive);
 productRouter.get('/products/tags/:id', getProductByTagId);
+productRouter.get('/products/:id/related', getProductRelated);
 // productRouter.delete('/products/:id', protectRoute, requireAdmin, toggleProduct);
 export default productRouter;
 //# sourceMappingURL=product.routes.js.map

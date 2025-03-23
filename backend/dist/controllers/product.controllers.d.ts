@@ -10,4 +10,5 @@ export declare const getProductByCategoryID: (req: Request, res: Response) => Pr
 export declare const uploadProductImage: (req: Request, res: Response) => Promise<void>;
 export declare const getProductActive: (req: Request, res: Response) => Promise<void>;
 export declare const getProductByTagId: (req: Request, res: Response) => Promise<void>;
+export declare const getProductRelated: (req: Request, res: Response) => Promise<void>;
 export declare const toggleProduct: (req: Request, res: Response) => Promise<void>;

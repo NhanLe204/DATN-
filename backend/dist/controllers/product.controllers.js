@@ -293,6 +293,28 @@ export const getProductByTagId = async (req, res) => {
         });
     }
 };
+export const getProductRelated = async (req, res) => {
+    const productId = req.params.id;
+    const product = await productModel.findById(productId);
+    if (!product) {
+        res.status(404).json({ message: 'Sản phẩm không tồn tại' });
+        return;
+    }
+    // Tìm sản phẩm liên quan dựa trên category_id, brand_id, hoặc tag_id
+    const allProducts = await productModel.find();
+    const relatedProducts = allProducts.filter((p) => {
+        // Không bao gồm chính sản phẩm hiện tại
+        if (p._id.toString() === productId)
+            return false;
+        // Sản phẩm liên quan nếu cùng category_id hoặc brand_id hoặc tag_id
+        return (p.category_id?.toString() === product.category_id?.toString() ||
+            p.brand_id?.toString() === product.brand_id?.toString() ||
+            p.tag_id?.toString() === product.tag_id?.toString());
+    });
+    // Giới hạn số lượng sản phẩm liên quan (ví dụ: 4 sản phẩm)
+    const limitedRelatedProducts = relatedProducts.slice(0, 4);
+    res.status(200).json(limitedRelatedProducts);
+};
 export const toggleProduct = async (req, res) => {
     try {
         const { id } = req.params;

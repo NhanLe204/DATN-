@@ -1,13 +1,18 @@
 import { UserRoles, UserStatus } from '../enums/user.enum.js';
 import { IProduct } from './product.interface.js';
 import { Document } from 'mongoose';
+export interface IAddress {
+    name: string;
+    phone: string;
+    address: string;
+}
 export interface IUser extends Document {
     googleId: string | undefined;
     email: string;
     fullname: string;
     password: string | undefined;
     phone_number: string;
-    address: [];
+    address: IAddress[];
     status: UserStatus;
     role: UserRoles;
     avatar: string;

@@ -11,7 +11,8 @@ import {
   getProductByCategoryID,
   getProductActive,
   getProductByTagId,
-  toggleProduct
+  toggleProduct,
+  getProductRelated
 } from '../controllers/product.controllers.js';
 import { protectRoute, requireAdmin } from '../middlewares/protectRoute.js';
 import { get } from 'http';
@@ -38,6 +39,7 @@ productRouter.patch(
 productRouter.get('/products/cate/:id', getProductByCategoryID);
 productRouter.get('/products/status/active', getProductActive);
 productRouter.get('/products/tags/:id', getProductByTagId);
+productRouter.get('/products/:id/related', getProductRelated);
 // productRouter.delete('/products/:id', protectRoute, requireAdmin, toggleProduct);
 
 export default productRouter;
