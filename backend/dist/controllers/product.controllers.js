@@ -74,19 +74,74 @@ export const updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
         console.log(id, 'ID');
-        const { name, description, price, category_id, image_url, brand_id, status, tag_id } = req.body;
-        if (!name || !description || !price || !category_id || !image_url || !brand_id || tag_id || !status) {
+        const { name, description, price, category_id, status, quantity, discount, brand_id, tag_id, existing_images, new_images } = req.body;
+        if (!name || !price || !category_id || !status) {
             res.status(400).json({
                 success: false,
-                message: 'Vui lòng cung cấp đầy đủ các trường của sản phẩm'
+                message: 'Vui lòng cung cấp đầy đủ các trường bắt buộc: name, price, category_id, status'
             });
             return;
         }
+        const currentProduct = await productModel.findById(id);
+        if (!currentProduct) {
+            res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
+            return;
+        }
+        // Khởi tạo danh sách ảnh từ dữ liệu hiện tại
+        let images_url = [...(currentProduct.image_url || [])];
+        // Xử lý ảnh cũ còn lại từ existing_images
+        let keptImages = [];
+        if (existing_images) {
+            keptImages = typeof existing_images === 'string' ? JSON.parse(existing_images) : existing_images;
+            if (!Array.isArray(keptImages))
+                keptImages = [];
+        }
+        // Xử lý ảnh mới từ req.files và new_images
+        if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+            const newImagesPaths = req.files.map((file) => file.path);
+            let newImagesIndices = [];
+            if (new_images) {
+                newImagesIndices = typeof new_images === 'string' ? JSON.parse(new_images) : new_images;
+            }
+            // Tạo danh sách ảnh cuối cùng
+            const finalImages = [];
+            const maxIndex = Math.max(images_url.length, ...newImagesIndices.map((ni) => ni.index));
+            // Điền ảnh cũ và ảnh mới vào vị trí tương ứng
+            for (let i = 0; i <= maxIndex; i++) {
+                const newImageIndex = newImagesIndices.findIndex((ni) => ni.index === i);
+                if (newImageIndex !== -1) {
+                    // Thay thế hoặc thêm ảnh mới tại vị trí chỉ định
+                    finalImages[i] = newImagesPaths[newImageIndex];
+                }
+                else if (i < images_url.length && keptImages.includes(images_url[i])) {
+                    // Giữ lại ảnh cũ nếu có trong keptImages
+                    finalImages[i] = images_url[i];
+                }
+            }
+            // Cập nhật images_url
+            images_url = finalImages.filter((img) => img !== undefined);
+        }
+        else {
+            // Nếu không có ảnh mới, chỉ giữ lại ảnh trong existing_images
+            images_url = keptImages;
+        }
+        console.log('Final images_url:', images_url);
         if (!Object.values(ProductStatus).includes(status)) {
             res.status(400).json({ success: false, message: 'Trạng thái sản phẩm không hợp lệ' });
             return;
         }
-        const updatedProduct = await productModel.findByIdAndUpdate(id, { name, description, price, category_id, image_url, brand_id, status, tag_id }, { new: true, runValidators: true });
+        const updatedProduct = await productModel.findByIdAndUpdate(id, {
+            name,
+            description,
+            price,
+            category_id,
+            image_url: images_url,
+            brand_id,
+            status,
+            tag_id,
+            quantity,
+            discount
+        }, { new: true, runValidators: true });
         if (!updatedProduct) {
             res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
             return;
@@ -349,6 +404,39 @@ export const toggleProduct = async (req, res) => {
     catch (error) {
         res.status(500).json({ message: 'Lỗi khi cập nhật trạng thái sản phẩm', error });
         return;
+    }
+};
+export const toggleProductStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+        console.log('ID Product:', id);
+        console.log('New Status:', status);
+        if (!id) {
+            res.status(400).json({ message: 'Vui lòng cung cấp ID sản phẩm' });
+            return;
+        }
+        if (!Object.values(ProductStatus).includes(status)) {
+            res.status(400).json({
+                message: `Trạng thái không hợp lệ. Chỉ chấp nhận ${Object.values(ProductStatus).join(', ')}`
+            });
+            return;
+        }
+        const product = await productModel.findById(id);
+        if (!product) {
+            res.status(404).json({ message: 'Sản phẩm không tồn tại' });
+            return;
+        }
+        product.status = status;
+        await product.save();
+        res.status(200).json({
+            message: `Trạng thái sản phẩm đã được cập nhật thành ${status} thành công`,
+            product
+        });
+    }
+    catch (error) {
+        console.error('Error toggling product status:', error);
+        res.status(500).json({ message: 'Lỗi khi cập nhật trạng thái sản phẩm', error });
     }
 };
 //# sourceMappingURL=product.controllers.js.map

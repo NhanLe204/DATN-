@@ -12,3 +12,4 @@ export declare const getProductActive: (req: Request, res: Response) => Promise<
 export declare const getProductByTagId: (req: Request, res: Response) => Promise<void>;
 export declare const getProductRelated: (req: Request, res: Response) => Promise<void>;
 export declare const toggleProduct: (req: Request, res: Response) => Promise<void>;
+export declare const toggleProductStatus: (req: Request, res: Response) => Promise<void>;

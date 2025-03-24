@@ -12,7 +12,7 @@ import {
   getProductActive,
   getProductByTagId,
   toggleProduct,
-  toggleProductStatus,,
+  toggleProductStatus,
   getProductRelated
 } from '../controllers/product.controllers.js';
 import { protectRoute, requireAdmin } from '../middlewares/protectRoute.js';

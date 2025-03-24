@@ -77,7 +77,19 @@ export const updateProduct = async (req: Request, res: Response): Promise<void> 
   try {
     const { id } = req.params;
     console.log(id, 'ID');
-    const { name, description, price, category_id, status, quantity, discount, brand_id, tag_id, existing_images, new_images } = req.body;
+    const {
+      name,
+      description,
+      price,
+      category_id,
+      status,
+      quantity,
+      discount,
+      brand_id,
+      tag_id,
+      existing_images,
+      new_images
+    } = req.body;
 
     if (!name || !price || !category_id || !status) {
       res.status(400).json({
@@ -134,7 +146,7 @@ export const updateProduct = async (req: Request, res: Response): Promise<void> 
       images_url = keptImages;
     }
 
-    console.log("Final images_url:", images_url);
+    console.log('Final images_url:', images_url);
 
     if (!Object.values(ProductStatus).includes(status as ProductStatus)) {
       res.status(400).json({ success: false, message: 'Trạng thái sản phẩm không hợp lệ' });

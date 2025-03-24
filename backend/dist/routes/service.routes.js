@@ -1,12 +1,15 @@
-import { Router } from 'express';
+import { getAllServices, createService, getServiceActive, getServiceById, updateService } from '../controllers/service.controllers.js';
 import { requireAdmin } from '../middlewares/protectRoute.js';
 import { verifyToken } from '../middlewares/verifyToken.js';
-import { deleteBrand, getAllBrands, getBrandById, insertBrand, updateBrand } from '../controllers/brand.controllers.js';
+import { Router } from 'express';
 const serviceRouter = Router();
-serviceRouter.get('/brands', getAllBrands);
-serviceRouter.get('/brands/:id', getBrandById);
-serviceRouter.post('/brands', verifyToken, requireAdmin, insertBrand);
-serviceRouter.patch('/brands/:id', verifyToken, requireAdmin, updateBrand);
-serviceRouter.delete('/brands/:id', verifyToken, requireAdmin, deleteBrand);
+// Định nghĩa các route cho Service
+serviceRouter.get('/services', verifyToken, requireAdmin, getAllServices); // Lấy tất cả dịch vụ
+serviceRouter.post('/services', createService); // Tạo mới một dịch vụ
+serviceRouter.get('/services/status/active', getServiceActive);
+serviceRouter.get('/services/:id', getServiceById);
+serviceRouter.patch('/services/:id', verifyToken, requireAdmin, updateService); // Cập nhật dịch vụ theo serviceID
+// serviceRouter.get('/services/:id', getServiceById); // Lấy dịch vụ theo serviceID
+// serviceRouter.delete('/services/:id', deleteService); // Xóa dịch vụ theo serviceID
 export default serviceRouter;
 //# sourceMappingURL=service.routes.js.map
