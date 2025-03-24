@@ -5,9 +5,12 @@ import PaymentType from '../models/paymentType.model.js';
 import deliveryModel from '../models/delivery.model.js';
 import couponModel from '../models/coupon.model.js';
 import { CouponStatus } from '../enums/coupon.enum.js';
-import orderDetailModel from '@/models/orderdetail.model.js';
-import ServiceModel from '@/models/service.model.js';
-import productModel from '@/models/product.model.js';
+import orderDetailModel from '../models/orderdetail.model.js';
+import productModel from '../models/product.model.js';
+import { OrderStatus, PaymentStatus } from '../enums/order.enum.js';
+import { ProductStatus } from '../enums/product.enum.js';
+import { ServiceStatus } from '../enums/service.enum.js';
+import serviceModel from '../models/service.model.js';
 export const createOrderAfterPayment = async (req, res) => {
     // Start a MongoDB transaction
     const session = await mongoose.startSession();
@@ -25,6 +28,10 @@ export const createOrderAfterPayment = async (req, res) => {
             !orderDetails ||
             !Array.isArray(orderDetails)) {
             throw new Error('Missing required fields');
+        }
+        // Validate payment_status
+        if (!Object.values(PaymentStatus).includes(payment_status)) {
+            throw new Error('Invalid payment status');
         }
         // 2. Validate user existence
         const user = await userModel.findById(userID).session(session);
@@ -55,23 +62,8 @@ export const createOrderAfterPayment = async (req, res) => {
             // Update coupon usage
             await couponModel.findByIdAndUpdate(couponID, { $inc: { used_count: 1 } }, { session });
         }
-        // 6. Create and save order
-        const order = new orderModel({
-            userID,
-            payment_typeID,
-            deliveryID,
-            couponID: couponID || null,
-            orderdate: orderdate ? new Date(orderdate) : new Date(),
-            total_price,
-            discount,
-            shipping_address,
-            delivery_name: delivery.delivery_name,
-            payment_status,
-            transaction_id,
-            booking_date: booking_date ? new Date(booking_date) : null
-        });
-        const savedOrder = await order.save({ session });
-        // 7. Process order details
+        // 6. Calculate total_price (verify total_price from client)
+        let calculatedTotalPrice = 0;
         const orderDetailsPromises = orderDetails.map(async (detail) => {
             const { productID, serviceID, quantity, product_price } = detail;
             if (!quantity || !product_price || (!productID && !serviceID)) {
@@ -79,10 +71,12 @@ export const createOrderAfterPayment = async (req, res) => {
             }
             // Validate product if exists
             if (productID) {
-                const product = await productModel.findById(productID).session(session);
+                const product = await productModel
+                    .findOne({ _id: productID, status: ProductStatus.AVAILABLE })
+                    .session(session);
                 if (!product)
-                    throw new Error(`Product not found: ${productID}`);
-                // Optional: Check product stock
+                    throw new Error(`Product not found or not available: ${productID}`);
+                // Check product stock
                 if (product.stock < quantity) {
                     throw new Error(`Insufficient stock for product: ${productID}`);
                 }
@@ -91,26 +85,56 @@ export const createOrderAfterPayment = async (req, res) => {
             }
             // Validate service if exists
             if (serviceID) {
-                const service = await ServiceModel.findById(serviceID).session(session);
+                const service = await serviceModel.findOne({ _id: serviceID, status: ServiceStatus.ACTIVE }).session(session);
                 if (!service)
-                    throw new Error(`Service not found: ${serviceID}`);
+                    throw new Error(`Service not found or not active: ${serviceID}`);
             }
             // Calculate total price for this detail
             const detailTotalPrice = quantity * product_price;
+            calculatedTotalPrice += detailTotalPrice;
+            return { productID, serviceID, quantity, product_price, total_price: detailTotalPrice };
+        });
+        // Wait for all validations and calculations
+        const validatedOrderDetails = await Promise.all(orderDetailsPromises);
+        // Verify total_price
+        const finalTotalPrice = calculatedTotalPrice - discount;
+        if (Math.abs(finalTotalPrice - total_price) > 1) {
+            throw new Error('Total price mismatch');
+        }
+        // 7. Create and save order
+        const order = new orderModel({
+            userID,
+            payment_typeID,
+            deliveryID,
+            couponID: couponID || null,
+            orderdate: orderdate ? new Date(orderdate) : new Date(),
+            total_price: finalTotalPrice,
+            discount,
+            shipping_address,
+            delivery_name: delivery.delivery_name,
+            payment_status, // Lấy từ body (pending)
+            status: OrderStatus.PENDING,
+            transaction_id,
+            booking_date: booking_date ? new Date(booking_date) : null
+        });
+        const savedOrder = await order.save({ session });
+        // 8. Create and save order details
+        const orderDetailDocs = validatedOrderDetails.map((detail) => {
+            console.log(detail, 'Detail');
             return new orderDetailModel({
-                orderID: savedOrder._id,
-                productID: productID || null,
-                serviceID: serviceID || null,
-                quantity,
-                product_price,
-                total_price: detailTotalPrice
+                orderId: savedOrder._id,
+                productId: detail.productID || null,
+                serviceId: detail.serviceID || null,
+                quantity: detail.quantity,
+                product_price: detail.product_price,
+                total_price: detail.total_price,
+                service_time: detail.serviceID ? booking_date : null
             });
         });
-        // Save all order details
-        const savedOrderDetails = await Promise.all(orderDetailsPromises.map((detail) => detail.then((d) => d.save({ session }))));
-        // Commit transaction
+        const savedOrderDetails = await Promise.all(orderDetailDocs.map((detail) => detail.save({ session })));
+        // 9. Commit transaction
         await session.commitTransaction();
-        // Send response
+        // 10. Send response
         res.status(201).json({
             success: true,
             message: 'Order and order details created successfully',
@@ -152,7 +176,6 @@ export const getAllOrders = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error', details: errorMessage });
     }
 };
-// Ví dụ: getOrderById
 export const getOrderById = async (req, res) => {
     try {
         const { id } = req.params;
