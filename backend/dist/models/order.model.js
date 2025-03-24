@@ -1,6 +1,6 @@
 import mongoose, { Schema, model } from 'mongoose';
 import user from '../models/user.model.js';
-import { PaymentStatus } from '../enums/order.enum.js';
+import { OrderStatus, PaymentStatus } from '../enums/order.enum.js';
 import paymentType from '../models/paymentType.model.js';
 import delivery from './delivery.model.js';
 import coupon from '../models/coupon.model.js';
@@ -18,6 +18,11 @@ const orderSchema = new Schema({
         type: String,
         enum: PaymentStatus,
         default: PaymentStatus.PENDING
+    },
+    status: {
+        type: String,
+        enum: OrderStatus,
+        default: OrderStatus.PENDING
     },
     transaction_id: { type: String, default: '' },
     booking_date: { type: Date, default: null }
