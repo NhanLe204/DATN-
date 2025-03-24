@@ -109,17 +109,22 @@ const ProductModal: React.FC<ProductModalProps> = ({
         status: product.status,
         category_id: product.category_id?._id || product.category_id,
         brand_id: product.brand_id?._id || product.brand_id || undefined,
-        tag_id: typeof product.tag_id === "string" ? product.tag_id : product.tag_id?._id,
+        tag_id:
+          typeof product.tag_id === "string"
+            ? product.tag_id
+            : product.tag_id?._id,
         description: product.description || "",
       });
 
-      const formattedImages = (product.images || []).map((url: string, index: number) => ({
-        uid: `-${index + 1}`,
-        name: `image-${index + 1}.png`,
-        status: "done",
-        url: url,
-        index: index,
-      }));
+      const formattedImages = (product.images || []).map(
+        (url: string, index: number) => ({
+          uid: `-${index + 1}`,
+          name: `image-${index + 1}.png`,
+          status: "done",
+          url: url,
+          index: index,
+        })
+      );
 
       console.log("Formatted images:", formattedImages);
       setImageFileList(formattedImages);
@@ -188,7 +193,10 @@ const ProductModal: React.FC<ProductModalProps> = ({
           // Ảnh mới (thay thế hoặc thêm)
           newImages.push({
             file: file.originFileObj,
-            index: file.index !== undefined ? file.index : originalImages.length + newImages.length,
+            index:
+              file.index !== undefined
+                ? file.index
+                : originalImages.length + newImages.length,
           });
         }
       });
@@ -200,7 +208,10 @@ const ProductModal: React.FC<ProductModalProps> = ({
 
       // Gửi new_images
       if (newImages.length > 0) {
-        formData.append("new_images", JSON.stringify(newImages.map((img) => ({ index: img.index }))));
+        formData.append(
+          "new_images",
+          JSON.stringify(newImages.map((img) => ({ index: img.index })))
+        );
         newImages.forEach((img) => formData.append("images_url", img.file));
       }
 
@@ -240,7 +251,9 @@ const ProductModal: React.FC<ProductModalProps> = ({
               <Form.Item
                 name="name"
                 label="Tên sản phẩm"
-                rules={[{ required: true, message: "Vui lòng nhập tên sản phẩm!" }]}
+                rules={[
+                  { required: true, message: "Vui lòng nhập tên sản phẩm!" },
+                ]}
               >
                 <Input placeholder="Nhập tên sản phẩm" />
               </Form.Item>
@@ -250,23 +263,36 @@ const ProductModal: React.FC<ProductModalProps> = ({
               <Form.Item
                 name="price"
                 label="Giá"
-                rules={[{ required: true, message: "Vui lòng nhập giá sản phẩm!" }]}
+                rules={[
+                  { required: true, message: "Vui lòng nhập giá sản phẩm!" },
+                ]}
               >
-                <InputNumber min={1} className="w-full" placeholder="Nhập giá sản phẩm" />
+                <InputNumber
+                  min={1}
+                  className="w-full"
+                  placeholder="Nhập giá sản phẩm"
+                />
               </Form.Item>
               <Form.Item
                 name="discount"
                 label="Giảm giá (%)"
                 rules={[{ type: "number", min: 0, max: 100 }]}
               >
-                <InputNumber min={0} max={100} className="w-full" placeholder="Nhập % giảm giá" />
+                <InputNumber
+                  min={0}
+                  max={100}
+                  className="w-full"
+                  placeholder="Nhập % giảm giá"
+                />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
                 name="status"
                 label="Tình trạng"
-                rules={[{ required: true, message: "Vui lòng chọn tình trạng!" }]}
+                rules={[
+                  { required: true, message: "Vui lòng chọn tình trạng!" },
+                ]}
               >
                 <Select placeholder="Chọn tình trạng">
                   <Option value="available">Còn hàng</Option>

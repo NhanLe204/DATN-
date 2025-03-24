@@ -77,7 +77,19 @@ export const updateProduct = async (req: Request, res: Response): Promise<void> 
   try {
     const { id } = req.params;
     console.log(id, 'ID');
-    const { name, description, price, category_id, status, quantity, discount, brand_id, tag_id, existing_images, new_images } = req.body;
+    const {
+      name,
+      description,
+      price,
+      category_id,
+      status,
+      quantity,
+      discount,
+      brand_id,
+      tag_id,
+      existing_images,
+      new_images
+    } = req.body;
 
     if (!name || !price || !category_id || !status) {
       res.status(400).json({
@@ -134,7 +146,7 @@ export const updateProduct = async (req: Request, res: Response): Promise<void> 
       images_url = keptImages;
     }
 
-    console.log("Final images_url:", images_url);
+    console.log('Final images_url:', images_url);
 
     if (!Object.values(ProductStatus).includes(status as ProductStatus)) {
       res.status(400).json({ success: false, message: 'Trạng thái sản phẩm không hợp lệ' });
@@ -383,6 +395,35 @@ export const getProductByTagId = async (req: Request, res: Response): Promise<vo
       message: `Lỗi khi lấy sản phẩm dành cho ${tagName}`
     });
   }
+};
+
+export const getProductRelated = async (req: Request, res: Response): Promise<void> => {
+  const productId = req.params.id;
+  const product = await productModel.findById(productId);
+
+  if (!product) {
+    res.status(404).json({ message: 'Sản phẩm không tồn tại' });
+    return;
+  }
+
+  // Tìm sản phẩm liên quan dựa trên category_id, brand_id, hoặc tag_id
+  const allProducts = await productModel.find();
+  const relatedProducts = allProducts.filter((p) => {
+    // Không bao gồm chính sản phẩm hiện tại
+    if (p._id.toString() === productId) return false;
+
+    // Sản phẩm liên quan nếu cùng category_id hoặc brand_id hoặc tag_id
+    return (
+      p.category_id?.toString() === product.category_id?.toString() ||
+      p.brand_id?.toString() === product.brand_id?.toString() ||
+      p.tag_id?.toString() === product.tag_id?.toString()
+    );
+  });
+
+  // Giới hạn số lượng sản phẩm liên quan (ví dụ: 4 sản phẩm)
+  const limitedRelatedProducts = relatedProducts.slice(0, 4);
+
+  res.status(200).json(limitedRelatedProducts);
 };
 
 export const toggleProduct = async (req: Request, res: Response) => {

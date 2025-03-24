@@ -13,6 +13,7 @@ import {
   getProductByTagId,
   toggleProduct,
   toggleProductStatus,
+  getProductRelated
 } from '../controllers/product.controllers.js';
 import { protectRoute, requireAdmin } from '../middlewares/protectRoute.js';
 import { get } from 'http';
@@ -40,5 +41,6 @@ productRouter.patch(
 productRouter.get('/products/cate/:id', getProductByCategoryID);
 productRouter.get('/products/status/active', getProductActive);
 productRouter.get('/products/tags/:id', getProductByTagId);
+productRouter.get('/products/:id/related', getProductRelated);
 // productRouter.patch("/products/:id/toggle-status", toggleProductStatus);
 export default productRouter;

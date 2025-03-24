@@ -1,3 +1,4 @@
+import { ServiceStatus } from '../enums/service.enum.js';
 import { ObjectId } from 'mongoose';
 export interface IService {
     _id: ObjectId;
@@ -5,6 +6,7 @@ export interface IService {
     description?: string;
     service_price: number;
     duration: Date;
+    status: ServiceStatus;
     create_at: Date;
     update_at: Date;
 }
