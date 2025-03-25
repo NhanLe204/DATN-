@@ -29,6 +29,7 @@ import Payment from "./pages/payment/payment";
 import AboutUs from "./pages/about-us/about-us";
 import BrandManager from "./admin/brand/brand";
 import TagManager from "./admin/tag/tag";
+import VerifyOtp from "./pages/verifyOTP/verifyOTP";
 
 interface User {
   id: string;
@@ -81,6 +82,14 @@ function App() {
       element: (
         <PublicRoute>
           <SignUp />
+        </PublicRoute>
+      ),
+    },
+    {
+      path: "/verify-otp", // Thêm route mới cho VerifyOtp
+      element: (
+        <PublicRoute>
+          <VerifyOtp />
         </PublicRoute>
       ),
     },

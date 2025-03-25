@@ -36,7 +36,7 @@ const userSchema = new Schema({
     },
     status: {
         type: String,
-        default: UserStatus.ACTIVE
+        default: UserStatus.PENDING
     },
     role: {
         type: String,
@@ -73,6 +73,19 @@ const userSchema = new Schema({
     dateOfBirth: {
         type: String,
         default: ''
+    },
+    otp: {
+        type: String,
+        default: null
+    },
+    otpExpiry: {
+        type: Date,
+        default: null
+    },
+    isVerified: {
+        // check tài khoản đã verify email chưa
+        type: Boolean,
+        default: false
     }
 }, { timestamps: true });
 const userModel = mongoose.models.user || model('user', userSchema);

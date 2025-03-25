@@ -25,4 +25,7 @@ export interface IUser extends Document {
   dateOfBirth: string;
   createdAt: Date;
   updatedAt: Date;
+  otp: string;
+  otpExpiry: Date;
+  isVerified: boolean;
 }

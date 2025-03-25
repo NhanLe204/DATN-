@@ -9,7 +9,8 @@ import {
   refreshTokenController,
   googleLogin,
   checkAdminRole,
-  checkRoleStatus
+  checkRoleStatus,
+  verifyOTPController
 } from '../controllers/auth.controllers.js';
 import { protectRoute } from '../middlewares/protectRoute.js';
 
@@ -23,6 +24,7 @@ authRouter.post('/forgotPassword', forgotPasswordController);
 authRouter.post('/resetPassword', resetPasswordController);
 authRouter.post('/refreshtoken', refreshTokenController);
 authRouter.post('/google', googleLogin);
+authRouter.post('/verify-otp', verifyOTPController);
 // bảo vệ route admin
 authRouter.get('/admin', checkRoleStatus, checkAdminRole, (req: Request, res: Response) => {
   res.status(200).json({ success: true, message: 'Welcome Admin' });

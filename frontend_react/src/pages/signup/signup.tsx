@@ -147,7 +147,7 @@ export default function SignUp() {
             confirmPassword: "",
           });
           setTimeout(() => {
-            navigate("/login"); // Dùng navigate thay window.location.href
+            navigate("/verify-otp", { state: { email: formData.email } }); // Dùng navigate thay window.location.href
           }, 2000);
         },
       });

@@ -71,16 +71,14 @@ export default function Login() {
         localStorage.clear();
         setUser(null);
       } else if (parsedUser.role === "admin") {
-        navigate("/admin"); // Thay window.location.href
+        navigate("/admin");
       } else {
-        navigate("/"); // Thay window.location.href
+        navigate("/");
       }
     }
   }, [navigate]);
 
-  // handle login
   const handleLogin = async () => {
-    
     if (!email.trim() && !password.trim()) {
       notification.error({
         message: "Lỗi!",
@@ -88,9 +86,6 @@ export default function Login() {
         placement: "topRight",
         duration: 2,
       });
-      localStorage.clear();
-      setUser(null);
-      setLoading(false);
       return;
     }
     if (!email.trim()) {
@@ -100,9 +95,6 @@ export default function Login() {
         placement: "topRight",
         duration: 2,
       });
-      localStorage.clear();
-      setUser(null);
-      setLoading(false);
       return;
     }
     if (!password.trim()) {
@@ -112,9 +104,6 @@ export default function Login() {
         placement: "topRight",
         duration: 2,
       });
-      localStorage.clear();
-      setUser(null);
-      setLoading(false);
       return;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -127,31 +116,17 @@ export default function Login() {
       });
       return;
     }
+
     setLoading(true);
     try {
-      const { data } = await loginApi.login({ email, password }); // Thay fetch bằng loginApi.login
+      const { data } = await loginApi.login({ email, password });
 
-      console.log("Phản hồi từ API:", data); // Giữ nguyên console.log (đổi response thành data)
-
-      if (data.success) { // Kiểm tra data.success thay vì response.ok
+      if (data.success) {
         const { userData, accessToken } = data;
         setUser(userData);
         localStorage.setItem("accessToken", accessToken);
         localStorage.setItem("accountID", JSON.stringify(userData._id));
         localStorage.setItem("userData", JSON.stringify(userData));
-
-        if (userData.status !== "active") {
-          notification.error({
-            message: "Truy cập bị từ chối!",
-            description: "Tài khoản của bạn không hoạt động.",
-            placement: "topRight",
-            duration: 2,
-          });
-          localStorage.clear();
-          setUser(null);
-          setLoading(false);
-          return;
-        }
 
         notification.success({
           message: "Đăng nhập thành công!",
@@ -160,9 +135,9 @@ export default function Login() {
           duration: 1.5,
           onClose: () => {
             if (userData.role === "admin") {
-              navigate("/admin"); // Thay window.location.href
+              navigate("/admin");
             } else {
-              window.location.href = "/";
+              navigate("/");
             }
           },
         });
@@ -170,13 +145,26 @@ export default function Login() {
         throw new Error(data.message || "Đăng nhập thất bại");
       }
     } catch (error) {
-      notification.error({
-        message: "Lỗi!",
-        description:
-          error.message || "Có lỗi xảy ra trong quá trình đăng nhập.",
-        placement: "topRight",
-        duration: 2,
-      });
+      // Kiểm tra lỗi cụ thể từ backend
+      const errorMessage = error.message || "Có lỗi xảy ra trong quá trình đăng nhập.";
+      if (errorMessage.includes("Vui lòng xác thực email bằng OTP")) {
+        notification.warning({
+          message: "Chưa xác thực tài khoản!",
+          description: "Vui lòng kiểm tra email để nhập OTP xác thực trước khi đăng nhập.",
+          placement: "topRight",
+          duration: 3,
+          onClose: () => {
+            navigate("/verify-otp", { state: { email } }); // Chuyển hướng đến trang OTP
+          },
+        });
+      } else {
+        notification.error({
+          message: "Lỗi!",
+          description: errorMessage,
+          placement: "topRight",
+          duration: 2,
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -193,9 +181,8 @@ export default function Login() {
     }
     setIsSending(true);
     try {
-      const { data } = await loginApi.forgotPassword(forgotEmail); // Thay fetch bằng loginApi.forgotPassword
-
-      if (data.success) { // Kiểm tra data.success thay vì response.ok
+      const { data } = await loginApi.forgotPassword(forgotEmail);
+      if (data.success) {
         notification.success({
           message: "Kiểm tra email!",
           description: "Hãy kiểm tra hộp thư của bạn để đặt lại mật khẩu.",
@@ -240,9 +227,8 @@ export default function Login() {
 
     setIsSending(true);
     try {
-      const { data } = await loginApi.resetPassword({ resetToken, newPassword }); // Thay fetch bằng loginApi.resetPassword
-      
-      if (data.success) { // Kiểm tra data.success thay vì response.ok
+      const { data } = await loginApi.resetPassword({ resetToken, newPassword });
+      if (data.success) {
         notification.success({
           message: "Mật khẩu đã được đặt lại thành công!",
           placement: "topRight",
@@ -267,12 +253,11 @@ export default function Login() {
     }
   };
 
-  // Chức năng đăng nhập GOOGLE
   const handleGoogleLogin = (credentialResponse: GoogleCredentialResponse) => {
     const idToken = credentialResponse.credential;
-    loginApi.googleLogin(idToken) // Thay fetch bằng loginApi.googleLogin
+    loginApi.googleLogin(idToken)
       .then((response) => {
-        const data = response.data; // Lấy data từ response
+        const data = response.data;
         if (!data.success) {
           return Promise.reject(new Error(`Server error: ${data.message || "Unknown error"}`));
         }
@@ -294,9 +279,9 @@ export default function Login() {
           duration: 2,
           onClose: () => {
             if (data.user.role === "admin") {
-              navigate("/admin"); // Thay window.location.href
+              navigate("/admin");
             } else {
-              navigate("/"); // Thay window.location.href
+              navigate("/");
             }
           },
         });
