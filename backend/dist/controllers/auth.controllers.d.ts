@@ -4,6 +4,7 @@ export interface CustomRequest extends Request {
     user?: IUser;
 }
 export declare const signupController: (req: Request, res: Response) => Promise<void>;
+export declare const verifyOTPController: (req: Request, res: Response) => Promise<void>;
 export declare const loginController: (req: Request, res: Response) => Promise<void>;
 export declare const logoutController: (req: Request, res: Response) => Promise<void>;
 export declare const authCheckController: (req: Request & {

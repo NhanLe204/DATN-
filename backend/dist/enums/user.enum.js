@@ -15,5 +15,6 @@ export var UserStatus;
 (function (UserStatus) {
     UserStatus["ACTIVE"] = "active";
     UserStatus["INACTIVE"] = "inactive";
+    UserStatus["PENDING"] = "pending";
 })(UserStatus || (UserStatus = {}));
 //# sourceMappingURL=user.enum.js.map

@@ -30,6 +30,7 @@ const getRandomHexColor = (): string => {
   return color;
 };
 
+const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 export const signupController = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password, fullname } = req.body;
@@ -85,16 +86,24 @@ export const signupController = async (req: Request, res: Response): Promise<voi
       fullname
     )}&background=${randomBackgroundColor}&color=fff&size=256`;
 
+    // Tạo OTP
+    const otp = generateOTP();
+    const otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5phút
     // Tạo user mới
     const newUser = new userModel({
       email,
       password: hashedPassword,
       fullname,
-      avatar: avatarUrl // Lưu URL avatar
+      avatar: avatarUrl, // Lưu URL avatar
+      otp,
+      otpExpiry,
+      isVerified: false
     });
 
     await newUser.save();
-    generateAccessToken(newUser._id, res);
+    // Gửi mail otp
+    const message = `Mã OTP của bạn là: ${otp}. Mã này sẽ hết hạn trong ${otpExpiry}`;
+    await sendEmail(email, 'Xác thực email của bạn', message, '');
 
     res.status(201).json({
       success: true,
@@ -109,7 +118,48 @@ export const signupController = async (req: Request, res: Response): Promise<voi
     res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 };
+// Xác thực OTP
+export const verifyOTPController = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      res.status(400).json({ success: false, message: 'Email và OTP là bắt buộc' });
+      return;
+    }
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      res.status(404).json({ success: false, message: 'Email không tồn tại' });
+      return;
+    }
+    if (user.otp !== otp || new Date() > user.otpExpiry) {
+      res.status(400).json({ success: false, message: 'Mã OTP không đúng hoặc đã hết hạn' });
+      return;
+    }
+    // xác thực thành công
+    user.otp = null;
+    user.otpExpiry = null;
+    user.isVerified = true;
+    user.status = UserStatus.ACTIVE;
+    await user.save();
 
+    generateAccessToken(user._id, res);
+
+    res.status(200).json({
+      success: true,
+      message: 'Xác thực OTP thành công, mời bạn đăng nhập',
+      user: { ...user._doc, password: '' }
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error verifying OTP: ${error.message}`);
+    } else {
+      console.error('Error verifying OTP:', error);
+    }
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+};
+
+// Login
 export const loginController = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
@@ -124,6 +174,16 @@ export const loginController = async (req: Request, res: Response): Promise<void
     }
     if (user.status === 'inactive') {
       res.status(401).json({ success: false, message: 'Tài khoản của bạn đã bị khóa!' });
+      return;
+    }
+
+    if (user.status === UserStatus.INACTIVE) {
+      res.status(401).json({ success: false, message: 'Tài khoản của bạn đã bị khóa!' });
+      return;
+    }
+
+    if (user.status === UserStatus.PENDING) {
+      res.status(403).json({ success: false, message: 'Vui lòng xác thực email bằng OTP trước khi đăng nhập!' });
       return;
     }
 

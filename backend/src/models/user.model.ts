@@ -40,7 +40,7 @@ const userSchema: Schema<IUser> = new Schema<IUser>(
     },
     status: {
       type: String,
-      default: UserStatus.ACTIVE
+      default: UserStatus.PENDING
     },
     role: {
       type: String,
@@ -77,6 +77,19 @@ const userSchema: Schema<IUser> = new Schema<IUser>(
     dateOfBirth: {
       type: String,
       default: ''
+    },
+    otp: {
+      type: String,
+      default: null
+    },
+    otpExpiry: {
+      type: Date,
+      default: null
+    },
+    isVerified: {
+      // check tài khoản đã verify email chưa
+      type: Boolean,
+      default: false
     }
   },
   { timestamps: true }
