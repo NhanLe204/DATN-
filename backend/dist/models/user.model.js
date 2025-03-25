@@ -83,7 +83,6 @@ const userSchema = new Schema({
         default: null
     },
     isVerified: {
-        // check tài khoản đã verify email chưa
         type: Boolean,
         default: false
     }

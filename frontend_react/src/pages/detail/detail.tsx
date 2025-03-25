@@ -79,7 +79,8 @@ export default function DetailProduct() {
   };
 
   // Logic hiển thị "Tình trạng"
-  const displayStatus = product.status === "available" ? "Còn hàng" : product.status;
+  const displayStatus =
+    product.status === "available" ? "Còn hàng" : product.status;
 
   return (
     <div className="text-black">
