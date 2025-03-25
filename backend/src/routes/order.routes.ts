@@ -5,7 +5,7 @@ import { createOrderAfterPayment, getAllOrders, getOrderById } from '../controll
 
 const orderRouter = Router();
 
-orderRouter.get('/orders', verifyToken, requireAdmin, getAllOrders);
+orderRouter.get('/orders', verifyToken, getAllOrders);
 orderRouter.post('/orders', verifyToken, createOrderAfterPayment);
 orderRouter.get('/orders/:id', verifyToken, getOrderById);
 // orderRouter.patch('/ratings/:id', updateRating);

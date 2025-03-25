@@ -1,9 +1,8 @@
 import { Router } from 'express';
-import { requireAdmin } from '../middlewares/protectRoute.js';
 import { verifyToken } from '../middlewares/verifyToken.js';
 import { createOrderAfterPayment, getAllOrders, getOrderById } from '../controllers/order.controllers.js';
 const orderRouter = Router();
-orderRouter.get('/orders', verifyToken, requireAdmin, getAllOrders);
+orderRouter.get('/orders', verifyToken, getAllOrders);
 orderRouter.post('/orders', verifyToken, createOrderAfterPayment);
 orderRouter.get('/orders/:id', verifyToken, getOrderById);
 // orderRouter.patch('/ratings/:id', updateRating);
