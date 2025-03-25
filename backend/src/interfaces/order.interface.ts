@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongoose';
 import { IUser } from './user.interface.js';
-import { PaymentStatus } from '../enums/order.enum.js';
+import { OrderStatus, PaymentStatus } from '../enums/order.enum.js';
 
 export interface IOrder {
   userID: IUser;
@@ -13,6 +13,7 @@ export interface IOrder {
   shipping_address: string;
   delivery_name?: string;
   payment_status: PaymentStatus;
+  status: OrderStatus;
   transaction_id?: string;
   booking_date?: Date;
 }

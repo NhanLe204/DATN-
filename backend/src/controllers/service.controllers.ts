@@ -110,7 +110,7 @@ export const updateService = async (req: Request, res: Response): Promise<void> 
   try {
     const { id } = req.params; // Lấy serviceID từ params
     const { service_name, description, service_price, duration, status } = req.body;
-		
+
     // Kiểm tra xem dịch vụ có tồn tại không
     const service = await serviceModel.findById(id);
     if (!service) {
