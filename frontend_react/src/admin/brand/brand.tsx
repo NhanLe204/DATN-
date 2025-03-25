@@ -195,7 +195,7 @@ const BrandManager: React.FC = () => {
       transition={{ duration: 0.5 }}
     >
       <Card
-        title={<Title level={4}>Quản lý Brand</Title>}
+        // title={<Title level={4}>Quản lý Brand</Title>}
         bordered={false}
         className="shadow-sm"
         extra={

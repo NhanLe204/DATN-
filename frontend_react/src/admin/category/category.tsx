@@ -248,7 +248,7 @@ const CategoryList: React.FC = () => {
       transition={{ duration: 0.5 }}
     >
       <Card
-        title={<Title level={4}>Danh sách danh mục</Title>}
+        // title={<Title level={4}>Danh sách danh mục</Title>}
         bordered={false}
         className="shadow-sm"
         extra={

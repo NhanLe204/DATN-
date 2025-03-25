@@ -198,7 +198,7 @@ const ProductList: React.FC = () => {
       transition={{ duration: 0.5 }}
     >
       <Card
-        title={<Title level={4}>Danh sách sản phẩm</Title>}
+        // title={<Title level={4}>Danh sách sản phẩm</Title>}
         bordered={false}
         className="shadow-sm"
         extra={

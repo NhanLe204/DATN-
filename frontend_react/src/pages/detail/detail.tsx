@@ -22,8 +22,11 @@ export default function DetailProduct() {
     discount?: number;
     description?: string;
     details?: string[];
+    brand?: string;
+    tag?: string;
+    status?: string;
   } | null>(null);
-  const dispatch = useDispatch(); // Khởi tạo dispatch để gọi action
+  const dispatch = useDispatch();
 
   const fetcher = (url) => fetch(url).then((res) => res.json());
 
@@ -31,27 +34,20 @@ export default function DetailProduct() {
     const fetchProductDetail = async () => {
       const productDetailResponse = await productsApi.getProductByID(params.id);
       const productDetailData = await productDetailResponse.data.product;
-      setProductDetail(productDetailData);
+      setProductDetail({
+        ...productDetailData,
+        brand: productDetailData.brand || "Sắc Màu TPet",
+        tag: productDetailData.tag || "Sản phẩm đồ chơi cho chó",
+        status: productDetailData.status || "available", // Giả định API trả về "available"
+      });
     };
     fetchProductDetail();
   }, [params.id]);
 
-  // const { data, error } = useSWR(
-  //   `http://localhost:5000/api/v1/products/${params.id}`,
-  //   fetcher,
-  //   {
-  //     refreshInterval: 15000,
-  //   }
-  // );
-
-  // console.log("API Data:", data);
-  // if (!productsDetail) return <Loader />;
   const product = productsDetail;
-  console.log(product, "SSS");
   if (!product)
     return <div>Không tìm thấy sản phẩm. Vui lòng kiểm tra lại.</div>;
 
-  // Handling functions
   const handleImageClick = (image) => {
     setSelectedImage(image);
   };
@@ -71,56 +67,33 @@ export default function DetailProduct() {
     setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
   };
 
-  // Hàm xử lý thêm vào giỏ hàng
   const handleAddToCart = () => {
     const item = {
-      id: product._id || product.id, // Đảm bảo có id từ API
+      id: product._id || product.id,
       name: product.name,
-      price: Number(product.price), // Chuyển price về số
-      image: product.image_url[0], // Lấy ảnh đầu tiên làm ảnh đại diện
+      price: Number(product.price),
+      image: product.image_url[0],
     };
-    dispatch(addToCart({ item, quantity })); // Gọi action addToCart
+    dispatch(addToCart({ item, quantity }));
     console.log(`Added to cart: ${item.name}, Quantity: ${quantity}`);
   };
 
-  // Breadcrumb items
-  const breadcrumbItems = [
-    {
-      title: (
-        <a href="#" className="hover:text-[#22A6DF]">
-          Home
-        </a>
-      ),
-    },
-    {
-      title: (
-        <a href="#" className="hover:text-[#22A6DF]">
-          Thức ăn
-        </a>
-      ),
-    },
-    {
-      title: <span className="text-[#686868]">{product.name}</span>,
-    },
-  ];
+  // Logic hiển thị "Tình trạng"
+  const displayStatus = product.status === "available" ? "Còn hàng" : product.status;
 
   return (
     <div className="text-black">
-      {/* Breadcrumb */}
-      <nav className="mx-auto max-w-6xl p-4 text-sm text-[#686868]">
-        <Breadcrumb items={breadcrumbItems} />
-      </nav>
-
-      <div className="mx-auto max-w-6xl p-6">
+      {/* Container chính: Full-width với padding 154px hai bên */}
+      <div className="mx-auto w-full px-[154px] py-6">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {/* Hình ảnh sản phẩm */}
+          {/* Hình ảnh sản phẩm - Bên trái */}
           <div className="flex w-full">
             <div className="flex flex-col space-y-6">
               {product.image_url[0] && (
                 <img
                   src={`${product.image_url[0]}`}
                   alt="Detail 1"
-                  className={`w-20 cursor-pointer rounded-lg border transition-all duration-300 ${
+                  className={`w-[90px] h-[90px] cursor-pointer rounded-lg border transition-all duration-300 ${
                     selectedImage === product.image_url[0]
                       ? "border-[#22A6DF]"
                       : "border-[#EAEAEA] hover:border-[#22A6DF]"
@@ -132,7 +105,7 @@ export default function DetailProduct() {
                 <img
                   src={`${product.image_url[1]}`}
                   alt="Detail 2"
-                  className={`w-20 cursor-pointer rounded-lg border transition-all duration-300 ${
+                  className={`w-[90px] h-[90px] cursor-pointer rounded-lg border transition-all duration-300 ${
                     selectedImage === product.image_url[1]
                       ? "border-[#22A6DF]"
                       : "border-[#EAEAEA] hover:border-[#22A6DF]"
@@ -144,7 +117,7 @@ export default function DetailProduct() {
                 <img
                   src={`${product.image_url[2]}`}
                   alt="Detail 3"
-                  className={`w-20 cursor-pointer rounded-lg border transition-all duration-300 ${
+                  className={`w-[90px] h-[90px] cursor-pointer rounded-lg border transition-all duration-300 ${
                     selectedImage === product.image_url[2]
                       ? "border-[#22A6DF]"
                       : "border-[#EAEAEA] hover:border-[#22A6DF]"
@@ -156,7 +129,7 @@ export default function DetailProduct() {
                 <img
                   src={`${product.image_url[3]}`}
                   alt="Detail 4"
-                  className={`w-20 cursor-pointer rounded-lg border transition-all duration-300 ${
+                  className={`w-[90px] h-[90px] cursor-pointer rounded-lg border transition-all duration-300 ${
                     selectedImage === product.image_url[3]
                       ? "border-[#22A6DF]"
                       : "border-[#EAEAEA] hover:border-[#22A6DF]"
@@ -165,43 +138,67 @@ export default function DetailProduct() {
                 />
               )}
             </div>
-            <div className="ml-10 w-full md:w-96">
+            <div className="ml-10 relative">
               <img
                 src={
                   selectedImage ? `${selectedImage}` : `${product.image_url[0]}`
                 }
                 alt="Main product"
-                className="w-full rounded-lg border border-[#EAEAEA] shadow-md transition-all duration-300"
+                className="w-[600px] h-[600px] rounded-lg border border-[#EAEAEA] shadow-md transition-all duration-300"
               />
+              {/* Badge giảm giá trên ảnh chính */}
+              {(product.discount ?? 0) > 0 && (
+                <div className="absolute top-4 left-4 bg-[#FF0000] text-white text-lg font-medium px-3 py-1 rounded-sm">
+                  -{product.discount}%
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Thông tin sản phẩm */}
-          <div>
-            <h1 className="mb-6 text-2xl font-bold text-gray-800">
+          {/* Thông tin sản phẩm - Bên phải */}
+          <div className="flex flex-col">
+            <h1 className="mb-2 text-2xl font-bold text-gray-800">
               {product.name}
             </h1>
+
+            {/* Thông tin Thương hiệu, Thẻ, Tình trạng */}
+            <div className="mb-4 text-sm text-gray-600">
+              <p>
+                <span className="font-semibold">Thương hiệu:</span>{" "}
+                {product.brand}
+              </p>
+              <p>
+                <span className="font-semibold">Thẻ:</span> {product.tag}
+              </p>
+              <p>
+                <span className="font-semibold">Tình trạng:</span>{" "}
+                {displayStatus}
+              </p>
+            </div>
+
             <div className="mb-6 mt-2 text-lg font-bold text-[#22A6DF]">
-  {new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-  }).format(
-    Number(Number(product.price) * (1 - Number(product.discount) / 100))
-  )}
-  {(product.discount ?? 0) > 0 && (
-    <>
-      <span className="ml-2 text-sm text-[#686868] line-through">
-        {new Intl.NumberFormat("vi-VN", {
-          style: "currency",
-          currency: "VND",
-        }).format(Number(product.price))}
-      </span>
-      <span className="ml-2 rounded border border-[#FF0000] px-2 py-1 font-medium text-[#FF0000]">
-        -{product.discount}%
-      </span>
-    </>
-  )}
-</div>
+              {new Intl.NumberFormat("vi-VN", {
+                style: "currency",
+                currency: "VND",
+              }).format(
+                Number(
+                  Number(product.price) * (1 - Number(product.discount) / 100)
+                )
+              )}
+              {(product.discount ?? 0) > 0 && (
+                <>
+                  <span className="ml-2 text-sm text-[#686868] line-through">
+                    {new Intl.NumberFormat("vi-VN", {
+                      style: "currency",
+                      currency: "VND",
+                    }).format(Number(product.price))}
+                  </span>
+                  <span className="ml-2 rounded border border-[#FF0000] px-2 py-1 font-medium text-[#FF0000]">
+                    -{product.discount}%
+                  </span>
+                </>
+              )}
+            </div>
 
             {/* Số lượng */}
             <div className="mb-6 mt-4 flex gap-4">
@@ -226,7 +223,7 @@ export default function DetailProduct() {
             <div className="flex flex-col gap-4 md:flex-row">
               <Button
                 className="rounded-lg bg-[#22A6DF] px-6 py-5 text-white"
-                onClick={handleAddToCart} // Gắn sự kiện thêm vào giỏ hàng
+                onClick={handleAddToCart}
               >
                 Thêm vào giỏ hàng
               </Button>
@@ -234,20 +231,20 @@ export default function DetailProduct() {
                 MUA NGAY
               </Button>
             </div>
-          </div>
-        </div>
 
-        {/* Thông tin chi tiết sản phẩm */}
-        <div className="mt-8">
-          <h2 className="text-xl font-bold text-gray-800">
-            Thông tin sản phẩm
-          </h2>
-          <p className="mt-2 text-[#686868]">{product.description}</p>
-          <ul className="mt-2 list-disc pl-6 text-[#686868]">
-            {product.details?.map((detail, index) => (
-              <li key={index}>{detail}</li>
-            ))}
-          </ul>
+            {/* Thông tin chi tiết sản phẩm */}
+            <div className="mt-8">
+              <h2 className="text-xl font-bold text-gray-800">
+                Thông tin sản phẩm
+              </h2>
+              <p className="mt-2 text-[#686868]">{product.description}</p>
+              <ul className="mt-2 list-disc pl-6 text-[#686868]">
+                {product.details?.map((detail, index) => (
+                  <li key={index}>{detail}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
     </div>
