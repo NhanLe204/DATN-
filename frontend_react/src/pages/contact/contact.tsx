@@ -43,14 +43,7 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-6xl">
-        {/* Breadcrumb */}
-        <nav className="mb-6 rounded-lg bg-white p-4 text-sm shadow-sm">
-          <a href="#" className="text-blue-500 transition-colors hover:text-blue-700">
-            Trang chủ
-          </a>
-          <span className="mx-2 text-gray-400">/</span>
-          <span className="text-gray-600">Liên hệ</span>
-        </nav>
+       
 
         {/* Main Content */}
         <div className="overflow-hidden rounded-xl bg-white shadow-lg">

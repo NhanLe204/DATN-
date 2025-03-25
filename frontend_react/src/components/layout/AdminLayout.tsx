@@ -15,6 +15,7 @@ import {
 } from "@ant-design/icons";
 import { Outlet, useNavigate } from "react-router-dom";
 import React from "react";
+import Navigation from "../navigation";
 
 const { Header, Sider, Content } = Layout;
 const { Text } = Typography;
@@ -25,7 +26,6 @@ const AdminLayout = () => {
   const [currentDate, setCurrentDate] = useState("");
   const navigate = useNavigate();
 
-  // Clock functionality
   useEffect(() => {
     const updateTime = () => {
       const today = new Date();
@@ -173,7 +173,8 @@ const AdminLayout = () => {
           </div>
         </Header>
         <Content className="p-6 bg-gray-50">
-          <Outlet /> {/* Nơi render các trang admin con */}
+          <Navigation />
+          <Outlet />
         </Content>
       </Layout>
     </Layout>

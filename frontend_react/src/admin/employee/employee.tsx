@@ -222,7 +222,7 @@ const EmployeeList: React.FC = () => {
       transition={{ duration: 0.5 }}
     >
       <Card 
-        title={<Title level={4}>Danh sách nhân viên</Title>}
+        // title={<Title level={4}>Danh sách nhân viên</Title>}
         bordered={false}
         className="shadow-sm"
         extra={

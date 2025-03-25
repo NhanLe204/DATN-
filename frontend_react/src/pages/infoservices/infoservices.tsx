@@ -5,16 +5,7 @@ const { Title, Text, Paragraph } = Typography;
 import { HomeOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 const PetSpaServices = () => {
-  const breadcrumbItems = [
-    {
-      title: (
-        <a href="#" className="hover:text-[#22A6DF]">
-          Home
-        </a>
-      ),
-    },
-    { title: <span className="text-[#686868]">Dịch vụ thú cưng</span> },
-  ];
+  
 
   // Bảng giá tắm cho chó
   const dogBathColumns = [
@@ -120,12 +111,7 @@ const PetSpaServices = () => {
   };
   return (
     <div className="min-h-screen bg-white px-4 sm:px-6 lg:px-8">
-      <div className="py-4">
-        <div className="mx-auto max-w-6xl">
-          <Breadcrumb items={breadcrumbItems} />
-        </div>
-      </div>
-
+      
       <div className="container mx-auto px-4 py-8">
           <h1 className="mb-8 text-3xl font-bold text-gray-800 text-center">
             DỊCH VỤ SPA CHUYÊN NGHIỆP CHO THÚ CƯNG TẠI PET HEAVEN

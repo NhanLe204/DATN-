@@ -203,7 +203,7 @@ const TagManager: React.FC = () => {
       transition={{ duration: 0.5 }}
     >
       <Card
-        title={<Title level={4}>Quản lý Tag</Title>}
+        // title={<Title level={4}>Quản lý Tag</Title>}
         bordered={false}
         className="shadow-sm"
         extra={

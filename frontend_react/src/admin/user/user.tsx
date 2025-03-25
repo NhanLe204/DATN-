@@ -172,7 +172,7 @@ const UserList: React.FC = () => {
       transition={{ duration: 0.5 }}
     >
       <Card
-        title={<Title level={4}>Danh sách người dùng</Title>}
+        // title={<Title level={4}>Danh sách người dùng</Title>}
         bordered={false}
         className="shadow-sm"
       >

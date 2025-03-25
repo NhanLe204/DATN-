@@ -39,7 +39,7 @@ interface User {
   role: string;
   status: string;
 }
-// Component bảo vệ route
+
 const ProtectedRoute = ({
   children,
   allowedRole,
@@ -50,12 +50,10 @@ const ProtectedRoute = ({
   const userData = localStorage.getItem("userData");
   const user: User | null = userData ? JSON.parse(userData) : null;
 
-  // Nếu không có user hoặc status không phải "active", chuyển về login
   if (!user || user.status !== "active") {
     return <Navigate to="/login" replace />;
   }
 
-  // Nếu có allowedRole và role không khớp, chuyển về trang chính
   if (allowedRole && user.role !== allowedRole) {
     return <Navigate to="/" replace />;
   }
@@ -63,10 +61,10 @@ const ProtectedRoute = ({
   return children;
 };
 
-// Component cho route công khai
 const PublicRoute = ({ children }: { children: JSX.Element }) => {
   return children;
 };
+
 function App() {
   const router = createBrowserRouter([
     {
@@ -86,7 +84,7 @@ function App() {
       ),
     },
     {
-      path: "/verify-otp", // Thêm route mới cho VerifyOtp
+      path: "/verify-otp",
       element: (
         <PublicRoute>
           <VerifyOtp />
@@ -118,7 +116,6 @@ function App() {
       path: "",
       element: <PageLayout />,
       children: [
-        // Route công khai (không cần đăng nhập)
         {
           path: "/",
           element: (
@@ -191,8 +188,6 @@ function App() {
             </PublicRoute>
           ),
         },
-
-        // Route bảo vệ (yêu cầu đăng nhập và role "user")
         {
           path: "/userprofile/*",
           element: (
