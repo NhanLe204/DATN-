@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import userModel from '../models/user.model.js';
 import mongoose from 'mongoose';
 import { IAddress, IUser } from '../interfaces/user.interface.js';
+import { UserStatus } from '@/enums/user.enum.js';
 
 interface AuthenticatedRequest extends Request {
   user?: IUser;
@@ -180,5 +181,23 @@ export const addUserAddress = async (req: Request, res: Response): Promise<void>
       console.error('Error adding address:', error);
       res.status(500).json({ success: false, message: 'Lỗi server không xác định' });
     }
+  }
+};
+// Lấy danh sách người dùng mới
+export const getNewUsers = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const newUsers = await userModel.find({ createdAt: { $gte: thirtyDaysAgo } }).select('-password').limit(4);
+
+    res.status(200).json({ success: true, result: newUsers });
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error fetching new users: ${error.message}`);
+    } else {
+      console.error('Error fetching new users:', error);
+    }
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 };
