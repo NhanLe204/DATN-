@@ -39,6 +39,27 @@ const userApi = {
             data: response.data,
         };
     },
+    updateAddress: async (id, index, address) => {
+        const response = await api.patch(`/v1/users/${id}/address/${index}`, address);
+        return {
+            data: response.data,
+        };
+    },
+    deleteAddress: async (id, index) => {
+        const response = await api.delete(`/v1/users/${id}/address/${index}`);
+        return {
+            data: response.data,
+        };
+    },
+    changePassword: async (id, currentPassword, newPassword) => {
+        const response = await api.patch(`/v1/users/${id}/change-password`, {
+            currentPassword,
+            newPassword,
+        });
+        return {
+            data: response.data,
+        };
+    },
 };
 
 export default userApi;
