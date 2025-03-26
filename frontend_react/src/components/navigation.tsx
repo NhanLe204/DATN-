@@ -1,50 +1,53 @@
-import React, { useEffect, useState } from 'react';
-import { Breadcrumb } from 'antd';
-import { useLocation, Link, useParams } from 'react-router-dom';
-import { Typography } from 'antd';
-import productsApi from '../api/productsApi'; // Import API
+import React, { useEffect, useState } from "react";
+import { Breadcrumb } from "antd";
+import { useLocation, Link, useParams } from "react-router-dom";
+import { Typography } from "antd";
+import productsApi from "../api/productsAPI"; // Import API
 
 const { Title } = Typography;
 
 // Mapping cho các trang admin
 const adminPageNameMapping: { [key: string]: string } = {
-  admin: 'Admin',
-  dashboard: 'Dashboard',
-  categories: 'Quản lý danh mục',
-  products: 'Quản lý sản phẩm',
-  brands: 'Quản lý thương hiệu',
-  tags: 'Quản lý tags',
-  employees: 'Quản lý nhân viên',
-  orders: 'Quản lý đơn hàng',
-  services: 'Quản lý dịch vụ',
-  users: 'Quản lý người dùng',
-  settings: 'Cài đặt hệ thống',
-  posts: 'Quản lý bài viết',
+  admin: "Admin",
+  dashboard: "Dashboard",
+  categories: "Quản lý danh mục",
+  products: "Quản lý sản phẩm",
+  brands: "Quản lý thương hiệu",
+  tags: "Quản lý tags",
+  employees: "Quản lý nhân viên",
+  orders: "Quản lý đơn hàng",
+  services: "Quản lý dịch vụ",
+  users: "Quản lý người dùng",
+  settings: "Cài đặt hệ thống",
+  posts: "Quản lý bài viết",
 };
 
 // Mapping cho các trang công khai
 const publicPageNameMapping: { [key: string]: string } = {
-  '': 'Trang chủ',
-  product: 'Sản phẩm',
-  contact: 'Liên hệ',
-  detail: 'Chi tiết sản phẩm',
-  info: 'Dịch vụ Spa',
-  'about-us': 'Về chúng tôi',
-  service: 'Đặt lịch Spa',
-  cart: 'Giỏ hàng',
-  checkout: 'Thanh toán',
-  userprofile: 'Hồ sơ người dùng',
+  "": "Trang chủ",
+  product: "Sản phẩm",
+  contact: "Liên hệ",
+  detail: "Chi tiết sản phẩm",
+  info: "Dịch vụ Spa",
+  "about-us": "Về chúng tôi",
+  service: "Đặt lịch Spa",
+  cart: "Giỏ hàng",
+  checkout: "Thanh toán",
+  userprofile: "Hồ sơ người dùng",
 };
 
 const Navigation: React.FC = () => {
   const location = useLocation();
-  const pathnames = location.pathname.split('/').filter((x) => x);
+  const pathnames = location.pathname.split("/").filter((x) => x);
   const { id } = useParams<{ id: string }>();
 
-  const isAdminPage = location.pathname.startsWith('/admin');
-  const isDetailPage = location.pathname.startsWith('/detail');
+  const isAdminPage = location.pathname.startsWith("/admin");
+  const isDetailPage = location.pathname.startsWith("/detail");
 
-  const [product, setProduct] = useState<{ name: string; category_id: { name: string } } | null>(null);
+  const [product, setProduct] = useState<{
+    name: string;
+    category_id: { name: string };
+  } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,12 +59,12 @@ const Navigation: React.FC = () => {
           setLoading(true);
           setError(null);
           const response = await productsApi.getProductByID(id);
-          console.log('API Response:', response); // Debug dữ liệu API trả về
+          console.log("API Response:", response); // Debug dữ liệu API trả về
           // Truy cập đúng cấu trúc response.data.product
           setProduct(response.data.product);
         } catch (err) {
-          setError('Không thể tải thông tin sản phẩm');
-          console.error('Error fetching product:', err);
+          setError("Không thể tải thông tin sản phẩm");
+          console.error("Error fetching product:", err);
         } finally {
           setLoading(false);
         }
@@ -71,7 +74,7 @@ const Navigation: React.FC = () => {
   }, [id, isDetailPage]);
 
   // Không hiển thị breadcrumb ở trang Dashboard hoặc Trang chủ
-  if (location.pathname === '/admin/dashboard' || location.pathname === '/') {
+  if (location.pathname === "/admin/dashboard" || location.pathname === "/") {
     return null;
   }
 
@@ -82,44 +85,53 @@ const Navigation: React.FC = () => {
   // Hàm lấy tên hiển thị từ mapping
   const getDisplayName = (name: string) => {
     if (isAdminPage) {
-      return adminPageNameMapping[name.toLowerCase()] || (name.charAt(0).toUpperCase() + name.slice(1).replace(/-/g, ' '));
+      return (
+        adminPageNameMapping[name.toLowerCase()] ||
+        name.charAt(0).toUpperCase() + name.slice(1).replace(/-/g, " ")
+      );
     } else {
-      return publicPageNameMapping[name.toLowerCase()] || (name.charAt(0).toUpperCase() + name.slice(1).replace(/-/g, ' '));
+      return (
+        publicPageNameMapping[name.toLowerCase()] ||
+        name.charAt(0).toUpperCase() + name.slice(1).replace(/-/g, " ")
+      );
     }
   };
 
   // Tên trang hiện tại
-  const currentPageName = isDetailPage && product ? product.name : getDisplayName(pathnames[pathnames.length - 1] || '');
+  const currentPageName =
+    isDetailPage && product
+      ? product.name
+      : getDisplayName(pathnames[pathnames.length - 1] || "");
 
   // Layout cho trang admin
   const adminLayout = (
     <div
       style={{
-        background: '#fff',
-        padding: '16px',
-        borderRadius: '8px',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-        marginBottom: '16px',
+        background: "#fff",
+        padding: "16px",
+        borderRadius: "8px",
+        boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+        marginBottom: "16px",
       }}
     >
-      <Breadcrumb style={{ marginBottom: '8px' }} separator=">">
+      <Breadcrumb style={{ marginBottom: "8px" }} separator=">">
         {pathnames.map((value, index) => {
           const last = index === pathnames.length - 1;
-          const to = `/${pathnames.slice(0, index + 1).join('/')}`;
+          const to = `/${pathnames.slice(0, index + 1).join("/")}`;
           return last ? (
-            <Breadcrumb.Item key={to} style={{ color: '#000' }}>
+            <Breadcrumb.Item key={to} style={{ color: "#000" }}>
               {getDisplayName(value)}
             </Breadcrumb.Item>
           ) : (
             <Breadcrumb.Item key={to}>
-              <Link to={to} style={{ color: '#8c8c8c' }}>
+              <Link to={to} style={{ color: "#8c8c8c" }}>
                 {getDisplayName(value)}
               </Link>
             </Breadcrumb.Item>
           );
         })}
       </Breadcrumb>
-      <Title level={3} style={{ margin: 0, color: '#000' }}>
+      <Title level={3} style={{ margin: 0, color: "#000" }}>
         {currentPageName}
       </Title>
     </div>
@@ -136,32 +148,34 @@ const Navigation: React.FC = () => {
           product ? (
             <>
               <Breadcrumb.Item>
-                <Link to="/product" style={{ color: '#8c8c8c' }}>
-                  {product.category_id?.name || 'Danh mục không xác định'}
+                <Link to="/product" style={{ color: "#8c8c8c" }}>
+                  {product.category_id?.name || "Danh mục không xác định"}
                 </Link>
               </Breadcrumb.Item>
-              <Breadcrumb.Item style={{ color: '#000' }}>
+              <Breadcrumb.Item style={{ color: "#000" }}>
                 {product.name}
               </Breadcrumb.Item>
             </>
           ) : (
-            <Breadcrumb.Item style={{ color: '#000' }}>
+            <Breadcrumb.Item style={{ color: "#000" }}>
               Chi tiết sản phẩm
             </Breadcrumb.Item>
           )
         ) : (
           pathnames.map((value, index) => {
             const last = index === pathnames.length - 1;
-            const to = `/${pathnames.slice(0, index + 1).join('/')}`;
+            const to = `/${pathnames.slice(0, index + 1).join("/")}`;
             const displayName = getDisplayName(value);
 
             return last ? (
-              <Breadcrumb.Item key={to} style={{ color: '#000' }}>
+              <Breadcrumb.Item key={to} style={{ color: "#000" }}>
                 {displayName}
               </Breadcrumb.Item>
             ) : (
               <Breadcrumb.Item key={to}>
-                <Link to={to} style={{ color: '#8c8c8c' }}>{displayName}</Link>
+                <Link to={to} style={{ color: "#8c8c8c" }}>
+                  {displayName}
+                </Link>
               </Breadcrumb.Item>
             );
           })

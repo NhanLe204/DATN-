@@ -36,17 +36,6 @@ const Cart: React.FC = () => {
     }
   }, [dispatch, userId]);
 
-  const breadcrumbItems = [
-    {
-      title: (
-        <a href="#" className="hover:text-[#22A6DF]">
-          Home
-        </a>
-      ),
-    },
-    { title: <span className="text-[#686868]">Giỏ hàng</span> },
-  ];
-
   // Hàm xử lý tăng số lượng
   const handleIncrement = (id) => {
     if (!userId) {
@@ -118,12 +107,6 @@ const Cart: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white px-4 sm:px-6 lg:px-8">
-      <div className="py-4">
-        <div className="mx-auto max-w-6xl">
-          <Breadcrumb items={breadcrumbItems} />
-        </div>
-      </div>
-
       <div className="mx-auto max-w-6xl py-8">
         <div className="mb-6 flex flex-col justify-between sm:flex-row sm:items-center">
           <Title level={3} className="!mb-0 text-gray-800">

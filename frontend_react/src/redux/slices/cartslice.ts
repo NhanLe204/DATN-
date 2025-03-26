@@ -1,10 +1,27 @@
 import { createSlice } from "@reduxjs/toolkit";
+// Lấy userId từ localStorage, đảm bảo trả về chuỗi hoặc null
 const getUserIdFromLocal = () => {
-  return localStorage.getItem("accountID") || null;
+  const userId = localStorage.getItem("accountID");
+  if (!userId) return null;
+
+  try {
+    // Nếu userId là chuỗi dạng JSON (ví dụ: "[...]" hoặc "{...}"), parse và lấy giá trị
+    const parsed = JSON.parse(userId);
+    if (Array.isArray(parsed)) {
+      return parsed[0]; // Lấy phần tử đầu tiên nếu là mảng
+    }
+    return parsed; // Nếu không phải mảng, trả về giá trị đã parse
+  } catch (e) {
+    // Nếu không parse được (tức là userId đã là chuỗi bình thường), trả về nguyên giá trị
+    return userId;
+  }
 };
 
 // Lấy toàn bộ cart từ localStorage, nếu không có thì trả về object rỗng
-const getAllCartsFromLocal = (): Record<string, { id: string; quantity: number }[]> => {
+const getAllCartsFromLocal = (): Record<
+  string,
+  { id: string; quantity: number }[]
+> => {
   const savedCarts = localStorage.getItem("carts");
   return savedCarts ? JSON.parse(savedCarts) : {};
 };
@@ -24,7 +41,7 @@ const cartSlice = createSlice({
   reducers: {
     setUserId: (state, action) => {
       const newUserId = action.payload;
-    state.userId = newUserId;
+      state.userId = newUserId;
       if (newUserId) {
         // Khi đăng nhập: lưu userId mới
         localStorage.setItem("accountID", newUserId);
@@ -64,7 +81,7 @@ const cartSlice = createSlice({
         saveCartsToLocal(state.userId, state.items);
       }
     },
-   decreaseQuantity: (state, action) => {
+    decreaseQuantity: (state, action) => {
       if (!state.userId) return;
       const item = state.items.find(
         (cartItem) => cartItem.id === action.payload.id
@@ -102,7 +119,9 @@ const saveCartsToLocal = (userId, items) => {
   allCarts[userId] = items;
 
   // Nếu không có sản phẩm nào trong allCarts, xóa key "carts"
-  const hasItems = Object.values(allCarts).some((cart: { id: string; quantity: number }[]) => cart.length > 0);
+  const hasItems = Object.values(allCarts).some(
+    (cart: { id: string; quantity: number }[]) => cart.length > 0
+  );
   if (!hasItems) {
     localStorage.removeItem("carts");
   } else {

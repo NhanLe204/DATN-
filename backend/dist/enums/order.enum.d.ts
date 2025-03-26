@@ -4,10 +4,9 @@ export declare enum PaymentStatus {
     CANCELLED = "cancelled"
 }
 export declare enum OrderStatus {
-    PENDING = "PENDING",
-    CONFIRMED = "CONFIRMED",
-    PREPARING = "PREPARING",
-    SHIPPED = "SHIPPED",
-    DELIVERED = "DELIVERED",
+    PENDING = "PENDING",// Đơn hàng đang chờ xử lý
+    PROCESSING = "PROCESSING",// Đang xử lý
+    SHIPPED = "SHIPPED",// Đã giao hàng
+    DELIVERED = "DELIVERED",// Đã nhận hàng
     CANCELLED = "CANCELLED"
 }
