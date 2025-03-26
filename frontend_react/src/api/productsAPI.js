@@ -25,6 +25,12 @@ const productsApi = {
       data: response.data,
     };
   },
+  getProductOutStock : async () => {
+    const response = await api.get("/v1/outproducts");
+    return {
+      data: response.data,
+    };
+  },
   getProductByID: async (id) => {
     const response = await api.get(`/v1/products/${id}`);
     return {

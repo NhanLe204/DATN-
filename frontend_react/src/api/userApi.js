@@ -7,6 +7,14 @@ const userApi = {
             data: response.data,
         };
     },
+    getNewUsers: async () => {
+        const response = await api.get("/v1/users/new");
+        console.log(response);
+        
+        return {
+            data: response.data,
+        };
+    },
     getUserById: async (id) => {
         const response = await api.get(`/v1/users/${id}`);
         return {

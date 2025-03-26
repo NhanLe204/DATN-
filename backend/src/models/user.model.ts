@@ -87,7 +87,6 @@ const userSchema: Schema<IUser> = new Schema<IUser>(
       default: null
     },
     isVerified: {
-      // check tài khoản đã verify email chưa
       type: Boolean,
       default: false
     }

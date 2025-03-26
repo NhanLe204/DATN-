@@ -34,7 +34,8 @@ const productSchema = new Schema({
     },
     tag_id: {
         type: Schema.Types.ObjectId,
-        ref: tag
+        ref: tag,
+        autoPopulate: true
     },
     status: {
         type: String,
