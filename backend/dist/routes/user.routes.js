@@ -1,6 +1,7 @@
 import { Router } from 'express';
 const userRouter = Router();
-import { getAllUser, updateUser, getUserById, updateCart, addUserAddress, updateUserAddress, deleteUserAddress, changePassword, getNewUsers } from '../controllers/user.controllers.js';
+import { getAllUser, updateUser, getUserById, updateCart, addUserAddress, updateUserAddress, deleteUserAddress, changePassword } from '../controllers/user.controllers.js';
+import { getNewUsers } from '../controllers/user.controllers.js';
 import { verifyToken } from '../middlewares/verifyToken.js';
 userRouter.get('/users', verifyToken, getAllUser);
 userRouter.get('/users/new', verifyToken, getNewUsers);
