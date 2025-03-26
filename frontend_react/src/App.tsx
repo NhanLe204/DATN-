@@ -30,6 +30,7 @@ import AboutUs from "./pages/about-us/about-us";
 import BrandManager from "./admin/brand/brand";
 import TagManager from "./admin/tag/tag";
 import VerifyOtp from "./pages/verifyOTP/verifyOTP";
+import Search from "./pages/search/search";
 
 interface User {
   id: string;
@@ -196,6 +197,14 @@ function App() {
             </ProtectedRoute>
           ),
         },
+        {
+          path: "/search",
+          element: (
+            <PublicRoute>
+              <Search />
+            </PublicRoute>
+          )
+        }
       ],
     },
   ]);

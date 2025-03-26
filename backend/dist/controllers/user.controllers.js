@@ -1,5 +1,6 @@
 import userModel from '../models/user.model.js';
 import mongoose from 'mongoose';
+import bcryptjs from 'bcryptjs';
 // lấy hết nè má
 export const getAllUser = async (req, res) => {
     try {
@@ -161,6 +162,193 @@ export const addUserAddress = async (req, res) => {
         }
         else {
             console.error('Error adding address:', error);
+            res.status(500).json({ success: false, message: 'Lỗi server không xác định' });
+        }
+    }
+};
+export const updateUserAddress = async (req, res) => {
+    try {
+        const { id, index } = req.params;
+        const updatedAddress = req.body;
+        // Validate dữ liệu địa chỉ
+        if (!updatedAddress ||
+            typeof updatedAddress !== 'object' ||
+            !updatedAddress.name ||
+            !updatedAddress.phone ||
+            !updatedAddress.address) {
+            res.status(400).json({
+                success: false,
+                message: 'Dữ liệu địa chỉ không hợp lệ! Yêu cầu các trường name, phone, address.'
+            });
+            return;
+        }
+        // Kiểm tra id hợp lệ
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            res.status(400).json({
+                success: false,
+                message: 'ID người dùng không hợp lệ!'
+            });
+            return;
+        }
+        // Kiểm tra index hợp lệ
+        const addressIndex = parseInt(index, 10);
+        if (isNaN(addressIndex) || addressIndex < 0) {
+            res.status(400).json({
+                success: false,
+                message: 'Index địa chỉ không hợp lệ!'
+            });
+            return;
+        }
+        // Tìm user
+        const user = await userModel.findById(id);
+        if (!user) {
+            res.status(404).json({ message: 'Không tìm thấy người dùng' });
+            return;
+        }
+        // Kiểm tra index có nằm trong mảng address không
+        if (!user.address || addressIndex >= user.address.length) {
+            res.status(400).json({
+                success: false,
+                message: 'Địa chỉ không tồn tại!'
+            });
+            return;
+        }
+        // Cập nhật địa chỉ tại vị trí index
+        user.address[addressIndex] = updatedAddress;
+        const updatedUser = await user.save();
+        res.status(200).json({
+            message: 'Cập nhật địa chỉ thành công',
+            user: updatedUser
+        });
+    }
+    catch (error) {
+        if (error instanceof Error) {
+            console.error(`Error updating address: ${error.message}`);
+            res.status(500).json({ success: false, message: `Lỗi server: ${error.message}` });
+        }
+        else {
+            console.error('Error updating address:', error);
+            res.status(500).json({ success: false, message: 'Lỗi server không xác định' });
+        }
+    }
+};
+export const deleteUserAddress = async (req, res) => {
+    try {
+        const { id, index } = req.params;
+        // Kiểm tra id hợp lệ
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            res.status(400).json({
+                success: false,
+                message: 'ID người dùng không hợp lệ!'
+            });
+            return;
+        }
+        // Kiểm tra index hợp lệ
+        const addressIndex = parseInt(index, 10);
+        if (isNaN(addressIndex) || addressIndex < 0) {
+            res.status(400).json({
+                success: false,
+                message: 'Index địa chỉ không hợp lệ!'
+            });
+            return;
+        }
+        // Tìm user
+        const user = await userModel.findById(id);
+        if (!user) {
+            res.status(404).json({ message: 'Không tìm thấy người dùng' });
+            return;
+        }
+        // Kiểm tra index có nằm trong mảng address không
+        if (!user.address || addressIndex >= user.address.length) {
+            res.status(400).json({
+                success: false,
+                message: 'Địa chỉ không tồn tại!'
+            });
+            return;
+        }
+        // Xóa địa chỉ tại vị trí index
+        user.address.splice(addressIndex, 1);
+        const updatedUser = await user.save();
+        res.status(200).json({
+            message: 'Xóa địa chỉ thành công',
+            user: updatedUser
+        });
+    }
+    catch (error) {
+        if (error instanceof Error) {
+            console.error(`Error deleting address: ${error.message}`);
+            res.status(500).json({ success: false, message: `Lỗi server: ${error.message}` });
+        }
+        else {
+            console.error('Error deleting address:', error);
+            res.status(500).json({ success: false, message: 'Lỗi server không xác định' });
+        }
+    }
+};
+export const changePassword = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { currentPassword, newPassword } = req.body;
+        // Kiểm tra đầu vào
+        if (!currentPassword || !newPassword) {
+            res.status(400).json({
+                success: false,
+                message: 'Vui lòng cung cấp mật khẩu hiện tại và mật khẩu mới!'
+            });
+            return;
+        }
+        // Kiểm tra id hợp lệ
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            res.status(400).json({
+                success: false,
+                message: 'ID người dùng không hợp lệ!'
+            });
+            return;
+        }
+        // Tìm user
+        const user = await userModel.findById(id);
+        if (!user) {
+            res.status(404).json({
+                success: false,
+                message: 'Không tìm thấy người dùng!'
+            });
+            return;
+        }
+        // Kiểm tra xem user có mật khẩu hay không
+        if (!user.password) {
+            res.status(400).json({
+                success: false,
+                message: 'Tài khoản của bạn chưa có mật khẩu. Vui lòng thiết lập mật khẩu trước!'
+            });
+            return;
+        }
+        // Kiểm tra mật khẩu hiện tại
+        const isMatch = await bcryptjs.compare(currentPassword, user.password);
+        if (!isMatch) {
+            res.status(400).json({
+                success: false,
+                message: 'Mật khẩu hiện tại không đúng!'
+            });
+            return;
+        }
+        // Mã hóa mật khẩu mới
+        const hashedPassword = await bcryptjs.hash(newPassword, 10);
+        user.password = hashedPassword;
+        // Lưu user với mật khẩu mới
+        const updatedUser = await user.save();
+        res.status(200).json({
+            success: true,
+            message: 'Đổi mật khẩu thành công!',
+            user: updatedUser
+        });
+    }
+    catch (error) {
+        if (error instanceof Error) {
+            console.error(`Error changing password: ${error.message}`);
+            res.status(500).json({ success: false, message: `Lỗi server: ${error.message}` });
+        }
+        else {
+            console.error('Error changing password:', error);
             res.status(500).json({ success: false, message: 'Lỗi server không xác định' });
         }
     }

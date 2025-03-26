@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Input,
   Dropdown,
@@ -58,6 +59,7 @@ export default function Header() {
   const { keyword, setKeyword } = useContext(SearchContext);
   const [user, setUser] = useState<User | null>(null);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const navigate = useNavigate();
 
   const showDrawer = () => setOpen(true);
   const onClose = () => {
@@ -93,8 +95,23 @@ export default function Header() {
     }
   };
 
+    // Xử lý khi nhấn Enter hoặc nút tìm kiếm
+    const handleSearchSubmit = (value: string) => {
+      const trimmedValue = value.trim();
+      if (trimmedValue) {
+        // Gọi hàm handleSearch để lưu lịch sử (nếu cần)
+        handleSearch(trimmedValue);
+        // Điều hướng sang trang /search với từ khóa
+        navigate(`/search?q=${encodeURIComponent(trimmedValue)}`);
+        // Đóng dropdown hoặc drawer tìm kiếm (nếu mở)
+        setSearchDesktopOpen(false);
+        setSearchMobileOpen(false);
+      }
+    };
+
   // Xóa toàn bộ lịch sử tìm kiếm
   const clearSearchHistory = () => {
+    console.log("Clear history");
     setSearchHistory([]);
     localStorage.removeItem("searchHistory");
   };
@@ -299,7 +316,7 @@ export default function Header() {
         placeholder="Tìm kiếm..."
         size="large"
         className="mb-4"
-        onSearch={handleSearch}
+        onSearch={handleSearchSubmit}
         onChange={(e) => {
           const value = e.target.value;
           setKeyword(value);
@@ -441,7 +458,7 @@ export default function Header() {
                 </button>
               }
               className="custom-search hidden w-1/3 rounded-full md:flex"
-              onSearch={handleSearch}
+              onSearch={handleSearchSubmit}
               value={keyword}
               onChange={(e) => {
                 const value = e.target.value;
