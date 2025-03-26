@@ -200,7 +200,8 @@ export const getHotProduct = async (req, res) => {
             .sort({ quantity_sold: -1 })
             .limit(10)
             .populate('category_id')
-            .populate('brand_id');
+            .populate('brand_id')
+            .populate('tag_id');
         if (!result || result.length === 0) {
             res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm bán chạy' });
             return;
@@ -437,6 +438,19 @@ export const toggleProductStatus = async (req, res) => {
     catch (error) {
         console.error('Error toggling product status:', error);
         res.status(500).json({ message: 'Lỗi khi cập nhật trạng thái sản phẩm', error });
+    }
+};
+export const getProductOutStock = async (req, res) => {
+    try {
+        const result = await productModel
+            .find({ status: ProductStatus.OUT_OF_STOCK })
+            .populate('category_id')
+            .populate('brand_id')
+            .populate('tag_id');
+        res.status(200).json({ success: true, result });
+    }
+    catch (error) {
+        res.status(500).json({ success: false, error });
     }
 };
 //# sourceMappingURL=product.controllers.js.map
