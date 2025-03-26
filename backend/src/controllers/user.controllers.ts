@@ -389,13 +389,19 @@ export const changePassword = async (req: Request, res: Response): Promise<void>
       console.error('Error changing password:', error);
       res.status(500).json({ success: false, message: 'Lỗi server không xác định' });
     }
+  }
+};
+
 // Lấy danh sách người dùng mới
 export const getNewUsers = async (req: Request, res: Response): Promise<void> => {
   try {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const newUsers = await userModel.find({ createdAt: { $gte: thirtyDaysAgo } }).select('-password').limit(4);
+    const newUsers = await userModel
+      .find({ createdAt: { $gte: thirtyDaysAgo } })
+      .select('-password')
+      .limit(4);
 
     res.status(200).json({ success: true, result: newUsers });
   } catch (error) {

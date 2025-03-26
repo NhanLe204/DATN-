@@ -353,4 +353,25 @@ export const changePassword = async (req, res) => {
         }
     }
 };
+// Lấy danh sách người dùng mới
+export const getNewUsers = async (req, res) => {
+    try {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const newUsers = await userModel
+            .find({ createdAt: { $gte: thirtyDaysAgo } })
+            .select('-password')
+            .limit(4);
+        res.status(200).json({ success: true, result: newUsers });
+    }
+    catch (error) {
+        if (error instanceof Error) {
+            console.error(`Error fetching new users: ${error.message}`);
+        }
+        else {
+            console.error('Error fetching new users:', error);
+        }
+        res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+};
 //# sourceMappingURL=user.controllers.js.map
