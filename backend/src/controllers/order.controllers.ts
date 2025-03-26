@@ -23,8 +23,8 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
   try {
     const {
       userID,
-      payment_typeID,
-      deliveryID,
+      // payment_typeID,
+      deliveryID = null, // Initialize deliveryID with a default value
       couponID,
       orderdate,
       total_price,
@@ -38,8 +38,8 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
     // 1. Validate input data
     if (
       !userID ||
-      !payment_typeID ||
-      !deliveryID ||
+      // !payment_typeID ||
+      // !deliveryID ||
       !total_price ||
       !shipping_address ||
       !payment_status ||
@@ -60,12 +60,12 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
     if (!user) throw new Error('User not found');
 
     // 3. Validate payment type
-    const paymentType = await PaymentType.findById(payment_typeID).session(session);
-    if (!paymentType) throw new Error('Payment type not found');
+    // const paymentType = await PaymentType.findById(payment_typeID).session(session);
+    // if (!paymentType) throw new Error('Payment type not found');
 
     // 4. Validate delivery
-    const delivery = await deliveryModel.findById(deliveryID).session(session);
-    if (!delivery) throw new Error('Delivery method not found');
+    // const delivery = await deliveryModel.findById(deliveryID).session(session);
+    // if (!delivery) throw new Error('Delivery method not found');
 
     // 5. Handle coupon validation and discount calculation
     let discount = 0;
@@ -139,14 +139,16 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
     // 7. Create and save order
     const order = new orderModel({
       userID,
-      payment_typeID,
-      deliveryID,
+      // payment_typeID,
+      // deliveryID,
+
+      PaymentType,
+      deliveryID: deliveryID,
       couponID: couponID || null,
       orderdate: orderdate ? new Date(orderdate) : new Date(),
       total_price: finalTotalPrice,
       discount,
       shipping_address,
-      delivery_name: delivery.delivery_name,
       payment_status, // Lấy từ body (pending)
       status: OrderStatus.PENDING,
       transaction_id,

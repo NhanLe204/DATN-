@@ -36,7 +36,6 @@ const Cart: React.FC = () => {
     }
   }, [dispatch, userId]);
 
-
   // Hàm xử lý tăng số lượng
   const handleIncrement = (id) => {
     if (!userId) {
@@ -107,11 +106,9 @@ const Cart: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen px-4 bg-white sm:px-6 lg:px-8">
-      
-
-      <div className="max-w-6xl py-8 mx-auto">
-        <div className="flex flex-col justify-between mb-6 sm:flex-row sm:items-center">
+    <div className="min-h-screen bg-white px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl py-8">
+        <div className="mb-6 flex flex-col justify-between sm:flex-row sm:items-center">
           <Title level={3} className="!mb-0 text-gray-800">
             Giỏ hàng của bạn
           </Title>

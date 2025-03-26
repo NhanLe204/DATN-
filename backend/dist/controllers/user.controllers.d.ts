@@ -8,4 +8,5 @@ export declare const getUserById: (req: Request, res: Response) => Promise<void>
 export declare const updateUser: (req: Request, res: Response) => Promise<void>;
 export declare const updateCart: (req: AuthenticatedRequest, res: Response) => Promise<void>;
 export declare const addUserAddress: (req: Request, res: Response) => Promise<void>;
+export declare const getNewUsers: (req: Request, res: Response) => Promise<void>;
 export {};

@@ -7,10 +7,9 @@ export var PaymentStatus;
 export var OrderStatus;
 (function (OrderStatus) {
     OrderStatus["PENDING"] = "PENDING";
-    OrderStatus["CONFIRMED"] = "CONFIRMED";
-    OrderStatus["PREPARING"] = "PREPARING";
+    OrderStatus["PROCESSING"] = "PROCESSING";
     OrderStatus["SHIPPED"] = "SHIPPED";
     OrderStatus["DELIVERED"] = "DELIVERED";
-    OrderStatus["CANCELLED"] = "CANCELLED";
+    OrderStatus["CANCELLED"] = "CANCELLED"; // Đã hủy
 })(OrderStatus || (OrderStatus = {}));
 //# sourceMappingURL=order.enum.js.map

@@ -12,5 +12,6 @@ export declare enum UserSex {
 export declare enum UserStatus {
     ACTIVE = "active",
     INACTIVE = "inactive",
-    PENDING = "pending"
+    PENDING = "pending",
+    AVAILABLE = "AVAILABLE"
 }
