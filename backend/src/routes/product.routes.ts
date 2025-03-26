@@ -13,7 +13,8 @@ import {
   getProductByTagId,
   toggleProduct,
   toggleProductStatus,
-  getProductRelated
+  getProductRelated,
+  getProductOutStock
 } from '../controllers/product.controllers.js';
 import { protectRoute, requireAdmin } from '../middlewares/protectRoute.js';
 import { get } from 'http';
@@ -27,6 +28,7 @@ productRouter.get('/products/:id', getProductById);
 productRouter.get('/newproducts', getNewProduct);
 productRouter.get('/saleproducts', getSaleProduct);
 productRouter.get('/hotproducts', getHotProduct);
+productRouter.get('/outproducts', getProductOutStock);
 productRouter.post('/products', verifyToken, requireAdmin, uploader.array('images_url', 12), insertProduct);
 productRouter.patch('/products/:id', verifyToken, requireAdmin, uploader.array('images_url', 12), updateProduct);
 productRouter.patch('/products/status/:id', verifyToken, requireAdmin, toggleProduct);

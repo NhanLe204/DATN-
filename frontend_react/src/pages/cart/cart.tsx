@@ -36,16 +36,6 @@ const Cart: React.FC = () => {
     }
   }, [dispatch, userId]);
 
-  const breadcrumbItems = [
-    {
-      title: (
-        <a href="#" className="hover:text-[#22A6DF]">
-          Home
-        </a>
-      ),
-    },
-    { title: <span className="text-[#686868]">Giỏ hàng</span> },
-  ];
 
   // Hàm xử lý tăng số lượng
   const handleIncrement = (id) => {
@@ -117,15 +107,11 @@ const Cart: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white px-4 sm:px-6 lg:px-8">
-      <div className="py-4">
-        <div className="mx-auto max-w-6xl">
-          <Breadcrumb items={breadcrumbItems} />
-        </div>
-      </div>
+    <div className="min-h-screen px-4 bg-white sm:px-6 lg:px-8">
+      
 
-      <div className="mx-auto max-w-6xl py-8">
-        <div className="mb-6 flex flex-col justify-between sm:flex-row sm:items-center">
+      <div className="max-w-6xl py-8 mx-auto">
+        <div className="flex flex-col justify-between mb-6 sm:flex-row sm:items-center">
           <Title level={3} className="!mb-0 text-gray-800">
             Giỏ hàng của bạn
           </Title>
@@ -188,16 +174,16 @@ const Cart: React.FC = () => {
               cartItems.map((item) => (
                 <Card
                   key={item.id}
-                  className="bg-white mb-4"
+                  className="mb-4 bg-white"
                   style={{ boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)" }}
                 >
-                  <div className="mb-4 border-b pb-4">
+                  <div className="pb-4 mb-4 border-b">
                     <div className="flex flex-col items-center gap-4 sm:flex-row">
-                      <div className="h-28 w-28 overflow-hidden rounded-lg">
+                      <div className="overflow-hidden rounded-lg h-28 w-28">
                         <img
                           src={`${item.image}`}
                           alt={item.name}
-                          className="h-full w-full object-cover"
+                          className="object-cover w-full h-full"
                         />
                       </div>
                       <div className="flex-1">
@@ -218,7 +204,7 @@ const Cart: React.FC = () => {
                             Xóa
                           </Button>
                         </div>
-                        <div className="mt-3 flex items-center justify-between">
+                        <div className="flex items-center justify-between mt-3">
                           <Text className="text-lg font-medium text-[#22A6DF]">
                             {(item.price * item.quantity).toLocaleString()}đ
                           </Text>
@@ -228,7 +214,7 @@ const Cart: React.FC = () => {
                             </Button>
                             <input
                               type="number"
-                              className="w-4 border-none bg-white text-center text-gray-800 md:w-7"
+                              className="w-4 text-center text-gray-800 bg-white border-none md:w-7"
                               min={1}
                               value={item.quantity}
                               readOnly
@@ -249,7 +235,7 @@ const Cart: React.FC = () => {
           {cartItems.length > 0 && (
             <div className="lg:col-span-1">
               <Card
-                className="sticky top-4 bg-white"
+                className="sticky bg-white top-4"
                 style={{ boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)" }}
               >
                 <Title level={4} className="text-gray-800">
@@ -268,7 +254,7 @@ const Cart: React.FC = () => {
                 </div>
                 <TextArea
                   placeholder="Ghi chú đơn hàng (không bắt buộc)"
-                  className="mb-6 bg-white text-gray-800"
+                  className="mb-6 text-gray-800 bg-white"
                   rows={4}
                 />
                 <div className="space-y-3">
