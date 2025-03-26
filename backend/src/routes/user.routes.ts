@@ -3,13 +3,15 @@ import { Router } from 'express';
 
 import { protectRoute } from '../middlewares/protectRoute.js';
 const userRouter = Router();
-import { getAllUser, updateUser, getUserById, updateCart, addUserAddress, updateUserAddress, deleteUserAddress, changePassword } from '../controllers/user.controllers.js';
 import {
   getAllUser,
   updateUser,
   getUserById,
   updateCart,
   addUserAddress,
+  updateUserAddress,
+  deleteUserAddress,
+  changePassword,
   getNewUsers
 } from '../controllers/user.controllers.js';
 import { verifyToken } from '../middlewares/verifyToken.js';
