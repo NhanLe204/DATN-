@@ -14,3 +14,4 @@ export declare const getProductRelated: (req: Request, res: Response) => Promise
 export declare const toggleProduct: (req: Request, res: Response) => Promise<void>;
 export declare const toggleProductStatus: (req: Request, res: Response) => Promise<void>;
 export declare const getProductOutStock: (req: Request, res: Response) => Promise<void>;
+export declare const deleteProduct: (req: Request, res: Response) => Promise<void>;

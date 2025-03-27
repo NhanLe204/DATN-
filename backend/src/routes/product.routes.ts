@@ -14,7 +14,8 @@ import {
   toggleProduct,
   toggleProductStatus,
   getProductRelated,
-  getProductOutStock
+  getProductOutStock,
+  deleteProduct
 } from '../controllers/product.controllers.js';
 import { protectRoute, requireAdmin } from '../middlewares/protectRoute.js';
 import { get } from 'http';
@@ -45,5 +46,6 @@ productRouter.get('/products/cate/:id', getProductByCategoryID);
 productRouter.get('/products/status/active', getProductActive);
 productRouter.get('/products/tags/:id', getProductByTagId);
 productRouter.get('/products/:id/related', getProductRelated);
+productRouter.delete('/products/:id', verifyToken, requireAdmin, deleteProduct);
 // productRouter.patch("/products/:id/toggle-status", toggleProductStatus);
 export default productRouter;

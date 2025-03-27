@@ -3,7 +3,6 @@ import {
   Card,
   Button,
   Table,
-  Checkbox,
   Modal,
   Form,
   Input,
@@ -19,7 +18,6 @@ import {
 } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import { Typography } from 'antd';
-import axios from 'axios';
 import categoryApi from '../../api/categoryApi';
 
 const { Title } = Typography;
@@ -37,7 +35,6 @@ const CategoryList: React.FC = () => {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
@@ -57,11 +54,11 @@ const CategoryList: React.FC = () => {
           _id: category._id,
           name: category.name,
           description: category.description,
-          status: category.status === "active" ? "Hoạt động" : "Bị khóa", // Dùng 'active' thay vì 'ACTIVE'
+          status: category.status === "active" ? "Hoạt động" : "Bị khóa",
         }));
         setCategories(fetchedCategories);
       } catch (error) {
-        console.error("Error fetching users:", error);
+        console.error("Error fetching categories:", error);
       } finally {
         setLoading(false);
       }
@@ -71,33 +68,11 @@ const CategoryList: React.FC = () => {
 
   const columns = [
     {
-      title: (
-        <Checkbox
-          onChange={(e) => {
-            if (e.target.checked) {
-              setSelectedRows(categories.map((user) => user.key));
-            } else {
-              setSelectedRows([]);
-            }
-          }}
-        />
-      ),
-      dataIndex: "checkbox",
-      width: 50,
-      render: (_: any, record: Category) => (
-        <Checkbox
-          checked={selectedRows.includes(record.key)}
-          onChange={(e) => {
-            if (e.target.checked) {
-              setSelectedRows([...selectedRows, record.key]);
-            } else {
-              setSelectedRows(selectedRows.filter((key) => key !== record.key));
-            }
-          }}
-        />
-      ),
+      title: 'STT',
+      key: 'stt',
+      width: 60,
+      render: (_: any, __: Category, index: number) => index + 1, // Hiển thị STT từ 1
     },
-    { title: 'ID danh mục', dataIndex: '_id', key: '_id' },
     { title: 'Tên danh mục', dataIndex: 'name', key: 'name', width: 150 },
     { title: 'Mô tả', dataIndex: 'description', key: 'description' },
     {
@@ -111,12 +86,18 @@ const CategoryList: React.FC = () => {
     {
       title: "Tính năng",
       key: "action",
-      width: 100,
+      width: 120,
       render: (_: any, record: Category) => (
         <Space>
           <Button
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
+            size="small"
+          />
+          <Button
+            danger
+            icon={<DeleteOutlined />}
+            onClick={() => handleDelete(record)}
             size="small"
           />
         </Space>
@@ -134,6 +115,34 @@ const CategoryList: React.FC = () => {
     });
   };
 
+  const handleDelete = (record: Category) => {
+    Modal.confirm({
+      title: 'Xác nhận',
+      content: `Bạn có chắc chắn muốn xóa danh mục "${record.name}"?`,
+      okText: 'Đồng ý',
+      cancelText: 'Hủy bỏ',
+      onOk: async () => {
+        try {
+          await categoryApi.delete(record._id);
+          setCategories(categories.filter(category => category._id !== record._id));
+          notification.success({
+            message: "Thành công",
+            description: "Danh mục đã được xóa thành công!",
+            placement: "topRight",
+          });
+        } catch (error: any) {
+          console.error("Error deleting category:", error);
+          const errorMessage = error.response?.data?.message || "Không thể xóa danh mục!";
+          notification.error({
+            message: "Lỗi",
+            description: errorMessage,
+            placement: "topRight",
+          });
+        }
+      },
+    });
+  };
+
   const handleEditModalOk = async () => {
     try {
       const values = await form.validateFields();
@@ -141,9 +150,9 @@ const CategoryList: React.FC = () => {
       const updatedData = {
         name: values.name,
         description: values.description,
-        status: values.status === "Hoạt động" ? "active" : "inactive", // Dùng 'active' và 'inactive'
+        status: values.status === "Hoạt động" ? "active" : "inactive",
       };
-      const response = await categoryApi.update(selectedCategory?._id, updatedData)
+      const response = await categoryApi.update(selectedCategory?._id, updatedData);
       setCategories(
         categories.map((u) =>
           u.key === selectedCategory?.key
@@ -158,7 +167,7 @@ const CategoryList: React.FC = () => {
         placement: "topRight",
       });
     } catch (error) {
-      console.error("Error updating user:", error);
+      console.error("Error updating category:", error);
       notification.error({
         message: "Lỗi",
         description: "Có lỗi khi cập nhật thông tin danh mục!",
@@ -169,45 +178,20 @@ const CategoryList: React.FC = () => {
 
   const handleAddModalOk = async () => {
     try {
-      // Validate form
       const values = await form.validateFields();
-
-      // Kiểm tra token
       if (!localStorage.getItem("accessToken")) {
         throw new Error("Bạn cần đăng nhập để thực hiện thao tác này!");
       }
-
-      // Chuẩn bị dữ liệu gửi lên API
       const newCategory = {
         name: values.name,
         description: values.description || "",
         status: "active",
       };
-
-      // Kiểm tra description không rỗng
-      if (!newCategory.description) {
-        throw new Error("Vui lòng nhập mô tả danh mục!");
-      }
-
-      // Gửi POST request với header Authorization
       const response = await categoryApi.create(newCategory);
-
-      console.log("API Response:", response);
-
-      // Kiểm tra response từ API
       if (!response.success) {
         throw new Error(response.message || "Tạo danh mục thất bại!");
       }
-
-      // Kiểm tra response.data.user có tồn tại không
-      if (!response.user || !response.user._id) {
-        throw new Error("Không tìm thấy ID danh mục trong response!");
-      }
-
-      // Lấy danh mục mới từ response.data.user
-      const addedCategoryData = response.user;
-
-      // Thêm danh mục mới vào state categories
+      const addedCategoryData = response.user || response.data;
       const addedCategory = {
         key: addedCategoryData._id,
         _id: addedCategoryData._id,
@@ -215,7 +199,6 @@ const CategoryList: React.FC = () => {
         description: values.description,
         status: "Hoạt động",
       };
-
       setCategories([...categories, addedCategory]);
       setIsAddModalVisible(false);
       form.resetFields();
@@ -224,14 +207,9 @@ const CategoryList: React.FC = () => {
         description: "Danh mục đã được tạo thành công!",
         placement: "topRight",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding category:", error);
-      let errorMessage = "Có lỗi khi tạo danh mục!";
-      if (error.response) {
-        errorMessage = error.response.data.message || "Lỗi từ server!";
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
+      const errorMessage = error.response?.data?.message || error.message || "Có lỗi khi tạo danh mục!";
       notification.error({
         message: "Lỗi",
         description: errorMessage,
@@ -240,7 +218,6 @@ const CategoryList: React.FC = () => {
     }
   };
 
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -248,7 +225,6 @@ const CategoryList: React.FC = () => {
       transition={{ duration: 0.5 }}
     >
       <Card
-        // title={<Title level={4}>Danh sách danh mục</Title>}
         bordered={false}
         className="shadow-sm"
         extra={
@@ -283,24 +259,20 @@ const CategoryList: React.FC = () => {
       >
         {selectedCategory && (
           <Form form={form} layout="vertical">
-            <Form.Item label="ID người dùng" name="_id">
+            <Form.Item label="ID danh mục" name="_id">
               <Input value={selectedCategory._id} disabled />
             </Form.Item>
             <Form.Item
               label="Tên danh mục"
               name="name"
-              rules={[
-                { required: true, message: "Vui lòng nhập tên danh mục!" },
-              ]}
+              rules={[{ required: true, message: "Vui lòng nhập tên danh mục!" }]}
             >
               <Input />
             </Form.Item>
             <Form.Item
               label="Mô tả danh mục"
               name="description"
-              rules={[
-                { required: true, message: "Vui lòng nhập mô tả!" },
-              ]}
+              rules={[{ required: true, message: "Vui lòng nhập mô tả!" }]}
             >
               <Input.TextArea rows={4} />
             </Form.Item>
@@ -328,10 +300,7 @@ const CategoryList: React.FC = () => {
         cancelText="Hủy bỏ"
         width={600}
       >
-        <Form
-          form={form}
-          layout="vertical"
-        >
+        <Form form={form} layout="vertical">
           <Form.Item
             label="Tên danh mục"
             name="name"

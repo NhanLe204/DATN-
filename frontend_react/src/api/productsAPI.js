@@ -97,6 +97,19 @@ const productsApi = {
       throw error;
     }
   },
+  delete: async (id) => {
+    try {
+      const response = await api.delete(`/v1/products/${id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error deleting product:", error.response?.data || error);
+      throw error;
+    }
+  },
 };
 
 export default productsApi;

@@ -187,4 +187,25 @@ export const getCategoriesActive = async (req: Request, res: Response) => {
   }
 };
 
-// export const
+// Xóa category
+export const deleteCategory = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const category = await categoryModel.findById(id);
+    if (!category) {
+      res.status(404).json({ message: 'Không tìm thấy danh mục' });
+      return;
+    }
+
+    await categoryModel.findByIdAndDelete(id);
+    res.status(200).json({ message: 'Xóa danh mục thành công' });
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error category up: ${error.message}`);
+      return;
+    } else {
+      console.error('Error category up:', error);
+      return;
+    }
+  }
+};
