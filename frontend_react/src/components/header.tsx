@@ -46,8 +46,9 @@ interface User {
 }
 
 export default function Header() {
-  const dispatch = useDispatch(); // Thêm dispatch để gọi setUserId
+  const dispatch = useDispatch();
   const cartItems = useSelector((state: any) => state.cart.items);
+  const [isUserLoaded, setIsUserLoaded] = useState(false); // Trạng thái xác thực user
   const cartCount = cartItems.reduce(
     (count: any, item: any) => count + Number(item.quantity),
     0
@@ -95,19 +96,16 @@ export default function Header() {
     }
   };
 
-    // Xử lý khi nhấn Enter hoặc nút tìm kiếm
-    const handleSearchSubmit = (value: string) => {
-      const trimmedValue = value.trim();
-      if (trimmedValue) {
-        // Gọi hàm handleSearch để lưu lịch sử (nếu cần)
-        handleSearch(trimmedValue);
-        // Điều hướng sang trang /search với từ khóa
-        navigate(`/search?q=${encodeURIComponent(trimmedValue)}`);
-        // Đóng dropdown hoặc drawer tìm kiếm (nếu mở)
-        setSearchDesktopOpen(false);
-        setSearchMobileOpen(false);
-      }
-    };
+  // Xử lý khi nhấn Enter hoặc nút tìm kiếm
+  const handleSearchSubmit = (value: string) => {
+    const trimmedValue = value.trim();
+    if (trimmedValue) {
+      handleSearch(trimmedValue);
+      navigate(`/search?q=${encodeURIComponent(trimmedValue)}`);
+      setSearchDesktopOpen(false);
+      setSearchMobileOpen(false);
+    }
+  };
 
   // Xóa toàn bộ lịch sử tìm kiếm
   const clearSearchHistory = () => {
@@ -148,22 +146,18 @@ export default function Header() {
     }
   };
 
-  // Lấy thông tin user khi component mount
+  // Sửa phần load giỏ hàng: Chỉ hiển thị cartCount sau khi xác thực user
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     const accountID =
       localStorage.getItem("accountID")?.replace(/^"|"$/g, "") || "";
 
-    // Kiểm tra token và accountID
     if (!token || !accountID) {
-      console.warn("Không tìm thấy token hoặc accountID trong localStorage:", {
-        token,
-        accountID,
-      });
+      setIsUserLoaded(false); // Không hiển thị cartCount nếu thiếu token hoặc accountID
       return;
     }
 
-    // Nếu có userData trong localStorage, sử dụng nó trước
+    // Nếu có userData trong localStorage, sử dụng trước
     const storedUserData = localStorage.getItem("userData");
     if (storedUserData) {
       try {
@@ -173,7 +167,7 @@ export default function Header() {
       }
     }
 
-    // Gọi API để lấy thông tin user mới nhất
+    // Fetch thông tin user từ server để xác thực
     fetch(`http://localhost:5000/api/v1/users/${accountID}`, {
       method: "GET",
       headers: {
@@ -193,21 +187,15 @@ export default function Header() {
         if (data.data) {
           setUser(data.data);
           localStorage.setItem("userData", JSON.stringify(data.data));
-        } else {
-          throw new Error("Không tìm thấy dữ liệu user trong response");
+          dispatch(setUserId(accountID)); // Cập nhật userId trong Redux
+          setIsUserLoaded(true); // Xác thực thành công, cho phép hiển thị cartCount
         }
       })
       .catch((err) => {
         console.error("Error fetching user:", err.message);
-        // Nếu lỗi là 401 (Unauthorized), có thể token đã hết hạn
+        setIsUserLoaded(false); // Nếu lỗi, không hiển thị cartCount
         if (err.message.includes("401")) {
           console.warn("Token có thể đã hết hạn, cần đăng nhập lại");
-          // Không xóa dữ liệu ngay, chỉ hiển thị cảnh báo
-          // localStorage.removeItem("accessToken");
-          // localStorage.removeItem("accountID");
-          // localStorage.removeItem("userData");
-          // setUser(null);
-          // dispatch(setUserId(null));
         }
       });
   }, [dispatch]);
@@ -217,7 +205,8 @@ export default function Header() {
     localStorage.removeItem("accountID");
     localStorage.removeItem("userData");
     setUser(null);
-    dispatch(setUserId(null)); // Reset userId trong Redux
+    dispatch(setUserId(null));
+    setIsUserLoaded(false); // Reset trạng thái khi đăng xuất
     window.location.href = "/";
   };
 
@@ -486,7 +475,9 @@ export default function Header() {
               <span className="text-xs text-gray-500">30 days no hassle</span>
             </div>
             <a href="/cart">
-              <Badge count={cartCount}>
+              <Badge count={isUserLoaded ? cartCount : 0}>
+                {" "}
+                {/* Chỉ hiển thị cartCount sau khi xác thực */}
                 <FaShoppingCart className="text-2xl" />
               </Badge>
             </a>
@@ -516,7 +507,9 @@ export default function Header() {
               <Search className="h-6 w-6" />
             </button>
             <a href="/cart">
-              <Badge count={cartCount}>
+              <Badge count={isUserLoaded ? cartCount : 0}>
+                {" "}
+                {/* Áp dụng tương tự cho mobile */}
                 <FaShoppingCart className="text-2xl" />
               </Badge>
             </a>

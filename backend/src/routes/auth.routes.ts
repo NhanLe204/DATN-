@@ -16,6 +16,8 @@ import { protectRoute } from '../middlewares/protectRoute.js';
 
 const authRouter = Router();
 
+// http://localhost:5000/api/v1/auth
+
 authRouter.post('/signup', signupController);
 authRouter.post('/login', loginController);
 authRouter.post('/logout', logoutController);

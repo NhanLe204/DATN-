@@ -140,10 +140,11 @@ export default function DetailProduct() {
                     key={index}
                     src={image}
                     alt={`Detail ${index + 1}`}
-                    className={`w-20 h-20 cursor-pointer rounded-lg border object-cover transition-all duration-300 ${selectedImage === image
+                    className={`w-20 h-20 cursor-pointer rounded-lg border object-cover transition-all duration-300 ${
+                      selectedImage === image
                         ? "border-[#28A745]"
                         : "border-[#EAEAEA] hover:border-[#28A745]"
-                      }`}
+                    }`}
                     onClick={() => handleImageClick(image)}
                   />
                 ))}
@@ -220,7 +221,6 @@ export default function DetailProduct() {
               )}
             </div>
 
-          
             <div className="flex gap-4 mt-4 mb-6">
               <span className="font-semibold">Số lượng:</span>
               <div className="flex items-center border rounded-lg">

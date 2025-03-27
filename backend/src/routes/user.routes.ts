@@ -15,6 +15,8 @@ import {
   getNewUsers
 } from '../controllers/user.controllers.js';
 import { verifyToken } from '../middlewares/verifyToken.js';
+
+// http://localhost:3000/api/v1/users
 userRouter.get('/users', verifyToken, getAllUser);
 userRouter.get('/users/new', verifyToken, getNewUsers);
 userRouter.patch('/users/:id', verifyToken, updateUser);
