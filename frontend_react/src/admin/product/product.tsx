@@ -21,6 +21,7 @@ import {
 import { motion } from "framer-motion";
 import { Typography } from "antd";
 import productsApi from "../../api/productsAPI";
+import orderApi from "../../api/orderApi"; // Thêm API để lấy đơn hàng
 import ProductModal from "../components/productModal";
 
 const { Title } = Typography;
@@ -33,6 +34,7 @@ interface Product {
   name: string;
   image: string;
   quantity: number;
+  quantity_sold: number; // Thêm quantity_sold
   status: string;
   price: string;
   category: string;
@@ -70,13 +72,33 @@ const ProductList: React.FC = () => {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const response = await productsApi.getAll();
-      const productList = response.data.result || [];
+      // Lấy danh sách sản phẩm
+      const productResponse = await productsApi.getAll();
+      const productList = productResponse.data.result || [];
 
       if (!Array.isArray(productList)) {
         throw new Error("Dữ liệu không hợp lệ từ API");
       }
 
+      // Lấy danh sách đơn hàng để tính quantity_sold
+      const orderResponse = await orderApi.getAll();
+      const orders = orderResponse.data.result || [];
+
+      // Tính quantity_sold cho từng sản phẩm
+      const productSalesMap: { [key: string]: number } = {};
+      orders.forEach((order: any) => {
+        if (order.items && Array.isArray(order.items)) {
+          order.items.forEach((item: any) => {
+            const productId = item.product_id || item.productID;
+            const quantity = item.quantity || 0;
+            if (productId) {
+              productSalesMap[productId] = (productSalesMap[productId] || 0) + quantity;
+            }
+          });
+        }
+      });
+
+      // Định dạng dữ liệu sản phẩm
       const formattedProducts = productList.map((product: any) => {
         const imageUrl = product.image_url?.[0];
         return {
@@ -87,7 +109,8 @@ const ProductList: React.FC = () => {
           image: imageUrl,
           images: product.image_url || [],
           quantity: product.quantity || 0,
-          status: product.status, 
+          quantity_sold: productSalesMap[product._id] || 0, // Số lượng đã bán
+          status: product.status,
           price: product.price,
           category: product.category_id?.name || "Không xác định",
           brand: product.brand_id?.brand_name || "Không có thương hiệu",
@@ -112,7 +135,7 @@ const ProductList: React.FC = () => {
     try {
       await productsApi.toggleStatus(productId, newStatus);
       message.success("Cập nhật trạng thái sản phẩm thành công!");
-      fetchProducts(); 
+      fetchProducts();
     } catch (error) {
       message.error("Lỗi khi cập nhật trạng thái sản phẩm!");
       console.error("Toggle status error:", error);
@@ -126,7 +149,7 @@ const ProductList: React.FC = () => {
       case "out_of_stock":
         return "Hết hàng";
       default:
-        return status; 
+        return status;
     }
   };
 
@@ -148,7 +171,7 @@ const ProductList: React.FC = () => {
       key: "image",
       width: 180,
       render: (text: string) => (
-        <img src={text} alt="Product" className="w-24 h-24 object-cover" />
+        <img src={text} alt="Product" className="object-cover w-24 h-24" />
       ),
     },
     {
@@ -167,14 +190,35 @@ const ProductList: React.FC = () => {
         </Select>
       ),
     },
-    { title: "Giá tiền", dataIndex: "price", key: "price", width: 100 },
-    { title: "Danh mục", dataIndex: "category", key: "category", width: 100 },
-    { title: "Thương hiệu", dataIndex: "brand", key: "brand" },
+    {
+      title: "Giá tiền",
+      dataIndex: "price",
+      key: "price",
+      width: 100,
+      render: (price: any) => `${price?.toLocaleString() || 0} VNĐ`,
+    },
+    { title: "Danh mục", dataIndex: "category", key: "category", width: 200 },
+    { title: "Thương hiệu", dataIndex: "brand", key: "brand", width: 200 },
     {
       title: "Tags",
       dataIndex: "tag",
       key: "tag",
+      width: 100,
       render: (tag: string) => (tag ? <Tag color="blue">{tag}</Tag> : null),
+    },
+    {
+      title: "Số lượng",
+      dataIndex: "quantity",
+      key: "quantity",
+      width: 100,
+      render: (quantity: number) => quantity || 0,
+    },
+    {
+      title: "Số lượng đã bán",
+      dataIndex: "quantity_sold",
+      key: "quantity_sold",
+      width: 100,
+      render: (quantity_sold: number) => quantity_sold || 0,
     },
     {
       title: "Chức năng",
@@ -198,7 +242,6 @@ const ProductList: React.FC = () => {
       transition={{ duration: 0.5 }}
     >
       <Card
-        // title={<Title level={4}>Danh sách sản phẩm</Title>}
         bordered={false}
         className="shadow-sm"
         extra={

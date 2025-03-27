@@ -1,17 +1,16 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Breadcrumb, Button } from "antd";
-import useSWR from "swr";
-import Loader from "../../components/loader";
-import { useSelector, useDispatch } from "react-redux";
-import { addToCart } from "../../redux/slices/cartslice";
+import { Breadcrumb, Button, Image } from "antd";
 import productsApi from "../../api/productsAPI";
+import { useDispatch } from "react-redux";
+import { addToCart } from "../../redux/slices/cartslice";
 
 export default function DetailProduct() {
   const params = useParams();
   const [selectedImage, setSelectedImage] = useState("");
   const [quantity, setQuantity] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
   const [productsDetail, setProductDetail] = useState<{
     _id?: string;
     id?: string;
@@ -27,8 +26,54 @@ export default function DetailProduct() {
     status?: string;
   } | null>(null);
   const dispatch = useDispatch();
+  const reviews = [
+    {
+      id: 1,
+      username: "tinhvan2502",
+      rating: 5,
+      date: "12-01-2025 15:22",
+      flavor: "thơm, dễ chịu",
+      comment:
+        "Hạt thơm, ngửi rất dễ chịu, shop đã đóng các mặt hàng, sẽ tiếp tục ủng hộ",
+    },
+    {
+      id: 2,
+      username: "hanhan0610",
+      rating: 5,
+      date: "12-01-2025 15:22",
+      flavor: "thơm, dễ chịu",
+      comment:
+        "Hạt thơm, ngửi rất dễ chịu, shop đã đóng các mặt hàng, sẽ tiếp tục ủng hộ",
+    },
+  ];
 
-  const fetcher = (url) => fetch(url).then((res) => res.json());
+  // Related products data
+  const relatedProducts = [
+    {
+      id: 1,
+      name: "Thức ăn cho mèo con và mèo mẹ ROYAL CANIN Mother & Babycat",
+      price: "130.000₫",
+      image: "/path-to-image-1.jpg",
+    },
+    {
+      id: 2,
+      name: "Thức ăn cho mèo con và mèo mẹ ROYAL CANIN Mother & Babycat",
+      price: "130.000₫",
+      image: "/path-to-image-2.jpg",
+    },
+    {
+      id: 3,
+      name: "Thức ăn cho mèo con và mèo mẹ ROYAL CANIN Mother & Babycat",
+      price: "130.000₫",
+      image: "/path-to-image-3.jpg",
+    },
+    {
+      id: 4,
+      name: "Thức ăn cho mèo con và mèo mẹ ROYAL CANIN Mother & Babycat",
+      price: "130.000₫",
+      image: "/path-to-image-4.jpg",
+    },
+  ];
 
   useEffect(() => {
     const fetchProductDetail = async () => {
@@ -38,7 +83,7 @@ export default function DetailProduct() {
         ...productDetailData,
         brand: productDetailData.brand || "Sắc Màu TPet",
         tag: productDetailData.tag || "Sản phẩm đồ chơi cho chó",
-        status: productDetailData.status || "available", // Giả định API trả về "available"
+        status: productDetailData.status || "available",
       });
     };
     fetchProductDetail();
@@ -78,91 +123,65 @@ export default function DetailProduct() {
     console.log(`Added to cart: ${item.name}, Quantity: ${quantity}`);
   };
 
-  // Logic hiển thị "Tình trạng"
   const displayStatus =
     product.status === "available" ? "Còn hàng" : product.status;
 
   return (
     <div className="text-black">
-      {/* Container chính: Full-width với padding 154px hai bên */}
-      <div className="mx-auto w-full px-[154px] py-6">
+      <div className="mx-auto w-full px-[154px] py-10">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {/* Hình ảnh sản phẩm - Bên trái */}
-          <div className="flex w-full">
-            <div className="flex flex-col space-y-6">
-              {product.image_url[0] && (
-                <img
-                  src={`${product.image_url[0]}`}
-                  alt="Detail 1"
-                  className={`w-[90px] h-[90px] cursor-pointer rounded-lg border transition-all duration-300 ${
-                    selectedImage === product.image_url[0]
-                      ? "border-[#22A6DF]"
-                      : "border-[#EAEAEA] hover:border-[#22A6DF]"
-                  }`}
-                  onClick={() => handleImageClick(product.image_url[0])}
+          {/* Phần hình ảnh - Cố định khi scroll */}
+          <div className="sticky top-0 h-fit">
+            <div className="flex items-start gap-6">
+              {/* Thumbnails */}
+              <div className="flex flex-col gap-4">
+                {product.image_url.map((image, index) => (
+                  <img
+                    key={index}
+                    src={image}
+                    alt={`Detail ${index + 1}`}
+                    className={`w-20 h-20 cursor-pointer rounded-lg border object-cover transition-all duration-300 ${selectedImage === image
+                        ? "border-[#28A745]"
+                        : "border-[#EAEAEA] hover:border-[#28A745]"
+                      }`}
+                    onClick={() => handleImageClick(image)}
+                  />
+                ))}
+              </div>
+
+              {/* Main Image - Sử dụng Image của Ant Design */}
+              <div className="relative w-[602px] h-[602px] overflow-hidden">
+                <Image
+                  src={selectedImage || product.image_url[0]}
+                  alt="Main product"
+                  className="w-full h-full rounded-lg border border-[#EAEAEA] shadow-md transition-all duration-300 object-contain hover:scale-105"
+                  preview={{
+                    mask: "Xem ảnh lớn",
+                    maskClassName: "custom-preview-mask",
+                  }}
+                  width="100%"
+                  height="100%"
                 />
-              )}
-              {product.image_url[1] && (
-                <img
-                  src={`${product.image_url[1]}`}
-                  alt="Detail 2"
-                  className={`w-[90px] h-[90px] cursor-pointer rounded-lg border transition-all duration-300 ${
-                    selectedImage === product.image_url[1]
-                      ? "border-[#22A6DF]"
-                      : "border-[#EAEAEA] hover:border-[#22A6DF]"
-                  }`}
-                  onClick={() => handleImageClick(product.image_url[1])}
-                />
-              )}
-              {product.image_url[2] && (
-                <img
-                  src={`${product.image_url[2]}`}
-                  alt="Detail 3"
-                  className={`w-[90px] h-[90px] cursor-pointer rounded-lg border transition-all duration-300 ${
-                    selectedImage === product.image_url[2]
-                      ? "border-[#22A6DF]"
-                      : "border-[#EAEAEA] hover:border-[#22A6DF]"
-                  }`}
-                  onClick={() => handleImageClick(product.image_url[2])}
-                />
-              )}
-              {product.image_url[3] && (
-                <img
-                  src={`${product.image_url[3]}`}
-                  alt="Detail 4"
-                  className={`w-[90px] h-[90px] cursor-pointer rounded-lg border transition-all duration-300 ${
-                    selectedImage === product.image_url[3]
-                      ? "border-[#22A6DF]"
-                      : "border-[#EAEAEA] hover:border-[#22A6DF]"
-                  }`}
-                  onClick={() => handleImageClick(product.image_url[3])}
-                />
-              )}
-            </div>
-            <div className="ml-10 relative">
-              <img
-                src={
-                  selectedImage ? `${selectedImage}` : `${product.image_url[0]}`
-                }
-                alt="Main product"
-                className="w-[600px] h-[600px] rounded-lg border border-[#EAEAEA] shadow-md transition-all duration-300"
-              />
-              {/* Badge giảm giá trên ảnh chính */}
-              {(product.discount ?? 0) > 0 && (
-                <div className="absolute top-4 left-4 bg-[#FF0000] text-white text-lg font-medium px-3 py-1 rounded-sm">
-                  -{product.discount}%
-                </div>
-              )}
+                {(product.discount ?? 0) > 0 && (
+                  <div className="absolute top-4 left-4 bg-[#FF0000] text-white text-lg font-medium px-3 py-1 rounded-sm">
+                    -{product.discount}%
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Thông tin sản phẩm - Bên phải */}
+          {/* Phần thông tin sản phẩm - Có thể scroll */}
           <div className="flex flex-col">
-            <h1 className="mb-2 text-2xl font-bold text-gray-800">
+            <h1 className="mb-2 text-3xl font-bold text-gray-800">
               {product.name}
             </h1>
 
-            {/* Thông tin Thương hiệu, Thẻ, Tình trạng */}
+            <div className="flex items-center mb-4">
+              <span className="text-yellow-400">★★★★★</span>
+              <span className="ml-2 text-sm text-gray-600">(123 đánh giá)</span>
+            </div>
+
             <div className="mb-4 text-sm text-gray-600">
               <p>
                 <span className="font-semibold">Thương hiệu:</span>{" "}
@@ -177,7 +196,7 @@ export default function DetailProduct() {
               </p>
             </div>
 
-            <div className="mb-6 mt-2 text-lg font-bold text-[#22A6DF]">
+            <div className="mb-6 mt-2 text-2xl font-bold text-[#FF0000]">
               {new Intl.NumberFormat("vi-VN", {
                 style: "currency",
                 currency: "VND",
@@ -201,10 +220,10 @@ export default function DetailProduct() {
               )}
             </div>
 
-            {/* Số lượng */}
-            <div className="mb-6 mt-4 flex gap-4">
+          
+            <div className="flex gap-4 mt-4 mb-6">
               <span className="font-semibold">Số lượng:</span>
-              <div className="flex items-center rounded-lg border">
+              <div className="flex items-center border rounded-lg">
                 <Button onClick={handleDecrement} className="px-4 py-2">
                   -
                 </Button>
@@ -212,7 +231,7 @@ export default function DetailProduct() {
                   min={1}
                   value={quantity}
                   onChange={handleChange}
-                  className="w-4 border-none text-center md:w-12"
+                  className="w-4 text-center border-none md:w-12"
                 />
                 <Button onClick={handleIncrement} className="px-4 py-2">
                   +
@@ -220,7 +239,6 @@ export default function DetailProduct() {
               </div>
             </div>
 
-            {/* Nút thêm vào giỏ hàng và mua ngay */}
             <div className="flex flex-col gap-4 md:flex-row">
               <Button
                 className="rounded-lg bg-[#22A6DF] px-6 py-5 text-white"
@@ -233,17 +251,122 @@ export default function DetailProduct() {
               </Button>
             </div>
 
-            {/* Thông tin chi tiết sản phẩm */}
             <div className="mt-8">
               <h2 className="text-xl font-bold text-gray-800">
                 Thông tin sản phẩm
               </h2>
-              <p className="mt-2 text-[#686868]">{product.description}</p>
-              <ul className="mt-2 list-disc pl-6 text-[#686868]">
+              <p className="mt-2 text-sm text-gray-600">
+                {product.description}
+              </p>
+              <ul className="pl-6 mt-2 text-sm text-gray-600 list-disc">
                 {product.details?.map((detail, index) => (
                   <li key={index}>{detail}</li>
                 ))}
               </ul>
+            </div>
+          </div>
+        </div>
+        <div className="p-6 mx-auto">
+          {/* Review Section */}
+          <div className="p-6 mb-8 border rounded-lg">
+            <h2 className="mb-4 text-xl font-bold">Đánh giá sản phẩm</h2>
+
+            {/* Rating Summary */}
+            <div className="flex items-center gap-4 mb-6">
+              <div className="flex items-center">
+                <div className="flex text-yellow-400">{"★".repeat(5)}</div>
+                <span className="ml-2 text-sm text-gray-500">
+                  Dựa trên 2 đánh giá
+                </span>
+              </div>
+
+              {/* Rating Filters */}
+              <div className="flex gap-2">
+                <button className="px-4 py-1 text-sm text-white bg-blue-500 rounded-full">
+                  Tất cả
+                </button>
+                <button className="px-4 py-1 text-sm border rounded-full">
+                  5 sao (2)
+                </button>
+                <button className="px-4 py-1 text-sm border rounded-full">
+                  4 sao (0)
+                </button>
+                <button className="px-4 py-1 text-sm border rounded-full">
+                  3 sao (0)
+                </button>
+                <button className="px-4 py-1 text-sm border rounded-full">
+                  2 sao (0)
+                </button>
+                <button className="px-4 py-1 text-sm border rounded-full">
+                  1 sao (0)
+                </button>
+              </div>
+            </div>
+
+            {/* Review List */}
+            <div className="space-y-6">
+              {reviews.map((review) => (
+                <div key={review.id} className="pb-6 border-b">
+                  <div className="flex items-center gap-4 mb-2">
+                    <div className="w-10 h-10 overflow-hidden bg-gray-200 rounded-full">
+                      {/* User Avatar */}
+                      <img
+                        src={`https://api.dicebear.com/6.x/initials/svg?seed=${review.username}`}
+                        alt="user avatar"
+                        className="object-cover w-full h-full"
+                      />
+                    </div>
+                    <div>
+                      <div className="font-medium">{review.username}</div>
+                      <div className="flex items-center">
+                        <div className="flex text-yellow-400">
+                          {"★".repeat(review.rating)}
+                        </div>
+                        <span className="ml-2 text-sm text-gray-500">
+                          {review.date}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="ml-14">
+                    <div className="mb-2">
+                      <span className="text-gray-600">Mùi hương: </span>
+                      <span>{review.flavor}</span>
+                    </div>
+                    <p className="text-gray-700">{review.comment}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Pagination */}
+            <div className="flex items-center justify-center gap-2 mt-6">
+              <button className="px-3 py-1 border rounded bg-blue-50">1</button>
+              <button className="px-3 py-1 border rounded">2</button>
+              <span>...</span>
+              <button className="px-3 py-1 border rounded">6</button>
+              <button className="px-4 py-1 border rounded">Sau</button>
+            </div>
+          </div>
+
+          {/* Related Products Section */}
+          <div>
+            <h3 className="mb-4 text-xl font-bold">SẢN PHẨM LIÊN QUAN</h3>
+            <div className="grid grid-cols-4 gap-4">
+              {relatedProducts.map((product) => (
+                <div key={product.id} className="p-4 border rounded-lg">
+                  <div className="mb-2 aspect-square">
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="object-contain w-full h-full"
+                    />
+                  </div>
+                  <h4 className="mb-2 text-sm line-clamp-2">{product.name}</h4>
+                  <p className="font-medium text-blue-500">{product.price}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
