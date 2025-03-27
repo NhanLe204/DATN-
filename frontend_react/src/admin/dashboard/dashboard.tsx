@@ -5,6 +5,7 @@ import {
   UserOutlined,
   ShoppingCartOutlined,
   FileTextOutlined,
+  ExceptionOutlined,
 } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { Typography } from "antd";
@@ -22,7 +23,14 @@ import {
 } from "chart.js";
 
 // Đăng ký các thành phần cần thiết của Chart.js
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const { Text } = Typography;
 
@@ -32,7 +40,15 @@ const Dashboard: React.FC = () => {
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalOrders, setTotalOrders] = useState(0);
   const [canceledOrders, setCanceledOrders] = useState(0);
-  const [newCustomers, setNewCustomers] = useState([]);
+  interface Customer {
+    avatar?: string;
+    fullname?: string;
+    name?: string;
+    status?: string;
+  }
+  
+  const [newCustomers, setNewCustomers] = useState<Customer[]>([]);
+  const [outOfStockProducts, setOutOfStockProducts] = useState([]);
   const [hotProducts, setHotProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -95,12 +111,34 @@ const Dashboard: React.FC = () => {
         const formattedOrders = allOrders.map((order, index) => ({
           key: index.toString(),
           id: order._id || "N/A",
-          customer: order.userID?.fullname || order.userID?.name || "Khách vãng lai",
+          customer:
+            order.userID?.fullname || order.userID?.name || "Khách vãng lai",
           paymentType: order.payment_typeID?.name || "Không xác định",
           delivery: order.deliveryID?.delivery_name || "Không xác định",
           total: `${order.total_price?.toLocaleString() || 0} VNĐ`,
         }));
         setOrders(formattedOrders);
+
+        // Lấy sản phẩm hết hàng
+        const outOfStockResponse = await productApi.getProductOutStock();
+        const outOfStockItems = outOfStockResponse.data.result || [];
+        
+        
+        const formattedOutOfStockItems = outOfStockItems.map((product) => ({
+          key: product._id,
+          _id: product._id,
+          name: product.name,
+          image: product.image_url?.[0] || "https://via.placeholder.com/64",
+          images: product.image_url || [],
+          quantity: product.quantity || 0,
+          status: product.status,
+          price: product.price,
+          category: product.category_id?.name || "Không xác định",
+          brand: product.brand_id?.brand_name || "Không có thương hiệu",
+          tag: product.tag_id?.tag_name || "Không có thẻ",
+        }));
+        setOutOfStockProducts(formattedOutOfStockItems.length);
+        setOutOfStockProducts(formattedOutOfStockItems);
 
         // Lấy sản phẩm bán chạy
         const hotProductsResponse = await productApi.getHotproducts();
@@ -173,7 +211,7 @@ const Dashboard: React.FC = () => {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: "top",
+        position: "top" as const,
       },
       title: {
         display: false,
@@ -200,7 +238,11 @@ const Dashboard: React.FC = () => {
   const ordersColumns = [
     { title: "ID đơn hàng", dataIndex: "id", key: "id" },
     { title: "Khách hàng", dataIndex: "customer", key: "customer" },
-    { title: "Phương thức thanh toán", dataIndex: "paymentType", key: "paymentType" },
+    {
+      title: "Phương thức thanh toán",
+      dataIndex: "paymentType",
+      key: "paymentType",
+    },
     { title: "Phương thức giao hàng", dataIndex: "delivery", key: "delivery" },
     { title: "Tổng tiền", dataIndex: "total", key: "total" },
   ];
@@ -282,7 +324,9 @@ const Dashboard: React.FC = () => {
                 <Statistic
                   title="Tổng số người dùng"
                   value={totalUsers}
-                  prefix={<UserOutlined className="mr-2 text-xl text-cyan-500" />}
+                  prefix={
+                    <UserOutlined className="mr-2 text-xl text-cyan-500" />
+                  }
                   suffix="tài khoản"
                   loading={loading}
                 />
@@ -298,8 +342,26 @@ const Dashboard: React.FC = () => {
                 <Statistic
                   title="Tổng đơn hàng"
                   value={totalOrders}
-                  prefix={<ShoppingCartOutlined className="mr-2 text-xl text-yellow-500" />}
+                  prefix={
+                    <ShoppingCartOutlined className="mr-2 text-xl text-yellow-500" />
+                  }
                   suffix="đơn hàng"
+                  loading={loading}
+                />
+              </Card>
+            </motion.div>
+          </Col>
+          <Col xs={24} sm={12} md={8} lg={8}>
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+            >
+              <Card bordered={false} className="shadow-sm">
+                <Statistic
+                  title="Hết hàng"
+                  value={outOfStockProducts.length}
+                  prefix={<ExceptionOutlined className="mr-2 text-xl text-yellow-500" />}
+                  suffix="sản phẩm"
                   loading={loading}
                 />
               </Card>
@@ -314,7 +376,9 @@ const Dashboard: React.FC = () => {
                 <Statistic
                   title="Đơn hàng hủy"
                   value={canceledOrders}
-                  prefix={<FileTextOutlined className="mr-2 text-xl text-red-500" />}
+                  prefix={
+                    <FileTextOutlined className="mr-2 text-xl text-red-500" />
+                  }
                   suffix="đơn hàng"
                   loading={loading}
                 />
@@ -326,14 +390,22 @@ const Dashboard: React.FC = () => {
         {/* Biểu đồ doanh số và khách hàng mới */}
         <Row gutter={[32, 16]} className="mb-6">
           <Col xs={24} lg={16}>
-            <Card title="THỐNG KẾ DOANH SỐ" bordered={false} className="shadow-sm">
+            <Card
+              title="THỐNG KẾ DOANH SỐ"
+              bordered={false}
+              className="shadow-sm"
+            >
               <div className="h-80">
                 <Bar data={chartData} options={chartOptions} />
               </div>
             </Card>
           </Col>
           <Col xs={24} lg={8}>
-            <Card title="Khách hàng mới" bordered={false} className="w-full shadow-sm">
+            <Card
+              title="Khách hàng mới"
+              bordered={false}
+              className="w-full shadow-sm"
+            >
               <div className="space-y-6">
                 {newCustomers.map((customer, index) => (
                   <div key={index} className="flex items-center space-x-4">
@@ -346,7 +418,10 @@ const Dashboard: React.FC = () => {
                       className="rounded-full w-14 h-14"
                     />
                     <div>
-                      <Text type="secondary" className="text-base text-gray-500">
+                      <Text
+                        type="secondary"
+                        className="text-base text-gray-500"
+                      >
                         {customer.fullname || customer.name}
                       </Text>
                       <br />
@@ -362,7 +437,11 @@ const Dashboard: React.FC = () => {
         </Row>
 
         {/* Bảng sản phẩm bán chạy */}
-        <Card title="SẢN PHẨM BÁN CHẠY" bordered={false} className="mb-6 shadow-sm">
+        <Card
+          title="SẢN PHẨM BÁN CHẠY"
+          bordered={false}
+          className="mb-6 shadow-sm"
+        >
           <Table
             columns={productColumns}
             dataSource={hotProducts}

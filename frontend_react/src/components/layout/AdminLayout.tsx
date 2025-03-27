@@ -12,6 +12,8 @@ import {
   LogoutOutlined,
   MenuUnfoldOutlined,
   MenuFoldOutlined,
+  StarOutlined,
+  TagOutlined,
 } from "@ant-design/icons";
 import { Outlet, useNavigate } from "react-router-dom";
 import React from "react";
@@ -140,8 +142,8 @@ const AdminLayout = () => {
             { key: "1", icon: <PieChartOutlined />, label: "Dashboard" },
             { key: "2", icon: <AppstoreOutlined />, label: "Quản lý danh mục" },
             { key: "3", icon: <ShoppingOutlined />, label: "Quản lý sản phẩm" },
-            { key: "4", icon: <ShoppingOutlined />, label: "Quản lý thương hiệu" },
-            { key: "5", icon: <ShoppingOutlined />, label: "Quản lý tags" },
+            { key: "4", icon: <StarOutlined />, label: "Quản lý thương hiệu" },
+            { key: "5", icon: <TagOutlined />, label: "Quản lý tags" },
             { key: "6", icon: <IdcardOutlined />, label: "Quản lý nhân viên" },
             { key: "7", icon: <FileTextOutlined />, label: "Quản lý đơn hàng" },
             { key: "8", icon: <ToolOutlined />, label: "Quản lý dịch vụ" },
