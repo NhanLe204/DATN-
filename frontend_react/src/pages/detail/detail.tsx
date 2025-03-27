@@ -150,12 +150,18 @@ export default function DetailProduct() {
                 ))}
               </div>
 
-              {/* Main Image */}
-              <div className="relative">
-                <img
+              {/* Main Image - Sử dụng Image của Ant Design */}
+              <div className="relative w-[602px] h-[602px] overflow-hidden">
+                <Image
                   src={selectedImage || product.image_url[0]}
                   alt="Main product"
-                  className="w-[500px] h-[500px] rounded-lg border border-[#EAEAEA] shadow-md transition-all duration-300 object-contain hover:scale-105"
+                  className="w-full h-full rounded-lg border border-[#EAEAEA] shadow-md transition-all duration-300 object-contain hover:scale-105"
+                  preview={{
+                    mask: "Xem ảnh lớn",
+                    maskClassName: "custom-preview-mask",
+                  }}
+                  width="100%"
+                  height="100%"
                 />
                 {(product.discount ?? 0) > 0 && (
                   <div className="absolute top-4 left-4 bg-[#FF0000] text-white text-lg font-medium px-3 py-1 rounded-sm">
@@ -215,21 +221,9 @@ export default function DetailProduct() {
               )}
             </div>
 
-            <div className="mb-6 mt-4">
-              <span className="font-semibold">Chọn màu sắc:</span>
-              <div className="flex gap-4 mt-2">
-                <button className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:border-[#28A745]">
-                  <span>Red (ABS)</span>
-                </button>
-                <button className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:border-[#28A745]">
-                  <span>Metal (SS)</span>
-                </button>
-              </div>
-            </div>
-
-            <div className="mb-6 mt-4 flex gap-4">
+            <div className="flex gap-4 mt-4 mb-6">
               <span className="font-semibold">Số lượng:</span>
-              <div className="flex items-center rounded-lg border">
+              <div className="flex items-center border rounded-lg">
                 <Button onClick={handleDecrement} className="px-4 py-2">
                   -
                 </Button>
@@ -237,7 +231,7 @@ export default function DetailProduct() {
                   min={1}
                   value={quantity}
                   onChange={handleChange}
-                  className="w-4 border-none text-center md:w-12"
+                  className="w-4 text-center border-none md:w-12"
                 />
                 <Button onClick={handleIncrement} className="px-4 py-2">
                   +
@@ -257,25 +251,6 @@ export default function DetailProduct() {
               </Button>
             </div>
 
-            <div className="mt-4">
-              <a
-                href="https://www.youtube.com/watch?v=your-video-id"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-[#FF0000] font-semibold"
-              >
-                <span>Xem trên YouTube</span>
-                <svg
-                  className="w-5 h-5"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M23.498 6.186a2.984 2.984 0 0 0-2.1-2.1C19.243 3.5 12 3.5 12 3.5s-7.243 0-9.398.586a2.984 2.984 0 0 0-2.1 2.1C.002 8.34 0 12 0 12s.002 3.66.502 5.814a2.984 2.984 0 0 0 2.1 2.1C4.757 20.5 12 20.5 12 20.5s7.243 0 9.398-.586a2.984 2.984 0 0 0 2.1-2.1C23.998 15.66 24 12 24 12s-.002-3.66-.502-5.814zM9.6 15.6V8.4l6.3 3.6-6.3 3.6z" />
-                </svg>
-              </a>
-            </div>
-
             <div className="mt-8">
               <h2 className="text-xl font-bold text-gray-800">
                 Thông tin sản phẩm
@@ -283,7 +258,7 @@ export default function DetailProduct() {
               <p className="mt-2 text-sm text-gray-600">
                 {product.description}
               </p>
-              <ul className="mt-2 list-disc pl-6 text-sm text-gray-600">
+              <ul className="pl-6 mt-2 text-sm text-gray-600 list-disc">
                 {product.details?.map((detail, index) => (
                   <li key={index}>{detail}</li>
                 ))}
@@ -291,38 +266,38 @@ export default function DetailProduct() {
             </div>
           </div>
         </div>
-        <div className=" mx-auto p-6">
+        <div className="p-6 mx-auto">
           {/* Review Section */}
-          <div className="border rounded-lg p-6 mb-8">
-            <h2 className="text-xl font-bold mb-4">Đánh giá sản phẩm</h2>
+          <div className="p-6 mb-8 border rounded-lg">
+            <h2 className="mb-4 text-xl font-bold">Đánh giá sản phẩm</h2>
 
             {/* Rating Summary */}
             <div className="flex items-center gap-4 mb-6">
               <div className="flex items-center">
                 <div className="flex text-yellow-400">{"★".repeat(5)}</div>
-                <span className="text-gray-500 text-sm ml-2">
+                <span className="ml-2 text-sm text-gray-500">
                   Dựa trên 2 đánh giá
                 </span>
               </div>
 
               {/* Rating Filters */}
               <div className="flex gap-2">
-                <button className="px-4 py-1 bg-blue-500 text-white rounded-full text-sm">
+                <button className="px-4 py-1 text-sm text-white bg-blue-500 rounded-full">
                   Tất cả
                 </button>
-                <button className="px-4 py-1 border rounded-full text-sm">
+                <button className="px-4 py-1 text-sm border rounded-full">
                   5 sao (2)
                 </button>
-                <button className="px-4 py-1 border rounded-full text-sm">
+                <button className="px-4 py-1 text-sm border rounded-full">
                   4 sao (0)
                 </button>
-                <button className="px-4 py-1 border rounded-full text-sm">
+                <button className="px-4 py-1 text-sm border rounded-full">
                   3 sao (0)
                 </button>
-                <button className="px-4 py-1 border rounded-full text-sm">
+                <button className="px-4 py-1 text-sm border rounded-full">
                   2 sao (0)
                 </button>
-                <button className="px-4 py-1 border rounded-full text-sm">
+                <button className="px-4 py-1 text-sm border rounded-full">
                   1 sao (0)
                 </button>
               </div>
@@ -331,14 +306,14 @@ export default function DetailProduct() {
             {/* Review List */}
             <div className="space-y-6">
               {reviews.map((review) => (
-                <div key={review.id} className="border-b pb-6">
+                <div key={review.id} className="pb-6 border-b">
                   <div className="flex items-center gap-4 mb-2">
-                    <div className="w-10 h-10 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="w-10 h-10 overflow-hidden bg-gray-200 rounded-full">
                       {/* User Avatar */}
                       <img
                         src={`https://api.dicebear.com/6.x/initials/svg?seed=${review.username}`}
                         alt="user avatar"
-                        className="w-full h-full object-cover"
+                        className="object-cover w-full h-full"
                       />
                     </div>
                     <div>
@@ -347,7 +322,7 @@ export default function DetailProduct() {
                         <div className="flex text-yellow-400">
                           {"★".repeat(review.rating)}
                         </div>
-                        <span className="text-gray-500 text-sm ml-2">
+                        <span className="ml-2 text-sm text-gray-500">
                           {review.date}
                         </span>
                       </div>
@@ -366,7 +341,7 @@ export default function DetailProduct() {
             </div>
 
             {/* Pagination */}
-            <div className="flex justify-center items-center gap-2 mt-6">
+            <div className="flex items-center justify-center gap-2 mt-6">
               <button className="px-3 py-1 border rounded bg-blue-50">1</button>
               <button className="px-3 py-1 border rounded">2</button>
               <span>...</span>
@@ -377,19 +352,19 @@ export default function DetailProduct() {
 
           {/* Related Products Section */}
           <div>
-            <h3 className="text-xl font-bold mb-4">SẢN PHẨM LIÊN QUAN</h3>
+            <h3 className="mb-4 text-xl font-bold">SẢN PHẨM LIÊN QUAN</h3>
             <div className="grid grid-cols-4 gap-4">
               {relatedProducts.map((product) => (
-                <div key={product.id} className="border rounded-lg p-4">
-                  <div className="aspect-square mb-2">
+                <div key={product.id} className="p-4 border rounded-lg">
+                  <div className="mb-2 aspect-square">
                     <img
                       src={product.image}
                       alt={product.name}
-                      className="w-full h-full object-contain"
+                      className="object-contain w-full h-full"
                     />
                   </div>
-                  <h4 className="text-sm mb-2 line-clamp-2">{product.name}</h4>
-                  <p className="text-blue-500 font-medium">{product.price}</p>
+                  <h4 className="mb-2 text-sm line-clamp-2">{product.name}</h4>
+                  <p className="font-medium text-blue-500">{product.price}</p>
                 </div>
               ))}
             </div>
