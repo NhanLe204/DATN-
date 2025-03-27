@@ -23,7 +23,7 @@ import { Typography } from "antd";
 import productsApi from "../../api/productsAPI";
 import orderApi from "../../api/orderApi";
 import ProductModal from "../components/productModal";
-
+import { Image } from "antd";
 const { Title } = Typography;
 const { Option } = Select;
 
@@ -89,7 +89,8 @@ const ProductList: React.FC = () => {
             const productId = item.product_id || item.productID;
             const quantity = item.quantity || 0;
             if (productId) {
-              productSalesMap[productId] = (productSalesMap[productId] || 0) + quantity;
+              productSalesMap[productId] =
+                (productSalesMap[productId] || 0) + quantity;
             }
           });
         }
@@ -152,14 +153,14 @@ const ProductList: React.FC = () => {
 
   const handleDelete = (record: Product) => {
     Modal.confirm({
-      title: 'Xác nhận',
+      title: "Xác nhận",
       content: `Bạn có chắc chắn muốn xóa sản phẩm "${record.name}"?`,
-      okText: 'Đồng ý',
-      cancelText: 'Hủy bỏ',
+      okText: "Đồng ý",
+      cancelText: "Hủy bỏ",
       onOk: async () => {
         try {
           await productsApi.delete(record._id);
-          setProducts(products.filter(product => product._id !== record._id));
+          setProducts(products.filter((product) => product._id !== record._id));
           notification.success({
             message: "Thành công",
             description: "Xóa sản phẩm thành công!",
@@ -167,7 +168,8 @@ const ProductList: React.FC = () => {
           });
         } catch (error: any) {
           console.error("Error deleting product:", error);
-          const errorMessage = error.response?.data?.message || "Không thể xóa sản phẩm!";
+          const errorMessage =
+            error.response?.data?.message || "Không thể xóa sản phẩm!";
           notification.error({
             message: "Lỗi",
             description: errorMessage,
@@ -207,7 +209,7 @@ const ProductList: React.FC = () => {
       key: "image",
       width: 180,
       render: (text: string) => (
-        <img src={text} alt="Product" className="object-cover w-24 h-24" />
+        <Image src={text} alt="Product" className="object-cover w-24 h-24" />
       ),
     },
     {
