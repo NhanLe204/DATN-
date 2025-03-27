@@ -10,13 +10,12 @@ import {
   Space,
   Tag,
   notification,
+  Input as AntdInput,
 } from "antd";
 import { EditOutlined } from "@ant-design/icons";
 import { motion } from "framer-motion";
-import { Typography } from "antd";
 import userApi from "../../api/userApi";
 
-const { Title } = Typography;
 const { Option } = Select;
 
 interface User {
@@ -24,6 +23,7 @@ interface User {
   _id: string;
   fullname: string;
   email: string;
+  avatar: string;
   phone_number: string;
   createdAt: string;
   status: string;
@@ -34,6 +34,7 @@ const UserList: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
 
@@ -47,12 +48,14 @@ const UserList: React.FC = () => {
           _id: user._id,
           fullname: user.fullname || "Chưa đặt tên",
           email: user.email,
+          avatar: user.avatar || "", // Ensure avatar is mapped from the API response
           phone_number: user.phone_number || "Chưa có",
           createdAt: new Date(user.createdAt).toLocaleDateString("vi-VN"),
           status: user.status === "active" ? "Hoạt động" : "Bị khóa",
           role: user.role || "USER",
         }));
         setUsers(fetchedUsers);
+        setFilteredUsers(fetchedUsers);
       } catch (error) {
         console.error("Error fetching users:", error);
       } finally {
@@ -62,6 +65,8 @@ const UserList: React.FC = () => {
     fetchUsers();
   }, []);
 
+  // Handle search functionality
+
   const columns = [
     {
       title: "STT",
@@ -70,33 +75,97 @@ const UserList: React.FC = () => {
       render: (_: any, __: User, index: number) => index + 1,
     },
     {
-      title: "Tên tài khoản",
+      title: "Ảnh",
+      key: "avatar",
+      width: 100,
+      render: (text: string, record: User) => (
+        <div
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: "50%",
+            backgroundColor: "#e0e0e0",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            overflow: "hidden", // Ensure the image doesn't overflow the circle
+          }}
+        >
+          {record.avatar ? (
+            <img
+              src={record.avatar}
+              alt={record.fullname}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover", // Ensure the image scales properly within the circle
+              }}
+              onError={(e) => {
+                // Fallback to placeholder if the image fails to load
+                e.currentTarget.style.display = "none";
+                e.currentTarget.parentElement!.innerHTML =
+                  '<span style="font-size: 20px; color: #888;">👤</span>';
+              }}
+            />
+          ) : (
+            <span style={{ fontSize: 20, color: "#888" }}>👤</span>
+          )}
+        </div>
+      ),
+    },
+    {
+      title: "Họ tên",
       dataIndex: "fullname",
       key: "fullname",
-      width: 250, // Tăng width từ 150 lên 250 để cột dài hơn
+      width: 400,
+      render: (text: string, record: User) => (
+        <span style={{ whiteSpace: "pre-line" }}>
+          {text}
+          <br />
+          {record.email}
+        </span>
+      ),
     },
-    { title: "Email", dataIndex: "email", key: "email" },
     { title: "Số điện thoại", dataIndex: "phone_number", key: "phone_number" },
-    { title: "Ngày đăng ký", dataIndex: "createdAt", key: "createdAt" },
     {
       title: "Trạng thái",
       dataIndex: "status",
       key: "status",
-      render: (status: string) => (
-        <Tag color={status === "Hoạt động" ? "success" : "error"}>{status}</Tag>
-      ),
+      width: 200,
+      render: (status: string) => {
+        let color = "";
+        switch (status) {
+          case "Hoạt động":
+            color = "green";
+            break;
+          case "Bị khóa":
+            color = "red";
+            break;
+          default:
+            color = "gray";
+        }
+        return <Tag color={color}>{status}</Tag>;
+      },
     },
     {
-      title: "Tính năng",
+      title: "Role",
+      dataIndex: "role",
+      key: "role",
+      width: 150,
+    },
+    {
+      title: "Action",
       key: "action",
       width: 100,
       render: (_: any, record: User) => (
         <Space>
           <Button
-            icon={<EditOutlined />}
+            type="link"
             onClick={() => handleEdit(record)}
-            size="small"
-          />
+            style={{ color: "#1890ff" }}
+          >
+            Edit
+          </Button>
         </Space>
       ),
     },
@@ -125,6 +194,11 @@ const UserList: React.FC = () => {
           u.key === selectedUser?.key ? { ...u, status: values.status } : u
         )
       );
+      setFilteredUsers(
+        filteredUsers.map((u) =>
+          u.key === selectedUser?.key ? { ...u, status: values.status } : u
+        )
+      );
       setIsModalVisible(false);
       notification.success({
         message: "Thành công",
@@ -147,15 +221,17 @@ const UserList: React.FC = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Card
-        bordered={false}
-        className="shadow-sm"
-      >
+      <Card bordered={false} className="shadow-sm">
         <Table
           columns={columns}
-          dataSource={users}
+          dataSource={filteredUsers}
           loading={loading}
-          pagination={{ pageSize: 10 }}
+          pagination={{
+            pageSize: 5, // Match the image (5 rows per page)
+            showSizeChanger: false,
+            position: ["bottomRight"],
+            className: "custom-pagination",
+          }}
           className="overflow-x-auto"
         />
       </Card>
@@ -198,6 +274,7 @@ const UserList: React.FC = () => {
           </Form>
         )}
       </Modal>
+
     </motion.div>
   );
 };
