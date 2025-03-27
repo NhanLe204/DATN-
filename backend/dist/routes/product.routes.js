@@ -4,6 +4,7 @@ import { requireAdmin } from '../middlewares/protectRoute.js';
 import { verifyToken } from '../middlewares/verifyToken.js';
 import uploader from '../config/cloudinary.config.js';
 const productRouter = Router();
+// http://localhost:5000/api/products
 productRouter.get('/products', getAllProduct);
 productRouter.get('/products/:id', getProductById);
 productRouter.get('/newproducts', getNewProduct);

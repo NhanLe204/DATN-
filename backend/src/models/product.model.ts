@@ -4,6 +4,7 @@ import { ProductStatus } from '../enums/product.enum.js';
 import { IProduct } from '../interfaces/product.interface.js';
 import brand from './brand.model.js';
 import tag from './tag.model.js';
+
 const productSchema: Schema<IProduct> = new Schema<IProduct>(
   {
     name: {

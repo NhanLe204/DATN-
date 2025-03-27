@@ -24,8 +24,7 @@ const orderSchema = new Schema({
         enum: OrderStatus,
         default: OrderStatus.PENDING
     },
-    transaction_id: { type: String, default: '' },
-    booking_date: { type: Date, default: null }
+    transaction_id: { type: String, default: '' }
 }, { timestamps: true });
 const orderModel = mongoose.models.Order || model('Order', orderSchema);
 export default orderModel;

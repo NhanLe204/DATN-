@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { getAllRatings, getRatingID, createRating, updateRating, deleteRating } from '../controllers/rate.controllers.js';
 const rateRouter = Router();
+// http://localhost:5000/api/v1/ratings
 rateRouter.get('/ratings', getAllRatings);
 rateRouter.get('/ratings/:id', getRatingID);
 rateRouter.post('/ratings', createRating);

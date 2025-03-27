@@ -3,6 +3,7 @@ import { getAllCategory, toggleCategory, insertCategory, updateCategory, getCate
 import { requireAdmin } from '../middlewares/protectRoute.js';
 import { verifyToken } from '../middlewares/verifyToken.js';
 const categoryRouter = Router();
+// http://localhost:5000/api/v1/categories
 categoryRouter.get('/categories', getAllCategory);
 categoryRouter.get('/categories/:id', getCategoryById);
 categoryRouter.get('/categories/status/active', getCategoriesActive);

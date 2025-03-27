@@ -14,5 +14,4 @@ export interface IOrder {
     payment_status: PaymentStatus;
     status: OrderStatus;
     transaction_id?: string;
-    booking_date?: Date;
 }

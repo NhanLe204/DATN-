@@ -3,6 +3,7 @@ import { requireAdmin } from '../middlewares/protectRoute.js';
 import { verifyToken } from '../middlewares/verifyToken.js';
 import { getAllTags, getTagById, insertTag, deleteTag, updateTag } from '../controllers/tag.controllers.js';
 const tagRouter = Router();
+// http://localhost:5000/api/v1/tags
 tagRouter.get('/tags', getAllTags);
 tagRouter.get('/tags/:id', getTagById);
 tagRouter.post('/tags', verifyToken, requireAdmin, insertTag);

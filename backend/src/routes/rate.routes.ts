@@ -10,6 +10,7 @@ import {
 } from '../controllers/rate.controllers.js';
 
 const rateRouter = Router();
+// http://localhost:5000/api/v1/ratings
 
 rateRouter.get('/ratings', getAllRatings);
 rateRouter.get('/ratings/:id', getRatingID);
