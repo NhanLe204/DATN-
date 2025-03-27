@@ -4,13 +4,14 @@ import mongoose, { Schema } from 'mongoose';
 
 const paymentTypeSchema: Schema<IPaymentType> = new Schema<IPaymentType>(
   {
-    _id: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: true
-    },
     payment_type_name: {
       type: String,
       required: true
+    },
+    description: {
+      type: String,
+      required: false,
+      default: ''
     }
   },
   { timestamps: true }
