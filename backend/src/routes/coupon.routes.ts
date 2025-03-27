@@ -13,6 +13,8 @@ import {
 // import { getAllBrands, getBrandById, insertBrand, updateBrand } from '../controllers/brand.controllers.js';
 
 const couponRouter = Router();
+
+// http://localhost:3000/api/v1/coupons
 couponRouter.get('/coupons', getAllCoupon);
 couponRouter.get('/coupons/active', getActiveCoupons);
 couponRouter.get('/coupons/:id', getCouponById);

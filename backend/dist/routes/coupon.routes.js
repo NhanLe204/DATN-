@@ -4,6 +4,7 @@ import { verifyToken } from '../middlewares/verifyToken.js';
 import { applyCoupon, createCoupon, deleteCouponById, getActiveCoupons, getAllCoupon, getCouponById, updateCoupon } from '../controllers/coupon.controllers.js';
 // import { getAllBrands, getBrandById, insertBrand, updateBrand } from '../controllers/brand.controllers.js';
 const couponRouter = Router();
+// http://localhost:3000/api/v1/coupons
 couponRouter.get('/coupons', getAllCoupon);
 couponRouter.get('/coupons/active', getActiveCoupons);
 couponRouter.get('/coupons/:id', getCouponById);

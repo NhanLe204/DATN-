@@ -4,7 +4,6 @@ import { Card, Row, Col, Table, Tag, Statistic, message } from "antd";
 import {
   UserOutlined,
   ShoppingCartOutlined,
-  ExceptionOutlined,
   FileTextOutlined,
 } from "@ant-design/icons";
 import { motion } from "framer-motion";
@@ -39,21 +38,12 @@ const Dashboard: React.FC = () => {
   const [currentDate, setCurrentDate] = useState("");
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalOrders, setTotalOrders] = useState(0);
-  const [outOfStockCount, setOutOfStockCount] = useState(0);
   const [canceledOrders, setCanceledOrders] = useState(0);
-  interface Customer {
-    avatar?: string;
-    fullname?: string;
-    name?: string;
-    status?: string;
-  }
-
-  const [newCustomers, setNewCustomers] = useState<Customer[]>([]);
+  const [newCustomers, setNewCustomers] = useState([]);
   const [outOfStockProducts, setOutOfStockProducts] = useState([]);
   const [hotProducts, setHotProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentPageOutOfStock, setCurrentPageOutOfStock] = useState(1);
   const [currentPageHotProducts, setCurrentPageHotProducts] = useState(1);
 
   // Cập nhật thời gian và ngày hiện tại
@@ -124,7 +114,8 @@ const Dashboard: React.FC = () => {
         // Lấy sản phẩm hết hàng
         const outOfStockResponse = await productApi.getProductOutStock();
         const outOfStockItems = outOfStockResponse.data.result || [];
-
+        
+        
         const formattedOutOfStockItems = outOfStockItems.map((product) => ({
           key: product._id,
           _id: product._id,
@@ -361,9 +352,7 @@ const Dashboard: React.FC = () => {
                 <Statistic
                   title="Hết hàng"
                   value={outOfStockCount}
-                  prefix={
-                    <ExceptionOutlined className="mr-2 text-xl text-yellow-500" />
-                  }
+                  prefix={<ExceptionOutlined className="mr-2 text-xl text-yellow-500" />}
                   suffix="sản phẩm"
                   loading={loading}
                 />
@@ -467,22 +456,6 @@ const Dashboard: React.FC = () => {
             pagination={{
               pageSize: 4,
               total: orders.length,
-            }}
-            className="overflow-x-auto"
-            loading={loading}
-          />
-        </Card>
-
-        {/* Bảng sản phẩm đã hết */}
-        <Card title="SẢN PHẨM ĐÃ HẾT" bordered={false} className="shadow-sm">
-          <Table
-            columns={productColumns}
-            dataSource={outOfStockProducts}
-            pagination={{
-              current: currentPageOutOfStock,
-              pageSize: 4,
-              onChange: (page) => setCurrentPageOutOfStock(page),
-              total: outOfStockProducts.length,
             }}
             className="overflow-x-auto"
             loading={loading}

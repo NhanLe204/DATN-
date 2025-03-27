@@ -17,6 +17,7 @@ import orderRouter from './routes/order.routes.js';
 import tagRouter from './routes/tag.routes.js';
 import serviceRouter from './routes/service.routes.js';
 import paymentRouter from './routes/payment.routes.js';
+import bookingRouter from './routes/booking.routes.js';
 
 dotenv.config(); // Đọc file .env
 console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID);
@@ -39,6 +40,8 @@ app.get('/', (req, res) => {
   res.send('Hello World');
 });
 
+// Routes
+
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1', categoryRouter);
 app.use('/api/v1', productRouter);
@@ -49,7 +52,7 @@ app.use('/api/v1', couponRouter);
 app.use('/api/v1', orderRouter);
 app.use('/api/v1', tagRouter);
 app.use('/api/v1', serviceRouter);
-app.use('/api/v1', paymentRouter);
+app.use('/api/v1', bookingRouter);
 
 app.use(errorHandler);
 

@@ -5,7 +5,7 @@ import { getAllTags, getTagById, insertTag, deleteTag, updateTag } from '../cont
 import { deleteRating } from '@/controllers/rate.controllers.js';
 
 const tagRouter = Router();
-
+// http://localhost:5000/api/v1/tags
 tagRouter.get('/tags', getAllTags);
 tagRouter.get('/tags/:id', getTagById);
 tagRouter.post('/tags', verifyToken, requireAdmin, insertTag);
