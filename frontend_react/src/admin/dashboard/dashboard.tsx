@@ -11,7 +11,7 @@ import { motion } from "framer-motion";
 import { Typography } from "antd";
 import userApi from "../../api/userApi";
 import productApi from "../../api/productsApi";
-import orderApi from "../../api/orderApi"
+import orderApi from "../../api/orderApi";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -23,7 +23,14 @@ import {
 } from "chart.js";
 
 // Đăng ký các thành phần cần thiết của Chart.js
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const { Text } = Typography;
 
@@ -34,7 +41,14 @@ const Dashboard: React.FC = () => {
   const [totalOrders, setTotalOrders] = useState(0);
   const [outOfStockCount, setOutOfStockCount] = useState(0);
   const [canceledOrders, setCanceledOrders] = useState(0);
-  const [newCustomers, setNewCustomers] = useState([]);
+  interface Customer {
+    avatar?: string;
+    fullname?: string;
+    name?: string;
+    status?: string;
+  }
+
+  const [newCustomers, setNewCustomers] = useState<Customer[]>([]);
   const [outOfStockProducts, setOutOfStockProducts] = useState([]);
   const [hotProducts, setHotProducts] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -99,7 +113,8 @@ const Dashboard: React.FC = () => {
         const formattedOrders = allOrders.map((order, index) => ({
           key: index.toString(),
           id: order._id || "N/A",
-          customer: order.userID?.fullname || order.userID?.name || "Khách vãng lai",
+          customer:
+            order.userID?.fullname || order.userID?.name || "Khách vãng lai",
           paymentType: order.payment_typeID?.name || "Không xác định",
           delivery: order.deliveryID?.delivery_name || "Không xác định",
           total: `${order.total_price?.toLocaleString() || 0} VNĐ`,
@@ -109,8 +124,7 @@ const Dashboard: React.FC = () => {
         // Lấy sản phẩm hết hàng
         const outOfStockResponse = await productApi.getProductOutStock();
         const outOfStockItems = outOfStockResponse.data.result || [];
-        
-        
+
         const formattedOutOfStockItems = outOfStockItems.map((product) => ({
           key: product._id,
           _id: product._id,
@@ -156,41 +170,41 @@ const Dashboard: React.FC = () => {
   }, []);
 
   // Dữ liệu doanh số cho biểu đồ
-const salesData = [
-  { name: "Tháng 1", sales2024: 20, sales2025: 25 },
-  { name: "Tháng 2", sales2024: 59, sales2025: 62 },
-  { name: "Tháng 3", sales2024: 90, sales2025: 85 },
-  { name: "Tháng 4", sales2024: 51, sales2025: null },
-  { name: "Tháng 5", sales2024: 56, sales2025: null },
-  { name: "Tháng 6", sales2024: 100, sales2025: null },
-  { name: "Tháng 7", sales2024: 75, sales2025: null },
-  { name: "Tháng 8", sales2024: 82, sales2025: null },
-  { name: "Tháng 9", sales2024: 68, sales2025: null },
-  { name: "Tháng 10", sales2024: 95, sales2025: null },
-  { name: "Tháng 11", sales2024: 87, sales2025: null },
-  { name: "Tháng 12", sales2024: 110, sales2025: null },
-];
+  const salesData = [
+    { name: "Tháng 1", sales2024: 20, sales2025: 25 },
+    { name: "Tháng 2", sales2024: 59, sales2025: 62 },
+    { name: "Tháng 3", sales2024: 90, sales2025: 85 },
+    { name: "Tháng 4", sales2024: 51, sales2025: null },
+    { name: "Tháng 5", sales2024: 56, sales2025: null },
+    { name: "Tháng 6", sales2024: 100, sales2025: null },
+    { name: "Tháng 7", sales2024: 75, sales2025: null },
+    { name: "Tháng 8", sales2024: 82, sales2025: null },
+    { name: "Tháng 9", sales2024: 68, sales2025: null },
+    { name: "Tháng 10", sales2024: 95, sales2025: null },
+    { name: "Tháng 11", sales2024: 87, sales2025: null },
+    { name: "Tháng 12", sales2024: 110, sales2025: null },
+  ];
 
-// Cập nhật chartData
-const chartData = {
-  labels: salesData.map((data) => data.name),
-  datasets: [
-    {
-      label: "Doanh số 2024",
-      data: salesData.map((data) => data.sales2024),
-      backgroundColor: "#FFD43B",
-      borderColor: "#FFD43B",
-      borderWidth: 1,
-    },
-    {
-      label: "Doanh số 2025",
-      data: salesData.map((data) => data.sales2025),
-      backgroundColor: "#096DEF",
-      borderColor: "#096DEF",
-      borderWidth: 1,
-    },
-  ],
-};
+  // Cập nhật chartData
+  const chartData = {
+    labels: salesData.map((data) => data.name),
+    datasets: [
+      {
+        label: "Doanh số 2024",
+        data: salesData.map((data) => data.sales2024),
+        backgroundColor: "#FFD43B",
+        borderColor: "#FFD43B",
+        borderWidth: 1,
+      },
+      {
+        label: "Doanh số 2025",
+        data: salesData.map((data) => data.sales2025),
+        backgroundColor: "#096DEF",
+        borderColor: "#096DEF",
+        borderWidth: 1,
+      },
+    ],
+  };
 
   // Tùy chọn cho biểu đồ Chart.js
   const chartOptions = {
@@ -198,7 +212,7 @@ const chartData = {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: "top",
+        position: "top" as const,
       },
       title: {
         display: false,
@@ -225,7 +239,11 @@ const chartData = {
   const ordersColumns = [
     { title: "ID đơn hàng", dataIndex: "id", key: "id" },
     { title: "Khách hàng", dataIndex: "customer", key: "customer" },
-    { title: "Phương thức thanh toán", dataIndex: "paymentType", key: "paymentType" },
+    {
+      title: "Phương thức thanh toán",
+      dataIndex: "paymentType",
+      key: "paymentType",
+    },
     { title: "Phương thức giao hàng", dataIndex: "delivery", key: "delivery" },
     { title: "Tổng tiền", dataIndex: "total", key: "total" },
   ];
@@ -307,7 +325,9 @@ const chartData = {
                 <Statistic
                   title="Tổng số người dùng"
                   value={totalUsers}
-                  prefix={<UserOutlined className="mr-2 text-xl text-cyan-500" />}
+                  prefix={
+                    <UserOutlined className="mr-2 text-xl text-cyan-500" />
+                  }
                   suffix="tài khoản"
                   loading={loading}
                 />
@@ -323,7 +343,9 @@ const chartData = {
                 <Statistic
                   title="Tổng đơn hàng"
                   value={totalOrders}
-                  prefix={<ShoppingCartOutlined className="mr-2 text-xl text-yellow-500" />}
+                  prefix={
+                    <ShoppingCartOutlined className="mr-2 text-xl text-yellow-500" />
+                  }
                   suffix="đơn hàng"
                   loading={loading}
                 />
@@ -339,7 +361,9 @@ const chartData = {
                 <Statistic
                   title="Hết hàng"
                   value={outOfStockCount}
-                  prefix={<ExceptionOutlined className="mr-2 text-xl text-yellow-500" />}
+                  prefix={
+                    <ExceptionOutlined className="mr-2 text-xl text-yellow-500" />
+                  }
                   suffix="sản phẩm"
                   loading={loading}
                 />
@@ -355,7 +379,9 @@ const chartData = {
                 <Statistic
                   title="Đơn hàng hủy"
                   value={canceledOrders}
-                  prefix={<FileTextOutlined className="mr-2 text-xl text-red-500" />}
+                  prefix={
+                    <FileTextOutlined className="mr-2 text-xl text-red-500" />
+                  }
                   suffix="đơn hàng"
                   loading={loading}
                 />
@@ -367,14 +393,22 @@ const chartData = {
         {/* Biểu đồ doanh số và khách hàng mới */}
         <Row gutter={[32, 16]} className="mb-6">
           <Col xs={24} lg={16}>
-            <Card title="THỐNG KẾ DOANH SỐ" bordered={false} className="shadow-sm">
+            <Card
+              title="THỐNG KẾ DOANH SỐ"
+              bordered={false}
+              className="shadow-sm"
+            >
               <div className="h-80">
                 <Bar data={chartData} options={chartOptions} />
               </div>
             </Card>
           </Col>
           <Col xs={24} lg={8}>
-            <Card title="Khách hàng mới" bordered={false} className="w-full shadow-sm">
+            <Card
+              title="Khách hàng mới"
+              bordered={false}
+              className="w-full shadow-sm"
+            >
               <div className="space-y-6">
                 {newCustomers.map((customer, index) => (
                   <div key={index} className="flex items-center space-x-4">
@@ -387,7 +421,10 @@ const chartData = {
                       className="rounded-full w-14 h-14"
                     />
                     <div>
-                      <Text type="secondary" className="text-base text-gray-500">
+                      <Text
+                        type="secondary"
+                        className="text-base text-gray-500"
+                      >
                         {customer.fullname || customer.name}
                       </Text>
                       <br />
@@ -403,7 +440,11 @@ const chartData = {
         </Row>
 
         {/* Bảng sản phẩm bán chạy */}
-        <Card title="SẢN PHẨM BÁN CHẠY" bordered={false} className="mb-6 shadow-sm">
+        <Card
+          title="SẢN PHẨM BÁN CHẠY"
+          bordered={false}
+          className="mb-6 shadow-sm"
+        >
           <Table
             columns={productColumns}
             dataSource={hotProducts}
