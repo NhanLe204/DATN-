@@ -19,7 +19,7 @@ interface Service {
   service_name: string;
   service_price: number;
   description?: string;
-  duration?: string; // ISO string like "1970-01-01T00:00:00.060Z"
+  duration?: string; 
   status?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -37,11 +37,19 @@ const SpaBookingForm: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [petFormData, setPetFormData] = useState<PetFormData[]>([{ estimatedPrice: undefined, estimatedDuration: undefined }]);
   const [selectedDates, setSelectedDates] = useState<(moment.Moment | null)[]>([null]);
+  const [currentDateTime, setCurrentDateTime] = useState(moment()); 
 
-  const currentDateTime = moment("2025-03-26T17:38:00"); // Ngày và giờ hiện tại: 26/03/2025, 5:38 PM
   const availableTimeSlots = [
     "8h", "9h", "10h", "11h", "13h", "14h", "15h", "16h", "17h",
   ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentDateTime(moment());
+    }, 1000); 
+
+    return () => clearInterval(interval); 
+  }, []);
 
   const handleInfoClick = () => {
     navigate("/info");
@@ -186,7 +194,7 @@ const SpaBookingForm: React.FC = () => {
       return true;
     });
 
-    return filteredTimeSlots.length > 0 ? filteredTimeSlots : availableTimeSlots; // Đảm bảo không trả về danh sách rỗng
+    return filteredTimeSlots.length > 0 ? filteredTimeSlots : availableTimeSlots;
   };
 
   const handleDateChange = (date: moment.Moment | null, index: number) => {

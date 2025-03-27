@@ -4,14 +4,13 @@ import { Card, Row, Col, Table, Tag, Statistic, message } from "antd";
 import {
   UserOutlined,
   ShoppingCartOutlined,
-  ExceptionOutlined,
   FileTextOutlined,
 } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { Typography } from "antd";
 import userApi from "../../api/userApi";
 import productApi from "../../api/productsApi";
-import orderApi from "../../api/orderApi"
+import orderApi from "../../api/orderApi";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -32,14 +31,11 @@ const Dashboard: React.FC = () => {
   const [currentDate, setCurrentDate] = useState("");
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalOrders, setTotalOrders] = useState(0);
-  const [outOfStockCount, setOutOfStockCount] = useState(0);
   const [canceledOrders, setCanceledOrders] = useState(0);
   const [newCustomers, setNewCustomers] = useState([]);
-  const [outOfStockProducts, setOutOfStockProducts] = useState([]);
   const [hotProducts, setHotProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentPageOutOfStock, setCurrentPageOutOfStock] = useState(1);
   const [currentPageHotProducts, setCurrentPageHotProducts] = useState(1);
 
   // Cập nhật thời gian và ngày hiện tại
@@ -106,27 +102,6 @@ const Dashboard: React.FC = () => {
         }));
         setOrders(formattedOrders);
 
-        // Lấy sản phẩm hết hàng
-        const outOfStockResponse = await productApi.getProductOutStock();
-        const outOfStockItems = outOfStockResponse.data.result || [];
-        
-        
-        const formattedOutOfStockItems = outOfStockItems.map((product) => ({
-          key: product._id,
-          _id: product._id,
-          name: product.name,
-          image: product.image_url?.[0] || "https://via.placeholder.com/64",
-          images: product.image_url || [],
-          quantity: product.quantity || 0,
-          status: product.status,
-          price: product.price,
-          category: product.category_id?.name || "Không xác định",
-          brand: product.brand_id?.brand_name || "Không có thương hiệu",
-          tag: product.tag_id?.tag_name || "Không có thẻ",
-        }));
-        setOutOfStockCount(formattedOutOfStockItems.length);
-        setOutOfStockProducts(formattedOutOfStockItems);
-
         // Lấy sản phẩm bán chạy
         const hotProductsResponse = await productApi.getHotproducts();
         const hotProductsItems = hotProductsResponse.data.result || [];
@@ -156,41 +131,41 @@ const Dashboard: React.FC = () => {
   }, []);
 
   // Dữ liệu doanh số cho biểu đồ
-const salesData = [
-  { name: "Tháng 1", sales2024: 20, sales2025: 25 },
-  { name: "Tháng 2", sales2024: 59, sales2025: 62 },
-  { name: "Tháng 3", sales2024: 90, sales2025: 85 },
-  { name: "Tháng 4", sales2024: 51, sales2025: null },
-  { name: "Tháng 5", sales2024: 56, sales2025: null },
-  { name: "Tháng 6", sales2024: 100, sales2025: null },
-  { name: "Tháng 7", sales2024: 75, sales2025: null },
-  { name: "Tháng 8", sales2024: 82, sales2025: null },
-  { name: "Tháng 9", sales2024: 68, sales2025: null },
-  { name: "Tháng 10", sales2024: 95, sales2025: null },
-  { name: "Tháng 11", sales2024: 87, sales2025: null },
-  { name: "Tháng 12", sales2024: 110, sales2025: null },
-];
+  const salesData = [
+    { name: "Tháng 1", sales2024: 20, sales2025: 25 },
+    { name: "Tháng 2", sales2024: 59, sales2025: 62 },
+    { name: "Tháng 3", sales2024: 90, sales2025: 85 },
+    { name: "Tháng 4", sales2024: 51, sales2025: null },
+    { name: "Tháng 5", sales2024: 56, sales2025: null },
+    { name: "Tháng 6", sales2024: 100, sales2025: null },
+    { name: "Tháng 7", sales2024: 75, sales2025: null },
+    { name: "Tháng 8", sales2024: 82, sales2025: null },
+    { name: "Tháng 9", sales2024: 68, sales2025: null },
+    { name: "Tháng 10", sales2024: 95, sales2025: null },
+    { name: "Tháng 11", sales2024: 87, sales2025: null },
+    { name: "Tháng 12", sales2024: 110, sales2025: null },
+  ];
 
-// Cập nhật chartData
-const chartData = {
-  labels: salesData.map((data) => data.name),
-  datasets: [
-    {
-      label: "Doanh số 2024",
-      data: salesData.map((data) => data.sales2024),
-      backgroundColor: "#FFD43B",
-      borderColor: "#FFD43B",
-      borderWidth: 1,
-    },
-    {
-      label: "Doanh số 2025",
-      data: salesData.map((data) => data.sales2025),
-      backgroundColor: "#096DEF",
-      borderColor: "#096DEF",
-      borderWidth: 1,
-    },
-  ],
-};
+  // Cập nhật chartData
+  const chartData = {
+    labels: salesData.map((data) => data.name),
+    datasets: [
+      {
+        label: "Doanh số 2024",
+        data: salesData.map((data) => data.sales2024),
+        backgroundColor: "#FFD43B",
+        borderColor: "#FFD43B",
+        borderWidth: 1,
+      },
+      {
+        label: "Doanh số 2025",
+        data: salesData.map((data) => data.sales2025),
+        backgroundColor: "#096DEF",
+        borderColor: "#096DEF",
+        borderWidth: 1,
+      },
+    ],
+  };
 
   // Tùy chọn cho biểu đồ Chart.js
   const chartOptions = {
@@ -337,22 +312,6 @@ const chartData = {
             >
               <Card bordered={false} className="shadow-sm">
                 <Statistic
-                  title="Hết hàng"
-                  value={outOfStockCount}
-                  prefix={<ExceptionOutlined className="mr-2 text-xl text-yellow-500" />}
-                  suffix="sản phẩm"
-                  loading={loading}
-                />
-              </Card>
-            </motion.div>
-          </Col>
-          <Col xs={24} sm={12} md={8} lg={8}>
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
-              <Card bordered={false} className="shadow-sm">
-                <Statistic
                   title="Đơn hàng hủy"
                   value={canceledOrders}
                   prefix={<FileTextOutlined className="mr-2 text-xl text-red-500" />}
@@ -426,22 +385,6 @@ const chartData = {
             pagination={{
               pageSize: 4,
               total: orders.length,
-            }}
-            className="overflow-x-auto"
-            loading={loading}
-          />
-        </Card>
-
-        {/* Bảng sản phẩm đã hết */}
-        <Card title="SẢN PHẨM ĐÃ HẾT" bordered={false} className="shadow-sm">
-          <Table
-            columns={productColumns}
-            dataSource={outOfStockProducts}
-            pagination={{
-              current: currentPageOutOfStock,
-              pageSize: 4,
-              onChange: (page) => setCurrentPageOutOfStock(page),
-              total: outOfStockProducts.length,
             }}
             className="overflow-x-auto"
             loading={loading}
