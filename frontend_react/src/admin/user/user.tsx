@@ -3,7 +3,6 @@ import {
   Card,
   Button,
   Table,
-  Checkbox,
   Modal,
   Form,
   Input,
@@ -15,7 +14,7 @@ import {
 import { EditOutlined } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { Typography } from "antd";
-import userApi from "../../api/userApi"; // Import userApi
+import userApi from "../../api/userApi";
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -34,7 +33,6 @@ interface User {
 const UserList: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
@@ -43,7 +41,7 @@ const UserList: React.FC = () => {
     const fetchUsers = async () => {
       setLoading(true);
       try {
-        const { data } = await userApi.getAllUsers(); // Sử dụng userApi thay vì axios
+        const { data } = await userApi.getAllUsers();
         const fetchedUsers = data.result.map((user: any) => ({
           key: user._id,
           _id: user._id,
@@ -66,38 +64,16 @@ const UserList: React.FC = () => {
 
   const columns = [
     {
-      title: (
-        <Checkbox
-          onChange={(e) => {
-            if (e.target.checked) {
-              setSelectedRows(users.map((user) => user.key));
-            } else {
-              setSelectedRows([]);
-            }
-          }}
-        />
-      ),
-      dataIndex: "checkbox",
-      width: 50,
-      render: (_: any, record: User) => (
-        <Checkbox
-          checked={selectedRows.includes(record.key)}
-          onChange={(e) => {
-            if (e.target.checked) {
-              setSelectedRows([...selectedRows, record.key]);
-            } else {
-              setSelectedRows(selectedRows.filter((key) => key !== record.key));
-            }
-          }}
-        />
-      ),
+      title: "STT",
+      key: "stt",
+      width: 60,
+      render: (_: any, __: User, index: number) => index + 1,
     },
-    { title: "ID người dùng", dataIndex: "_id", key: "_id" },
     {
       title: "Tên tài khoản",
       dataIndex: "fullname",
       key: "fullname",
-      width: 150,
+      width: 250, // Tăng width từ 150 lên 250 để cột dài hơn
     },
     { title: "Email", dataIndex: "email", key: "email" },
     { title: "Số điện thoại", dataIndex: "phone_number", key: "phone_number" },
@@ -143,7 +119,7 @@ const UserList: React.FC = () => {
       const updatedData = {
         status: values.status === "Hoạt động" ? "active" : "inactive",
       };
-      const { data } = await userApi.update(selectedUser?._id, updatedData); // Sử dụng userApi.update
+      const { data } = await userApi.update(selectedUser?._id, updatedData);
       setUsers(
         users.map((u) =>
           u.key === selectedUser?.key ? { ...u, status: values.status } : u
@@ -172,7 +148,6 @@ const UserList: React.FC = () => {
       transition={{ duration: 0.5 }}
     >
       <Card
-        // title={<Title level={4}>Danh sách người dùng</Title>}
         bordered={false}
         className="shadow-sm"
       >
