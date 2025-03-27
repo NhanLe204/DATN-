@@ -8,36 +8,49 @@ import { ServiceStatus } from '@/enums/service.enum.js';
 
 export const createService = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { service_name, description, duration, status } = req.body;
+    const { service_name, description, service_price, duration, status } = req.body;
 
     // Validate dữ liệu đầu vào
-    if (!service_name || !description || !duration || !status) {
-      res.status(400).json({ success: false, message: 'Thiếu các trường bắt buộc' });
+    if (!service_name || service_price === undefined || duration === undefined) {
+      res
+        .status(400)
+        .json({ success: false, message: 'Thiếu các trường bắt buộc: service_name, service_price, duration' });
       return;
     }
 
-    // Kiểm tra xem serviceID đã tồn tại chưa
+    // Kiểm tra kiểu dữ liệu
+    const price = Number(service_price);
+    const dur = Number(duration);
+    if (isNaN(price) || price < 0) {
+      res.status(400).json({ success: false, message: 'Giá dịch vụ phải là số không âm' });
+      return;
+    }
+    if (isNaN(dur) || dur <= 0) {
+      res.status(400).json({ success: false, message: 'Thời lượng phải là số lớn hơn 0' });
+      return;
+    }
+
+    // Kiểm tra service_name đã tồn tại chưa
     const existingService = await serviceModel.findOne({ service_name });
     if (existingService) {
-      res.status(400).json({ success: false, message: 'service đã tồn tại' });
+      res.status(400).json({ success: false, message: 'Dịch vụ đã tồn tại' });
       return;
     }
 
-    // Tạo mới dịch vụ
     const newService = new serviceModel({
       service_name,
-      description,
-      duration,
-      status
+      description: description || '',
+      service_price: price,
+      duration: dur,
+      status: status || 'active'
     });
 
-    // Lưu vào database
     const savedService = await newService.save();
 
     res.status(201).json({ success: true, message: 'Tạo dịch vụ thành công', data: savedService });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    res.status(500).json({ success: false, message: 'Internal Server Error', details: errorMessage });
+    res.status(500).json({ success: false, message: 'Lỗi server khi tạo dịch vụ', details: errorMessage });
   }
 };
 export const getAllServices = async (req: Request, res: Response): Promise<void> => {
@@ -108,43 +121,58 @@ export const getServiceById = async (req: Request, res: Response): Promise<void>
 
 export const updateService = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id } = req.params; // Lấy serviceID từ params
+    const { id } = req.params;
     const { service_name, description, service_price, duration, status } = req.body;
 
-    // Kiểm tra xem dịch vụ có tồn tại không
     const service = await serviceModel.findById(id);
     if (!service) {
-      res.status(404).json({ success: false, message: 'Không tìm thấy dịch vụ với serviceID này' });
+      res.status(404).json({ success: false, message: 'Không tìm thấy dịch vụ' });
       return;
     }
 
-    // Kiểm tra dữ liệu đầu vào
-    if (service_price !== undefined && service_price < 0) {
-      res.status(400).json({ success: false, message: 'Giá dịch vụ không được âm' });
-      return;
+    // Kiểm tra dữ liệu đầu vào nếu có
+    if (service_price !== undefined) {
+      const price = Number(service_price);
+      if (isNaN(price) || price < 0) {
+        res.status(400).json({ success: false, message: 'Giá dịch vụ phải là số không âm' });
+        return;
+      }
+      service.service_price = price;
     }
-    if (duration !== undefined && duration <= 0) {
-      res.status(400).json({ success: false, message: 'Thời lượng phải lớn hơn 0' });
-      return;
+    if (duration !== undefined) {
+      const dur = Number(duration);
+      if (isNaN(dur) || dur <= 0) {
+        res.status(400).json({ success: false, message: 'Thời lượng phải là số lớn hơn 0' });
+        return;
+      }
+      service.duration = dur;
     }
-    if (status && !Object.values(ServiceStatus).includes(status)) {
-      res.status(400).json({ success: false, message: 'Trạng thái không hợp lệ' });
-      return;
-    }
-
-    // Cập nhật các trường (chỉ cập nhật nếu có giá trị trong body)
     if (service_name) service.service_name = service_name;
-    if (description) service.description = description;
-    if (service_price !== undefined) service.service_price = service_price;
-    if (duration !== undefined) service.duration = duration;
-    if (status) service.status = status;
+    if (description !== undefined) service.description = description;
+    if (status && ['active', 'inactive'].includes(status)) service.status = status;
 
-    // Lưu thay đổi
     const updatedService = await service.save();
 
     res.status(200).json({ success: true, message: 'Cập nhật dịch vụ thành công', data: updatedService });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    res.status(500).json({ success: false, message: 'Internal Server Error', details: errorMessage });
+    res.status(500).json({ success: false, message: 'Lỗi server khi cập nhật dịch vụ', details: errorMessage });
+  }
+};
+// xóa
+export const deleteService = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const service = await serviceModel.findById(id);
+    if (!service) {
+      res.status(404).json({ success: false, message: 'Không tìm thấy dịch vụ' });
+      return;
+    }
+
+    await serviceModel.findByIdAndDelete(id);
+    res.status(200).json({ success: true, message: 'Xóa dịch vụ thành công' });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    res.status(500).json({ success: false, message: 'Lỗi server khi xóa dịch vụ', details: errorMessage });
   }
 };

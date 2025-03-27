@@ -5,6 +5,7 @@ import {
   UserOutlined,
   ShoppingCartOutlined,
   FileTextOutlined,
+  ExceptionOutlined,
 } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { Typography } from "antd";
@@ -39,7 +40,14 @@ const Dashboard: React.FC = () => {
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalOrders, setTotalOrders] = useState(0);
   const [canceledOrders, setCanceledOrders] = useState(0);
-  const [newCustomers, setNewCustomers] = useState([]);
+  interface Customer {
+    avatar?: string;
+    fullname?: string;
+    name?: string;
+    status?: string;
+  }
+  
+  const [newCustomers, setNewCustomers] = useState<Customer[]>([]);
   const [outOfStockProducts, setOutOfStockProducts] = useState([]);
   const [hotProducts, setHotProducts] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -129,7 +137,7 @@ const Dashboard: React.FC = () => {
           brand: product.brand_id?.brand_name || "Không có thương hiệu",
           tag: product.tag_id?.tag_name || "Không có thẻ",
         }));
-        setOutOfStockCount(formattedOutOfStockItems.length);
+        setOutOfStockProducts(formattedOutOfStockItems.length);
         setOutOfStockProducts(formattedOutOfStockItems);
 
         // Lấy sản phẩm bán chạy
@@ -351,7 +359,7 @@ const Dashboard: React.FC = () => {
               <Card bordered={false} className="shadow-sm">
                 <Statistic
                   title="Hết hàng"
-                  value={outOfStockCount}
+                  value={outOfStockProducts.length}
                   prefix={<ExceptionOutlined className="mr-2 text-xl text-yellow-500" />}
                   suffix="sản phẩm"
                   loading={loading}

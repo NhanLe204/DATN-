@@ -5,7 +5,7 @@ export interface IService {
     service_name: string;
     description?: string;
     service_price: number;
-    duration: Date;
+    duration: number;
     status: ServiceStatus;
     create_at: Date;
     update_at: Date;
