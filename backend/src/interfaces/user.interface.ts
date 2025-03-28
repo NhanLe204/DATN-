@@ -5,7 +5,8 @@ import { Document } from 'mongoose';
 export interface IAddress {
   name: string;
   phone: string;
-  address: string; // Chuỗi địa chỉ đầy đủ
+  address: string;
+  isDefault?: boolean;
 }
 
 export interface IUser extends Document {

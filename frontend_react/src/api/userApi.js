@@ -60,6 +60,12 @@ const userApi = {
             data: response.data,
         };
     },
+    setDefaultAddress: async (id, index) => {
+        const response = await api.patch(`/v1/users/${id}/set-default/${index}`);
+        return {
+            data: response.data,
+        };
+    },
 };
 
 export default userApi;
