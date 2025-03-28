@@ -10,6 +10,7 @@ import {
   Tag,
   Form,
   Tooltip,
+  notification,
 } from 'antd';
 import {
   DeleteOutlined,
@@ -57,7 +58,12 @@ const ServiceList: React.FC = () => {
         setServices(fetchedServices);
       } catch (error) {
         console.error('Error fetching services:', error);
-        Modal.error({ title: 'Lỗi', content: 'Không thể tải danh sách dịch vụ!' });
+        notification.error({
+          message: "Lỗi",
+          description: "Không thể tải danh sách dịch vụ!",
+          placement: "topRight",
+          duration: 2,
+        });
       } finally {
         setLoading(false);
       }
@@ -66,12 +72,11 @@ const ServiceList: React.FC = () => {
   }, []);
 
   const columns = [
-    { 
-      title: 'ID dịch vụ', 
-      dataIndex: '_id', 
-      key: '_id', 
-      ellipsis: true,
-      render: (text: string) => <Tooltip title={text}>{text}</Tooltip>,
+    {
+      title: "STT",
+      key: "stt",
+      width: 60,
+      render: (_: any, __: Service, index: number) => index + 1, // Hiển thị STT từ 1
     },
     { 
       title: 'Tên dịch vụ', 
@@ -116,7 +121,7 @@ const ServiceList: React.FC = () => {
     {
       title: 'Tính năng',
       key: 'action',
-      width: 120, // Tăng width để chứa 2 nút
+      width: 120,
       render: (_: any, record: Service) => (
         <Space>
           <Button
@@ -156,11 +161,21 @@ const ServiceList: React.FC = () => {
         try {
           await serviceApi.delete(record._id);
           setServices(services.filter(service => service._id !== record._id));
-          Modal.success({ content: 'Xóa dịch vụ thành công!' });
+          notification.success({
+            message: "Thành công",
+            description: "Xóa dịch vụ thành công!",
+            placement: "topRight",
+            duration: 2,
+          });
         } catch (error: any) {
           console.error('Error deleting service:', error);
           const errorMessage = error.response?.data?.message || 'Không thể xóa dịch vụ!';
-          Modal.error({ title: 'Lỗi', content: errorMessage });
+          notification.error({
+            message: "Lỗi",
+            description: errorMessage,
+            placement: "topRight",
+            duration: 2,
+          });
         }
       },
     });
@@ -187,10 +202,20 @@ const ServiceList: React.FC = () => {
           : service
       ));
       setIsModalVisible(false);
-      Modal.success({ content: 'Cập nhật dịch vụ thành công!' });
+      notification.success({
+        message: "Thành công",
+        description: "Cập nhật dịch vụ thành công!",
+        placement: "topRight",
+        duration: 2,
+      });
     } catch (error) {
       console.error('Error updating service:', error);
-      Modal.error({ title: 'Lỗi', content: 'Không thể cập nhật dịch vụ!' });
+      notification.error({
+        message: "Lỗi",
+        description: "Không thể cập nhật dịch vụ!",
+        placement: "topRight",
+        duration: 2,
+      });
     }
   };
 
@@ -216,11 +241,21 @@ const ServiceList: React.FC = () => {
       };
       setServices([...services, createdService]);
       setIsAddModalVisible(false);
-      Modal.success({ content: 'Thêm dịch vụ thành công!' });
+      notification.success({
+        message: "Thành công",
+        description: "Thêm dịch vụ thành công!",
+        placement: "topRight",
+        duration: 2,
+      });
     } catch (error: any) {
       console.error('Error adding service:', error);
       const errorMessage = error.response?.data?.message || 'Không thể thêm dịch vụ!';
-      Modal.error({ title: 'Lỗi', content: errorMessage });
+      notification.error({
+        message: "Lỗi",
+        description: errorMessage,
+        placement: "topRight",
+        duration: 2,
+      });
     }
   };
 

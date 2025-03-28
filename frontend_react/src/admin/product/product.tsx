@@ -10,7 +10,7 @@ import {
   Space,
   Tag,
   Upload,
-  message,
+  notification,
 } from "antd";
 import {
   PlusOutlined,
@@ -21,9 +21,9 @@ import {
 import { motion } from "framer-motion";
 import { Typography } from "antd";
 import productsApi from "../../api/productsAPI";
-import orderApi from "../../api/orderApi"; // Thêm API để lấy đơn hàng
+import orderApi from "../../api/orderApi";
 import ProductModal from "../components/productModal";
-
+import { Image } from "antd";
 const { Title } = Typography;
 const { Option } = Select;
 
@@ -34,7 +34,7 @@ interface Product {
   name: string;
   image: string;
   quantity: number;
-  quantity_sold: number; // Thêm quantity_sold
+  quantity_sold: number;
   status: string;
   price: string;
   category: string;
@@ -72,7 +72,6 @@ const ProductList: React.FC = () => {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      // Lấy danh sách sản phẩm
       const productResponse = await productsApi.getAll();
       const productList = productResponse.data.result || [];
 
@@ -80,11 +79,9 @@ const ProductList: React.FC = () => {
         throw new Error("Dữ liệu không hợp lệ từ API");
       }
 
-      // Lấy danh sách đơn hàng để tính quantity_sold
       const orderResponse = await orderApi.getAll();
       const orders = orderResponse.data.result || [];
 
-      // Tính quantity_sold cho từng sản phẩm
       const productSalesMap: { [key: string]: number } = {};
       orders.forEach((order: any) => {
         if (order.items && Array.isArray(order.items)) {
@@ -92,13 +89,13 @@ const ProductList: React.FC = () => {
             const productId = item.product_id || item.productID;
             const quantity = item.quantity || 0;
             if (productId) {
-              productSalesMap[productId] = (productSalesMap[productId] || 0) + quantity;
+              productSalesMap[productId] =
+                (productSalesMap[productId] || 0) + quantity;
             }
           });
         }
       });
 
-      // Định dạng dữ liệu sản phẩm
       const formattedProducts = productList.map((product: any) => {
         const imageUrl = product.image_url?.[0];
         return {
@@ -109,7 +106,7 @@ const ProductList: React.FC = () => {
           image: imageUrl,
           images: product.image_url || [],
           quantity: product.quantity || 0,
-          quantity_sold: productSalesMap[product._id] || 0, // Số lượng đã bán
+          quantity_sold: productSalesMap[product._id] || 0,
           status: product.status,
           price: product.price,
           category: product.category_id?.name || "Không xác định",
@@ -125,7 +122,11 @@ const ProductList: React.FC = () => {
 
       setProducts(formattedProducts);
     } catch (error) {
-      message.error("Lỗi khi tải danh sách sản phẩm!");
+      notification.error({
+        message: "Lỗi",
+        description: "Lỗi khi tải danh sách sản phẩm!",
+        placement: "topRight",
+      });
       console.error("Lỗi khi lấy sản phẩm:", error);
     }
     setLoading(false);
@@ -134,12 +135,49 @@ const ProductList: React.FC = () => {
   const handleStatusChange = async (productId: string, newStatus: string) => {
     try {
       await productsApi.toggleStatus(productId, newStatus);
-      message.success("Cập nhật trạng thái sản phẩm thành công!");
+      notification.success({
+        message: "Thành công",
+        description: "Cập nhật trạng thái sản phẩm thành công!",
+        placement: "topRight",
+      });
       fetchProducts();
     } catch (error) {
-      message.error("Lỗi khi cập nhật trạng thái sản phẩm!");
+      notification.error({
+        message: "Lỗi",
+        description: "Lỗi khi cập nhật trạng thái sản phẩm!",
+        placement: "topRight",
+      });
       console.error("Toggle status error:", error);
     }
+  };
+
+  const handleDelete = (record: Product) => {
+    Modal.confirm({
+      title: "Xác nhận",
+      content: `Bạn có chắc chắn muốn xóa sản phẩm "${record.name}"?`,
+      okText: "Đồng ý",
+      cancelText: "Hủy bỏ",
+      onOk: async () => {
+        try {
+          await productsApi.delete(record._id);
+          setProducts(products.filter((product) => product._id !== record._id));
+          notification.success({
+            message: "Thành công",
+            description: "Xóa sản phẩm thành công!",
+            placement: "topRight",
+          });
+        } catch (error: any) {
+          console.error("Error deleting product:", error);
+          const errorMessage =
+            error.response?.data?.message || "Không thể xóa sản phẩm!";
+          notification.error({
+            message: "Lỗi",
+            description: errorMessage,
+            placement: "topRight",
+          });
+        }
+      },
+    });
   };
 
   const getStatusDisplayName = (status: string) => {
@@ -171,7 +209,7 @@ const ProductList: React.FC = () => {
       key: "image",
       width: 180,
       render: (text: string) => (
-        <img src={text} alt="Product" className="object-cover w-24 h-24" />
+        <Image src={text} alt="Product" className="object-cover w-24 h-24" />
       ),
     },
     {
@@ -223,12 +261,19 @@ const ProductList: React.FC = () => {
     {
       title: "Chức năng",
       key: "action",
+      width: 120,
       render: (_: any, record: Product) => (
         <Space>
           <Button
             icon={<EditOutlined />}
             size="small"
             onClick={() => showModal(record)}
+          />
+          <Button
+            danger
+            icon={<DeleteOutlined />}
+            size="small"
+            onClick={() => handleDelete(record)}
           />
         </Space>
       ),

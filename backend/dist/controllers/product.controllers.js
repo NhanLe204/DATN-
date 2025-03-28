@@ -594,4 +594,19 @@ export const getProductOutStock = async (req, res) => {
         res.status(500).json({ success: false, error });
     }
 };
+export const deleteProduct = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const product = await productModel.findById(id).populate('category_id').populate('brand_id').populate('tag_id');
+        if (!product) {
+            res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
+            return;
+        }
+        await productModel.findByIdAndDelete(id);
+        res.status(200).json({ message: 'Xóa sản phẩm thành công', product });
+    }
+    catch (error) {
+        res.status(500).json({ message: 'Error getting product', error });
+    }
+};
 //# sourceMappingURL=product.controllers.js.map
