@@ -46,10 +46,7 @@ const productsApi = {
   getAll: async (params = {}) => {
     try {
       const response = await api.get("/v1/products", {
-        params,
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
+        params, 
       });
       return {
         data: response.data,
