@@ -413,3 +413,65 @@ export const getNewUsers = async (req: Request, res: Response): Promise<void> =>
     res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 };
+
+export const setDefaultAddress = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id, index } = req.params;
+
+    // Kiểm tra id hợp lệ
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json({
+        success: false,
+        message: 'ID người dùng không hợp lệ!'
+      });
+      return;
+    }
+
+    // Kiểm tra index hợp lệ
+    const addressIndex = parseInt(index, 10);
+    if (isNaN(addressIndex) || addressIndex < 0) {
+      res.status(400).json({
+        success: false,
+        message: 'Index địa chỉ không hợp lệ!'
+      });
+      return;
+    }
+
+    // Tìm user
+    const user = await userModel.findById(id);
+    if (!user) {
+      res.status(404).json({ message: 'Không tìm thấy người dùng' });
+      return;
+    }
+
+    // Kiểm tra index có nằm trong mảng address không
+    if (!user.address || addressIndex >= user.address.length) {
+      res.status(400).json({
+        success: false,
+        message: 'Địa chỉ không tồn tại!'
+      });
+      return;
+    }
+
+    // Đặt tất cả địa chỉ thành không mặc định, sau đó đặt địa chỉ được chọn thành mặc định
+    user.address = user.address.map((addr: any, idx: number) => ({
+      ...addr,
+      isDefault: idx === addressIndex
+    }));
+
+    const updatedUser = await user.save();
+
+    res.status(200).json({
+      message: 'Đặt địa chỉ mặc định thành công',
+      user: updatedUser
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error setting default address: ${error.message}`);
+      res.status(500).json({ success: false, message: `Lỗi server: ${error.message}` });
+    } else {
+      console.error('Error setting default address:', error);
+      res.status(500).json({ success: false, message: 'Lỗi server không xác định' });
+    }
+  }
+};
