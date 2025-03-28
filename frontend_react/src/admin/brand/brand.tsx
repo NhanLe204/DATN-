@@ -26,7 +26,6 @@ const BrandManager: React.FC = () => {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
-  const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [form] = Form.useForm();
 
@@ -49,11 +48,23 @@ const BrandManager: React.FC = () => {
   }, []);
 
   const columns = [
-    { title: "ID", dataIndex: "id", key: "id" },
-    { title: "Tên Brand", dataIndex: "brand_name", key: "brand_name" },
+    {
+      title: "STT",
+      key: "stt",
+      width: 60,
+      render: (_: any, __: Brand, index: number) => index + 1,
+    },
+    {
+      title: "Tên Brand",
+      dataIndex: "brand_name",
+      key: "brand_name",
+      width: 200, // Đặt width cố định để kiểm soát kích thước
+      align: "center" as const, // Căn giữa nội dung
+    },
     {
       title: "Chức năng",
       key: "action",
+      width: 120,
       render: (_: any, record: Brand) => (
         <Space>
           <Button
@@ -144,7 +155,6 @@ const BrandManager: React.FC = () => {
         });
         console.log("API Response:", response);
 
-        // Lấy ID từ response (điều chỉnh dựa trên cấu trúc thực tế của API)
         const brandId =
           response?.data?._id ||
           response?._id ||
@@ -164,7 +174,6 @@ const BrandManager: React.FC = () => {
           );
         }
 
-        // Làm mới danh sách từ server để đảm bảo ID chính xác
         await fetchBrands();
 
         setIsAddModalVisible(false);
@@ -195,7 +204,6 @@ const BrandManager: React.FC = () => {
       transition={{ duration: 0.5 }}
     >
       <Card
-        // title={<Title level={4}>Quản lý Brand</Title>}
         bordered={false}
         className="shadow-sm"
         extra={
@@ -212,11 +220,6 @@ const BrandManager: React.FC = () => {
           columns={columns}
           dataSource={brands}
           pagination={{ pageSize: 10 }}
-          rowSelection={{
-            selectedRowKeys: selectedRows,
-            onChange: (selectedRowKeys) =>
-              setSelectedRows(selectedRowKeys as string[]),
-          }}
           className="overflow-x-auto"
         />
       </Card>

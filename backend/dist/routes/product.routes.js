@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getAllProduct, getNewProduct, getProductById, insertProduct, updateProduct, getSaleProduct, getHotProduct, uploadProductImage, getProductByCategoryID, getProductActive, getProductByTagId, toggleProduct, toggleProductStatus, getProductRelated, getProductOutStock } from '../controllers/product.controllers.js';
+import { getAllProduct, getNewProduct, getProductById, insertProduct, updateProduct, getSaleProduct, getHotProduct, uploadProductImage, getProductByCategoryID, getProductActive, getProductByTagId, toggleProduct, toggleProductStatus, getProductRelated, getProductOutStock, deleteProduct } from '../controllers/product.controllers.js';
 import { requireAdmin } from '../middlewares/protectRoute.js';
 import { verifyToken } from '../middlewares/verifyToken.js';
 import uploader from '../config/cloudinary.config.js';
@@ -20,6 +20,7 @@ productRouter.get('/products/cate/:id', getProductByCategoryID);
 productRouter.get('/products/status/active', getProductActive);
 productRouter.get('/products/tags/:id', getProductByTagId);
 productRouter.get('/products/:id/related', getProductRelated);
+productRouter.delete('/products/:id', verifyToken, requireAdmin, deleteProduct);
 // productRouter.patch("/products/:id/toggle-status", toggleProductStatus);
 export default productRouter;
 //# sourceMappingURL=product.routes.js.map

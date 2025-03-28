@@ -6,7 +6,7 @@ import {
 } from "react-router-dom";
 import Home from "./pages/home/home";
 import PageLayout from "./components/layout/PageLayout";
-import "@fortawesome/fontawesome-free/css/all.min.css";
+// import "@fortawesome/fontawesome-free/css/all.min.css";
 import Login from "./pages/login/login";
 import SignUp from "./pages/signup/signup";
 import ContactPage from "./pages/contact/contact";
@@ -203,8 +203,8 @@ function App() {
             <PublicRoute>
               <Search />
             </PublicRoute>
-          )
-        }
+          ),
+        },
       ],
     },
   ]);

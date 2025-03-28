@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getAllCategory, toggleCategory, insertCategory, updateCategory, getCategoryById, getCategoriesActive } from '../controllers/category.controllers.js';
+import { getAllCategory, toggleCategory, insertCategory, updateCategory, getCategoryById, getCategoriesActive, deleteCategory } from '../controllers/category.controllers.js';
 import { requireAdmin } from '../middlewares/protectRoute.js';
 import { verifyToken } from '../middlewares/verifyToken.js';
 const categoryRouter = Router();
@@ -10,5 +10,6 @@ categoryRouter.get('/categories/status/active', getCategoriesActive);
 categoryRouter.post('/categories', verifyToken, requireAdmin, insertCategory);
 categoryRouter.patch('/categories/:id', verifyToken, requireAdmin, updateCategory);
 categoryRouter.patch('/categories/status/:id', verifyToken, requireAdmin, toggleCategory);
+categoryRouter.delete('/categories/:id', verifyToken, requireAdmin, deleteCategory);
 export default categoryRouter;
 //# sourceMappingURL=category.routes.js.map
