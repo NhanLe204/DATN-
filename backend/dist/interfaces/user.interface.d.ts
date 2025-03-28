@@ -5,6 +5,7 @@ export interface IAddress {
     name: string;
     phone: string;
     address: string;
+    isDefault?: boolean;
 }
 export interface IUser extends Document {
     googleId: string | undefined;

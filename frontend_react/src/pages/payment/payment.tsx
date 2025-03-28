@@ -7,65 +7,85 @@ import {
   Sun,
   Moon,
   ChevronRight,
-  ChevronDown,
   Package,
   CheckCircle,
   CreditCard,
   Truck,
   MapPin,
   DollarSign,
+  X,
 } from "lucide-react";
 import orderApi from "../../api/orderApi";
+import userApi from "../../api/userApi";
+import deliveryApi from "../../api/deliveryApi";
+import paymentTypeApi from "../../api/paymentTypeApi";
 import { clearProduct } from "../../redux/slices/cartslice";
 
+// Định nghĩa interface cho phương thức thanh toán
+interface PaymentType {
+  _id: string;
+  payment_type_name: string;
+  description: string;
+}
+
+// Định nghĩa interface cho phương thức vận chuyển
+interface Delivery {
+  _id: string;
+  delivery_name: string;
+  description: string;
+  delivery_fee: number;
+  status: string;
+}
+
+interface Address {
+  _id?: string;
+  name: string;
+  phone: string;
+  address: string;
+  isDefault?: boolean;
+}
+
+interface User {
+  _id: string;
+  email: string;
+  fullname: string;
+  password: string;
+  phone_number: string;
+  address: Address[];
+  role: string;
+  avatar: string;
+  reset_password_token: string | null;
+  reset_password_expires: string | null;
+  refreshToken: string;
+  dateOfBirth: string;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+}
+
 const Payment = () => {
-  const dispatch = useDispatch(); // Thêm useDispatch
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const [darkMode, setDarkMode] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // State để kiểm tra trạng thái đăng nhập
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  interface Province {
-    code: Key | null | undefined;
-    packge: string;
-    name: string;
-  }
-  const [provinces, setProvinces] = useState<Province[]>([]);
-  interface District {
-    code: string;
-    name: string;
-  }
-  const [districts, setDistricts] = useState<District[]>([]);
-  interface Ward {
-    code: string;
-    name: string;
-  }
-  const [wards, setWards] = useState<Ward[]>([]);
-  const [selectedProvince, setSelectedProvince] = useState<Province | null>(
-    null
-  );
-  const [selectedDistrict, setSelectedDistrict] = useState<District | null>(
-    null
-  );
-  const [selectedWard, setSelectedWard] = useState<Ward | null>(null);
-  const [showProvinceDropdown, setShowProvinceDropdown] = useState(false);
-  const [showDistrictDropdown, setShowDistrictDropdown] = useState(false);
-  const [showWardDropdown, setShowWardDropdown] = useState(false);
-  interface ShippingMethod {
-    id: number;
-    name: string;
-    price: number;
-    days: string;
-  }
-  const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([]);
-  const [selectedShippingMethod, setSelectedShippingMethod] =
-    useState<ShippingMethod | null>(null);
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
+  const [checkedAddressId, setCheckedAddressId] = useState<string | null>(null);
+
+  const [shippingMethods, setShippingMethods] = useState<Delivery[]>([]);
+  const [selectedShippingMethod, setSelectedShippingMethod] = useState<Delivery | null>(null);
+
+  // Định nghĩa kiểu cho paymentMethods và selectedPayment
+  const [paymentMethods, setPaymentMethods] = useState<PaymentType[]>([]);
+  const [selectedPayment, setSelectedPayment] = useState<string>(""); // Sử dụng _id để xác định phương thức được chọn
+
   const [formData, setFormData] = useState({
     fullName: "",
-    email: "",
     phone: "",
     address: "",
   });
-  const [selectedPayment, setSelectedPayment] = useState("cod");
 
   // Lấy dữ liệu giỏ hàng từ Redux store
   interface CartState {
@@ -78,137 +98,142 @@ const Payment = () => {
     }[];
     userId: string | null;
   }
-  const { items: cartItems, userId } = useSelector(
-    (state: { cart: CartState }) => state.cart
-  );
+  const { items: cartItems, userId } = useSelector((state: { cart: CartState }) => state.cart);
 
-  // Payment methods data
-  const paymentMethods = [
-    {
-      id: "",
-      label: "Thanh toán khi nhận hàng (COD)",
-      icon: <DollarSign className="text-blue-500" />,
-    },
-    {
-      id: "bank_transfer",
-      label: "Chuyển khoản qua ngân hàng",
-      icon: <CreditCard className="text-green-500" />,
-    },
-    {
-      id: "card",
-      label: "Thanh toán qua thẻ ngân hàng",
-      icon: <CreditCard className="text-purple-500" />,
-    },
-  ];
-
-  // Kiểm tra token khi component mount
-  useEffect(() => {
-    const token = localStorage.getItem("accessToken"); // Giả định token được lưu trong localStorage
-    if (token) {
-      setIsLoggedIn(true); // Nếu có token, người dùng đã đăng nhập
-    } else {
-      setIsLoggedIn(false); // Nếu không có token, người dùng chưa đăng nhập
+  // Hàm ánh xạ payment_type_name với icon
+  const getPaymentIcon = (paymentTypeName: string) => {
+    switch (paymentTypeName.toLowerCase()) {
+      case "paypal":
+        return <CreditCard className="text-blue-500" />;
+      case "bank transfer":
+      case "wire transfer":
+        return <CreditCard className="text-green-500" />;
+      case "cash on delivery":
+        return <DollarSign className="text-blue-500" />;
+      case "installment plan":
+        return <CreditCard className="text-purple-500" />;
+      case "gift card":
+        return <CreditCard className="text-orange-500" />;
+      default:
+        return <CreditCard className="text-gray-500" />;
     }
-  }, []);
+  };
 
+  // Kiểm tra token và khởi tạo dữ liệu khi component mount
   useEffect(() => {
-    const fetchProvinces = async () => {
-      try {
-        const response = await fetch("https://provinces.open-api.vn/api/p/");
-        const data = await response.json();
-        setProvinces(data);
-      } catch (error) {
-        console.error("Error fetching provinces:", error);
-      }
-    };
-    fetchProvinces();
-  }, []);
+    const token = localStorage.getItem("accessToken");
+    const accountID = localStorage.getItem("accountID")?.replace(/"/g, "").trim();
 
-  // Fetch districts when province is selected
-  useEffect(() => {
-    if (selectedProvince) {
-      const fetchDistricts = async () => {
+    if (token && accountID) {
+      setIsLoggedIn(true);
+
+      // Gọi API để lấy thông tin người dùng, bao gồm danh sách địa chỉ
+      const fetchUserData = async () => {
         try {
-          const response = await fetch(
-            `https://provinces.open-api.vn/api/p/${selectedProvince.code}?depth=2`
-          );
-          const data = await response.json();
-          setDistricts(data.districts || []);
-          setSelectedDistrict(null);
-          setWards([]);
-          setSelectedWard(null);
-          setShippingMethods([
-            { id: 1, name: "Giao hàng tiêu chuẩn", price: 25000, days: "2-3" },
-            { id: 2, name: "Giao hàng nhanh", price: 45000, days: "1-2" },
-          ]);
+          const userResponse = await userApi.getUserById(accountID);
+          const userData: User = userResponse.data.data;
+          const userAddresses: Address[] = userData.address || [];
+
+          setAddresses(userAddresses);
+
+          const defaultAddress = userAddresses.find((addr) => addr.isDefault) || userAddresses[0];
+          if (defaultAddress) {
+            setSelectedAddress(defaultAddress);
+            setCheckedAddressId(defaultAddress._id || null);
+            setFormData({
+              fullName: defaultAddress.name,
+              phone: defaultAddress.phone,
+              address: defaultAddress.address,
+            });
+          }
         } catch (error) {
-          console.error("Error fetching districts:", error);
+          console.error("Failed to fetch user data:", error);
+          setAddresses([]);
+          setSelectedAddress(null);
+          setCheckedAddressId(null);
         }
       };
-      fetchDistricts();
+
+      // Gọi API để lấy danh sách phương thức vận chuyển
+      const fetchDeliveryMethods = async () => {
+        try {
+          const deliveryResponse = await deliveryApi.getAllDelivery();
+          const deliveryMethods: Delivery[] = deliveryResponse.data.data || [];
+          setShippingMethods(deliveryMethods);
+
+          if (deliveryMethods.length > 0) {
+            setSelectedShippingMethod(deliveryMethods[0]);
+          }
+        } catch (error) {
+          console.error("Failed to fetch delivery methods:", error);
+          setShippingMethods([]);
+          setSelectedShippingMethod(null);
+        }
+      };
+
+      // Gọi API để lấy danh sách phương thức thanh toán
+      const fetchPaymentMethods = async () => {
+        try {
+          const paymentResponse = await paymentTypeApi.getAllPayment();
+          const paymentMethodsData: PaymentType[] = paymentResponse.data.data || [];
+          setPaymentMethods(paymentMethodsData);
+
+          // Chọn phương thức thanh toán mặc định (ví dụ: phương thức đầu tiên)
+          if (paymentMethodsData.length > 0) {
+            setSelectedPayment(paymentMethodsData[0]._id);
+          }
+        } catch (error) {
+          console.error("Failed to fetch payment methods:", error);
+          setPaymentMethods([]);
+          setSelectedPayment("");
+        }
+      };
+
+      fetchUserData();
+      fetchDeliveryMethods();
+      fetchPaymentMethods();
     } else {
-      setDistricts([]);
-      setSelectedDistrict(null);
-      setWards([]);
-      setSelectedWard(null);
+      setIsLoggedIn(false);
+      setAddresses([]);
+      setSelectedAddress(null);
+      setCheckedAddressId(null);
       setShippingMethods([]);
+      setSelectedShippingMethod(null);
+      setPaymentMethods([]);
+      setSelectedPayment("");
     }
-  }, [selectedProvince]);
+  }, []);
 
-  // Fetch wards when district is selected
-  useEffect(() => {
-    if (selectedDistrict) {
-      const fetchWards = async () => {
-        try {
-          const response = await fetch(
-            `https://provinces.open-api.vn/api/d/${selectedDistrict.code}?depth=2`
-          );
-          const data = await response.json();
-          setWards(data.wards || []);
-          setSelectedWard(null);
-        } catch (error) {
-          console.error("Error fetching wards:", error);
-        }
-      };
-      fetchWards();
-    } else {
-      setWards([]);
-      setSelectedWard(null);
+  const handleConfirmAddress = () => {
+    const selected = addresses.find((address) => address._id === checkedAddressId);
+    if (selected) {
+      setSelectedAddress(selected);
+      setFormData({
+        fullName: selected.name,
+        phone: selected.phone,
+        address: selected.address,
+      });
     }
-  }, [selectedDistrict]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setIsModalOpen(false);
   };
 
   const toggleDarkMode = () => setDarkMode(!darkMode);
 
   const calculateTotal = () => {
-    let total = cartItems.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
-    );
-    if (selectedShippingMethod) total += selectedShippingMethod.price;
+    let total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    if (selectedShippingMethod) total += selectedShippingMethod.delivery_fee;
     return total;
   };
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("vi-VN").format(price) + "₫";
+
   const handleCheckout = async () => {
     if (!userId) {
       alert("Vui lòng đăng nhập để tiến hành đặt hàng!");
       return;
     }
-    if (
-      !formData.fullName ||
-      !formData.email ||
-      !formData.phone ||
-      !formData.address ||
-      !selectedProvince ||
-      !selectedDistrict ||
-      !selectedWard
-    ) {
+    if (!formData.fullName || !formData.phone || !formData.address) {
       alert("Vui lòng điền đầy đủ thông tin giao hàng!");
       return;
     }
@@ -216,16 +241,25 @@ const Payment = () => {
       alert("Giỏ hàng của bạn đang trống!");
       return;
     }
+    if (!selectedPayment) {
+      alert("Vui lòng chọn phương thức thanh toán!");
+      return;
+    }
+    if (!selectedShippingMethod) {
+      alert("Vui lòng chọn phương thức vận chuyển!");
+      return;
+    }
 
     try {
-      const shippingAddress = `${formData.address}, ${selectedWard.name}, ${selectedDistrict.name}, ${selectedProvince.name}`;
+      const shippingAddress = formData.address;
       const orderData = {
         userID: userId,
         couponID: null,
+        payment_typeID: selectedPayment,
+        deliveryID: selectedShippingMethod,
         orderdate: new Date().toISOString(),
         total_price: calculateTotal(),
         shipping_address: shippingAddress,
-        payment_status: selectedPayment === "cod" ? "pending" : "completed",
         transaction_id: `TRANS_${Date.now()}`,
         orderDetails: cartItems.map((item) => ({
           productID: item.id,
@@ -235,45 +269,35 @@ const Payment = () => {
         })),
       };
 
-      // Kiểm tra dữ liệu trước khi gửi
-      console.log("Cart items before order:", cartItems); // Log để kiểm tra cartItems
-      console.log("Sending order data:", orderData); // Log dữ liệu gửi lên
+      console.log("Cart items before order:", cartItems);
+      console.log("Sending order data:", orderData);
 
       const response = await orderApi.create(orderData);
       console.log("Order created:", response);
 
-      // Lưu vào localStorage
       const existingOrders = JSON.parse(localStorage.getItem("orders") || "[]");
-      existingOrders.push(orderData); // Đẩy toàn bộ orderData vào mảng
+      existingOrders.push(orderData);
       localStorage.setItem("orders", JSON.stringify(existingOrders));
 
-      // Kiểm tra dữ liệu sau khi lưu
-      console.log(
-        "Orders in localStorage:",
-        JSON.parse(localStorage.getItem("orders") || "[]")
-      );
+      console.log("Orders in localStorage:", JSON.parse(localStorage.getItem("orders") || "[]"));
 
-      // Reset form và giỏ hàng
       setFormData({
         fullName: "",
-        email: "",
         phone: "",
         address: "",
       });
-      setSelectedProvince(null);
-      setSelectedDistrict(null);
-      setSelectedWard(null);
 
-      dispatch(clearProduct()); // Xóa giỏ hàng sau khi lưu
+      dispatch(clearProduct());
 
       alert("Đơn hàng của bạn đã được tạo thành công!");
-      navigate("/"); // Chuyển hướng về trang chủ
+      navigate("/");
     } catch (error) {
       console.error("Error creating order:", error);
       console.log("Error response:", error.response?.data);
       alert("Có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại!");
     }
   };
+
   return (
     <div
       className={`min-h-screen transition-colors duration-300 ${
@@ -318,7 +342,6 @@ const Payment = () => {
           </div>
         </nav>
 
-        {/* Ẩn phần "Bạn đã có tài khoản? Đăng nhập" nếu đã đăng nhập */}
         {!isLoggedIn && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -350,205 +373,110 @@ const Payment = () => {
               <h2 className="mb-6 text-xl font-semibold flex items-center">
                 <MapPin className="mr-2" size={20} /> Thông tin giao hàng
               </h2>
-              <div className="mb-4">
-                <input
-                  type="text"
-                  name="fullName"
-                  value={formData.fullName}
-                  onChange={handleInputChange}
-                  placeholder="Họ và tên"
-                  className={`w-full rounded-xl border p-3 ${
-                    darkMode
-                      ? "border-gray-700 bg-gray-700 text-white"
-                      : "border-gray-300 bg-gray-50 text-gray-800"
-                  }`}
-                />
-              </div>
-              <div className="mb-4 flex flex-col space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0">
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  placeholder="Email"
-                  className={`w-full rounded-xl border p-3 ${
-                    darkMode
-                      ? "border-gray-700 bg-gray-700 text-white"
-                      : "border-gray-300 bg-gray-50 text-gray-800"
-                  }`}
-                />
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  placeholder="Số điện thoại"
-                  className={`w-full rounded-xl border p-3 ${
-                    darkMode
-                      ? "border-gray-700 bg-gray-700 text-white"
-                      : "border-gray-300 bg-gray-50 text-gray-800"
-                  }`}
-                />
-              </div>
-              <div className="mb-4">
-                <input
-                  type="text"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  placeholder="Địa chỉ"
-                  className={`w-full rounded-xl border p-3 ${
-                    darkMode
-                      ? "border-gray-700 bg-gray-700 text-white"
-                      : "border-gray-300 bg-gray-50 text-gray-800"
-                  }`}
-                />
-              </div>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <div className="relative">
-                  <div
-                    onClick={() =>
-                      setShowProvinceDropdown(!showProvinceDropdown)
-                    }
-                    className={`flex cursor-pointer items-center justify-between rounded-xl border p-3 ${
-                      darkMode
-                        ? "border-gray-700 bg-gray-700 text-white"
-                        : "border-gray-300 bg-gray-50 text-gray-800"
-                    }`}
-                  >
-                    <span className={selectedProvince ? "" : "text-gray-400"}>
-                      {selectedProvince
-                        ? selectedProvince.name
-                        : "Chọn tỉnh/thành phố"}
-                    </span>
-                    <ChevronDown size={16} />
-                  </div>
-                  {showProvinceDropdown && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className={`absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-xl border ${
-                        darkMode
-                          ? "border-gray-700 bg-gray-800 text-white"
-                          : "border-gray-200 bg-white text-gray-800"
-                      }`}
+
+              {isLoggedIn && selectedAddress ? (
+                <div className="mb-4">
+                  <div className="flex justify-between items-start border-b pb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-lg">{selectedAddress.name}</p>
+                        <p className={darkMode ? "text-gray-400" : "text-gray-600"}>
+                          | {selectedAddress.phone}
+                        </p>
+                        {selectedAddress.isDefault && (
+                          <span className="inline-block px-2 py-1 text-xs font-semibold text-orange-600 bg-orange-100 rounded">
+                            Mặc định
+                          </span>
+                        )}
+                      </div>
+                      <p className={darkMode ? "text-gray-400" : "text-gray-600 mt-1"}>
+                        {selectedAddress.address}
+                      </p>
+                    </div>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setIsModalOpen(true)}
+                      className="text-blue-500 font-medium hover:text-blue-600"
                     >
-                      {provinces.map((province) => (
-                        <div
-                          key={province.code}
-                          onClick={() => {
-                            setSelectedProvince(province);
-                            setShowProvinceDropdown(false);
-                          }}
-                          className={`cursor-pointer p-3 hover:bg-blue-100 hover:text-blue-600 ${
-                            darkMode ? "hover:bg-blue-900" : ""
-                          }`}
-                        >
-                          {province.name}
-                        </div>
-                      ))}
-                    </motion.div>
-                  )}
-                </div>
-                <div className="relative">
-                  <div
-                    onClick={() =>
-                      selectedProvince &&
-                      setShowDistrictDropdown(!showDistrictDropdown)
-                    }
-                    className={`flex cursor-pointer items-center justify-between rounded-xl border p-3 ${
-                      !selectedProvince
-                        ? darkMode
-                          ? "border-gray-700 bg-gray-700 opacity-50"
-                          : "border-gray-200 bg-gray-100 opacity-50"
-                        : darkMode
-                        ? "border-gray-700 bg-gray-700 text-white"
-                        : "border-gray-300 bg-gray-50 text-gray-800"
-                    }`}
-                  >
-                    <span className={selectedDistrict ? "" : "text-gray-400"}>
-                      {selectedDistrict
-                        ? selectedDistrict.name
-                        : "Chọn quận/huyện"}
-                    </span>
-                    <ChevronDown size={16} />
+                      Thay đổi
+                    </motion.button>
                   </div>
-                  {showDistrictDropdown && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className={`absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-xl border ${
-                        darkMode
-                          ? "border-gray-700 bg-gray-800 text-white"
-                          : "border-gray-200 bg-white text-gray-800"
-                      }`}
-                    >
-                      {districts.map((district) => (
-                        <div
-                          key={district.code}
-                          onClick={() => {
-                            setSelectedDistrict(district);
-                            setShowDistrictDropdown(false);
-                          }}
-                          className={`cursor-pointer p-3 hover:bg-blue-100 hover:text-blue-600 ${
-                            darkMode ? "hover:bg-blue-900" : ""
-                          }`}
-                        >
-                          {district.name}
-                        </div>
-                      ))}
-                    </motion.div>
-                  )}
                 </div>
-                <div className="relative">
-                  <div
-                    onClick={() =>
-                      selectedDistrict && setShowWardDropdown(!showWardDropdown)
-                    }
-                    className={`flex cursor-pointer items-center justify-between rounded-xl border p-3 ${
-                      !selectedDistrict
-                        ? darkMode
-                          ? "border-gray-700 bg-gray-700 opacity-50"
-                          : "border-gray-200 bg-gray-100 opacity-50"
-                        : darkMode
-                        ? "border-gray-700 bg-gray-700 text-white"
-                        : "border-gray-300 bg-gray-50 text-gray-800"
-                    }`}
-                  >
-                    <span className={selectedWard ? "" : "text-gray-400"}>
-                      {selectedWard ? selectedWard.name : "Chọn phường/xã"}
-                    </span>
-                    <ChevronDown size={16} />
-                  </div>
-                  {showWardDropdown && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className={`absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-xl border ${
-                        darkMode
-                          ? "border-gray-700 bg-gray-800 text-white"
-                          : "border-gray-200 bg-white text-gray-800"
-                      }`}
-                    >
-                      {wards.map((ward) => (
-                        <div
-                          key={ward.code}
-                          onClick={() => {
-                            setSelectedWard(ward);
-                            setShowWardDropdown(false);
-                          }}
-                          className={`cursor-pointer p-3 hover:bg-blue-100 hover:text-blue-600 ${
-                            darkMode ? "hover:bg-blue-900" : ""
-                          }`}
-                        >
-                          {ward.name}
-                        </div>
-                      ))}
-                    </motion.div>
-                  )}
-                </div>
-              </div>
+              ) : (
+                <p className="text-gray-500 mb-4">
+                  {isLoggedIn ? "Chưa có địa chỉ nào. Vui lòng thêm địa chỉ." : "Vui lòng đăng nhập để xem địa chỉ."}
+                </p>
+              )}
             </div>
+
+            {isModalOpen && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className={`w-full max-w-lg rounded-xl p-6 ${
+                    darkMode ? "bg-gray-800 text-white" : "bg-white text-gray-800"
+                  }`}
+                >
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold">Chọn địa chỉ giao hàng</h3>
+                    <button onClick={() => setIsModalOpen(false)}>
+                      <X size={20} />
+                    </button>
+                  </div>
+                  <div className="max-h-96 overflow-y-auto">
+                    {addresses.length > 0 ? (
+                      addresses.map((address: Address) => (
+                        <motion.div
+                          key={address._id || `${address.name}-${address.phone}`}
+                          className={`p-4 mb-2 border-b ${
+                            darkMode ? "border-gray-700" : "border-gray-200"
+                          }`}
+                        >
+                          <div className="flex items-start gap-2 flex-1">
+                            <input
+                              type="radio"
+                              name="address"
+                              checked={checkedAddressId === address._id}
+                              onChange={() => setCheckedAddressId(address._id || null)}
+                              className="h-4 w-4 text-blue-500 mt-1"
+                            />
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium">{address.name}</p>
+                                <p className={darkMode ? "text-gray-400" : "text-gray-600"}>
+                                  | {address.phone}
+                                </p>
+                                {address.isDefault && (
+                                  <span className="inline-block px-2 py-1 text-xs font-semibold text-orange-600 bg-orange-100 rounded">
+                                    Mặc định
+                                  </span>
+                                )}
+                              </div>
+                              <p className={darkMode ? "text-gray-400" : "text-gray-600 mt-1"}>
+                                {address.address}
+                              </p>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))
+                    ) : (
+                      <p className="text-center text-gray-500">Chưa có địa chỉ nào.</p>
+                    )}
+                    <div className="flex justify-end mt-4">
+                      <motion.button
+                        whileTap={{ scale: 0.98 }}
+                        onClick={handleConfirmAddress}
+                        className="rounded-xl bg-blue-500 px-4 py-1 font-medium text-white text-sm"
+                      >
+                        Xác nhận
+                      </motion.button>
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
+            )}
 
             {/* Shipping Method */}
             <div
@@ -559,15 +487,15 @@ const Payment = () => {
               <h2 className="mb-6 text-xl font-semibold flex items-center">
                 <Truck className="mr-2" size={20} /> Phương thức vận chuyển
               </h2>
-              {selectedProvince && selectedDistrict && selectedWard ? (
+              {shippingMethods.length > 0 ? (
                 <div className="space-y-3">
                   {shippingMethods.map((method) => (
                     <motion.div
                       whileHover={{ scale: 1.01 }}
-                      key={method.id}
+                      key={method._id}
                       onClick={() => setSelectedShippingMethod(method)}
                       className={`flex cursor-pointer items-center justify-between rounded-xl p-4 ${
-                        selectedShippingMethod?.id === method.id
+                        selectedShippingMethod?._id === method._id
                           ? darkMode
                             ? "border-blue-500 bg-blue-900/30"
                             : "border-blue-500 bg-blue-50"
@@ -585,17 +513,17 @@ const Payment = () => {
                           <Truck size={18} className="text-blue-500" />
                         </div>
                         <div>
-                          <div className="font-medium">{method.name}</div>
+                          <div className="font-medium">{method.delivery_name}</div>
                           <div className="text-sm text-gray-500">
-                            Nhận hàng trong {method.days} ngày
+                            {method.description}
                           </div>
                         </div>
                       </div>
                       <div className="flex items-center">
                         <span className="font-semibold">
-                          {formatPrice(method.price)}
+                          {formatPrice(method.delivery_fee)}
                         </span>
-                        {selectedShippingMethod?.id === method.id && (
+                        {selectedShippingMethod?._id === method._id && (
                           <CheckCircle
                             size={18}
                             className="ml-2 text-green-500"
@@ -616,8 +544,7 @@ const Payment = () => {
                     className={darkMode ? "text-gray-500" : "text-gray-400"}
                   />
                   <p className="mt-3 text-center text-sm text-gray-500">
-                    Vui lòng chọn tỉnh/thành, quận/huyện và phường/xã để xem
-                    phương thức vận chuyển
+                    Không có phương thức vận chuyển khả dụng.
                   </p>
                 </div>
               )}
@@ -632,40 +559,59 @@ const Payment = () => {
               <h2 className="mb-6 text-xl font-semibold flex items-center">
                 <CreditCard className="mr-2" size={20} /> Phương thức thanh toán
               </h2>
-              <div className="space-y-3">
-                {paymentMethods.map((method) => (
-                  <motion.div
-                    whileHover={{ scale: 1.01 }}
-                    key={method.id}
-                    onClick={() => setSelectedPayment(method.id)}
-                    className={`flex cursor-pointer items-center rounded-xl p-4 ${
-                      selectedPayment === method.id
-                        ? darkMode
-                          ? "border-blue-500 bg-blue-900/30"
-                          : "border-blue-500 bg-blue-50"
-                        : darkMode
-                        ? "bg-gray-700"
-                        : "bg-gray-50"
-                    }`}
-                  >
-                    <div className="mr-3">
-                      <div
-                        className={`rounded-full p-2 ${
-                          darkMode ? "bg-gray-600" : "bg-white"
-                        }`}
-                      >
-                        {method.icon}
+              {paymentMethods.length > 0 ? (
+                <div className="space-y-3">
+                  {paymentMethods.map((method) => (
+                    <motion.div
+                      whileHover={{ scale: 1.01 }}
+                      key={method._id}
+                      onClick={() => setSelectedPayment(method._id)}
+                      className={`flex cursor-pointer items-center rounded-xl p-4 ${
+                        selectedPayment === method._id
+                          ? darkMode
+                            ? "border-blue-500 bg-blue-900/30"
+                            : "border-blue-500 bg-blue-50"
+                          : darkMode
+                          ? "bg-gray-700"
+                          : "bg-gray-50"
+                      }`}
+                    >
+                      <div className="mr-3">
+                        <div
+                          className={`rounded-full p-2 ${
+                            darkMode ? "bg-gray-600" : "bg-white"
+                          }`}
+                        >
+                          {getPaymentIcon(method.payment_type_name)}
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex-grow">
-                      <div className="font-medium">{method.label}</div>
-                    </div>
-                    {selectedPayment === method.id && (
-                      <CheckCircle size={18} className="ml-2 text-green-500" />
-                    )}
-                  </motion.div>
-                ))}
-              </div>
+                      <div className="flex-grow">
+                        <div className="font-medium">{method.payment_type_name}</div>
+                        {method.description && (
+                          <div className="text-sm text-gray-500">{method.description}</div>
+                        )}
+                      </div>
+                      {selectedPayment === method._id && (
+                        <CheckCircle size={18} className="ml-2 text-green-500" />
+                      )}
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <div
+                  className={`flex h-40 flex-col items-center justify-center rounded-xl ${
+                    darkMode ? "bg-gray-700" : "bg-gray-50"
+                  }`}
+                >
+                  <CreditCard
+                    size={32}
+                    className={darkMode ? "text-gray-500" : "text-gray-400"}
+                  />
+                  <p className="mt-3 text-center text-sm text-gray-500">
+                    Không có phương thức thanh toán khả dụng.
+                  </p>
+                </div>
+              )}
             </div>
           </motion.div>
 
@@ -755,7 +701,7 @@ const Payment = () => {
                   </span>
                   <span>
                     {selectedShippingMethod ? (
-                      formatPrice(selectedShippingMethod.price)
+                      formatPrice(selectedShippingMethod.delivery_fee)
                     ) : (
                       <span className="text-gray-500">Đang tính...</span>
                     )}

@@ -20,7 +20,8 @@ const orderSchema: Schema<IOrder> = new Schema<IOrder>(
     payment_status: {
       type: String,
       enum: PaymentStatus,
-      default: PaymentStatus.PENDING
+      default: PaymentStatus.PENDING,
+      required: false
     },
     status: {
       type: String,

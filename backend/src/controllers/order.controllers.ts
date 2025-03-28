@@ -23,13 +23,12 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
   try {
     const {
       userID,
-      // payment_typeID,
+      payment_typeID,
       deliveryID = null, // Initialize deliveryID with a default value
       couponID,
       orderdate,
       total_price,
       shipping_address,
-      payment_status,
       transaction_id,
       booking_date,
       orderDetails
@@ -38,11 +37,10 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
     // 1. Validate input data
     if (
       !userID ||
-      // !payment_typeID ||
-      // !deliveryID ||
+      !payment_typeID ||
+      !deliveryID ||
       !total_price ||
       !shipping_address ||
-      !payment_status ||
       !transaction_id ||
       !orderDetails ||
       !Array.isArray(orderDetails)
@@ -50,22 +48,17 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       throw new Error('Missing required fields');
     }
 
-    // Validate payment_status
-    if (!Object.values(PaymentStatus).includes(payment_status)) {
-      throw new Error('Invalid payment status');
-    }
-
     // 2. Validate user existence
     const user = await userModel.findById(userID).session(session);
     if (!user) throw new Error('User not found');
 
     // 3. Validate payment type
-    // const paymentType = await PaymentType.findById(payment_typeID).session(session);
-    // if (!paymentType) throw new Error('Payment type not found');
+    const paymentType = await PaymentType.findById(payment_typeID).session(session);
+    if (!paymentType) throw new Error('Payment type not found');
 
     // 4. Validate delivery
-    // const delivery = await deliveryModel.findById(deliveryID).session(session);
-    // if (!delivery) throw new Error('Delivery method not found');
+    const delivery = await deliveryModel.findById(deliveryID).session(session);
+    if (!delivery) throw new Error('Delivery method not found');
 
     // 5. Handle coupon validation and discount calculation
     let discount = 0;
@@ -149,7 +142,6 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       total_price: finalTotalPrice,
       discount,
       shipping_address,
-      payment_status, // Lấy từ body (pending)
       status: OrderStatus.PENDING,
       transaction_id,
       booking_date: booking_date ? new Date(booking_date) : null

@@ -6,7 +6,8 @@ import product from './product.model.js';
 const addressSchema = new Schema({
   name: { type: String, required: true },
   phone: { type: String, required: true },
-  address: { type: String, required: true } // Chuỗi địa chỉ đầy đủ
+  address: { type: String, required: true },
+  isDefault: { type: Boolean, required: false }
 });
 
 const userSchema: Schema<IUser> = new Schema<IUser>(
@@ -93,6 +94,20 @@ const userSchema: Schema<IUser> = new Schema<IUser>(
   },
   { timestamps: true }
 );
+
+// Đảm bảo chỉ một địa chỉ được đặt làm mặc định
+// userSchema.pre('save', function (next) {
+//   const user = this;
+//   if (user.address) {
+//     const defaultAddresses = user.address.filter((addr) => addr.isDefault);
+//     if (defaultAddresses.length > 1) {
+//       user.address.forEach((addr, index) => {
+//         addr.isDefault = index === user.address.length - 1 && defaultAddresses.includes(addr);
+//       });
+//     }
+//   }
+//   next();
+// });
 
 const userModel = mongoose.models.user || model('user', userSchema);
 

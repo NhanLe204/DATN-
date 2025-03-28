@@ -1,6 +1,13 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Button, Form, Input, Modal, Select, message } from "antd";
+import {
+  Button,
+  Form,
+  Input,
+  Modal,
+  Select,
+  message,
+} from "antd";
 import { useParams } from "react-router-dom";
 import userApi from "../api/userApi";
 
@@ -28,6 +35,7 @@ interface Address {
   name: string;
   phone: string;
   address: string;
+  isDefault?: boolean;
 }
 
 export default function Address() {
@@ -127,34 +135,26 @@ export default function Address() {
     addressForm
       .validateFields()
       .then(async (values) => {
-        const accountID = localStorage
-          .getItem("accountID")
-          ?.replace(/"/g, "")
-          .trim();
+        const accountID = localStorage.getItem("accountID")?.replace(/"/g, "").trim();
         if (!accountID || !user) {
           message.error("Không tìm thấy thông tin người dùng!");
           return;
         }
 
-        const provinceName =
-          provinces.find((p) => p.code === values.province)?.name || "";
-        const districtName =
-          districts.find((d) => d.code === values.district)?.name || "";
+        const provinceName = provinces.find((p) => p.code === values.province)?.name || "";
+        const districtName = districts.find((d) => d.code === values.district)?.name || "";
         const wardName = wards.find((w) => w.code === values.ward)?.name || "";
-        const fullAddress =
-          `${values.address}, ${wardName}, ${districtName}, ${provinceName}`.trim();
+        const fullAddress = `${values.address}, ${wardName}, ${districtName}, ${provinceName}`.trim();
 
         const newAddress: Address = {
           name: values.name,
           phone: values.phone,
           address: fullAddress,
+          isDefault: false, // Địa chỉ mới không phải là mặc định
         };
 
         try {
-          const userUpdateResponse = await userApi.addAddress(
-            accountID,
-            newAddress
-          );
+          const userUpdateResponse = await userApi.addAddress(accountID, newAddress);
           const updatedAddresses = [...(user.address || []), newAddress];
           const updatedUser = { ...user, address: updatedAddresses };
           setUser(updatedUser);
@@ -163,10 +163,7 @@ export default function Address() {
           resetAddressForm();
           message.success("Thêm địa chỉ thành công!");
         } catch (error) {
-          const errorMessage =
-            error.response?.data?.message ||
-            error.message ||
-            "Lỗi không xác định";
+          const errorMessage = error.response?.data?.message || error.message || "Lỗi không xác định";
           message.error(`Thêm địa chỉ thất bại: ${errorMessage}`);
           console.log("Dữ liệu gửi lên API:", newAddress);
           console.error("Lỗi từ server:", error);
@@ -181,35 +178,26 @@ export default function Address() {
     addressForm
       .validateFields()
       .then(async (values) => {
-        const accountID = localStorage
-          .getItem("accountID")
-          ?.replace(/"/g, "")
-          .trim();
+        const accountID = localStorage.getItem("accountID")?.replace(/"/g, "").trim();
         if (!accountID || !user || editAddressIndex === null) {
           message.error("Không tìm thấy thông tin người dùng hoặc địa chỉ!");
           return;
         }
 
-        const provinceName =
-          provinces.find((p) => p.code === values.province)?.name || "";
-        const districtName =
-          districts.find((d) => d.code === values.district)?.name || "";
+        const provinceName = provinces.find((p) => p.code === values.province)?.name || "";
+        const districtName = districts.find((d) => d.code === values.district)?.name || "";
         const wardName = wards.find((w) => w.code === values.ward)?.name || "";
-        const fullAddress =
-          `${values.address}, ${wardName}, ${districtName}, ${provinceName}`.trim();
+        const fullAddress = `${values.address}, ${wardName}, ${districtName}, ${provinceName}`.trim();
 
         const updatedAddress: Address = {
           name: values.name,
           phone: values.phone,
           address: fullAddress,
+          isDefault: user.address[editAddressIndex].isDefault, // Giữ nguyên trạng thái isDefault
         };
 
         try {
-          const userUpdateResponse = await userApi.updateAddress(
-            accountID,
-            editAddressIndex,
-            updatedAddress
-          );
+          const userUpdateResponse = await userApi.updateAddress(accountID, editAddressIndex, updatedAddress);
           const updatedAddresses = [...(user.address || [])];
           updatedAddresses[editAddressIndex] = updatedAddress;
           const updatedUser = { ...user, address: updatedAddresses };
@@ -220,10 +208,7 @@ export default function Address() {
           setEditAddressIndex(null);
           message.success("Cập nhật địa chỉ thành công!");
         } catch (error) {
-          const errorMessage =
-            error.response?.data?.message ||
-            error.message ||
-            "Lỗi không xác định";
+          const errorMessage = error.response?.data?.message || error.message || "Lỗi không xác định";
           message.error(`Cập nhật địa chỉ thất bại: ${errorMessage}`);
           console.log("Dữ liệu gửi lên API:", updatedAddress);
           console.error("Lỗi từ server:", error);
@@ -259,9 +244,7 @@ export default function Address() {
       const districtData = await districtResponse.json();
       setDistricts(districtData.districts || []);
 
-      const district = districtData.districts.find(
-        (d) => d.name === districtName
-      );
+      const district = districtData.districts.find((d) => d.name === districtName);
       if (!district) {
         message.error("Không tìm thấy quận/huyện!");
         return;
@@ -304,10 +287,7 @@ export default function Address() {
       okType: "danger",
       cancelText: "Hủy",
       onOk: async () => {
-        const accountID = localStorage
-          .getItem("accountID")
-          ?.replace(/"/g, "")
-          .trim();
+        const accountID = localStorage.getItem("accountID")?.replace(/"/g, "").trim();
         if (!accountID || !user) {
           message.error("Không tìm thấy thông tin người dùng!");
           return;
@@ -321,10 +301,7 @@ export default function Address() {
           localStorage.setItem("userData", JSON.stringify(updatedUser));
           message.success("Xóa địa chỉ thành công!");
         } catch (error) {
-          const errorMessage =
-            error.response?.data?.message ||
-            error.message ||
-            "Lỗi không xác định";
+          const errorMessage = error.response?.data?.message || error.message || "Lỗi không xác định";
           message.error(`Xóa địa chỉ thất bại: ${errorMessage}`);
           console.error("Lỗi khi xóa địa chỉ:", error);
         }
@@ -335,12 +312,38 @@ export default function Address() {
     });
   };
 
+  const handleSetDefaultAddress = async (index: number) => {
+    const accountID = localStorage.getItem("accountID")?.replace(/"/g, "").trim();
+    if (!accountID || !user) {
+      message.error("Không tìm thấy thông tin người dùng!");
+      return;
+    }
+
+    try {
+      // Gọi API để đặt địa chỉ mặc định
+      await userApi.setDefaultAddress(accountID, index);
+
+      // Cập nhật danh sách địa chỉ trong state
+      const updatedAddresses = user.address.map((addr, i) => ({
+        ...addr,
+        isDefault: i === index, // Đặt isDefault là true cho địa chỉ được chọn, false cho các địa chỉ khác
+      }));
+
+      const updatedUser = { ...user, address: updatedAddresses };
+      setUser(updatedUser);
+      localStorage.setItem("userData", JSON.stringify(updatedUser));
+      message.success("Đặt địa chỉ mặc định thành công!");
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message || "Lỗi không xác định";
+      message.error(`Đặt địa chỉ mặc định thất bại: ${errorMessage}`);
+      console.error("Lỗi khi đặt địa chỉ mặc định:", error);
+    }
+  };
+
   return (
     <>
       <div className="flex justify-between">
-        <h3 className="mb-4 text-lg font-bold text-gray-800">
-          Địa chỉ của tôi
-        </h3>
+        <h3 className="mb-4 text-lg font-bold text-gray-800">Địa chỉ của tôi</h3>
         <Button
           className="w-1/6 bg-[#22A6DF] hover:bg-[#1890ff] hover:border-[#22A6DF] rounded text-white"
           onClick={() => setIsModalVisible(true)}
@@ -349,7 +352,7 @@ export default function Address() {
         </Button>
       </div>
       <hr className="mt-2 border-gray-300" />
-      <div className="flex-1 overflow-y-auto max-h-[calc(100vh-200px)] hide-scrollbar">
+      <div className="m-4">
         {user?.address && user.address.length > 0 ? (
           user.address.map((addr, index) => (
             <div
@@ -360,9 +363,12 @@ export default function Address() {
                 <p className="text-base font-semibold">
                   {addr.name}
                   <span className="mx-2 text-gray-500">|</span>
-                  <span className="font-normal text-gray-500">
-                    {addr.phone}
-                  </span>
+                  <span className="font-normal text-gray-500">{addr.phone}</span>
+                  {addr.isDefault && (
+                    <span className="ml-2 inline-block px-2 py-1 text-xs font-semibold text-orange-600 bg-orange-100 rounded">
+                      Mặc định
+                    </span>
+                  )}
                 </p>
                 <p className="mt-2 text-base text-gray-500">{addr.address}</p>
               </div>
@@ -379,6 +385,17 @@ export default function Address() {
                 >
                   Xóa
                 </Button>
+                <Button
+                  className={`w-1/7 rounded text-white ${
+                    addr.isDefault
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-green-500 hover:bg-green-600"
+                  }`}
+                  onClick={() => handleSetDefaultAddress(index)}
+                  disabled={addr.isDefault}
+                >
+                  {addr.isDefault ? "Mặc định" : "Đặt làm mặc định"}
+                </Button>
               </div>
             </div>
           ))
@@ -388,11 +405,7 @@ export default function Address() {
       </div>
 
       <Modal
-        title={
-          <span className="text-xl font-semibold text-gray-800">
-            Thêm địa chỉ mới
-          </span>
-        }
+        title={<span className="text-xl font-semibold text-gray-800">Thêm địa chỉ mới</span>}
         open={isModalVisible}
         onOk={handleOk}
         onCancel={() => {
@@ -402,24 +415,22 @@ export default function Address() {
         okText="Lưu"
         cancelText="Hủy"
         okButtonProps={{
-          className:
-            "bg-[#22A6DF] hover:bg-[#1890ff] text-white font-semibold py-2 px-4 rounded-lg transition duration-200",
+          className: "bg-[#22A6DF] hover:bg-[#1890ff] text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
         }}
         cancelButtonProps={{
-          className:
-            "bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg transition duration-200",
+          className: "bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg transition duration-200"
         }}
         width={600}
         bodyStyle={{ padding: "24px" }}
       >
-        <Form form={addressForm} layout="vertical" className="space-y-6">
+        <Form
+          form={addressForm}
+          layout="vertical"
+          className="space-y-6"
+        >
           <Item
             name="name"
-            label={
-              <span className="text-base font-semibold text-gray-700">
-                Họ và tên
-              </span>
-            }
+            label={<span className="text-base font-semibold text-gray-700">Họ và tên</span>}
             rules={[{ required: true, message: "Vui lòng nhập họ và tên!" }]}
           >
             <Input
@@ -429,14 +440,8 @@ export default function Address() {
           </Item>
           <Item
             name="phone"
-            label={
-              <span className="text-base font-semibold text-gray-700">
-                Số điện thoại
-              </span>
-            }
-            rules={[
-              { required: true, message: "Vui lòng nhập số điện thoại!" },
-            ]}
+            label={<span className="text-base font-semibold text-gray-700">Số điện thoại</span>}
+            rules={[{ required: true, message: "Vui lòng nhập số điện thoại!" }]}
           >
             <Input
               placeholder="Nhập số điện thoại"
@@ -446,14 +451,8 @@ export default function Address() {
           <div className="grid grid-cols-2 gap-4">
             <Item
               name="province"
-              label={
-                <span className="text-base font-semibold text-gray-700">
-                  Tỉnh/Thành phố
-                </span>
-              }
-              rules={[
-                { required: true, message: "Vui lòng chọn tỉnh/thành phố!" },
-              ]}
+              label={<span className="text-base font-semibold text-gray-700">Tỉnh/Thành phố</span>}
+              rules={[{ required: true, message: "Vui lòng chọn tỉnh/thành phố!" }]}
             >
               <Select
                 placeholder="Chọn tỉnh/thành phố"
@@ -472,11 +471,7 @@ export default function Address() {
             </Item>
             <Item
               name="district"
-              label={
-                <span className="text-base font-semibold text-gray-700">
-                  Quận/Huyện
-                </span>
-              }
+              label={<span className="text-base font-semibold text-gray-700">Quận/Huyện</span>}
               rules={[{ required: true, message: "Vui lòng chọn quận/huyện!" }]}
             >
               <Select
@@ -499,11 +494,7 @@ export default function Address() {
           <div className="grid grid-cols-2 gap-4">
             <Item
               name="ward"
-              label={
-                <span className="text-base font-semibold text-gray-700">
-                  Phường/Xã
-                </span>
-              }
+              label={<span className="text-base font-semibold text-gray-700">Phường/Xã</span>}
               rules={[{ required: true, message: "Vui lòng chọn phường/xã!" }]}
             >
               <Select
@@ -523,14 +514,8 @@ export default function Address() {
             </Item>
             <Item
               name="address"
-              label={
-                <span className="text-base font-semibold text-gray-700">
-                  Địa chỉ nhà
-                </span>
-              }
-              rules={[
-                { required: true, message: "Vui lòng nhập địa chỉ nhà!" },
-              ]}
+              label={<span className="text-base font-semibold text-gray-700">Địa chỉ nhà</span>}
+              rules={[{ required: true, message: "Vui lòng nhập địa chỉ nhà!" }]}
             >
               <Input
                 placeholder="Nhập địa chỉ nhà"
@@ -542,11 +527,7 @@ export default function Address() {
       </Modal>
 
       <Modal
-        title={
-          <span className="text-xl font-semibold text-gray-800">
-            Chỉnh sửa địa chỉ
-          </span>
-        }
+        title={<span className="text-xl font-semibold text-gray-800">Chỉnh sửa địa chỉ</span>}
         open={isEditModalVisible}
         onOk={handleEditOk}
         onCancel={() => {
@@ -557,28 +538,22 @@ export default function Address() {
         okText="Lưu"
         cancelText="Hủy"
         okButtonProps={{
-          className:
-            "bg-[#22A6DF] hover:bg-[#1890ff] text-white font-semibold py-2 px-4 rounded-lg transition duration-200",
+          className: "bg-[#22A6DF] hover:bg-[#1890ff] text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
         }}
         cancelButtonProps={{
-          className:
-            "bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg transition duration-200",
+          className: "bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg transition duration-200"
         }}
-        width={600} // Tăng chiều rộng modal để không bị chật
-        bodyStyle={{ padding: "24px" }} // Thêm padding cho nội dung modal
+        width={600}
+        bodyStyle={{ padding: "24px" }}
       >
         <Form
           form={addressForm}
           layout="vertical"
-          className="space-y-6" // Tăng khoảng cách giữa các trường
+          className="space-y-6"
         >
           <Item
             name="name"
-            label={
-              <span className="text-base font-semibold text-gray-700">
-                Họ và tên
-              </span>
-            }
+            label={<span className="text-base font-semibold text-gray-700">Họ và tên</span>}
             rules={[{ required: true, message: "Vui lòng nhập họ và tên!" }]}
           >
             <Input
@@ -588,14 +563,8 @@ export default function Address() {
           </Item>
           <Item
             name="phone"
-            label={
-              <span className="text-base font-semibold text-gray-700">
-                Số điện thoại
-              </span>
-            }
-            rules={[
-              { required: true, message: "Vui lòng nhập số điện thoại!" },
-            ]}
+            label={<span className="text-base font-semibold text-gray-700">Số điện thoại</span>}
+            rules={[{ required: true, message: "Vui lòng nhập số điện thoại!" }]}
           >
             <Input
               placeholder="Nhập số điện thoại"
@@ -603,18 +572,10 @@ export default function Address() {
             />
           </Item>
           <div className="grid grid-cols-2 gap-4">
-            {" "}
-            {/* Chia 2 cột cho tỉnh/quận */}
             <Item
               name="province"
-              label={
-                <span className="text-base font-semibold text-gray-700">
-                  Tỉnh/Thành phố
-                </span>
-              }
-              rules={[
-                { required: true, message: "Vui lòng chọn tỉnh/thành phố!" },
-              ]}
+              label={<span className="text-base font-semibold text-gray-700">Tỉnh/Thành phố</span>}
+              rules={[{ required: true, message: "Vui lòng chọn tỉnh/thành phố!" }]}
             >
               <Select
                 placeholder="Chọn tỉnh/thành phố"
@@ -633,11 +594,7 @@ export default function Address() {
             </Item>
             <Item
               name="district"
-              label={
-                <span className="text-base font-semibold text-gray-700">
-                  Quận/Huyện
-                </span>
-              }
+              label={<span className="text-base font-semibold text-gray-700">Quận/Huyện</span>}
               rules={[{ required: true, message: "Vui lòng chọn quận/huyện!" }]}
             >
               <Select
@@ -657,15 +614,9 @@ export default function Address() {
             </Item>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            {" "}
-            {/* Chia 2 cột cho phường/xã và địa chỉ */}
             <Item
               name="ward"
-              label={
-                <span className="text-base font-semibold text-gray-700">
-                  Phường/Xã
-                </span>
-              }
+              label={<span className="text-base font-semibold text-gray-700">Phường/Xã</span>}
               rules={[{ required: true, message: "Vui lòng chọn phường/xã!" }]}
             >
               <Select
@@ -684,14 +635,8 @@ export default function Address() {
             </Item>
             <Item
               name="address"
-              label={
-                <span className="text-base font-semibold text-gray-700">
-                  Địa chỉ nhà
-                </span>
-              }
-              rules={[
-                { required: true, message: "Vui lòng nhập địa chỉ nhà!" },
-              ]}
+              label={<span className="text-base font-semibold text-gray-700">Địa chỉ nhà</span>}
+              rules={[{ required: true, message: "Vui lòng nhập địa chỉ nhà!" }]}
             >
               <Input
                 placeholder="Nhập địa chỉ nhà"

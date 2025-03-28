@@ -12,7 +12,8 @@ import {
   updateUserAddress,
   deleteUserAddress,
   changePassword,
-  getNewUsers
+  getNewUsers,
+  setDefaultAddress
 } from '../controllers/user.controllers.js';
 import { verifyToken } from '../middlewares/verifyToken.js';
 
@@ -26,5 +27,6 @@ userRouter.post('/users/:id/address', verifyToken, addUserAddress);
 userRouter.patch('/users/:id/address/:index', verifyToken, updateUserAddress);
 userRouter.delete('/users/:id/address/:index', verifyToken, deleteUserAddress);
 userRouter.patch('/users/:id/change-password', verifyToken, changePassword);
+userRouter.patch('/users/:id/set-default/:index', verifyToken, setDefaultAddress);
 
 export default userRouter;

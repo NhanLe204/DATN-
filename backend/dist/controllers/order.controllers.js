@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import orderModel from '../models/order.model.js';
 import userModel from '../models/user.model.js';
 import PaymentType from '../models/paymentType.model.js';
+import deliveryModel from '../models/delivery.model.js';
 import couponModel from '../models/coupon.model.js';
 import { CouponStatus } from '../enums/coupon.enum.js';
 import orderDetailModel from '../models/orderdetail.model.js';
@@ -15,14 +16,12 @@ export const createOrderAfterPayment = async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
-        const { userID, 
-        // payment_typeID,
-        deliveryID = null, // Initialize deliveryID with a default value
+        const { userID, payment_typeID, deliveryID = null, // Initialize deliveryID with a default value
         couponID, orderdate, total_price, shipping_address, payment_status, transaction_id, booking_date, orderDetails } = req.body;
         // 1. Validate input data
         if (!userID ||
-            // !payment_typeID ||
-            // !deliveryID ||
+            !payment_typeID ||
+            !deliveryID ||
             !total_price ||
             !shipping_address ||
             !payment_status ||
@@ -40,11 +39,13 @@ export const createOrderAfterPayment = async (req, res) => {
         if (!user)
             throw new Error('User not found');
         // 3. Validate payment type
-        // const paymentType = await PaymentType.findById(payment_typeID).session(session);
-        // if (!paymentType) throw new Error('Payment type not found');
+        const paymentType = await PaymentType.findById(payment_typeID).session(session);
+        if (!paymentType)
+            throw new Error('Payment type not found');
         // 4. Validate delivery
-        // const delivery = await deliveryModel.findById(deliveryID).session(session);
-        // if (!delivery) throw new Error('Delivery method not found');
+        const delivery = await deliveryModel.findById(deliveryID).session(session);
+        if (!delivery)
+            throw new Error('Delivery method not found');
         // 5. Handle coupon validation and discount calculation
         let discount = 0;
         if (couponID) {

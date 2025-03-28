@@ -12,4 +12,5 @@ export declare const updateUserAddress: (req: Request, res: Response) => Promise
 export declare const deleteUserAddress: (req: Request, res: Response) => Promise<void>;
 export declare const changePassword: (req: Request, res: Response) => Promise<void>;
 export declare const getNewUsers: (req: Request, res: Response) => Promise<void>;
+export declare const setDefaultAddress: (req: Request, res: Response) => Promise<void>;
 export {};
