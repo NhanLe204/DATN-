@@ -9,7 +9,7 @@ import {
   Space,
   notification,
 } from "antd";
-import { PlusOutlined, DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import { PlusOutlined, DeleteOutlined, EditOutlined, SearchOutlined } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { Typography } from "antd";
 import brandApi from "../../api/brandApi";
@@ -22,11 +22,21 @@ interface Brand {
   brand_name: string;
 }
 
+  const removeAccents = (str: string) => {
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D');
+};
+
 const BrandManager: React.FC = () => {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
   const [brands, setBrands] = useState<Brand[]>([]);
+  const [filteredBrands, setFilteredBrands] = useState<Brand[]>([]);
+  const [searchText, setSearchText] = useState('');
   const [form] = Form.useForm();
 
   const fetchBrands = async () => {
@@ -38,6 +48,7 @@ const BrandManager: React.FC = () => {
         brand_name: brand.brand_name,
       }));
       setBrands(brandData);
+      setFilteredBrands(brandData); 
     } catch (error) {
       console.error("Lỗi khi lấy danh sách brand:", error);
     }
@@ -47,24 +58,37 @@ const BrandManager: React.FC = () => {
     fetchBrands();
   }, []);
 
+  const handleSearch = (value: string) => {
+    setSearchText(value);
+    const normalizedSearchText = removeAccents(value.toLowerCase());
+
+    const filtered = brands.filter(brand => {
+      const normalizedBrandName = removeAccents(brand.brand_name.toLowerCase());
+      return normalizedBrandName.includes(normalizedSearchText);
+    });
+
+    setFilteredBrands(filtered);
+  };
+
   const columns = [
     {
       title: "STT",
       key: "stt",
-      width: 60,
+      width: 70,
       render: (_: any, __: Brand, index: number) => index + 1,
+      align: "left" as const,
     },
     {
       title: "Tên Brand",
       dataIndex: "brand_name",
       key: "brand_name",
-      width: 200, // Đặt width cố định để kiểm soát kích thước
-      align: "center" as const, // Căn giữa nội dung
+      width: 300, 
+      align: "left" as const, 
     },
     {
       title: "Chức năng",
       key: "action",
-      width: 120,
+      width: 150, 
       render: (_: any, record: Brand) => (
         <Space>
           <Button
@@ -80,6 +104,7 @@ const BrandManager: React.FC = () => {
           />
         </Space>
       ),
+      align: "left" as const, 
     },
   ];
 
@@ -98,7 +123,9 @@ const BrandManager: React.FC = () => {
       onOk: async () => {
         try {
           await brandApi.delete(record.id);
-          setBrands(brands.filter((b) => b.key !== record.key));
+          const updatedBrands = brands.filter((b) => b.key !== record.key);
+          setBrands(updatedBrands);
+          setFilteredBrands(updatedBrands);
           notification.success({
             message: "Thành công",
             description: "Brand đã được xóa thành công!",
@@ -120,13 +147,13 @@ const BrandManager: React.FC = () => {
           await brandApi.update(selectedBrand.id, {
             brand_name: values.brand_name,
           });
-          setBrands(
-            brands.map((b) =>
-              b.key === selectedBrand.key
-                ? { ...b, brand_name: values.brand_name }
-                : b
-            )
+          const updatedBrands = brands.map((b) =>
+            b.key === selectedBrand.key
+              ? { ...b, brand_name: values.brand_name }
+              : b
           );
+          setBrands(updatedBrands);
+          setFilteredBrands(updatedBrands);
           setIsEditModalVisible(false);
           notification.success({
             message: "Thành công",
@@ -167,14 +194,15 @@ const BrandManager: React.FC = () => {
             id: brandId,
             brand_name: values.brand_name,
           };
-          setBrands([...brands, newBrand]);
+          const updatedBrands = [...brands, newBrand];
+          setBrands(updatedBrands);
+          setFilteredBrands(updatedBrands);
         } else {
           console.warn(
             "Không tìm thấy ID trong response, làm mới danh sách từ server"
           );
+          await fetchBrands();
         }
-
-        await fetchBrands();
 
         setIsAddModalVisible(false);
         form.resetFields();
@@ -186,7 +214,11 @@ const BrandManager: React.FC = () => {
         });
       } catch (error) {
         console.error("Lỗi khi thêm brand:", error);
-        Modal.error({ title: "Lỗi", content: "Không thể thêm brand!" });
+        Modal.error({
+          title: "Lỗi", content
+
+            : "Không thể thêm brand!"
+        });
       }
     });
   };
@@ -204,6 +236,17 @@ const BrandManager: React.FC = () => {
       transition={{ duration: 0.5 }}
     >
       <Card
+        title={
+          <div className="flex items-center gap-4">
+            <Input
+              placeholder="Tìm kiếm..."
+              prefix={<SearchOutlined />}
+              value={searchText}
+              onChange={(e) => handleSearch(e.target.value)}
+              style={{ width: 250 }}
+            />
+          </div>
+        }
         bordered={false}
         className="shadow-sm"
         extra={
@@ -218,7 +261,7 @@ const BrandManager: React.FC = () => {
       >
         <Table
           columns={columns}
-          dataSource={brands}
+          dataSource={filteredBrands}
           pagination={{ pageSize: 10 }}
           className="overflow-x-auto"
         />

@@ -43,11 +43,18 @@ const productsApi = {
       data: response.data,
     };
   },
-  getAll: async () => {
-    const response = await api.get("/v1/products");
-    return {
-      data: response.data,
-    };
+  getAll: async (params = {}) => {
+    try {
+      const response = await api.get("/v1/products", {
+        params, 
+      });
+      return {
+        data: response.data,
+      };
+    } catch (error) {
+      console.error("Error fetching products:", error.response?.data || error);
+      throw error;
+    }
   },
   create: async (data) => {
     try {

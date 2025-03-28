@@ -15,6 +15,7 @@ import {
   PlusOutlined,
   DeleteOutlined,
   EditOutlined,
+  SearchOutlined,
 } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import { Typography } from 'antd';
@@ -31,12 +32,23 @@ interface Category {
   status: string;
 }
 
+// Function to remove Vietnamese accents
+const removeAccents = (str: string) => {
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D');
+};
+
 const CategoryList: React.FC = () => {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [filteredCategories, setFilteredCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searchText, setSearchText] = useState('');
   const [form] = Form.useForm();
 
   useEffect(() => {
@@ -57,6 +69,7 @@ const CategoryList: React.FC = () => {
           status: category.status === "active" ? "Hoạt động" : "Bị khóa",
         }));
         setCategories(fetchedCategories);
+        setFilteredCategories(fetchedCategories);
       } catch (error) {
         console.error("Error fetching categories:", error);
       } finally {
@@ -66,12 +79,25 @@ const CategoryList: React.FC = () => {
     fetchCategories();
   }, []);
 
+  // Enhanced search functionality
+  const handleSearch = (value: string) => {
+    setSearchText(value);
+    const normalizedSearchText = removeAccents(value.toLowerCase());
+
+    const filtered = categories.filter(category => {
+      const normalizedCategoryName = removeAccents(category.name.toLowerCase());
+      return normalizedCategoryName.includes(normalizedSearchText);
+    });
+
+    setFilteredCategories(filtered);
+  };
+
   const columns = [
     {
       title: 'STT',
       key: 'stt',
       width: 60,
-      render: (_: any, __: Category, index: number) => index + 1, // Hiển thị STT từ 1
+      render: (_: any, __: Category, index: number) => index + 1,
     },
     { title: 'Tên danh mục', dataIndex: 'name', key: 'name', width: 150 },
     { title: 'Mô tả', dataIndex: 'description', key: 'description' },
@@ -124,7 +150,9 @@ const CategoryList: React.FC = () => {
       onOk: async () => {
         try {
           await categoryApi.delete(record._id);
-          setCategories(categories.filter(category => category._id !== record._id));
+          const updatedCategories = categories.filter(category => category._id !== record._id);
+          setCategories(updatedCategories);
+          setFilteredCategories(updatedCategories);
           notification.success({
             message: "Thành công",
             description: "Danh mục đã được xóa thành công!",
@@ -153,13 +181,13 @@ const CategoryList: React.FC = () => {
         status: values.status === "Hoạt động" ? "active" : "inactive",
       };
       const response = await categoryApi.update(selectedCategory?._id, updatedData);
-      setCategories(
-        categories.map((u) =>
-          u.key === selectedCategory?.key
-            ? { ...u, ...updatedData, status: values.status }
-            : u
-        )
+      const updatedCategories = categories.map((u) =>
+        u.key === selectedCategory?.key
+          ? { ...u, ...updatedData, status: values.status }
+          : u
       );
+      setCategories(updatedCategories);
+      setFilteredCategories(updatedCategories);
       setIsEditModalVisible(false);
       notification.success({
         message: "Thành công",
@@ -199,7 +227,9 @@ const CategoryList: React.FC = () => {
         description: values.description,
         status: "Hoạt động",
       };
-      setCategories([...categories, addedCategory]);
+      const updatedCategories = [...categories, addedCategory];
+      setCategories(updatedCategories);
+      setFilteredCategories(updatedCategories);
       setIsAddModalVisible(false);
       form.resetFields();
       notification.success({
@@ -225,6 +255,17 @@ const CategoryList: React.FC = () => {
       transition={{ duration: 0.5 }}
     >
       <Card
+        title={
+          <div className="flex items-center gap-4">
+            <Input
+              placeholder="Tìm kiếm..."
+              value={searchText}
+              onChange={(e) => handleSearch(e.target.value)}
+              style={{ width: 200 }}
+              prefix={<SearchOutlined />}
+            />
+          </div>
+        }
         bordered={false}
         className="shadow-sm"
         extra={
@@ -241,7 +282,7 @@ const CategoryList: React.FC = () => {
       >
         <Table
           columns={columns}
-          dataSource={categories}
+          dataSource={filteredCategories}
           loading={loading}
           pagination={{ pageSize: 10 }}
           className="overflow-x-auto"

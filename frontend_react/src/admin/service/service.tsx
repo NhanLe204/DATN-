@@ -16,6 +16,7 @@ import {
   DeleteOutlined,
   EditOutlined,
   PlusOutlined,
+  SearchOutlined,
 } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import serviceApi from '../../api/serviceApi';
@@ -32,12 +33,23 @@ interface Service {
   status: string;
 }
 
+// Function to remove Vietnamese accents
+const removeAccents = (str: string) => {
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D');
+};
+
 const ServiceList: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [services, setServices] = useState<Service[]>([]);
+  const [filteredServices, setFilteredServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searchText, setSearchText] = useState('');
   const [editForm] = Form.useForm();
   const [addForm] = Form.useForm();
 
@@ -56,6 +68,7 @@ const ServiceList: React.FC = () => {
           status: service.status === 'active' ? 'Hoạt động' : 'Ngừng hoạt động',
         }));
         setServices(fetchedServices);
+        setFilteredServices(fetchedServices); 
       } catch (error) {
         console.error('Error fetching services:', error);
         notification.error({
@@ -71,12 +84,24 @@ const ServiceList: React.FC = () => {
     fetchServices();
   }, []);
 
+  const handleSearch = (value: string) => {
+    setSearchText(value);
+    const normalizedSearchText = removeAccents(value.toLowerCase());
+    
+    const filtered = services.filter(service => {
+      const normalizedServiceName = removeAccents(service.service_name.toLowerCase());
+      return normalizedServiceName.includes(normalizedSearchText);
+    });
+    
+    setFilteredServices(filtered);
+  };
+
   const columns = [
     {
       title: "STT",
       key: "stt",
       width: 60,
-      render: (_: any, __: Service, index: number) => index + 1, // Hiển thị STT từ 1
+      render: (_: any, __: Service, index: number) => index + 1,
     },
     { 
       title: 'Tên dịch vụ', 
@@ -160,7 +185,9 @@ const ServiceList: React.FC = () => {
       onOk: async () => {
         try {
           await serviceApi.delete(record._id);
-          setServices(services.filter(service => service._id !== record._id));
+          const updatedServices = services.filter(service => service._id !== record._id);
+          setServices(updatedServices);
+          setFilteredServices(updatedServices);
           notification.success({
             message: "Thành công",
             description: "Xóa dịch vụ thành công!",
@@ -192,7 +219,7 @@ const ServiceList: React.FC = () => {
         status: values.status === 'Hoạt động' ? 'active' : 'inactive',
       };
       const response = await serviceApi.update(selectedService!._id, updatedData);
-      setServices(services.map(service => 
+      const updatedServices = services.map(service => 
         service._id === selectedService!._id 
           ? { 
               ...service, 
@@ -200,7 +227,9 @@ const ServiceList: React.FC = () => {
               status: response.data.status === 'active' ? 'Hoạt động' : 'Ngừng hoạt động'
             } 
           : service
-      ));
+      );
+      setServices(updatedServices);
+      setFilteredServices(updatedServices);
       setIsModalVisible(false);
       notification.success({
         message: "Thành công",
@@ -239,7 +268,9 @@ const ServiceList: React.FC = () => {
         duration: response.data.duration,
         status: response.data.status === 'active' ? 'Hoạt động' : 'Ngừng hoạt động',
       };
-      setServices([...services, createdService]);
+      const updatedServices = [...services, createdService];
+      setServices(updatedServices);
+      setFilteredServices(updatedServices);
       setIsAddModalVisible(false);
       notification.success({
         message: "Thành công",
@@ -266,6 +297,17 @@ const ServiceList: React.FC = () => {
       transition={{ duration: 0.5 }}
     >
       <Card 
+        title={
+          <div className="flex items-center gap-4">
+            <Input
+              placeholder="Tìm kiếm..."
+              prefix={<SearchOutlined />}
+              value={searchText}
+              onChange={(e) => handleSearch(e.target.value)}
+              style={{ width: 200 }}
+            />
+          </div>
+        }
         bordered={false}
         className="shadow-sm"
         extra={
@@ -280,7 +322,7 @@ const ServiceList: React.FC = () => {
       >
         <Table 
           columns={columns} 
-          dataSource={services} 
+          dataSource={filteredServices} 
           pagination={{ pageSize: 10 }}
           loading={loading}
           className="overflow-x-auto"

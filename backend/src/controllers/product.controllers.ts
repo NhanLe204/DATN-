@@ -8,12 +8,15 @@ import tagModel from '../models/tag.model.js';
 import { IProduct } from '@/interfaces/product.interface.js';
 import brandModel from '@/models/brand.model.js';
 
+const removeVietnameseTones = (str: string): string => {
+  str = str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  str = str.replace(/[đĐ]/g, (match) => (match === 'đ' ? 'd' : 'D'));
+  return str.toLowerCase();
+};
+
 export const getAllProduct = async (req: Request, res: Response): Promise<void> => {
   try {
-    // Lấy các tham số query từ request
     const { search, tag, status, brand, category, priceMin, priceMax, page = '1', limit = '10' } = req.query;
-
-    // Khởi tạo điều kiện lọc
     const query: any = {};
 
     // 1. Lọc theo trạng thái (status)
@@ -21,7 +24,7 @@ export const getAllProduct = async (req: Request, res: Response): Promise<void> 
       if (!Object.values(ProductStatus).includes(status as ProductStatus)) {
         res.status(400).json({
           success: false,
-          message: `Trạng thái không hợp lệ. Chỉ chấp nhận ${Object.values(ProductStatus).join(', ')}`
+          message: `Trạng thái không hợp lệ. Chỉ chấp nhận ${Object.values(ProductStatus).join(', ')}`,
         });
         return;
       }
@@ -31,43 +34,32 @@ export const getAllProduct = async (req: Request, res: Response): Promise<void> 
     // 2. Lọc theo tag (tag_id)
     if (tag && typeof tag === 'string') {
       if (!ObjectId.isValid(tag)) {
-        res.status(400).json({
-          success: false,
-          message: 'Tag ID không hợp lệ'
-        });
+        res.status(400).json({ success: false, message: 'Tag ID không hợp lệ' });
         return;
       }
       const tagExists = await tagModel.findById(tag);
       if (!tagExists) {
-        res.status(404).json({
-          success: false,
-          message: `Tag với ID ${tag} không tồn tại`
-        });
+        res.status(404).json({ success: false, message: `Tag với ID ${tag} không tồn tại` });
         return;
       }
       query.tag_id = new ObjectId(tag);
     }
 
-    // 3. Tìm kiếm theo tên sản phẩm (search)
+    // 3. Tìm kiếm theo tên sản phẩm (search) với hỗ trợ không dấu
     if (search && typeof search === 'string') {
-      query.name = { $regex: search, $options: 'i' }; // Tìm kiếm không phân biệt hoa thường
+      const searchNoTones = removeVietnameseTones(search);
+      query.name = { $regex: searchNoTones, $options: 'i' }; // Tìm kiếm không phân biệt hoa/thường và không dấu
     }
 
     // 4. Lọc theo thương hiệu (brand_id)
     if (brand && typeof brand === 'string') {
       if (!ObjectId.isValid(brand)) {
-        res.status(400).json({
-          success: false,
-          message: 'Brand ID không hợp lệ'
-        });
+        res.status(400).json({ success: false, message: 'Brand ID không hợp lệ' });
         return;
       }
       const brandExists = await brandModel.findById(brand);
       if (!brandExists) {
-        res.status(404).json({
-          success: false,
-          message: `Brand với ID ${brand} không tồn tại`
-        });
+        res.status(404).json({ success: false, message: `Brand với ID ${brand} không tồn tại` });
         return;
       }
       query.brand_id = new ObjectId(brand);
@@ -76,18 +68,12 @@ export const getAllProduct = async (req: Request, res: Response): Promise<void> 
     // 5. Lọc theo danh mục (category_id)
     if (category && typeof category === 'string') {
       if (!ObjectId.isValid(category)) {
-        res.status(400).json({
-          success: false,
-          message: 'Category ID không hợp lệ'
-        });
+        res.status(400).json({ success: false, message: 'Category ID không hợp lệ' });
         return;
       }
       const categoryExists = await categoryModel.findById(category);
       if (!categoryExists) {
-        res.status(404).json({
-          success: false,
-          message: `Category với ID ${category} không tồn tại`
-        });
+        res.status(404).json({ success: false, message: `Category với ID ${category} không tồn tại` });
         return;
       }
       query.category_id = new ObjectId(category);
@@ -99,10 +85,7 @@ export const getAllProduct = async (req: Request, res: Response): Promise<void> 
       if (priceMin && typeof priceMin === 'string') {
         const min = parseFloat(priceMin);
         if (isNaN(min) || min < 0) {
-          res.status(400).json({
-            success: false,
-            message: 'Giá tối thiểu (priceMin) không hợp lệ'
-          });
+          res.status(400).json({ success: false, message: 'Giá tối thiểu không hợp lệ' });
           return;
         }
         query.price.$gte = min;
@@ -110,20 +93,13 @@ export const getAllProduct = async (req: Request, res: Response): Promise<void> 
       if (priceMax && typeof priceMax === 'string') {
         const max = parseFloat(priceMax);
         if (isNaN(max) || max < 0) {
-          res.status(400).json({
-            success: false,
-            message: 'Giá tối đa (priceMax) không hợp lệ'
-          });
+          res.status(400).json({ success: false, message: 'Giá tối đa không hợp lệ' });
           return;
         }
         query.price.$lte = max;
       }
-      // Kiểm tra nếu priceMin > priceMax
       if (query.price.$gte !== undefined && query.price.$lte !== undefined && query.price.$gte > query.price.$lte) {
-        res.status(400).json({
-          success: false,
-          message: 'Giá tối thiểu (priceMin) không được lớn hơn giá tối đa (priceMax)'
-        });
+        res.status(400).json({ success: false, message: 'Giá tối thiểu không được lớn hơn giá tối đa' });
         return;
       }
     }
@@ -131,6 +107,10 @@ export const getAllProduct = async (req: Request, res: Response): Promise<void> 
     // Phân trang
     const pageNum = parseInt(page as string) || 1;
     const limitNum = parseInt(limit as string) || 10;
+    if (pageNum < 1 || limitNum < 1) {
+      res.status(400).json({ success: false, message: 'Page và limit phải là số dương' });
+      return;
+    }
     const skip = (pageNum - 1) * limitNum;
 
     // Đếm tổng số sản phẩm phù hợp với điều kiện lọc
@@ -139,38 +119,27 @@ export const getAllProduct = async (req: Request, res: Response): Promise<void> 
     // Thực hiện truy vấn với các điều kiện lọc và phân trang
     const result = await productModel
       .find(query)
-      .populate('category_id')
-      .populate('brand_id')
-      .populate('tag_id')
-      .skip(skip);
+      .populate('category_id', 'name')
+      .populate('brand_id', 'brand_name')
+      .populate('tag_id', 'tag_name')
+      .skip(skip)
+      .limit(limitNum);
 
-    // Kiểm tra kết quả
-    if (!result || result.length === 0) {
-      res.status(404).json({
-        success: false,
-        message: 'Không tìm thấy sản phẩm phù hợp với tiêu chí lọc'
-      });
-      return;
-    }
-
+    // Trả về kết quả
     res.status(200).json({
       success: true,
-      message: 'Lấy danh sách sản phẩm thành công',
+      message: result.length > 0 ? 'Lấy danh sách sản phẩm thành công' : 'Không tìm thấy sản phẩm phù hợp',
       result,
       pagination: {
         total,
         page: pageNum,
         limit: limitNum,
-        totalPages: Math.ceil(total / limitNum)
-      }
+        totalPages: Math.ceil(total / limitNum),
+      },
     });
   } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error fetching products: ${error.message}`);
-    } else {
-      console.error('Error fetching products:', error);
-    }
-    res.status(500).json({ success: false, message: 'Internal Server Error' });
+    console.error('Error fetching products:', (error as Error).message || error);
+    res.status(500).json({ success: false, message: 'Lỗi server nội bộ' });
   }
 };
 

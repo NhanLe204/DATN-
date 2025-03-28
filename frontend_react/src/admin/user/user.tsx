@@ -10,9 +10,8 @@ import {
   Space,
   Tag,
   notification,
-  Input as AntdInput,
 } from "antd";
-import { EditOutlined } from "@ant-design/icons";
+import { EditOutlined, SearchOutlined } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import userApi from "../../api/userApi";
 
@@ -30,12 +29,22 @@ interface User {
   role: string;
 }
 
+const removeAccents = (str: string) => {
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D');
+};
+
 const UserList: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searchText, setSearchText] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [form] = Form.useForm();
 
   useEffect(() => {
@@ -48,7 +57,7 @@ const UserList: React.FC = () => {
           _id: user._id,
           fullname: user.fullname || "Chưa đặt tên",
           email: user.email,
-          avatar: user.avatar || "", // Ensure avatar is mapped from the API response
+          avatar: user.avatar || "",
           phone_number: user.phone_number || "Chưa có",
           createdAt: new Date(user.createdAt).toLocaleDateString("vi-VN"),
           status: user.status === "active" ? "Hoạt động" : "Bị khóa",
@@ -65,7 +74,31 @@ const UserList: React.FC = () => {
     fetchUsers();
   }, []);
 
-  // Handle search functionality
+  const handleSearchAndFilter = (searchValue: string, statusValue: string | null) => {
+    setSearchText(searchValue);
+    setStatusFilter(statusValue);
+
+    const normalizedSearchText = removeAccents(searchValue.toLowerCase());
+
+    let filtered = users;
+
+    if (searchValue) {
+      filtered = filtered.filter(user => {
+        const normalizedFullname = removeAccents(user.fullname.toLowerCase());
+        const normalizedEmail = removeAccents(user.email.toLowerCase());
+        return (
+          normalizedFullname.includes(normalizedSearchText) ||
+          normalizedEmail.includes(normalizedSearchText)
+        );
+      });
+    }
+
+    if (statusValue) {
+      filtered = filtered.filter(user => user.status === statusValue);
+    }
+
+    setFilteredUsers(filtered);
+  };
 
   const columns = [
     {
@@ -88,7 +121,7 @@ const UserList: React.FC = () => {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            overflow: "hidden", // Ensure the image doesn't overflow the circle
+            overflow: "hidden",
           }}
         >
           {record.avatar ? (
@@ -98,10 +131,9 @@ const UserList: React.FC = () => {
               style={{
                 width: "100%",
                 height: "100%",
-                objectFit: "cover", // Ensure the image scales properly within the circle
+                objectFit: "cover",
               }}
               onError={(e) => {
-                // Fallback to placeholder if the image fails to load
                 e.currentTarget.style.display = "none";
                 e.currentTarget.parentElement!.innerHTML =
                   '<span style="font-size: 20px; color: #888;">👤</span>';
@@ -189,15 +221,22 @@ const UserList: React.FC = () => {
         status: values.status === "Hoạt động" ? "active" : "inactive",
       };
       const { data } = await userApi.update(selectedUser?._id, updatedData);
-      setUsers(
-        users.map((u) =>
-          u.key === selectedUser?.key ? { ...u, status: values.status } : u
-        )
+      const updatedUsers = users.map((u) =>
+        u.key === selectedUser?.key ? { ...u, status: values.status } : u
       );
+      setUsers(updatedUsers);
       setFilteredUsers(
-        filteredUsers.map((u) =>
-          u.key === selectedUser?.key ? { ...u, status: values.status } : u
-        )
+        updatedUsers.filter(user => {
+          const normalizedFullname = removeAccents(user.fullname.toLowerCase());
+          const normalizedEmail = removeAccents(user.email.toLowerCase());
+          const normalizedSearchText = removeAccents(searchText.toLowerCase());
+          const matchesSearch = searchText
+            ? normalizedFullname.includes(normalizedSearchText) ||
+              normalizedEmail.includes(normalizedSearchText)
+            : true;
+          const matchesStatus = statusFilter ? user.status === statusFilter : true;
+          return matchesSearch && matchesStatus;
+        })
       );
       setIsModalVisible(false);
       notification.success({
@@ -221,13 +260,36 @@ const UserList: React.FC = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Card bordered={false} className="shadow-sm">
+      <Card 
+        title={
+          <div className="flex items-center gap-4">
+            <Input
+              placeholder="Tìm kiếm..."
+              prefix={<SearchOutlined />}
+              value={searchText}
+              onChange={(e) => handleSearchAndFilter(e.target.value, statusFilter)}
+              style={{ width: 200 }}
+            />
+            <Select
+              placeholder="Lọc trạng thái"
+              style={{ width: 150 }}
+              allowClear
+              onChange={(value) => handleSearchAndFilter(searchText, value)}
+            >
+              <Option value="Hoạt động">Hoạt động</Option>
+              <Option value="Bị khóa">Bị khóa</Option>
+            </Select>
+          </div>
+        }
+        bordered={false} 
+        className="shadow-sm"
+      >
         <Table
           columns={columns}
           dataSource={filteredUsers}
           loading={loading}
           pagination={{
-            pageSize: 5, // Match the image (5 rows per page)
+            pageSize: 5,
             showSizeChanger: false,
             position: ["bottomRight"],
             className: "custom-pagination",
@@ -274,7 +336,6 @@ const UserList: React.FC = () => {
           </Form>
         )}
       </Modal>
-
     </motion.div>
   );
 };
