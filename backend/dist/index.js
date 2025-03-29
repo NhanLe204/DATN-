@@ -18,6 +18,7 @@ import tagRouter from './routes/tag.routes.js';
 import serviceRouter from './routes/service.routes.js';
 import paymentTypeRouter from './routes/paymentType.routes.js';
 import deliveryRouter from './routes/delivery.routes.js';
+import orderDetailRouter from './routes/orderDetail.routes.js';
 dotenv.config(); // Đọc file .env
 console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID);
 console.log('JWT_SECRET:', process.env.JWT_SECRET);
@@ -48,6 +49,7 @@ app.use('/api/v1', tagRouter);
 app.use('/api/v1', serviceRouter);
 app.use('/api/v1', paymentTypeRouter);
 app.use('/api/v1', deliveryRouter);
+app.use('/api/v1', orderDetailRouter);
 app.use(errorHandler);
 app.listen(PORT, () => {
     console.log(`Server is running on port http://localhost:${PORT}`);

@@ -18,6 +18,7 @@ import {
 import { Outlet, useNavigate } from "react-router-dom";
 import React from "react";
 import Navigation from "../navigation";
+import SubMenu from "antd/es/menu/SubMenu";
 
 const { Header, Sider, Content } = Layout;
 const { Text } = Typography;
@@ -110,7 +111,10 @@ const AdminLayout = () => {
         trigger={null}
         collapsible
         collapsed={collapsed}
-        className="bg-white shadow-md"
+        className="bg-white shadow-md fixed top-0 left-0 h-screen z-10"
+        style={{
+          overflow: "auto", // Allow scrolling within the sidebar if content overflows
+        }}
       >
         <div className="p-4 flex items-center space-x-2">
           <Avatar
@@ -143,8 +147,13 @@ const AdminLayout = () => {
         />
       </Sider>
 
-      <Layout>
-        <Header className="bg-white px-4 flex justify-between items-center shadow-sm">
+      <Layout
+        style={{
+          marginLeft: collapsed ? 80 : 200, // Adjust margin based on collapsed state
+          transition: "margin-left 0.2s", // Smooth transition when collapsing/expanding
+        }}
+      >
+        <Header className="bg-white px-4 flex justify-between items-center shadow-sm fixed top-0 w-full z-9">
           <Button
             type="text"
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
@@ -164,7 +173,14 @@ const AdminLayout = () => {
             />
           </div>
         </Header>
-        <Content className="p-6 bg-gray-50">
+        <Content
+          className="p-6 bg-gray-50"
+          style={{
+            marginTop: 64, // Offset for the fixed header
+            minHeight: "calc(100vh - 64px)", // Ensure content takes up remaining height
+            overflowY: "auto", // Allow scrolling in the content area
+          }}
+        >
           <Navigation />
           <Outlet />
         </Content>
