@@ -1,23 +1,16 @@
 import { Router, Request, Response } from 'express';
 import { protectRoute, requireAdmin } from '../middlewares/protectRoute.js';
 import { verifyToken } from '../middlewares/verifyToken.js';
-import {
-  createOrderAfterPayment,
-  getAllOrders,
-  getOrderById,
-  getAvailableSlots
-} from '../controllers/order.controllers.js';
+import { getOrderDetails, getOrderDetailsByOrderId } from '@/controllers/orderDetail.controllers.js';
 
-const orderRouter = Router();
+const orderDetailRouter = Router();
 
-orderRouter.get('/orders', verifyToken, getAllOrders);
-orderRouter.post('/orders', verifyToken, createOrderAfterPayment);
-orderRouter.get('/orders/check/available-slots', verifyToken, getAvailableSlots);
-orderRouter.get('/orders/:id', verifyToken, getOrderById);
+orderDetailRouter.get('/ordersDetail', verifyToken, getOrderDetails);
+orderDetailRouter.get('/ordersDetail/:id', verifyToken, getOrderDetailsByOrderId);
 // orderRouter.patch('/ratings/:id', updateRating);
 // orderRouter.delete('/ratings/:id', deleteRating);
 // brandRouter.post('/brands', verifyToken, requireAdmin, insertBrand);
 // brandRouter.patch('/brands/:id', verifyToken, requireAdmin, updateBrand);
 // categoryRouter.delete('/categories/:id', protectRoute, requireAdmin, toggleCategory);
 
-export default orderRouter;
+export default orderDetailRouter;
