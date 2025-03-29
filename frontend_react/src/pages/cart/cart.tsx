@@ -36,9 +36,13 @@ const Cart: React.FC = () => {
     }
   }, [dispatch, userId]);
 
+  const breadcrumbItems = [
+  
+  ];
+
   // Hàm xử lý tăng số lượng
-  const handleIncrement = (id) => {
-    if (!userId) {
+  const handleIncrement = (id: string) => {
+    if (!userId || userId === 'guest') {
       Modal.warning({
         title: "Yêu cầu đăng nhập",
         content: "Vui lòng đăng nhập để thực hiện thao tác này!",
@@ -50,8 +54,8 @@ const Cart: React.FC = () => {
   };
 
   // Hàm xử lý giảm số lượng
-  const handleDecrement = (id) => {
-    if (!userId) {
+  const handleDecrement = (id: string) => {
+    if (!userId || userId === 'guest') {
       Modal.warning({
         title: "Yêu cầu đăng nhập",
         content: "Vui lòng đăng nhập để thực hiện thao tác này!",
@@ -63,8 +67,8 @@ const Cart: React.FC = () => {
   };
 
   // Hàm xóa sản phẩm với modal xác nhận
-  const handleRemove = (id, name) => {
-    if (!userId) {
+  const handleRemove = (id: string, name: string) => {
+    if (!userId || userId === 'guest') {
       Modal.warning({
         title: "Yêu cầu đăng nhập",
         content: "Vui lòng đăng nhập để thực hiện thao tác này!",
@@ -94,7 +98,7 @@ const Cart: React.FC = () => {
 
   // Xử lý khi nhấn "Tiến hành đặt hàng"
   const handleCheckout = () => {
-    if (!userId) {
+    if (!userId || userId === 'guest') {
       Modal.warning({
         title: "Yêu cầu đăng nhập",
         content: "Vui lòng đăng nhập để tiến hành đặt hàng!",
@@ -107,6 +111,12 @@ const Cart: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white px-4 sm:px-6 lg:px-8">
+      <div className="py-4">
+        <div className="mx-auto max-w-6xl">
+          <Breadcrumb items={breadcrumbItems} />
+        </div>
+      </div>
+
       <div className="mx-auto max-w-6xl py-8">
         <div className="mb-6 flex flex-col justify-between sm:flex-row sm:items-center">
           <Title level={3} className="!mb-0 text-gray-800">
@@ -171,16 +181,16 @@ const Cart: React.FC = () => {
               cartItems.map((item) => (
                 <Card
                   key={item.id}
-                  className="mb-4 bg-white"
+                  className="bg-white mb-4"
                   style={{ boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)" }}
                 >
-                  <div className="pb-4 mb-4 border-b">
+                  <div className="mb-4 border-b pb-4">
                     <div className="flex flex-col items-center gap-4 sm:flex-row">
-                      <div className="overflow-hidden rounded-lg h-28 w-28">
+                      <div className="h-28 w-28 overflow-hidden rounded-lg">
                         <img
                           src={`${item.image}`}
                           alt={item.name}
-                          className="object-cover w-full h-full"
+                          className="h-full w-full object-cover"
                         />
                       </div>
                       <div className="flex-1">
@@ -201,7 +211,7 @@ const Cart: React.FC = () => {
                             Xóa
                           </Button>
                         </div>
-                        <div className="flex items-center justify-between mt-3">
+                        <div className="mt-3 flex items-center justify-between">
                           <Text className="text-lg font-medium text-[#22A6DF]">
                             {(item.price * item.quantity).toLocaleString()}đ
                           </Text>
@@ -211,7 +221,7 @@ const Cart: React.FC = () => {
                             </Button>
                             <input
                               type="number"
-                              className="w-4 text-center text-gray-800 bg-white border-none md:w-7"
+                              className="w-4 border-none bg-white text-center text-gray-800 md:w-7"
                               min={1}
                               value={item.quantity}
                               readOnly
@@ -232,7 +242,7 @@ const Cart: React.FC = () => {
           {cartItems.length > 0 && (
             <div className="lg:col-span-1">
               <Card
-                className="sticky bg-white top-4"
+                className="sticky top-4 bg-white"
                 style={{ boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)" }}
               >
                 <Title level={4} className="text-gray-800">
@@ -251,7 +261,7 @@ const Cart: React.FC = () => {
                 </div>
                 <TextArea
                   placeholder="Ghi chú đơn hàng (không bắt buộc)"
-                  className="mb-6 text-gray-800 bg-white"
+                  className="mb-6 bg-white text-gray-800"
                   rows={4}
                 />
                 <div className="space-y-3">

@@ -26,10 +26,10 @@ import {
 import { BsGeoAltFill } from "react-icons/bs";
 import { Search } from "lucide-react";
 import { useContext } from "react";
-import { useSelector, useDispatch } from "react-redux"; // Thêm useDispatch
+import { useSelector, useDispatch } from "react-redux";
 import { useLocation } from "react-router-dom";
 import { SearchContext } from "./searchContext";
-import { addToCart, setUserId } from "../redux/slices/cartslice"; // Thêm setUserId
+import { addToCart, setUserId } from "../redux/slices/cartslice";
 import productsApi from "../api/productsAPI";
 const { Title, Text } = Typography;
 
@@ -48,7 +48,7 @@ interface User {
 export default function Header() {
   const dispatch = useDispatch();
   const cartItems = useSelector((state: any) => state.cart.items);
-  const [isUserLoaded, setIsUserLoaded] = useState(false); // Trạng thái xác thực user
+  const [isUserLoaded, setIsUserLoaded] = useState(false);
   const cartCount = cartItems.reduce(
     (count: any, item: any) => count + Number(item.quantity),
     0
@@ -74,7 +74,6 @@ export default function Header() {
   const showSearchDesktop = () => setSearchDesktopOpen(true);
   const closeSearchDesktop = () => setSearchDesktopOpen(false);
 
-  // Load lịch sử tìm kiếm từ localStorage khi component mount
   useEffect(() => {
     const storedHistory = localStorage.getItem("searchHistory");
     if (storedHistory) {
@@ -82,12 +81,10 @@ export default function Header() {
     }
   }, []);
 
-  // Lưu lịch sử tìm kiếm vào localStorage khi thay đổi
   useEffect(() => {
     localStorage.setItem("searchHistory", JSON.stringify(searchHistory));
   }, [searchHistory]);
 
-  // Xử lý khi người dùng tìm kiếm
   const handleSearch = (value: string) => {
     const trimmedValue = value.trim();
     if (trimmedValue && !searchHistory.includes(trimmedValue)) {
@@ -96,7 +93,6 @@ export default function Header() {
     }
   };
 
-  // Xử lý khi nhấn Enter hoặc nút tìm kiếm
   const handleSearchSubmit = (value: string) => {
     const trimmedValue = value.trim();
     if (trimmedValue) {
@@ -107,7 +103,6 @@ export default function Header() {
     }
   };
 
-  // Xóa toàn bộ lịch sử tìm kiếm
   const clearSearchHistory = () => {
     console.log("Clear history");
     setSearchHistory([]);
@@ -146,18 +141,16 @@ export default function Header() {
     }
   };
 
-  // Sửa phần load giỏ hàng: Chỉ hiển thị cartCount sau khi xác thực user
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     const accountID =
       localStorage.getItem("accountID")?.replace(/^"|"$/g, "") || "";
 
     if (!token || !accountID) {
-      setIsUserLoaded(false); // Không hiển thị cartCount nếu thiếu token hoặc accountID
+      setIsUserLoaded(false);
       return;
     }
 
-    // Nếu có userData trong localStorage, sử dụng trước
     const storedUserData = localStorage.getItem("userData");
     if (storedUserData) {
       try {
@@ -167,7 +160,6 @@ export default function Header() {
       }
     }
 
-    // Fetch thông tin user từ server để xác thực
     fetch(`http://localhost:5000/api/v1/users/${accountID}`, {
       method: "GET",
       headers: {
@@ -187,13 +179,13 @@ export default function Header() {
         if (data.data) {
           setUser(data.data);
           localStorage.setItem("userData", JSON.stringify(data.data));
-          dispatch(setUserId(accountID)); // Cập nhật userId trong Redux
-          setIsUserLoaded(true); // Xác thực thành công, cho phép hiển thị cartCount
+          dispatch(setUserId(accountID));
+          setIsUserLoaded(true);
         }
       })
       .catch((err) => {
         console.error("Error fetching user:", err.message);
-        setIsUserLoaded(false); // Nếu lỗi, không hiển thị cartCount
+        setIsUserLoaded(false);
         if (err.message.includes("401")) {
           console.warn("Token có thể đã hết hạn, cần đăng nhập lại");
         }
@@ -206,11 +198,10 @@ export default function Header() {
     localStorage.removeItem("userData");
     setUser(null);
     dispatch(setUserId(null));
-    setIsUserLoaded(false); // Reset trạng thái khi đăng xuất
+    setIsUserLoaded(false);
     window.location.href = "/";
   };
 
-  // Menu cho dropdown khi hover
   const userMenu = (
     <Menu>
       <Menu.Item key="1">
@@ -226,7 +217,6 @@ export default function Header() {
     </Menu>
   );
 
-  // Nội dung của Dropdown tìm kiếm (desktop)
   const searchDesktop = (
     <div
       className="w-[100%] bg-white shadow-lg rounded-lg border border-gray-200"
@@ -298,7 +288,6 @@ export default function Header() {
     </div>
   );
 
-  // Nội dung của Drawer tìm kiếm (mobile)
   const searchMobile = (
     <div className="p-4">
       <Input.Search
@@ -385,7 +374,6 @@ export default function Header() {
   return (
     <>
       <header className="w-full">
-        {/* Menu 1 */}
         <div className="flex h-[34px] items-center justify-between bg-[#22A6DF] px-4 text-[10px] text-white sm:h-[34px] sm:px-[40px] sm:text-xs lg:px-[154px] lg:text-sm">
           <Space className="gap-4 sm:gap-4 lg:gap-10">
             <span className="flex items-center gap-1">
@@ -407,9 +395,7 @@ export default function Header() {
           </Space>
         </div>
 
-        {/* Menu 2 */}
         <div className="flex items-center justify-between px-4 py-3 sm:px-[40px] sm:py-4 lg:px-[154px]">
-          {/* Logo */}
           <a href="/">
             <img
               src="/images/icons/logo.jpg"
@@ -475,9 +461,7 @@ export default function Header() {
               <span className="text-xs text-gray-500">30 days no hassle</span>
             </div>
             <a href="/cart">
-              <Badge count={isUserLoaded ? cartCount : 0}>
-                {" "}
-                {/* Chỉ hiển thị cartCount sau khi xác thực */}
+              <Badge count={cartCount}>
                 <FaShoppingCart className="text-2xl" />
               </Badge>
             </a>
@@ -507,9 +491,7 @@ export default function Header() {
               <Search className="h-6 w-6" />
             </button>
             <a href="/cart">
-              <Badge count={isUserLoaded ? cartCount : 0}>
-                {" "}
-                {/* Áp dụng tương tự cho mobile */}
+              <Badge count={cartCount}>
                 <FaShoppingCart className="text-2xl" />
               </Badge>
             </a>
@@ -532,7 +514,6 @@ export default function Header() {
           </Space>
         </div>
 
-        {/* Menu 3 */}
         <nav className="flex items-center justify-between bg-white px-4 text-black sm:px-[40px] lg:px-[154px]">
           <Space className="hidden items-center justify-between py-3 md:flex md:gap-[20px] lg:gap-[27px] xl:gap-[50px]">
             {menuItems.map((item) => (
@@ -568,7 +549,6 @@ export default function Header() {
         <hr className="mt-[5px] border-dashed border-gray-300" />
       </header>
 
-      {/* Search Drawer */}
       <Drawer
         title="Tìm Kiếm"
         placement="top"
@@ -579,7 +559,6 @@ export default function Header() {
         {searchMobile}
       </Drawer>
 
-      {/* Menu Drawer */}
       <Drawer
         title={subMenu ? "Sản phẩm" : "Menu"}
         placement="left"

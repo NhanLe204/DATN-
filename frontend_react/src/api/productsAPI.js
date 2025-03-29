@@ -1,3 +1,4 @@
+import { data } from "react-router-dom";
 import api from "./axios";
 
 const productsApi = {
@@ -42,6 +43,17 @@ const productsApi = {
     return {
       data: response.data,
     };
+  },
+  getProductRelatedList: async (id) => {
+    try {
+      const response = await api.get(`/v1/products/${id}/related`); 
+      return {
+        data: response.data,
+      };
+    } catch (error) {
+      console.error("Error fetching related products:", error.response?.data || error);
+      throw error;
+    }
   },
   getAll: async (params = {}) => {
     try {

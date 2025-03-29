@@ -31,7 +31,7 @@ import BrandManager from "./admin/brand/brand";
 import TagManager from "./admin/tag/tag";
 import VerifyOtp from "./pages/verifyOTP/verifyOTP";
 import Search from "./pages/search/search";
-
+import BlogContent from "./pages/blog/blog";
 interface User {
   id: string;
   email: string;
@@ -186,6 +186,14 @@ function App() {
           element: (
             <PublicRoute>
               <Payment />
+            </PublicRoute>
+          ),
+        },
+        {
+          path: "/blog",
+          element: (
+            <PublicRoute>
+              <BlogContent/>
             </PublicRoute>
           ),
         },
