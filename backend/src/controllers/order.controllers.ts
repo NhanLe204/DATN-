@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import mongoose from 'mongoose';
 import rateModel from '../models/rate.model.js';
 import { Request, Response } from 'express';
@@ -68,24 +69,6 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
     const deliveryFee = delivery.delivery_fee || 0;
 
     // 5. Handle coupon validation and discount calculation
-    let discount = 0;
-    if (couponID) {
-      const coupon = await couponModel.findById(couponID).session(session);
-      if (!coupon) throw new Error('Coupon not found');
-
-      const currentDate = new Date();
-      if (
-        coupon.status !== CouponStatus.ACTIVE ||
-        currentDate < coupon.start_date ||
-        currentDate > coupon.end_date ||
-        coupon.used_count >= coupon.usage_limit
-      ) {
-        throw new Error('Invalid or expired coupon');
-      }
-
-      discount = Math.min(coupon.discount_value, coupon.max_discount);
-      await couponModel.findByIdAndUpdate(couponID, { $inc: { used_count: 1 } }, { session });
-    }
 
     // 6. Calculate total_price (verify total_price from client)
     let calculatedTotalPrice = 0;
@@ -124,6 +107,25 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
 
     const validatedOrderDetails = await Promise.all(orderDetailsPromises);
     const subtotal = calculatedTotalPrice; // Tổng tiền sản phẩm/dịch vụ
+
+    let discount = 0;
+    if (couponID) {
+      const coupon = await couponModel.findById(couponID).session(session);
+      if (!coupon) throw new Error('Coupon not found');
+
+      const currentDate = new Date();
+      if (
+        coupon.status !== CouponStatus.ACTIVE ||
+        currentDate < coupon.start_date ||
+        currentDate > coupon.end_date ||
+        coupon.used_count >= coupon.usage_limit
+      ) {
+        throw new Error('Invalid or expired coupon');
+      }
+      const discountPercentage = coupon.discount_value; // 25%
+      discount = (subtotal * discountPercentage) / 100;
+      await couponModel.findByIdAndUpdate(couponID, { $inc: { used_count: 1 } }, { session });
+    }
 
     // Verify total_price
     const discountedSubtotal = calculatedTotalPrice - discount;
