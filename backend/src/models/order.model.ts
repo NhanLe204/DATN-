@@ -8,15 +8,13 @@ import coupon from '../models/coupon.model.js';
 import { DeliveryStatus } from '../enums/delivery.enum.js';
 const orderSchema: Schema<IOrder> = new Schema<IOrder>(
   {
-    userID: { type: Schema.Types.ObjectId, ref: user, required: true },
+    userID: { type: Schema.Types.ObjectId, ref: user, required: false },
     payment_typeID: { type: Schema.Types.ObjectId, ref: paymentType, default: null },
     deliveryID: { type: Schema.Types.ObjectId, ref: delivery, default: null },
     couponID: { type: Schema.Types.ObjectId, ref: coupon, default: null },
     order_date: { type: Date, default: Date.now },
     total_price: { type: Number, required: true },
-    discount: { type: Number, default: 0 },
-    shipping_address: { type: String, required: true },
-    delivery_name: { type: String, default: '' },
+    shipping_address: { type: String, required: false },
     payment_status: {
       type: String,
       enum: PaymentStatus,

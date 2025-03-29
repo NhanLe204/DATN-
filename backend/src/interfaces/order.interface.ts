@@ -3,7 +3,7 @@ import { IUser } from './user.interface.js';
 import { OrderStatus, PaymentStatus } from '../enums/order.enum.js';
 
 export interface IOrder {
-  userID: IUser;
+  userID?: IUser;
   payment_typeID?: ObjectId;
   deliveryID?: ObjectId;
   couponID?: ObjectId;

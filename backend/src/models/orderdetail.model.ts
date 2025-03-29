@@ -8,7 +8,10 @@ const orderDetailSchema = new Schema(
     orderId: { type: Schema.Types.ObjectId, ref: order, required: true },
     productId: { type: Schema.Types.ObjectId, ref: product, required: false, default: '' },
     serviceId: { type: Schema.Types.ObjectId, ref: service, required: false, default: '' },
-    quantity: { type: Number, required: true }
+    quantity: { type: Number, required: true },
+    product_price: { type: Number, required: true },
+    total_price: { type: Number, required: true },
+    booking_date: { type: String, required: false, default: '' }
   },
   { timestamps: true }
 );
