@@ -31,19 +31,17 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       shipping_address = null,
       transaction_id,
       orderDetails,
-      infoUserGuest = null // Thông tin người dùng khách hàng nếu không đăng nhập
+      infoUserGuest = null
     } = req.body;
 
-    // 1. Validate input data (các trường bắt buộc chung)
+    // 1. Validate input data
     if (!total_price || !transaction_id || !orderDetails || !Array.isArray(orderDetails)) {
       throw new Error('Missing required fields');
     }
 
-    // Xác định đây là booking hay order dựa trên orderDetails
     const isBooking = orderDetails.every((detail: any) => detail.serviceID && !detail.productID);
     const isOrder = orderDetails.some((detail: any) => detail.productID);
 
-    // Nếu là order sản phẩm, yêu cầu deliveryID
     if (isOrder && !deliveryID) {
       throw new Error('Delivery ID is required for product orders');
     }
@@ -60,17 +58,98 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       if (!paymentType) throw new Error('Payment type not found');
     }
 
-    // 4. Validate delivery (chỉ khi là order)
+    // 4. Validate delivery
     let delivery = null;
+    let deliveryFee = 0;
     if (deliveryID) {
       delivery = await deliveryModel.findById(deliveryID).session(session);
       if (!delivery) throw new Error('Delivery method not found');
+      deliveryFee = delivery?.delivery_fee || 0;
     }
-    const deliveryFee = delivery.delivery_fee || 0;
 
-    // 5. Handle coupon validation and discount calculation
+    // 5. Kiểm tra slot trống cho các booking
+    const maxSlots = 5;
+    const slotUsage: { [key: string]: number } = {}; // Theo dõi số pet trong từng slot
 
-    // 6. Calculate total_price (verify total_price from client)
+    for (const detail of orderDetails) {
+      const { serviceID, booking_date } = detail;
+
+      if (serviceID && booking_date) {
+        const bookingDate = new Date(booking_date);
+        if (isNaN(bookingDate.getTime())) {
+          throw new Error(`Invalid booking_date format: ${booking_date}`);
+        }
+
+        bookingDate.setMinutes(0, 0, 0);
+        const date = bookingDate.toISOString().split('T')[0];
+        const hour = bookingDate.getHours();
+
+        const service = await serviceModel.findOne({ _id: serviceID, status: ServiceStatus.ACTIVE }).session(session);
+        if (!service) throw new Error(`Service not found or not active: ${serviceID}`);
+
+        const serviceDuration = service.duration || 60;
+        const affectedSlots = Math.ceil(serviceDuration / 60);
+
+        const timeSlots: { start: Date; end: Date; time: string }[] = [];
+        for (let i = 0; i < affectedSlots; i++) {
+          const slotHour = hour + i;
+          const startDate = new Date(`${date}T${slotHour.toString().padStart(2, '0')}:00:00+07:00`);
+          const endDate = new Date(`${date}T${slotHour.toString().padStart(2, '0')}:59:59.999+07:00`);
+          timeSlots.push({ start: startDate, end: endDate, time: `${slotHour}h` });
+        }
+
+        // Đếm số pet trong request cho từng slot
+        for (const slot of timeSlots) {
+          const slotKey = `${date}-${slot.time}`;
+          slotUsage[slotKey] = (slotUsage[slotKey] || 0) + 1;
+        }
+      }
+    }
+
+    // Kiểm tra slot còn lại so với slotUsage
+    for (const detail of orderDetails) {
+      const { serviceID, booking_date } = detail;
+
+      if (serviceID && booking_date) {
+        const bookingDate = new Date(booking_date);
+        bookingDate.setMinutes(0, 0, 0);
+        const date = bookingDate.toISOString().split('T')[0];
+        const hour = bookingDate.getHours();
+
+        const service = await serviceModel.findOne({ _id: serviceID, status: ServiceStatus.ACTIVE }).session(session);
+        const serviceDuration = service.duration || 60;
+        const affectedSlots = Math.ceil(serviceDuration / 60);
+
+        const timeSlots: { start: Date; end: Date; time: string }[] = [];
+        for (let i = 0; i < affectedSlots; i++) {
+          const slotHour = hour + i;
+          const startDate = new Date(`${date}T${slotHour.toString().padStart(2, '0')}:00:00+07:00`);
+          const endDate = new Date(`${date}T${slotHour.toString().padStart(2, '0')}:59:59.999+07:00`);
+          timeSlots.push({ start: startDate, end: endDate, time: `${slotHour}h` });
+        }
+
+        for (const slot of timeSlots) {
+          const bookedPets = await orderDetailModel
+            .countDocuments({
+              booking_date: {
+                $gte: slot.start,
+                $lte: slot.end
+              }
+            })
+            .session(session);
+
+          const slotKey = `${date}-${slot.time}`;
+          const totalPetsInSlot = bookedPets + (slotUsage[slotKey] || 0);
+          if (totalPetsInSlot > maxSlots) {
+            throw new Error(
+              `Not enough slots for booking on ${date} at ${slot.time}. Only ${maxSlots - bookedPets} slot(s) remaining.`
+            );
+          }
+        }
+      }
+    }
+
+    // 6. Calculate total_price
     let calculatedTotalPrice = 0;
     const orderDetailsPromises = orderDetails.map(async (detail: any) => {
       const { productID, serviceID, quantity, product_price, booking_date } = detail;
@@ -79,21 +158,17 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
         throw new Error('Invalid order detail data');
       }
 
-      // Validate product nếu có
       if (productID) {
         const product = await productModel
           .findOne({ _id: productID, status: ProductStatus.AVAILABLE })
           .session(session);
         if (!product) throw new Error(`Product not found or not available: ${productID}`);
-
         if (product.stock < quantity) {
           throw new Error(`Insufficient stock for product: ${productID}`);
         }
-
         await productModel.findByIdAndUpdate(productID, { $inc: { stock: -quantity } }, { session });
       }
 
-      // Validate service nếu có
       if (serviceID) {
         const service = await serviceModel.findOne({ _id: serviceID, status: ServiceStatus.ACTIVE }).session(session);
         if (!service) throw new Error(`Service not found or not active: ${serviceID}`);
@@ -102,17 +177,28 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       const detailTotalPrice = quantity * product_price;
       calculatedTotalPrice += detailTotalPrice;
 
-      return { productID, serviceID, quantity, product_price, total_price: detailTotalPrice, booking_date };
+      const standardizedBookingDate = serviceID && booking_date ? new Date(booking_date) : null;
+      if (standardizedBookingDate) {
+        standardizedBookingDate.setMinutes(0, 0, 0);
+      }
+
+      return {
+        productID,
+        serviceID,
+        quantity,
+        product_price,
+        total_price: detailTotalPrice,
+        booking_date: standardizedBookingDate
+      };
     });
 
     const validatedOrderDetails = await Promise.all(orderDetailsPromises);
-    const subtotal = calculatedTotalPrice; // Tổng tiền sản phẩm/dịch vụ
+    const subtotal = calculatedTotalPrice;
 
     let discount = 0;
     if (couponID) {
       const coupon = await couponModel.findById(couponID).session(session);
       if (!coupon) throw new Error('Coupon not found');
-
       const currentDate = new Date();
       if (
         coupon.status !== CouponStatus.ACTIVE ||
@@ -122,23 +208,14 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       ) {
         throw new Error('Invalid or expired coupon');
       }
-      const discountPercentage = coupon.discount_value; // 25%
+      const discountPercentage = coupon.discount_value;
       discount = (subtotal * discountPercentage) / 100;
       await couponModel.findByIdAndUpdate(couponID, { $inc: { used_count: 1 } }, { session });
     }
 
-    // Verify total_price
     const discountedSubtotal = calculatedTotalPrice - discount;
-    const finalTotalPrice = discountedSubtotal + deliveryFee; // Thêm phí vận chuyển
+    const finalTotalPrice = discountedSubtotal + deliveryFee;
 
-    // Log để kiểm tra giá trị
-    console.log('Subtotal:', subtotal);
-    console.log('Discount:', discount);
-    console.log('Delivery Fee:', deliveryFee);
-    console.log('Final Total Price (Backend):', finalTotalPrice);
-    console.log('Total Price (Client):', total_price);
-
-    // Verify total_price từ client
     if (Math.abs(finalTotalPrice - total_price) > 1) {
       throw new Error('Total price mismatch');
     }
@@ -154,7 +231,7 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       shipping_address,
       status: OrderStatus.PENDING,
       transaction_id,
-      inforUserGuest: infoUserGuest || null // Thông tin người dùng khách hàng nếu không đăng nhập
+      inforUserGuest: infoUserGuest || null
     });
 
     const savedOrder = await order.save({ session });
@@ -168,11 +245,11 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
         quantity: detail.quantity,
         product_price: detail.product_price,
         total_price: detail.total_price,
-        booking_date: detail.serviceID ? detail.booking_date : null // Sử dụng booking_date từ từng orderDetail
+        booking_date: detail.booking_date
       });
     });
 
-    const savedOrderDetails = await Promise.all(orderDetailDocs.map((detail: any) => detail.save({ session })));
+    await Promise.all(orderDetailDocs.map((detail: any) => detail.save({ session })));
 
     // 9. Commit transaction
     await session.commitTransaction();
@@ -183,7 +260,7 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       message: 'Order and order details created successfully',
       data: {
         order: savedOrder,
-        orderDetails: savedOrderDetails
+        orderDetails: orderDetailDocs
       }
     });
   } catch (error) {
@@ -200,6 +277,62 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
     session.endSession();
   }
 };
+
+export const getAvailableSlots = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { date } = req.query; // Ngày cần kiểm tra, ví dụ: "2025-03-29"
+    if (!date) throw new Error('Date is required');
+
+    const maxSlots = 5;
+    const availableTimeSlots = ['8h', '9h', '10h', '11h', '13h', '14h', '15h', '16h', '17h'];
+
+    const startOfDay = new Date(`${date}T00:00:00+07:00`);
+    const endOfDay = new Date(`${date}T23:59:59.999+07:00`);
+
+    // Lấy tất cả booking trong ngày
+    const bookings = await orderDetailModel
+      .find({
+        booking_date: { $gte: startOfDay, $lte: endOfDay }
+      })
+      .populate('serviceId');
+
+    // Tính số slot bị chiếm cho từng khung giờ
+    const slotOccupancy: { [key: string]: number } = {};
+    availableTimeSlots.forEach((time) => (slotOccupancy[time] = 0));
+
+    bookings.forEach((booking) => {
+      const bookingDate = new Date(booking.booking_date);
+      const hour = bookingDate.getHours();
+      const serviceDuration = booking.serviceId?.duration || 60;
+      const affectedSlots = Math.ceil(serviceDuration / 60);
+
+      for (let i = 0; i < affectedSlots; i++) {
+        const slotHour = hour + i;
+        const time = `${slotHour}h`;
+        if (availableTimeSlots.includes(time)) {
+          slotOccupancy[time] += 1;
+        }
+      }
+    });
+
+    // Tính slot còn lại
+    const slotAvailability: { [key: string]: number } = {};
+    availableTimeSlots.forEach((time) => {
+      slotAvailability[time] = maxSlots - slotOccupancy[time];
+    });
+
+    res.status(200).json({
+      success: true,
+      data: slotAvailability
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+};
+
 export const getAllOrders = async (req: Request, res: Response): Promise<void> => {
   try {
     const orders = await orderModel
@@ -234,5 +367,63 @@ export const getOrderById = async (req: Request, res: Response): Promise<void> =
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error(`Error fetching order: ${errorMessage}`);
     res.status(500).json({ success: false, message: 'Internal Server Error', details: errorMessage });
+  }
+};
+
+export const checkAvailableSlots = async (req: Request, res: Response): Promise<void> => {
+  const { date, time } = req.query;
+  const maxSlots = 5;
+
+  try {
+    // Kiểm tra đầu vào
+    if (!date || !time || typeof date !== 'string' || typeof time !== 'string') {
+      res.status(400).json({ message: 'Invalid date or time parameters' });
+      return;
+    }
+    // Chuyển time từ dạng "9h" sang số giờ (9)
+    const hourMatch = time.match(/^(\d+)h$/);
+    if (!hourMatch) {
+      res.status(400).json({ message: 'Invalid time format. Expected format: "Xh" (e.g., "9h")' });
+      return;
+    }
+    const hour = parseInt(hourMatch[1], 10);
+
+    // Kiểm tra giờ hợp lệ (từ 0 đến 23)
+    if (isNaN(hour) || hour < 0 || hour > 23) {
+      res.status(400).json({ message: 'Invalid hour value' });
+      return;
+    }
+
+    // Tạo khoảng thời gian theo giờ Việt Nam (UTC+07:00)
+    const startDate = new Date(`${date}T${hour.toString().padStart(2, '0')}:00:00+07:00`);
+    const endDate = new Date(startDate);
+    endDate.setHours(endDate.getHours() + 1);
+
+    // Kiểm tra xem startDate có hợp lệ không
+    if (isNaN(startDate.getTime())) {
+      res.status(400).json({ message: 'Invalid date format. Expected format: "YYYY-MM-DD"' });
+      return;
+    }
+
+    // Đếm số lượng pet đã đặt trong khung giờ
+    const bookedPets = await orderDetailModel.countDocuments({
+      booking_date: {
+        $gte: startDate,
+        $lt: endDate
+      }
+    });
+
+    // Tính số slot còn lại
+    const remainingSlots = maxSlots - bookedPets;
+
+    // Trả về kết quả
+    res.status(200).json({
+      date,
+      time,
+      remainingSlots: remainingSlots >= 0 ? remainingSlots : 0
+    });
+  } catch (error) {
+    console.error('Error checking slots:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 };
