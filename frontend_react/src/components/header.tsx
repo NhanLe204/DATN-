@@ -366,7 +366,7 @@ export default function Header() {
     { path: "/", label: "Trang chủ" },
     { path: "/product", label: "Sản phẩm" },
     { path: "/info", label: "Dịch vụ thú cưng" },
-    { path: "", label: "Blog" },
+    { path: "/blog", label: "Blog" },
     { path: "/about-us", label: "Giới thiệu" },
     { path: "/contact", label: "Liên hệ" },
   ];
