@@ -16,7 +16,7 @@ import {
   FaGift,
   FaCheckCircle,
   FaShoppingCart,
-  FaUserAlt,
+  // FaUserAlt,
   FaPhoneAlt,
   FaSearch,
   FaBars,
@@ -31,6 +31,7 @@ import { useLocation } from "react-router-dom";
 import { SearchContext } from "./searchContext";
 import { addToCart, setUserId } from "../redux/slices/cartslice";
 import productsApi from "../api/productsAPI";
+import { UserOutlined } from "@ant-design/icons";
 const { Title, Text } = Typography;
 
 interface Product {
@@ -43,6 +44,7 @@ interface Product {
 interface User {
   fullname: string;
   avatar?: string;
+  role: string;
 }
 
 export default function Header() {
@@ -154,6 +156,8 @@ export default function Header() {
     const storedUserData = localStorage.getItem("userData");
     if (storedUserData) {
       try {
+        const parsedUser = JSON.parse(storedUserData);
+        console.log("User data in header.js:", parsedUser);
         setUser(JSON.parse(storedUserData));
       } catch (error) {
         console.error("Lỗi khi parse userData từ localStorage:", error);
@@ -204,12 +208,19 @@ export default function Header() {
 
   const userMenu = (
     <Menu>
+      {(user?.role === "admin" || user?.role === "employee") && (
       <Menu.Item key="1">
+        <a href="/admin">
+          <i className="fas fa-cog mr-2"></i>Quản lý website
+        </a>
+      </Menu.Item>
+    )}
+      <Menu.Item key="2">
         <a href={`/userprofile/account`}>
           <i className="fas fa-user mr-2"></i>Tài khoản
         </a>
       </Menu.Item>
-      <Menu.Item key="2" onClick={handleLogout}>
+      <Menu.Item key="3" onClick={handleLogout}>
         <a href="#">
           <i className="fas fa-sign-out-alt mr-2"></i>Đăng xuất
         </a>
@@ -470,7 +481,7 @@ export default function Header() {
                 <div className="flex items-center cursor-pointer">
                   <Avatar
                     src={user.avatar ? `${user.avatar}` : undefined}
-                    icon={!user.avatar && <FaUserAlt />}
+                    icon={!user.avatar && <UserOutlined />}
                     className="bg-[#22A6DF]"
                   />
                   <FaAngleDown className="ml-1 text-[#22A6DF]" />
@@ -478,7 +489,7 @@ export default function Header() {
               </Dropdown>
             ) : (
               <a href="/login">
-                <Avatar icon={<FaUserAlt />} className="bg-[#22A6DF]" />
+                <Avatar icon={<UserOutlined />} className="bg-[#22A6DF]" />
               </a>
             )}
           </Space>
@@ -500,7 +511,7 @@ export default function Header() {
                 <div className="flex items-center cursor-pointer">
                   <Avatar
                     src={user.avatar ? `${user.avatar}` : undefined}
-                    icon={!user.avatar && <FaUserAlt />}
+                    icon={!user.avatar && <UserOutlined />}
                     className="bg-[#22A6DF]"
                   />
                   <FaAngleDown className="ml-1 text-[#22A6DF]" />
@@ -508,7 +519,7 @@ export default function Header() {
               </Dropdown>
             ) : (
               <a href="/login">
-                <Avatar icon={<FaUserAlt />} className="bg-[#22A6DF]" />
+                <Avatar icon={<UserOutlined />} className="bg-[#22A6DF]" />
               </a>
             )}
           </Space>

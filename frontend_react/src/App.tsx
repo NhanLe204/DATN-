@@ -6,7 +6,6 @@ import {
 } from "react-router-dom";
 import Home from "./pages/home/home";
 import PageLayout from "./components/layout/PageLayout";
-// import "@fortawesome/fontawesome-free/css/all.min.css";
 import Login from "./pages/login/login";
 import SignUp from "./pages/signup/signup";
 import ContactPage from "./pages/contact/contact";
@@ -31,7 +30,9 @@ import BrandManager from "./admin/brand/brand";
 import TagManager from "./admin/tag/tag";
 import VerifyOtp from "./pages/verifyOTP/verifyOTP";
 import Search from "./pages/search/search";
-import BlogContent from "./pages/blog/blog";
+import BlogContent from "./pages/blog/blog"; // Adjust the path as needed
+import { notification } from "antd";
+
 interface User {
   id: string;
   email: string;
@@ -41,22 +42,78 @@ interface User {
   status: string;
 }
 
+const EMPLOYEE_ALLOWED_PAGES = [
+  "/admin",
+  "/admin/dashboard",
+  "/admin/products",
+  "/admin/categories",
+  "/admin/orders",
+  "/admin/services",
+  "/admin/brands",
+  "/admin/tags",
+];
+
 const ProtectedRoute = ({
   children,
   allowedRole,
+  path,
 }: {
   children: JSX.Element;
   allowedRole?: string;
+  path?: string;
 }) => {
   const userData = localStorage.getItem("userData");
   const user: User | null = userData ? JSON.parse(userData) : null;
 
+  console.log("ProtectedRoute - Path:", path);
+  console.log("ProtectedRoute - User:", user);
+
   if (!user || user.status !== "active") {
+    notification.error({
+      message: "Truy cập bị từ chối",
+      description: `Vui lòng đăng nhập hoặc kiểm tra trạng thái tài khoản (status: ${user?.status || "không xác định"}).`,
+      placement: "topRight",
+    });
+    return <Navigate to="/login" replace />;
+  }
+
+  const validRoles = ["user", "admin", "employee"];
+  if (!validRoles.includes(user.role)) {
+    notification.error({
+      message: "Truy cập bị từ chối",
+      description: `Vai trò không hợp lệ: ${user.role}. Vui lòng liên hệ quản trị viên.`,
+      placement: "topRight",
+    });
     return <Navigate to="/login" replace />;
   }
 
   if (allowedRole && user.role !== allowedRole) {
+    notification.error({
+      message: "Truy cập bị từ chối",
+      description: `Bạn không có quyền truy cập trang này (yêu cầu vai trò: ${allowedRole}).`,
+      placement: "topRight",
+    });
     return <Navigate to="/" replace />;
+  }
+
+  if (path && path.startsWith("/admin")) {
+    if (user.role !== "admin" && user.role !== "employee") {
+      notification.error({
+        message: "Truy cập bị từ chối",
+        description: "Chỉ admin và nhân viên mới có thể truy cập trang này.",
+        placement: "topRight",
+      });
+      return <Navigate to="/" replace />;
+    }
+
+    if (user.role === "employee" && !EMPLOYEE_ALLOWED_PAGES.includes(path)) {
+      notification.warning({
+        message: "Truy cập bị từ chối",
+        description: "Bạn không có quyền truy cập trang này.",
+        placement: "topRight",
+      });
+      return <Navigate to="/admin" replace />;
+    }
   }
 
   return children;
@@ -95,7 +152,7 @@ function App() {
     {
       path: "/admin",
       element: (
-        <ProtectedRoute allowedRole="admin">
+        <ProtectedRoute path="/admin">
           <AdminLayout />
         </ProtectedRoute>
       ),
