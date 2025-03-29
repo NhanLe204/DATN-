@@ -8,9 +8,7 @@ export interface IOrder {
     couponID?: ObjectId;
     order_date: Date;
     total_price: number;
-    discount?: number;
     shipping_address: string;
-    delivery_name?: string;
     payment_status: PaymentStatus;
     status: OrderStatus;
     transaction_id?: string;

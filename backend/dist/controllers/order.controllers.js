@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import mongoose from 'mongoose';
 import orderModel from '../models/order.model.js';
 import userModel from '../models/user.model.js';
@@ -15,16 +16,13 @@ export const createOrderAfterPayment = async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
-        const { userID = null, payment_typeID, deliveryID = null, couponID = null, orderdate, total_price, shipping_address = null, transaction_id, orderDetails, infoUserGuest = null // Thông tin người dùng khách hàng nếu không đăng nhập
-         } = req.body;
-        // 1. Validate input data (các trường bắt buộc chung)
+        const { userID = null, payment_typeID, deliveryID = null, couponID = null, orderdate, total_price, shipping_address = null, transaction_id, orderDetails, infoUserGuest = null } = req.body;
+        // 1. Validate input data
         if (!total_price || !transaction_id || !orderDetails || !Array.isArray(orderDetails)) {
             throw new Error('Missing required fields');
         }
-        // Xác định đây là booking hay order dựa trên orderDetails
         const isBooking = orderDetails.every((detail) => detail.serviceID && !detail.productID);
         const isOrder = orderDetails.some((detail) => detail.productID);
-        // Nếu là order sản phẩm, yêu cầu deliveryID
         if (isOrder && !deliveryID) {
             throw new Error('Delivery ID is required for product orders');
         }
@@ -40,15 +38,122 @@ export const createOrderAfterPayment = async (req, res) => {
             if (!paymentType)
                 throw new Error('Payment type not found');
         }
-        // 4. Validate delivery (chỉ khi là order)
+        // 4. Validate delivery
         let delivery = null;
+        let deliveryFee = 0;
         if (deliveryID) {
             delivery = await deliveryModel.findById(deliveryID).session(session);
             if (!delivery)
                 throw new Error('Delivery method not found');
+            deliveryFee = delivery?.delivery_fee || 0;
         }
-        const deliveryFee = delivery.delivery_fee || 0;
-        // 5. Handle coupon validation and discount calculation
+        // 5. Kiểm tra slot trống cho các booking
+        const maxSlots = 5;
+        const slotUsage = {}; // Theo dõi số pet trong từng slot
+        for (const detail of orderDetails) {
+            const { serviceID, booking_date } = detail;
+            if (serviceID && booking_date) {
+                const bookingDate = new Date(booking_date);
+                if (isNaN(bookingDate.getTime())) {
+                    throw new Error(`Invalid booking_date format: ${booking_date}`);
+                }
+                bookingDate.setMinutes(0, 0, 0);
+                const date = bookingDate.toISOString().split('T')[0];
+                const hour = bookingDate.getHours();
+                const service = await serviceModel.findOne({ _id: serviceID, status: ServiceStatus.ACTIVE }).session(session);
+                if (!service)
+                    throw new Error(`Service not found or not active: ${serviceID}`);
+                const serviceDuration = service.duration || 60;
+                const affectedSlots = Math.ceil(serviceDuration / 60);
+                const timeSlots = [];
+                for (let i = 0; i < affectedSlots; i++) {
+                    const slotHour = hour + i;
+                    const startDate = new Date(`${date}T${slotHour.toString().padStart(2, '0')}:00:00+07:00`);
+                    const endDate = new Date(`${date}T${slotHour.toString().padStart(2, '0')}:59:59.999+07:00`);
+                    timeSlots.push({ start: startDate, end: endDate, time: `${slotHour}h` });
+                }
+                // Đếm số pet trong request cho từng slot
+                for (const slot of timeSlots) {
+                    const slotKey = `${date}-${slot.time}`;
+                    slotUsage[slotKey] = (slotUsage[slotKey] || 0) + 1;
+                }
+            }
+        }
+        // Kiểm tra slot còn lại so với slotUsage
+        for (const detail of orderDetails) {
+            const { serviceID, booking_date } = detail;
+            if (serviceID && booking_date) {
+                const bookingDate = new Date(booking_date);
+                bookingDate.setMinutes(0, 0, 0);
+                const date = bookingDate.toISOString().split('T')[0];
+                const hour = bookingDate.getHours();
+                const service = await serviceModel.findOne({ _id: serviceID, status: ServiceStatus.ACTIVE }).session(session);
+                const serviceDuration = service.duration || 60;
+                const affectedSlots = Math.ceil(serviceDuration / 60);
+                const timeSlots = [];
+                for (let i = 0; i < affectedSlots; i++) {
+                    const slotHour = hour + i;
+                    const startDate = new Date(`${date}T${slotHour.toString().padStart(2, '0')}:00:00+07:00`);
+                    const endDate = new Date(`${date}T${slotHour.toString().padStart(2, '0')}:59:59.999+07:00`);
+                    timeSlots.push({ start: startDate, end: endDate, time: `${slotHour}h` });
+                }
+                for (const slot of timeSlots) {
+                    const bookedPets = await orderDetailModel
+                        .countDocuments({
+                        booking_date: {
+                            $gte: slot.start,
+                            $lte: slot.end
+                        }
+                    })
+                        .session(session);
+                    const slotKey = `${date}-${slot.time}`;
+                    const totalPetsInSlot = bookedPets + (slotUsage[slotKey] || 0);
+                    if (totalPetsInSlot > maxSlots) {
+                        throw new Error(`Not enough slots for booking on ${date} at ${slot.time}. Only ${maxSlots - bookedPets} slot(s) remaining.`);
+                    }
+                }
+            }
+        }
+        // 6. Calculate total_price
+        let calculatedTotalPrice = 0;
+        const orderDetailsPromises = orderDetails.map(async (detail) => {
+            const { productID, serviceID, quantity, product_price, booking_date } = detail;
+            if (!quantity || !product_price || (!productID && !serviceID)) {
+                throw new Error('Invalid order detail data');
+            }
+            if (productID) {
+                const product = await productModel
+                    .findOne({ _id: productID, status: ProductStatus.AVAILABLE })
+                    .session(session);
+                if (!product)
+                    throw new Error(`Product not found or not available: ${productID}`);
+                if (product.stock < quantity) {
+                    throw new Error(`Insufficient stock for product: ${productID}`);
+                }
+                await productModel.findByIdAndUpdate(productID, { $inc: { stock: -quantity } }, { session });
+            }
+            if (serviceID) {
+                const service = await serviceModel.findOne({ _id: serviceID, status: ServiceStatus.ACTIVE }).session(session);
+                if (!service)
+                    throw new Error(`Service not found or not active: ${serviceID}`);
+            }
+            const detailTotalPrice = quantity * product_price;
+            calculatedTotalPrice += detailTotalPrice;
+            const standardizedBookingDate = serviceID && booking_date ? new Date(booking_date) : null;
+            if (standardizedBookingDate) {
+                standardizedBookingDate.setMinutes(0, 0, 0);
+            }
+            return {
+                productID,
+                serviceID,
+                quantity,
+                product_price,
+                total_price: detailTotalPrice,
+                booking_date: standardizedBookingDate
+            };
+        });
+        const validatedOrderDetails = await Promise.all(orderDetailsPromises);
+        const subtotal = calculatedTotalPrice;
         let discount = 0;
         if (couponID) {
             const coupon = await couponModel.findById(couponID).session(session);
@@ -61,50 +166,12 @@ export const createOrderAfterPayment = async (req, res) => {
                 coupon.used_count >= coupon.usage_limit) {
                 throw new Error('Invalid or expired coupon');
             }
-            discount = Math.min(coupon.discount_value, coupon.max_discount);
+            const discountPercentage = coupon.discount_value;
+            discount = (subtotal * discountPercentage) / 100;
             await couponModel.findByIdAndUpdate(couponID, { $inc: { used_count: 1 } }, { session });
         }
-        // 6. Calculate total_price (verify total_price from client)
-        let calculatedTotalPrice = 0;
-        const orderDetailsPromises = orderDetails.map(async (detail) => {
-            const { productID, serviceID, quantity, product_price, booking_date } = detail;
-            if (!quantity || !product_price || (!productID && !serviceID)) {
-                throw new Error('Invalid order detail data');
-            }
-            // Validate product nếu có
-            if (productID) {
-                const product = await productModel
-                    .findOne({ _id: productID, status: ProductStatus.AVAILABLE })
-                    .session(session);
-                if (!product)
-                    throw new Error(`Product not found or not available: ${productID}`);
-                if (product.stock < quantity) {
-                    throw new Error(`Insufficient stock for product: ${productID}`);
-                }
-                await productModel.findByIdAndUpdate(productID, { $inc: { stock: -quantity } }, { session });
-            }
-            // Validate service nếu có
-            if (serviceID) {
-                const service = await serviceModel.findOne({ _id: serviceID, status: ServiceStatus.ACTIVE }).session(session);
-                if (!service)
-                    throw new Error(`Service not found or not active: ${serviceID}`);
-            }
-            const detailTotalPrice = quantity * product_price;
-            calculatedTotalPrice += detailTotalPrice;
-            return { productID, serviceID, quantity, product_price, total_price: detailTotalPrice, booking_date };
-        });
-        const validatedOrderDetails = await Promise.all(orderDetailsPromises);
-        const subtotal = calculatedTotalPrice; // Tổng tiền sản phẩm/dịch vụ
-        // Verify total_price
         const discountedSubtotal = calculatedTotalPrice - discount;
-        const finalTotalPrice = discountedSubtotal + deliveryFee; // Thêm phí vận chuyển
-        // Log để kiểm tra giá trị
-        console.log('Subtotal:', subtotal);
-        console.log('Discount:', discount);
-        console.log('Delivery Fee:', deliveryFee);
-        console.log('Final Total Price (Backend):', finalTotalPrice);
-        console.log('Total Price (Client):', total_price);
-        // Verify total_price từ client
+        const finalTotalPrice = discountedSubtotal + deliveryFee;
         if (Math.abs(finalTotalPrice - total_price) > 1) {
             throw new Error('Total price mismatch');
         }
@@ -119,7 +186,7 @@ export const createOrderAfterPayment = async (req, res) => {
             shipping_address,
             status: OrderStatus.PENDING,
             transaction_id,
-            inforUserGuest: infoUserGuest || null // Thông tin người dùng khách hàng nếu không đăng nhập
+            inforUserGuest: infoUserGuest || null
         });
         const savedOrder = await order.save({ session });
         // 8. Create and save order details
@@ -131,10 +198,10 @@ export const createOrderAfterPayment = async (req, res) => {
                 quantity: detail.quantity,
                 product_price: detail.product_price,
                 total_price: detail.total_price,
-                booking_date: detail.serviceID ? detail.booking_date : null // Sử dụng booking_date từ từng orderDetail
+                booking_date: detail.booking_date
             });
         });
-        const savedOrderDetails = await Promise.all(orderDetailDocs.map((detail) => detail.save({ session })));
+        await Promise.all(orderDetailDocs.map((detail) => detail.save({ session })));
         // 9. Commit transaction
         await session.commitTransaction();
         // 10. Send response
@@ -143,7 +210,7 @@ export const createOrderAfterPayment = async (req, res) => {
             message: 'Order and order details created successfully',
             data: {
                 order: savedOrder,
-                orderDetails: savedOrderDetails
+                orderDetails: orderDetailDocs
             }
         });
     }
@@ -159,6 +226,54 @@ export const createOrderAfterPayment = async (req, res) => {
     }
     finally {
         session.endSession();
+    }
+};
+export const getAvailableSlots = async (req, res) => {
+    try {
+        const { date } = req.query; // Ngày cần kiểm tra, ví dụ: "2025-03-29"
+        if (!date)
+            throw new Error('Date is required');
+        const maxSlots = 5;
+        const availableTimeSlots = ['8h', '9h', '10h', '11h', '13h', '14h', '15h', '16h', '17h'];
+        const startOfDay = new Date(`${date}T00:00:00+07:00`);
+        const endOfDay = new Date(`${date}T23:59:59.999+07:00`);
+        // Lấy tất cả booking trong ngày
+        const bookings = await orderDetailModel
+            .find({
+            booking_date: { $gte: startOfDay, $lte: endOfDay }
+        })
+            .populate('serviceId');
+        // Tính số slot bị chiếm cho từng khung giờ
+        const slotOccupancy = {};
+        availableTimeSlots.forEach((time) => (slotOccupancy[time] = 0));
+        bookings.forEach((booking) => {
+            const bookingDate = new Date(booking.booking_date);
+            const hour = bookingDate.getHours();
+            const serviceDuration = booking.serviceId?.duration || 60;
+            const affectedSlots = Math.ceil(serviceDuration / 60);
+            for (let i = 0; i < affectedSlots; i++) {
+                const slotHour = hour + i;
+                const time = `${slotHour}h`;
+                if (availableTimeSlots.includes(time)) {
+                    slotOccupancy[time] += 1;
+                }
+            }
+        });
+        // Tính slot còn lại
+        const slotAvailability = {};
+        availableTimeSlots.forEach((time) => {
+            slotAvailability[time] = maxSlots - slotOccupancy[time];
+        });
+        res.status(200).json({
+            success: true,
+            data: slotAvailability
+        });
+    }
+    catch (error) {
+        res.status(400).json({
+            success: false,
+            message: error instanceof Error ? error.message : 'Unknown error'
+        });
     }
 };
 export const getAllOrders = async (req, res) => {

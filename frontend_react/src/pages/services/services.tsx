@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import serviceApi from "../../api/serviceApi";
 import paymentTypeApi from "../../api/paymentTypeApi";
-import moment from "moment-timezone"; // Sử dụng moment-timezone
+import moment from "moment-timezone";
 import orderApi from "../../api/orderApi";
 
 const { Option } = Select;
@@ -52,6 +52,9 @@ const SpaBookingForm: React.FC = () => {
   const [currentDateTime, setCurrentDateTime] = useState(
     moment().tz("Asia/Ho_Chi_Minh")
   );
+  const [slotAvailability, setSlotAvailability] = useState<{
+    [key: string]: { [key: string]: number };
+  }>({});
 
   const availableTimeSlots = [
     "8h",
@@ -125,6 +128,11 @@ const SpaBookingForm: React.FC = () => {
       setSelectedDates(
         selectedDates.filter((_, index) => index !== indexToRemove)
       );
+      setSlotAvailability((prev) => {
+        const newAvailability = { ...prev };
+        delete newAvailability[indexToRemove];
+        return newAvailability;
+      });
       form.setFields(
         petForms
           .map((_, index) =>
@@ -140,6 +148,45 @@ const SpaBookingForm: React.FC = () => {
     }
   };
 
+  const fetchAvailableSlots = async (
+    date: moment.Moment | null,
+    index: number
+  ) => {
+    if (!date) {
+      setSlotAvailability((prev) => {
+        const newAvailability = { ...prev };
+        delete newAvailability[index];
+        return newAvailability;
+      });
+      return;
+    }
+    try {
+      const dateStr = date.format("YYYY-MM-DD");
+      const response = await orderApi.getAvailableSlots(dateStr);
+      console.log(
+        `Fetched slots for ${dateStr} (pet ${index}):`,
+        response.data
+      );
+      setSlotAvailability((prev) => ({
+        ...prev,
+        [index]: response.data,
+      }));
+    } catch (error) {
+      console.error(
+        `Error fetching slots for ${date?.format(
+          "YYYY-MM-DD"
+        )} (pet ${index}):`,
+        error
+      );
+      message.error("Không thể tải danh sách khung giờ, vui lòng thử lại!");
+      setSlotAvailability((prev) => {
+        const newAvailability = { ...prev };
+        delete newAvailability[index];
+        return newAvailability;
+      });
+    }
+  };
+
   const onFinish = async (values: any) => {
     console.log("Form values:", values);
 
@@ -152,16 +199,13 @@ const SpaBookingForm: React.FC = () => {
       message.error("Vui lòng đăng nhập để đặt lịch!");
       return;
     }
-    if (!selectedPayment) {
-      message.error("Vui lòng chọn phương thức thanh toán!");
-      return;
-    }
     if (totalPrice <= 0) {
       message.error("Vui lòng chọn ít nhất một dịch vụ để đặt lịch!");
       return;
     }
 
-    // Kiểm tra xem tất cả các pet có ngày và giờ được chọn hay không
+    // Đếm số pet trong từng slot từ request
+    const slotUsage: { [key: string]: number } = {};
     for (let index = 0; index < petForms.length; index++) {
       const selectedDate = selectedDates[index];
       const selectedTime = values.pets[index]?.time;
@@ -174,34 +218,59 @@ const SpaBookingForm: React.FC = () => {
         message.error(`Vui lòng chọn giờ hẹn cho pet ${index + 1}!`);
         return;
       }
+
+      const selectedServiceId = values.pets[index].service;
+      const selectedService = services.find((s) => s._id === selectedServiceId);
+      const duration = selectedService?.duration
+        ? parseInt(selectedService.duration)
+        : 60;
+      const slotsNeeded = Math.ceil(duration / 60);
+      const hour = parseInt(selectedTime.replace("h", ""), 10);
+      const dateStr = selectedDate.format("YYYY-MM-DD");
+
+      // Tính slotUsage cho tất cả khung giờ bị ảnh hưởng
+      for (let i = 0; i < slotsNeeded; i++) {
+        const checkHour = hour + i;
+        const checkTime = `${checkHour}h`;
+        const slotKey = `${dateStr}-${checkTime}`;
+        slotUsage[slotKey] = (slotUsage[slotKey] || 0) + 1;
+
+        const slotsAvailable = slotAvailability[index]?.[checkTime] || 0;
+        if (slotUsage[slotKey] > slotsAvailable) {
+          message.error(
+            `Không đủ slot cho khung giờ ${checkTime} ngày ${selectedDate.format(
+              "DD/MM/YYYY"
+            )}! Chỉ còn ${slotsAvailable} slot.`
+          );
+          return;
+        }
+      }
     }
 
-    // Tạo orderDetails với service_time riêng cho từng pet
     const orderDetails = petForms.map((index) => {
-      const selectedDate = selectedDates[index]; // Ngày được chọn cho pet này
-      const selectedTime = values.pets[index].time; // Giờ được chọn (ví dụ: "9h")
+      const selectedDate = selectedDates[index];
+      const selectedTime = values.pets[index].time;
       const hour = parseInt(selectedTime.replace("h", ""), 10);
 
-      // Tạo service_time dựa trên selectedDate và hour
       const serviceTime = selectedDate.clone().set({
         hour,
         minute: 0,
         second: 0,
         millisecond: 0,
       });
-
-      const serviceTimeString = serviceTime.format("YYYY-MM-DDTHH:mm:ss.SSSZ");
+      const serviceTimeString = serviceTime.format(
+        "YYYY-MM-DDTHH:00:00.000+07:00"
+      );
 
       return {
         productID: null,
         serviceID: values.pets[index].service,
         quantity: 1,
         product_price: petFormData[index].estimatedPrice || 0,
-        booking_date: serviceTimeString, // Thêm service_time cho từng orderDetail
+        booking_date: serviceTimeString,
       };
     });
 
-    // Tạo orderData mà không có booking_date
     const orderData = {
       userID: userId,
       payment_typeID: null,
@@ -213,7 +282,7 @@ const SpaBookingForm: React.FC = () => {
       total_price: totalPrice,
       shipping_address: null,
       transaction_id: `TRANS_${Date.now()}`,
-      orderDetails, // orderDetails giờ đã chứa service_time
+      orderDetails,
       inforUserGuest: {
         fullName: values.fullName,
         phone: values.phone,
@@ -234,8 +303,12 @@ const SpaBookingForm: React.FC = () => {
           estimatedDuration: undefined,
         }))
       );
+      const previousDates = [...selectedDates];
       setSelectedDates(petForms.map(() => null));
       setPetForms([0]);
+      previousDates.forEach((date, index) => {
+        if (date) fetchAvailableSlots(date, index);
+      });
     } catch (error) {
       console.error("Error creating order:", error);
       const errorMessage =
@@ -246,10 +319,8 @@ const SpaBookingForm: React.FC = () => {
 
   const parseDuration = (duration: string | undefined): string => {
     if (!duration) return "Chưa chọn dịch vụ";
-    const date = new Date(duration);
-    const milliseconds = date.getUTCMilliseconds();
-    const minutes = Math.floor(milliseconds);
-    return `${minutes} phút`;
+    const minutes = parseInt(duration, 10);
+    return isNaN(minutes) ? "Chưa chọn dịch vụ" : `${minutes} phút`;
   };
 
   const handleServiceChange = (value: string, index: number) => {
@@ -265,46 +336,70 @@ const SpaBookingForm: React.FC = () => {
         [index]: {
           estimatedPrice: selectedService?.service_price || 0,
           estimatedDuration: selectedService?.duration,
+          time: undefined, // Reset khung giờ khi thay đổi dịch vụ
         },
       },
     });
+    if (selectedDates[index]) {
+      fetchAvailableSlots(selectedDates[index], index);
+    }
   };
 
   const disabledDate = (current: moment.Moment) => {
-    if (current && current < moment().tz("Asia/Ho_Chi_Minh").startOf("day"))
-      return true;
-    const isToday =
-      current && current.isSame(moment().tz("Asia/Ho_Chi_Minh"), "day");
-    if (isToday) {
-      const currentHour = currentDateTime.hour();
-      const currentMinute = currentDateTime.minute();
-      const hasAvailableSlots = availableTimeSlots.some((time) => {
-        const hour = parseInt(time.replace("h", ""), 10);
-        if (hour < currentHour) return false;
-        if (hour === currentHour) return currentMinute === 0;
-        return true;
-      });
-      return !hasAvailableSlots;
-    }
-    return false;
+    return current && current < moment().tz("Asia/Ho_Chi_Minh").startOf("day");
   };
 
   const getAvailableTimeSlots = (index: number) => {
     const selectedDate = selectedDates[index];
-    if (!selectedDate) return [];
+    if (!selectedDate) {
+      console.log(`No date selected for pet ${index}, showing all slots`);
+      return availableTimeSlots;
+    }
+
     const isToday = selectedDate.isSame(moment().tz("Asia/Ho_Chi_Minh"), "day");
-    if (!isToday) return availableTimeSlots;
-    const currentHour = currentDateTime.hour();
-    const currentMinute = currentDateTime.minute();
-    const filteredTimeSlots = availableTimeSlots.filter((time) => {
+    let baseSlots = availableTimeSlots;
+
+    if (isToday) {
+      const currentHour = currentDateTime.hour();
+      baseSlots = availableTimeSlots.filter((time) => {
+        const hour = parseInt(time.replace("h", ""), 10);
+        return hour > currentHour;
+      });
+    }
+
+    const slotsForDate = slotAvailability[index] || {};
+    console.log(
+      `Slots for pet ${index} on ${selectedDate.format("YYYY-MM-DD")}:`,
+      slotsForDate
+    );
+
+    const selectedServiceId = form.getFieldValue(["pets", index, "service"]);
+    const selectedService = services.find((s) => s._id === selectedServiceId);
+    const duration = selectedService?.duration
+      ? parseInt(selectedService.duration)
+      : 60;
+    const slotsNeeded = Math.ceil(duration / 60);
+
+    if (Object.keys(slotsForDate).length === 0) {
+      return baseSlots;
+    }
+
+    const availableSlots = baseSlots.filter((time) => {
       const hour = parseInt(time.replace("h", ""), 10);
-      if (hour < currentHour) return false;
-      if (hour === currentHour) return currentMinute === 0;
+      // Kiểm tra tất cả slot cần thiết
+      for (let i = 0; i < slotsNeeded; i++) {
+        const checkHour = hour + i;
+        const checkTime = `${checkHour}h`;
+        const slotsAvailable = slotsForDate[checkTime] || 0;
+        if (slotsAvailable <= 0 || !availableTimeSlots.includes(checkTime)) {
+          return false;
+        }
+      }
       return true;
     });
-    return filteredTimeSlots.length > 0
-      ? filteredTimeSlots
-      : availableTimeSlots;
+
+    console.log(`Available slots for pet ${index}:`, availableSlots);
+    return availableSlots;
   };
 
   const handleDateChange = (date: moment.Moment | null, index: number) => {
@@ -323,8 +418,10 @@ const SpaBookingForm: React.FC = () => {
         "Asia/Ho_Chi_Minh"
       );
       updatedDates[index] = newDate;
+      fetchAvailableSlots(newDate, index);
     } else {
       updatedDates[index] = null;
+      fetchAvailableSlots(null, index);
     }
     setSelectedDates(updatedDates);
     form.setFieldsValue({ pets: { [index]: { time: undefined } } });
@@ -503,7 +600,7 @@ const SpaBookingForm: React.FC = () => {
                       placeholder="21/01/2025"
                       disabledDate={disabledDate}
                       onChange={(date) => handleDateChange(date, index)}
-                      value={selectedDates[index]} // Đồng bộ với state
+                      value={selectedDates[index]}
                     />
                   </Form.Item>
                   <Form.Item
@@ -525,7 +622,8 @@ const SpaBookingForm: React.FC = () => {
                     >
                       {getAvailableTimeSlots(index).map((time) => (
                         <Option key={time} value={time}>
-                          {time}
+                          {time} ({slotAvailability[index]?.[time] || 0} slot
+                          còn lại)
                         </Option>
                       ))}
                     </Select>
