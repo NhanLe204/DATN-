@@ -22,7 +22,13 @@ const userApi = {
         };
     },
     update: async (id, data) => {
-        const response = await api.patch(`/v1/users/${id}`, data);
+        console.log("Data being sent to update:", data);
+        const response = await api.patch(`/v1/users/${id}`, data, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
+        console.log("Update response:", response.data);
         return {
             data: response.data,
         };

@@ -340,6 +340,14 @@ export default function Address() {
     }
   };
 
+  const validatePhoneNumber = (_: any, value: string) => {
+    const phoneRegex = /^(03|05|07|08|09)[0-9]{8}$/; // Bắt đầu bằng 03, 05, 07, 08, 09 và đủ 10 số
+    if (value && !phoneRegex.test(value)) {
+      return Promise.reject(new Error('Số điện thoại không hợp lệ! Phải bắt đầu bằng 03, 05, 07, 08, 09 và đủ 10 số.'));
+    }
+    return Promise.resolve();
+  };
+
   return (
     <>
       <div className="flex justify-between">
@@ -386,11 +394,10 @@ export default function Address() {
                   Xóa
                 </Button>
                 <Button
-                  className={`w-1/7 rounded text-white ${
-                    addr.isDefault
+                  className={`w-1/7 rounded text-white ${addr.isDefault
                       ? "bg-gray-400 cursor-not-allowed"
                       : "bg-green-500 hover:bg-green-600"
-                  }`}
+                    }`}
                   onClick={() => handleSetDefaultAddress(index)}
                   disabled={addr.isDefault}
                 >
@@ -441,7 +448,10 @@ export default function Address() {
           <Item
             name="phone"
             label={<span className="text-base font-semibold text-gray-700">Số điện thoại</span>}
-            rules={[{ required: true, message: "Vui lòng nhập số điện thoại!" }]}
+            rules={[
+              { required: true, message: 'Vui lòng nhập số điện thoại!' },
+              { validator: validatePhoneNumber }
+            ]}
           >
             <Input
               placeholder="Nhập số điện thoại"
@@ -564,7 +574,10 @@ export default function Address() {
           <Item
             name="phone"
             label={<span className="text-base font-semibold text-gray-700">Số điện thoại</span>}
-            rules={[{ required: true, message: "Vui lòng nhập số điện thoại!" }]}
+            rules={[
+              { required: true, message: 'Vui lòng nhập số điện thoại!' },
+              { validator: validatePhoneNumber }
+            ]}
           >
             <Input
               placeholder="Nhập số điện thoại"

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response } from 'express';
 import userModel from '../models/user.model.js';
 import mongoose from 'mongoose';
@@ -65,9 +66,11 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
     if (phone_number) updateData.phone_number = phone_number;
     if (address) updateData.address = address;
     if (role) updateData.role = role;
-    if (avatar) updateData.avatar = avatar;
     if (status) updateData.status = status;
     if (dateOfBirth) updateData.dateOfBirth = dateOfBirth;
+    if (req.file) {
+      updateData.avatar = req.file.path; // URL của ảnh từ Cloudinary
+    }
 
     const updatedUser = await userModel.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
 
