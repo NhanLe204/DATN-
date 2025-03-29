@@ -7,7 +7,7 @@ import couponModel from '../models/coupon.model.js';
 import { CouponStatus } from '../enums/coupon.enum.js';
 import orderDetailModel from '../models/orderdetail.model.js';
 import productModel from '../models/product.model.js';
-import { OrderStatus, PaymentStatus } from '../enums/order.enum.js';
+import { OrderStatus } from '../enums/order.enum.js';
 import { ProductStatus } from '../enums/product.enum.js';
 import { ServiceStatus } from '../enums/service.enum.js';
 import serviceModel from '../models/service.model.js';
@@ -17,22 +17,17 @@ export const createOrderAfterPayment = async (req, res) => {
     session.startTransaction();
     try {
         const { userID, payment_typeID, deliveryID = null, // Initialize deliveryID with a default value
-        couponID, orderdate, total_price, shipping_address, payment_status, transaction_id, booking_date, orderDetails } = req.body;
+        couponID, orderdate, total_price, shipping_address, transaction_id, booking_date, orderDetails } = req.body;
         // 1. Validate input data
         if (!userID ||
             !payment_typeID ||
             !deliveryID ||
             !total_price ||
             !shipping_address ||
-            !payment_status ||
             !transaction_id ||
             !orderDetails ||
             !Array.isArray(orderDetails)) {
             throw new Error('Missing required fields');
-        }
-        // Validate payment_status
-        if (!Object.values(PaymentStatus).includes(payment_status)) {
-            throw new Error('Invalid payment status');
         }
         // 2. Validate user existence
         const user = await userModel.findById(userID).session(session);
@@ -114,7 +109,6 @@ export const createOrderAfterPayment = async (req, res) => {
             total_price: finalTotalPrice,
             discount,
             shipping_address,
-            payment_status, // Lấy từ body (pending)
             status: OrderStatus.PENDING,
             transaction_id,
             booking_date: booking_date ? new Date(booking_date) : null
