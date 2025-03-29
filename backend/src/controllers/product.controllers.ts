@@ -548,7 +548,6 @@ export const getProductRelated = async (req: Request, res: Response): Promise<vo
 
   res.status(200).json(limitedRelatedProducts);
 };
-
 export const toggleProduct = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;

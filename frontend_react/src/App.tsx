@@ -30,6 +30,7 @@ import BrandManager from "./admin/brand/brand";
 import TagManager from "./admin/tag/tag";
 import VerifyOtp from "./pages/verifyOTP/verifyOTP";
 import Search from "./pages/search/search";
+import BlogContent from "./pages/blog/blog"; // Adjust the path as needed
 import { notification } from "antd";
 
 interface User {
@@ -242,6 +243,14 @@ function App() {
           element: (
             <PublicRoute>
               <Payment />
+            </PublicRoute>
+          ),
+        },
+        {
+          path: "/blog",
+          element: (
+            <PublicRoute>
+              <BlogContent/>
             </PublicRoute>
           ),
         },

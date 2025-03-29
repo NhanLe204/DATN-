@@ -1,23 +1,22 @@
 import { createSlice } from "@reduxjs/toolkit";
+
 // Lấy userId từ localStorage, đảm bảo trả về chuỗi hoặc null
 const getUserIdFromLocal = () => {
   const userId = localStorage.getItem("accountID");
   if (!userId) return null;
 
   try {
-    // Nếu userId là chuỗi dạng JSON (ví dụ: "[...]" hoặc "{...}"), parse và lấy giá trị
     const parsed = JSON.parse(userId);
     if (Array.isArray(parsed)) {
-      return parsed[0]; // Lấy phần tử đầu tiên nếu là mảng
+      return parsed[0];
     }
-    return parsed; // Nếu không phải mảng, trả về giá trị đã parse
+    return parsed;
   } catch (e) {
-    // Nếu không parse được (tức là userId đã là chuỗi bình thường), trả về nguyên giá trị
     return userId;
   }
 };
 
-// Lấy toàn bộ cart từ localStorage, nếu không có thì trả về object rỗng
+// Lấy toàn bộ cart từ localStorage
 const getAllCartsFromLocal = (): Record<
   string,
   { id: string; quantity: number }[]
@@ -26,16 +25,16 @@ const getAllCartsFromLocal = (): Record<
   return savedCarts ? JSON.parse(savedCarts) : {};
 };
 
-// Lấy cart của userId hiện tại
-const getCartForUser = (userId) => {
+// Lấy cart của userId hoặc guest
+const getCartForUser = (userId: string | null) => {
   const allCarts = getAllCartsFromLocal();
-  return allCarts[userId] || [];
+  return allCarts[userId || 'guest'] || [];
 };
 
 const cartSlice = createSlice({
   name: "cart",
   initialState: {
-    items: getCartForUser(getUserIdFromLocal()), // Chỉ lấy cart của userId hiện tại
+    items: getCartForUser(getUserIdFromLocal()),
     userId: getUserIdFromLocal(),
   },
   reducers: {
@@ -43,23 +42,27 @@ const cartSlice = createSlice({
       const newUserId = action.payload;
       state.userId = newUserId;
       if (newUserId) {
-        // Khi đăng nhập: lưu userId mới
         localStorage.setItem("accountID", newUserId);
-        // Cập nhật state.items với cart của userId mới
-        state.items = getCartForUser(newUserId);
+        // Khi đăng nhập, chuyển cart của guest sang user nếu có
+        const guestCart = getCartForUser('guest');
+        if (guestCart.length > 0) {
+          state.items = [...guestCart];
+          saveCartsToLocal(newUserId, state.items);
+          // Xóa cart của guest sau khi chuyển
+          const allCarts = getAllCartsFromLocal();
+          delete allCarts['guest'];
+          localStorage.setItem("carts", JSON.stringify(allCarts));
+        } else {
+          state.items = getCartForUser(newUserId);
+        }
       } else {
-        // Khi đăng xuất: xóa accountID và toàn bộ carts
         localStorage.removeItem("accountID");
-        // localStorage.removeItem("carts"); // Xóa toàn bộ carts khi đăng xuất
         state.userId = null;
-        state.items = [];
+        state.items = getCartForUser('guest');
       }
     },
     addToCart: (state, action) => {
-      if (!state.userId) {
-        console.log("User must be logged in to add items to cart");
-        return;
-      }
+      const userId = state.userId || 'guest';
       const { item, quantity } = action.payload;
       const existingItem = state.items.find(
         (cartItem) => cartItem.id === item.id
@@ -69,42 +72,40 @@ const cartSlice = createSlice({
       } else {
         state.items.push({ ...item, quantity });
       }
-      saveCartsToLocal(state.userId, state.items);
+      saveCartsToLocal(userId, state.items);
     },
     increaseQuantity: (state, action) => {
-      if (!state.userId) return;
+      const userId = state.userId || 'guest';
       const item = state.items.find(
         (cartItem) => cartItem.id === action.payload.id
       );
       if (item) {
         item.quantity += 1;
-        saveCartsToLocal(state.userId, state.items);
+        saveCartsToLocal(userId, state.items);
       }
     },
     decreaseQuantity: (state, action) => {
-      if (!state.userId) return;
+      const userId = state.userId || 'guest';
       const item = state.items.find(
         (cartItem) => cartItem.id === action.payload.id
       );
       if (item && item.quantity > 1) {
         item.quantity -= 1;
-        saveCartsToLocal(state.userId, state.items);
+        saveCartsToLocal(userId, state.items);
       }
     },
     removeProduct: (state, action) => {
-      if (!state.userId) return;
+      const userId = state.userId || 'guest';
       state.items = state.items.filter(
         (cartItem) => cartItem.id !== action.payload.id
       );
-      saveCartsToLocal(state.userId, state.items);
+      saveCartsToLocal(userId, state.items);
     },
     clearProduct: (state) => {
-      if (!state.userId) return;
+      const userId = state.userId || 'guest';
       state.items = [];
-      // Xóa giỏ hàng của userId hiện tại khỏi localStorage
       const allCarts = getAllCartsFromLocal();
-      delete allCarts[state.userId];
-      // Nếu không còn user nào trong allCarts, xóa key "carts"
+      delete allCarts[userId];
       if (Object.keys(allCarts).length === 0) {
         localStorage.removeItem("carts");
       } else {
@@ -113,12 +114,11 @@ const cartSlice = createSlice({
     },
   },
 });
-// Hàm helper để lưu carts vào localStorage
-const saveCartsToLocal = (userId, items) => {
+
+const saveCartsToLocal = (userId: string, items: any[]) => {
   const allCarts = getAllCartsFromLocal();
   allCarts[userId] = items;
 
-  // Nếu không có sản phẩm nào trong allCarts, xóa key "carts"
   const hasItems = Object.values(allCarts).some(
     (cart: { id: string; quantity: number }[]) => cart.length > 0
   );
