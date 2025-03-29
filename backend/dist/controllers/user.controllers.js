@@ -62,12 +62,13 @@ export const updateUser = async (req, res) => {
             updateData.address = address;
         if (role)
             updateData.role = role;
-        if (avatar)
-            updateData.avatar = avatar;
         if (status)
             updateData.status = status;
         if (dateOfBirth)
             updateData.dateOfBirth = dateOfBirth;
+        if (req.file) {
+            updateData.avatar = req.file.path; // URL của ảnh từ Cloudinary
+        }
         const updatedUser = await userModel.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
         if (!updatedUser) {
             res.status(404).json({ message: 'Không tìm thấy người dùng' });

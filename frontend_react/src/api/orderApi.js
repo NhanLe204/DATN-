@@ -29,7 +29,6 @@ const orderApi = {
     const response = await api.patch(`/v1/orders/${id}`, data);
     return response.data;
   },
-
   delete: async (id) => {
     const response = await api.delete(`/v1/orders/${id}`);
     return response.data;
