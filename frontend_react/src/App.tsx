@@ -32,6 +32,8 @@ import VerifyOtp from "./pages/verifyOTP/verifyOTP";
 import Search from "./pages/search/search";
 import BlogContent from "./pages/blog/blog"; // Adjust the path as needed
 import { notification } from "antd";
+import CancelPage from "./pages/orders/cancel";
+import SuccessPage from "./pages/orders/success";
 
 interface User {
   id: string;
@@ -71,7 +73,9 @@ const ProtectedRoute = ({
   if (!user || user.status !== "active") {
     notification.error({
       message: "Truy cập bị từ chối",
-      description: `Vui lòng đăng nhập hoặc kiểm tra trạng thái tài khoản (status: ${user?.status || "không xác định"}).`,
+      description: `Vui lòng đăng nhập hoặc kiểm tra trạng thái tài khoản (status: ${
+        user?.status || "không xác định"
+      }).`,
       placement: "topRight",
     });
     return <Navigate to="/login" replace />;
@@ -250,7 +254,23 @@ function App() {
           path: "/blog",
           element: (
             <PublicRoute>
-              <BlogContent/>
+              <BlogContent />
+            </PublicRoute>
+          ),
+        },
+        {
+          path: "/cancel",
+          element: (
+            <PublicRoute>
+              <CancelPage />
+            </PublicRoute>
+          ),
+        },
+        {
+          path: "/success",
+          element: (
+            <PublicRoute>
+              <SuccessPage />
             </PublicRoute>
           ),
         },

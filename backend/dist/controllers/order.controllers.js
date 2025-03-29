@@ -16,7 +16,8 @@ export const createOrderAfterPayment = async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
-        const { userID = null, payment_typeID, deliveryID = null, couponID = null, orderdate, total_price, shipping_address = null, transaction_id, orderDetails, infoUserGuest = null } = req.body;
+        const { userID = null, payment_typeID, deliveryID = null, couponID = null, orderdate, total_price, shipping_address = null, transaction_id, orderDetails, paymentOrderCode = null, infoUserGuest = null } = req.body;
+        console.log(paymentOrderCode, 'paymentOrderCode');
         // 1. Validate input data
         if (!total_price || !transaction_id || !orderDetails || !Array.isArray(orderDetails)) {
             throw new Error('Missing required fields');
@@ -184,6 +185,7 @@ export const createOrderAfterPayment = async (req, res) => {
             orderdate: orderdate ? new Date(orderdate) : new Date(),
             total_price: finalTotalPrice,
             shipping_address,
+            paymentOrderCode,
             status: OrderStatus.PENDING,
             transaction_id,
             inforUserGuest: infoUserGuest || null
@@ -362,6 +364,45 @@ export const checkAvailableSlots = async (req, res) => {
     catch (error) {
         console.error('Error checking slots:', error);
         res.status(500).json({ message: 'Internal server error' });
+    }
+};
+export const updateOrderStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+        console.log('status', status);
+        // Kiểm tra xem ID có hợp lệ không
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            res.status(400).json({
+                success: false,
+                message: 'ID không hợp lệ'
+            });
+            return;
+        }
+        // Kiểm tra xem trạng thái có hợp lệ không
+        if (!Object.values(OrderStatus).includes(status)) {
+            res.status(400).json({ success: false, message: 'Trạng thái đơn hàng không hợp lệ' });
+            return;
+        }
+        // Cập nhật trạng thái đơn hàng
+        const updatedOrder = await orderModel.findByIdAndUpdate(id, { status }, { new: true, runValidators: true });
+        if (!updatedOrder) {
+            res.status(404).json({ success: false, message: 'Đơn hàng không tồn tại' });
+            return;
+        }
+        res
+            .status(200)
+            .json({ success: true, message: 'Trạng thái đơn hàng được cập nhật thành công', order: updatedOrder });
+    }
+    catch (error) {
+        if (error instanceof Error) {
+            console.error(`Error updating order status: ${error.message}`);
+            res.status(500).json({ success: false, message: 'Lỗi máy chủ' });
+        }
+        else {
+            console.error('Lỗi không xác định khi cập nhật trạng thái đơn hàng:', error);
+            res.status(500).json({ success: false, message: 'Lỗi máy chủ' });
+        }
     }
 };
 //# sourceMappingURL=order.controllers.js.map

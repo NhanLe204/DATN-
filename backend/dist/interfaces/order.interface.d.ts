@@ -10,6 +10,7 @@ export interface IOrder {
     total_price: number;
     shipping_address: string;
     payment_status: PaymentStatus;
+    paymentOrderCode: number;
     status: OrderStatus;
     transaction_id?: string;
 }

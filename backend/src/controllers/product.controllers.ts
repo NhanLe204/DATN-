@@ -24,7 +24,7 @@ export const getAllProduct = async (req: Request, res: Response): Promise<void> 
       if (!Object.values(ProductStatus).includes(status as ProductStatus)) {
         res.status(400).json({
           success: false,
-          message: `Trạng thái không hợp lệ. Chỉ chấp nhận ${Object.values(ProductStatus).join(', ')}`,
+          message: `Trạng thái không hợp lệ. Chỉ chấp nhận ${Object.values(ProductStatus).join(', ')}`
         });
         return;
       }
@@ -134,8 +134,8 @@ export const getAllProduct = async (req: Request, res: Response): Promise<void> 
         total,
         page: pageNum,
         limit: limitNum,
-        totalPages: Math.ceil(total / limitNum),
-      },
+        totalPages: Math.ceil(total / limitNum)
+      }
     });
   } catch (error) {
     console.error('Error fetching products:', (error as Error).message || error);

@@ -19,7 +19,7 @@ export const getAllProduct = async (req, res) => {
             if (!Object.values(ProductStatus).includes(status)) {
                 res.status(400).json({
                     success: false,
-                    message: `Trạng thái không hợp lệ. Chỉ chấp nhận ${Object.values(ProductStatus).join(', ')}`,
+                    message: `Trạng thái không hợp lệ. Chỉ chấp nhận ${Object.values(ProductStatus).join(', ')}`
                 });
                 return;
             }
@@ -120,8 +120,8 @@ export const getAllProduct = async (req, res) => {
                 total,
                 page: pageNum,
                 limit: limitNum,
-                totalPages: Math.ceil(total / limitNum),
-            },
+                totalPages: Math.ceil(total / limitNum)
+            }
         });
     }
     catch (error) {
