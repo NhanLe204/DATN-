@@ -44,6 +44,8 @@ export default function Account({ isEditing, setIsEditing }: AccountProps) {
     const type = params["*"] || "account";
     const [form] = Form.useForm();
     const [user, setUser] = useState<User | null>(null);
+    const [fileList, setFileList] = useState<any[]>([]);
+    const [uploading, setUploading] = useState(false);
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -81,8 +83,6 @@ export default function Account({ isEditing, setIsEditing }: AccountProps) {
         }
     }, [user, form]);
 
-    const handleEdit = () => setIsEditing(true);
-
     const handleCancel = () => {
         if (user) {
             form.resetFields();
@@ -93,6 +93,7 @@ export default function Account({ isEditing, setIsEditing }: AccountProps) {
                 birthDate: user.dateOfBirth ? dayjs(user.dateOfBirth, "YYYY-MM-DD") : null,
             });
         }
+        setFileList([]);
         setIsEditing(false);
     };
 
@@ -105,15 +106,40 @@ export default function Account({ isEditing, setIsEditing }: AccountProps) {
             return;
         }
 
-        const updatedData = {
-            fullname: values.fullname || undefined,
-            email: values.email || undefined,
-            phone_number: values.phone || undefined,
-            dateOfBirth: values.birthDate?.format("YYYY-MM-DD"),
-        };
+        const formData = new FormData();
+        formData.append("fullname", values.fullname || "");
+        formData.append("email", values.email || "");
+        formData.append("phone_number", values.phone || "");
+        formData.append("dateOfBirth", values.birthDate?.format("YYYY-MM-DD") || "");
+
+        // Nếu có file ảnh, thêm vào FormData
+        if (fileList.length > 0) {
+            const file = fileList[0].originFileObj;
+            if (!file) {
+                message.error("Vui lòng chọn file để upload!");
+                return;
+            }
+
+            // Kiểm tra kích thước file (1MB = 1024 * 1024 bytes)
+            if (file.size > 1024 * 1024) {
+                message.error("Dung lượng file tối đa là 1MB!");
+                return;
+            }
+
+            // Kiểm tra định dạng file
+            const allowedTypes = ["image/jpeg", "image/png"];
+            if (!allowedTypes.includes(file.type)) {
+                message.error("Chỉ hỗ trợ định dạng JPG, PNG!");
+                return;
+            }
+
+            formData.append("avatar", file); // Thêm file vào FormData
+        }
+
+        setUploading(true);
 
         try {
-            const userUpdateResponse = await userApi.update(accountID, updatedData);
+            const userUpdateResponse = await userApi.update(accountID, formData);
             const data = userUpdateResponse.data;
             const updatedUser = {
                 ...user,
@@ -128,11 +154,38 @@ export default function Account({ isEditing, setIsEditing }: AccountProps) {
             localStorage.setItem("userData", JSON.stringify(updatedUser));
             message.success("Cập nhật thành công!");
             setIsEditing(false);
+            setFileList([]);
             window.location.reload();
         } catch (error) {
             message.error(`Cập nhật thất bại: ${error.message}`);
             setIsEditing(false);
         }
+    };
+
+    const validatePhoneNumber = (_: any, value: string) => {
+        const phoneRegex = /^(03|05|07|08|09)[0-9]{8}$/; // Bắt đầu bằng 03, 05, 07, 08, 09 và đủ 10 số
+        if (value && !phoneRegex.test(value)) {
+            return Promise.reject(new Error('Số điện thoại không hợp lệ! Phải bắt đầu bằng 03, 05, 07, 08, 09 và đủ 10 số.'));
+        }
+        return Promise.resolve();
+    };
+
+    const uploadProps = {
+        onRemove: () => {
+            setFileList([]);
+        },
+        beforeUpload: (file: any) => {
+            setFileList([file]); // Lưu file vào fileList
+            return false; // Ngăn upload tự động
+        },
+        fileList,
+        onChange: (info: any) => {
+            // Cập nhật fileList khi có thay đổi
+            let newFileList = [...info.fileList];
+            // Giới hạn chỉ cho phép 1 file
+            newFileList = newFileList.slice(-1);
+            setFileList(newFileList);
+        },
     };
 
     return (
@@ -142,13 +195,26 @@ export default function Account({ isEditing, setIsEditing }: AccountProps) {
             <div className="flex m-4 flex-col gap-6 md:flex-row md:gap-8">
                 <div className="w-full md:w-1/2">
                     <Form form={form} layout="vertical" className="space-y-4" onFinish={onFinish}>
-                        <Item name="fullname" label={<span className="text-base font-semibold">Họ và tên</span>}>
+                        <Item 
+                            name="fullname" 
+                            label={<span className="text-base font-semibold">Họ và tên</span>}
+                            rules={[
+                                { required: true, message: 'Vui lòng nhập họ và tên!' }
+                            ]}
+                        >
                             <Input className="rounded border border-gray-300 p-2" disabled={!isEditing} />
                         </Item>
                         <Item name="email" label={<span className="text-base font-semibold">Email</span>}>
-                            <Input className="rounded border border-gray-300 p-2" disabled={!isEditing} />
+                            <Input className="rounded border border-gray-300 p-2" disabled />
                         </Item>
-                        <Item name="phone" label={<span className="text-base font-semibold">Số điện thoại</span>}>
+                        <Item 
+                            name="phone" 
+                            label={<span className="text-base font-semibold">Số điện thoại</span>}
+                            rules={[
+                                { required: true, message: 'Vui lòng nhập số điện thoại!' },
+                                { validator: validatePhoneNumber }
+                            ]}
+                        >
                             <Input placeholder="Nhập số điện thoại" className="rounded border border-gray-300 p-2" disabled={!isEditing} />
                         </Item>
                         <Item name="birthDate" label={<span className="text-base font-semibold">Ngày sinh</span>}>
@@ -161,19 +227,19 @@ export default function Account({ isEditing, setIsEditing }: AccountProps) {
                         </Item>
                         {isEditing && (
                             <Item>
-                                <Button htmlType="submit" className="w-1/4 bg-[#22A6DF] hover:bg-[#1890ff] rounded text-white mr-2">Lưu</Button>
-                                <Button className="w-1/4 bg-gray-300 hover:bg-gray-400 rounded text-gray-700" onClick={handleCancel}>Hủy</Button>
+                                <Button htmlType="submit" className="w-1/4 bg-[#22A6DF] hover:bg-[#1890ff] rounded text-white mr-2" loading={uploading}>Lưu</Button>
+                                <Button className="w-1/4 bg-gray-300 hover:bg-gray-400 rounded text-gray-700" onClick={handleCancel} disabled={uploading}>Hủy</Button>
                             </Item>
                         )}
                     </Form>
                 </div>
                 <div className="w-full md:w-1/2 flex flex-col justify-center items-center">
                     <Avatar size={120} src={user?.avatar || "/images/avatar/avatar1.png"} />
-                    <Upload>
+                    <Upload {...uploadProps}>
                         <Button
                             icon={<UploadOutlined />}
                             className="bg-[#22A6DF] text-white hover:bg-[#1890ff] rounded my-3"
-                            disabled={!isEditing}
+                            disabled={!isEditing || uploading}
                         >
                             Chọn
                         </Button>
