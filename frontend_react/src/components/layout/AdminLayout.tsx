@@ -29,6 +29,10 @@ const AdminLayout = () => {
   const [currentDate, setCurrentDate] = useState("");
   const navigate = useNavigate();
 
+  // Lấy thông tin user từ localStorage
+  const userData = localStorage.getItem("userData");
+  const user = userData ? JSON.parse(userData) : null;
+
   useEffect(() => {
     const updateTime = () => {
       const today = new Date();
@@ -65,40 +69,32 @@ const AdminLayout = () => {
     return () => clearInterval(timerId);
   }, []);
 
+  // Danh sách menu đầy đủ cho admin
+  const adminMenuItems = [
+    { key: "1", icon: <PieChartOutlined />, label: "Dashboard", path: "/admin/dashboard" },
+    { key: "2", icon: <AppstoreOutlined />, label: "Quản lý danh mục", path: "/admin/categories" },
+    { key: "3", icon: <ShoppingOutlined />, label: "Quản lý sản phẩm", path: "/admin/products" },
+    { key: "4", icon: <StarOutlined />, label: "Quản lý thương hiệu", path: "/admin/brands" },
+    { key: "5", icon: <TagOutlined />, label: "Quản lý tags", path: "/admin/tags" },
+    { key: "6", icon: <IdcardOutlined />, label: "Quản lý nhân viên", path: "/admin/employees" },
+    { key: "7", icon: <FileTextOutlined />, label: "Quản lý đơn hàng", path: "/admin/orders" },
+    { key: "8", icon: <ToolOutlined />, label: "Quản lý dịch vụ", path: "/admin/services" },
+    { key: "9", icon: <UserOutlined />, label: "Quản lý người dùng", path: "/admin/users" },
+    { key: "10", icon: <SettingOutlined />, label: "Cài đặt hệ thống", path: "/admin/settings" },  
+  ];
+
+  // Danh sách menu cho employee (loại bỏ các menu nhạy cảm)
+  const employeeMenuItems = adminMenuItems.filter((item) =>
+    ["1", "2", "3", "4", "5", "7"].includes(item.key)
+  );
+
+  // Chọn danh sách menu dựa trên vai trò
+  const menuItems = user?.role === "admin" ? adminMenuItems : employeeMenuItems;
+
   const handleMenuClick = (e) => {
-    switch (e.key) {
-      case "1":
-        navigate("/admin/dashboard");
-        break;
-      case "2":
-        navigate("/admin/categories");
-        break;
-      case "3":
-        navigate("/admin/products");
-        break;
-      case "4":
-        navigate("/admin/brands");
-        break;
-      case "5":
-        navigate("/admin/tags");
-        break;
-      case "6":
-        navigate("/admin/employees");
-        break;
-      case "7":
-        navigate("/admin/orders");
-        break;
-      case "8":
-        navigate("/admin/services");
-        break;
-      case "9":
-        navigate("/admin/users");
-        break;
-      case "10":
-        navigate("/admin/settings");
-        break;
-      default:
-        break;
+    const selectedMenu = menuItems.find((item) => item.key === e.key);
+    if (selectedMenu) {
+      navigate(selectedMenu.path);
     }
   };
 
@@ -123,12 +119,12 @@ const AdminLayout = () => {
         <div className="p-4 flex items-center space-x-2">
           <Avatar
             size={40}
-            src="https://img.lovepik.com/png/20231127/young-businessman-3d-cartoon-avatar-portrait-character-digital_708913_wh860.png"
+            src={user?.avatar || "https://via.placeholder.com/40"}
           />
           {!collapsed && (
             <div>
               <Text strong className="block">
-                Admin
+                {user?.role === "admin" ? "Quản lý" : "Nhân viên"}
               </Text>
               <Text className="text-xs text-gray-500">
                 Chào mừng bạn trở lại
@@ -143,18 +139,11 @@ const AdminLayout = () => {
           defaultSelectedKeys={["1"]}
           onClick={handleMenuClick}
           className="border-r-0"
-          items={[
-            { key: "1", icon: <PieChartOutlined />, label: "Dashboard" },
-            { key: "2", icon: <AppstoreOutlined />, label: "Quản lý danh mục" },
-            { key: "3", icon: <ShoppingOutlined />, label: "Quản lý sản phẩm" },
-            { key: "4", icon: <StarOutlined />, label: "Quản lý thương hiệu" },
-            { key: "5", icon: <TagOutlined />, label: "Quản lý tags" },
-            { key: "6", icon: <IdcardOutlined />, label: "Quản lý nhân viên" },
-            { key: "7", icon: <FileTextOutlined />, label: "Quản lý đơn hàng" },
-            { key: "8", icon: <ToolOutlined />, label: "Quản lý dịch vụ" },
-            { key: "9", icon: <UserOutlined />, label: "Quản lý người dùng" },
-            { key: "10", icon: <SettingOutlined />, label: "Cài đặt hệ thống" },
-          ]}
+          items={menuItems.map((item) => ({
+            key: item.key,
+            icon: item.icon,
+            label: item.label,
+          }))}
         />
       </Sider>
 

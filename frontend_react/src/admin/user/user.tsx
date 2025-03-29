@@ -180,23 +180,22 @@ const UserList: React.FC = () => {
       },
     },
     {
-      title: "Role",
+      title: "Vai trò",
       dataIndex: "role",
       key: "role",
-      width: 150,
+      width: 100,
     },
     {
-      title: "Action",
+      title: "Tính năng",
       key: "action",
-      width: 100,
+      width: 150,
       render: (_: any, record: User) => (
         <Space>
           <Button
-            type="link"
+            icon={<EditOutlined />}
+            size="small"
             onClick={() => handleEdit(record)}
-            style={{ color: "#1890ff" }}
           >
-            Edit
           </Button>
         </Space>
       ),

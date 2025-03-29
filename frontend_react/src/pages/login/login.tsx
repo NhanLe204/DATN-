@@ -5,8 +5,7 @@ declare global {
     google: any;
   }
 }
-import { useNavigate } from "react-router-dom"; // Thêm useNavigate
-import { FcGoogle } from "react-icons/fc";
+import { useNavigate } from "react-router-dom";
 import { FaCheckDouble } from "react-icons/fa6";
 import {
   GoogleOAuthProvider,
@@ -25,8 +24,7 @@ import {
 } from "antd";
 import "antd/dist/reset.css";
 import { EyeInvisibleOutlined, EyeOutlined } from "@ant-design/icons";
-import loginApi from "../../api/login";// Điều chỉnh đường dẫn theo dự án
-import ENV_VARS from "../../../config";
+import loginApi from "../../api/login";
 const { Title, Text } = Typography;
 
 interface User {
@@ -52,7 +50,7 @@ export default function Login() {
     useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const navigate = useNavigate(); // Thêm navigate
+  const navigate = useNavigate();
 
   // Check role & status
   useEffect(() => {
@@ -70,9 +68,8 @@ export default function Login() {
         });
         localStorage.clear();
         setUser(null);
-      } else if (parsedUser.role === "admin") {
-        navigate("/admin");
       } else {
+        // Luôn chuyển hướng đến trang chính (/) bất kể vai trò
         navigate("/");
       }
     }
@@ -134,18 +131,14 @@ export default function Login() {
           placement: "topRight",
           duration: 1.5,
           onClose: () => {
-            if (userData.role === "admin") {
-              navigate("/admin");
-            } else {
-              navigate("/");
-            }
+            // Luôn chuyển hướng đến trang chính (/)
+            navigate("/");
           },
         });
       } else {
         throw new Error(data.message || "Đăng nhập thất bại");
       }
     } catch (error) {
-      // Kiểm tra lỗi cụ thể từ backend
       const errorMessage = error.message || "Có lỗi xảy ra trong quá trình đăng nhập.";
       if (errorMessage.includes("Vui lòng xác thực email bằng OTP")) {
         notification.warning({
@@ -154,7 +147,7 @@ export default function Login() {
           placement: "topRight",
           duration: 3,
           onClose: () => {
-            navigate("/verify-otp", { state: { email } }); // Chuyển hướng đến trang OTP
+            navigate("/verify-otp", { state: { email } });
           },
         });
       } else {
@@ -278,11 +271,8 @@ export default function Login() {
           placement: "topRight",
           duration: 2,
           onClose: () => {
-            if (data.user.role === "admin") {
-              navigate("/admin");
-            } else {
-              navigate("/");
-            }
+            // Luôn chuyển hướng đến trang chính (/)
+            navigate("/");
           },
         });
       })
@@ -529,4 +519,4 @@ export default function Login() {
       </Modal>
     </div>
   );
-};
+}
