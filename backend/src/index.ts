@@ -20,7 +20,7 @@ import paymentRouter from './routes/payment.routes.js';
 import paymentTypeRouter from './routes/paymentType.routes.js';
 import deliveryRouter from './routes/delivery.routes.js';
 import orderDetailRouter from './routes/orderDetail.routes.js';
-
+import BlogRouter from './routes/blog.routes.js'
 dotenv.config(); // Đọc file .env
 console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID);
 console.log('JWT_SECRET:', process.env.JWT_SECRET);
@@ -57,7 +57,7 @@ app.use('/api/v1', serviceRouter);
 app.use('/api/v1', paymentTypeRouter);
 app.use('/api/v1', deliveryRouter);
 app.use('/api/v1', orderDetailRouter);
-
+app.use('/api/v1', BlogRouter);
 app.use(errorHandler);
 
 app.listen(PORT, () => {
