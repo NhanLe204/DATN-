@@ -345,7 +345,6 @@ export const googleLogin = async (req, res) => {
         const { sub: googleId, email, name, picture: avatar } = payload;
         let user = (await userModel.findOne({ googleId })) || (await userModel.findOne({ email }));
         if (user) {
-            // ✅ Thêm kiểm tra trạng thái tài khoản trước khi tiếp tục
             if (user.status === 'inactive') {
                 res.status(401).json({ success: false, message: 'Tài khoản của bạn đã bị khóa!' });
                 return;
