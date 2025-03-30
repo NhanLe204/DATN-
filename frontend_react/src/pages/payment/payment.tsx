@@ -22,6 +22,9 @@ import deliveryApi from "../../api/deliveryApi";
 import paymentTypeApi from "../../api/paymentTypeApi";
 import couponApi from "../../api/couponApi";
 import { clearProduct } from "../../redux/slices/cartslice";
+import paymentApi from "../../api/paymentApi";
+import ENV_VARS from "../../../config";
+import { create } from "domain";
 
 // Định nghĩa interface cho phương thức thanh toán
 interface PaymentType {
@@ -91,7 +94,8 @@ const Payment = () => {
   const [checkedAddressId, setCheckedAddressId] = useState<string | null>(null);
 
   const [shippingMethods, setShippingMethods] = useState<Delivery[]>([]);
-  const [selectedShippingMethod, setSelectedShippingMethod] = useState<Delivery | null>(null);
+  const [selectedShippingMethod, setSelectedShippingMethod] =
+    useState<Delivery | null>(null);
 
   const [paymentMethods, setPaymentMethods] = useState<PaymentType[]>([]);
   const [selectedPayment, setSelectedPayment] = useState<string>("");
@@ -116,7 +120,9 @@ const Payment = () => {
     }[];
     userId: string | null;
   }
-  const { items: cartItems, userId } = useSelector((state: { cart: CartState }) => state.cart);
+  const { items: cartItems, userId } = useSelector(
+    (state: { cart: CartState }) => state.cart
+  );
 
   const getPaymentIcon = (paymentTypeName: string) => {
     switch (paymentTypeName.toLowerCase()) {
@@ -138,7 +144,10 @@ const Payment = () => {
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
-    const accountID = localStorage.getItem("accountID")?.replace(/"/g, "").trim();
+    const accountID = localStorage
+      .getItem("accountID")
+      ?.replace(/"/g, "")
+      .trim();
 
     if (token && accountID) {
       setIsLoggedIn(true);
@@ -151,7 +160,8 @@ const Payment = () => {
 
           setAddresses(userAddresses);
 
-          const defaultAddress = userAddresses.find((addr) => addr.isDefault) || userAddresses[0];
+          const defaultAddress =
+            userAddresses.find((addr) => addr.isDefault) || userAddresses[0];
           if (defaultAddress) {
             setSelectedAddress(defaultAddress);
             setCheckedAddressId(defaultAddress._id || null);
@@ -188,7 +198,8 @@ const Payment = () => {
       const fetchPaymentMethods = async () => {
         try {
           const paymentResponse = await paymentTypeApi.getAllPayment();
-          const paymentMethodsData: PaymentType[] = paymentResponse.data.data || [];
+          const paymentMethodsData: PaymentType[] =
+            paymentResponse.data.data || [];
           setPaymentMethods(paymentMethodsData);
 
           if (paymentMethodsData.length > 0) {
@@ -220,54 +231,64 @@ const Payment = () => {
     try {
       const response = await couponApi.getActiveCoupon();
       const activeCoupons: Coupon[] = response.data.result;
-  
+
       const matchedCoupon = activeCoupons.find(
-        (coupon) => coupon.coupon_code.toUpperCase() === couponCode.toUpperCase()
+        (coupon) =>
+          coupon.coupon_code.toUpperCase() === couponCode.toUpperCase()
       );
-  
+
       if (!matchedCoupon) {
         message.error("Mã giảm giá không hợp lệ hoặc không tồn tại!");
         setAppliedCoupon(null);
         setDiscount(0);
         return;
       }
-  
+
       const currentDate = new Date();
       const startDate = new Date(matchedCoupon.start_date);
       const endDate = new Date(matchedCoupon.end_date);
-  
+
       // Tính tổng tiền sản phẩm (không bao gồm phí vận chuyển)
-      const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  
+      const subtotal = cartItems.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0
+      );
+
       if (currentDate < startDate || currentDate > endDate) {
         message.error("Mã giảm giá đã hết hạn!");
         setAppliedCoupon(null);
         setDiscount(0);
         return;
       }
-  
+
       // Kiểm tra min_order_value dựa trên tổng tiền sản phẩm
       if (subtotal < matchedCoupon.min_order_value) {
-        message.error(`Tổng tiền sản phẩm phải có giá trị tối thiểu ${matchedCoupon.min_order_value} để áp dụng mã này!`);
+        message.error(
+          `Tổng tiền sản phẩm phải có giá trị tối thiểu ${matchedCoupon.min_order_value} để áp dụng mã này!`
+        );
         setAppliedCoupon(null);
         setDiscount(0);
         return;
       }
-  
+
       if (matchedCoupon.used_count >= matchedCoupon.usage_limit) {
         message.error("Mã giảm giá đã được sử dụng hết số lần cho phép!");
         setAppliedCoupon(null);
         setDiscount(0);
         return;
       }
-  
+
       // Tính giá trị giảm giá theo phần trăm (chỉ trên tổng tiền sản phẩm)
       const discountPercentage = matchedCoupon.discount_value; // 25%
       const discountValue = (subtotal * discountPercentage) / 100; // Giảm giá = Tổng tiền sản phẩm * (25 / 100)
-  
+
       setAppliedCoupon(matchedCoupon);
       setDiscount(discountValue);
-      message.success(`Áp dụng mã giảm giá thành công! Bạn được giảm ${formatPrice(discountValue)}`);
+      message.success(
+        `Áp dụng mã giảm giá thành công! Bạn được giảm ${formatPrice(
+          discountValue
+        )}`
+      );
     } catch (error) {
       console.error("Error applying coupon:", error);
       message.error("Có lỗi xảy ra khi áp dụng mã giảm giá. Vui lòng thử lại!");
@@ -277,7 +298,9 @@ const Payment = () => {
   };
 
   const handleConfirmAddress = () => {
-    const selected = addresses.find((address) => address._id === checkedAddressId);
+    const selected = addresses.find(
+      (address) => address._id === checkedAddressId
+    );
     if (selected) {
       setSelectedAddress(selected);
       setFormData({
@@ -292,48 +315,69 @@ const Payment = () => {
   const toggleDarkMode = () => setDarkMode(!darkMode);
 
   const calculateTotal = () => {
-    const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const subtotal = cartItems.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
     const discountedSubtotal = subtotal - discount; // Giảm giá chỉ trên tổng tiền sản phẩm
-    const total = discountedSubtotal + (selectedShippingMethod ? selectedShippingMethod.delivery_fee : 0);
+    const total =
+      discountedSubtotal +
+      (selectedShippingMethod ? selectedShippingMethod.delivery_fee : 0);
     return Math.max(total, 0);
   };
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("vi-VN").format(price) + "₫";
-
-  const handleCheckout = async () => {
-    if (!userId) {
-      message.error("Vui lòng đăng nhập để tiến hành đặt hàng!");
-      return;
-    }
-    if (!formData.fullName || !formData.phone || !formData.address) {
-      message.error("Vui lòng điền đầy đủ thông tin giao hàng!");
-      return;
-    }
-    if (cartItems.length === 0) {
-      message.error("Giỏ hàng của bạn đang trống!");
-      return;
-    }
-    if (!selectedPayment || selectedPayment === "") {
-      message.error("Vui lòng chọn phương thức thanh toán!");
-      return;
-    }
-    if (!selectedShippingMethod || !selectedShippingMethod._id) {
-      message.error("Vui lòng chọn phương thức vận chuyển!");
-      return;
-    }
-
+  const handlePayment = async (paymentData: any) => {
     try {
+      const response = await paymentApi.create({
+        ...paymentData,
+      });
+      const checkoutUrl = response.data.checkoutUrl;
+      window.location.href = checkoutUrl;
+    } catch (error) {
+      console.error("Error creating payment link:", error);
+      message.error("Có lỗi xảy ra khi tạo liên kết thanh toán.");
+    }
+  };
+  const handleCheckout = async () => {
+    try {
+      // Basic validations
+      if (!selectedAddress) {
+        message.error("Vui lòng chọn địa chỉ giao hàng!");
+        return;
+      }
+      if (!selectedShippingMethod) {
+        message.error("Vui lòng chọn phương thức vận chuyển!");
+        return;
+      }
+      if (!selectedPayment) {
+        message.error("Vui lòng chọn phương thức thanh toán!");
+        return;
+      }
+      if (cartItems.length === 0) {
+        message.error("Giỏ hàng của bạn đang trống!");
+        return;
+      }
+
+      message.loading("Đang xử lý đơn hàng...", 0);
+
       const shippingAddress = formData.address;
+      const totalAmount = calculateTotal();
+      const numericOrderCode = Date.now(); // Tạo mã số duy nhất
+
+      // 1. Create order data
       const orderData = {
         userID: userId,
         couponID: appliedCoupon ? appliedCoupon._id : null,
         payment_typeID: selectedPayment,
-        deliveryID: selectedShippingMethod._id,
+        deliveryID: selectedShippingMethod?._id,
         orderdate: new Date().toISOString(),
-        total_price: calculateTotal(),
+        total_price: totalAmount,
         shipping_address: shippingAddress,
-        transaction_id: `TRANS_${Date.now()}`,
+        transaction_id: `TRANS_${numericOrderCode}`, // Đồng bộ với orderCode
+        paymentOrderCode: numericOrderCode, // Lưu để webhook tra cứu
+        status: "PENDING",
         orderDetails: cartItems.map((item) => ({
           productID: item.id,
           serviceID: null,
@@ -342,33 +386,50 @@ const Payment = () => {
         })),
       };
 
-      console.log("Sending order data:", orderData);
+      console.log("Creating order with data:", orderData);
 
-      const response = await orderApi.create(orderData);
-      console.log("Order created:", response);
+      // 2. Create order
+      const orderResponse = await orderApi.create(orderData);
+      const createdOrder = orderResponse.data;
+      console.log("Order created successfully:", createdOrder);
 
-      const existingOrders = JSON.parse(localStorage.getItem("orders") || "[]");
-      existingOrders.push(orderData);
-      localStorage.setItem("orders", JSON.stringify(existingOrders));
+      // 3. Prepare payment data
+      const paymentData = {
+        orderCode: numericOrderCode, // Dùng số thay vì chuỗi ObjectId
+        amount: totalAmount,
+        description: `Thanh toán đơn hàng}`,
+        returnUrl: `http://localhost:3000/success`, // Không cần orderId vì webhook sẽ xử lý
+        cancelUrl: `http://localhost:3000/cancel`,
+      };
 
-      dispatch(clearProduct());
+      console.warn("Creating payment with data:", paymentData);
+      await handlePayment(paymentData);
 
-      message.success("Đơn hàng của bạn đã được tạo thành công!");
-      navigate("/");
+      // Không cần xử lý thêm ở đây, webhook sẽ cập nhật trạng thái
+      message.destroy();
     } catch (error) {
-      console.error("Error creating order:", error);
-      message.error("Có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại!");
+      console.error("Checkout process error:", error);
+      message.destroy();
+      message.error(
+        error.response?.data?.message ||
+          error.message ||
+          "Có lỗi xảy ra khi xử lý đơn hàng. Vui lòng thử lại!"
+      );
     }
   };
 
   return (
     <div
-      className={`min-h-screen transition-colors duration-300 ${darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-800"}`}
+      className={`min-h-screen transition-colors duration-300 ${
+        darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-800"
+      }`}
     >
       <motion.button
         whileTap={{ scale: 0.95 }}
         onClick={toggleDarkMode}
-        className={`fixed right-4 top-4 z-50 rounded-full p-2 shadow-lg ${darkMode ? "bg-gray-800 text-yellow-300" : "bg-white text-gray-800"}`}
+        className={`fixed right-4 top-4 z-50 rounded-full p-2 shadow-lg ${
+          darkMode ? "bg-gray-800 text-yellow-300" : "bg-white text-gray-800"
+        }`}
       >
         {darkMode ? <Sun size={20} /> : <Moon size={20} />}
       </motion.button>
@@ -405,7 +466,9 @@ const Payment = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`mb-8 rounded-xl p-4 ${darkMode ? "bg-blue-900/30" : "bg-blue-50"}`}
+            className={`mb-8 rounded-xl p-4 ${
+              darkMode ? "bg-blue-900/30" : "bg-blue-50"
+            }`}
           >
             <span>
               Bạn đã có tài khoản?{" "}
@@ -423,7 +486,9 @@ const Payment = () => {
             className="w-full lg:w-3/5"
           >
             <div
-              className={`mb-8 rounded-xl p-6 ${darkMode ? "bg-gray-800" : "bg-white"}`}
+              className={`mb-8 rounded-xl p-6 ${
+                darkMode ? "bg-gray-800" : "bg-white"
+              }`}
             >
               <h2 className="mb-6 text-xl font-semibold flex items-center">
                 <MapPin className="mr-2" size={20} /> Thông tin giao hàng
@@ -434,8 +499,14 @@ const Payment = () => {
                   <div className="flex justify-between items-start border-b pb-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <p className="font-medium text-lg">{selectedAddress.name}</p>
-                        <p className={darkMode ? "text-gray-400" : "text-gray-600"}>
+                        <p className="font-medium text-lg">
+                          {selectedAddress.name}
+                        </p>
+                        <p
+                          className={
+                            darkMode ? "text-gray-400" : "text-gray-600"
+                          }
+                        >
                           | {selectedAddress.phone}
                         </p>
                         {selectedAddress.isDefault && (
@@ -444,7 +515,11 @@ const Payment = () => {
                           </span>
                         )}
                       </div>
-                      <p className={darkMode ? "text-gray-400" : "text-gray-600 mt-1"}>
+                      <p
+                        className={
+                          darkMode ? "text-gray-400" : "text-gray-600 mt-1"
+                        }
+                      >
                         {selectedAddress.address}
                       </p>
                     </div>
@@ -460,7 +535,9 @@ const Payment = () => {
                 </div>
               ) : (
                 <p className="text-gray-500 mb-4">
-                  {isLoggedIn ? "Chưa có địa chỉ nào. Vui lòng thêm địa chỉ." : "Vui lòng đăng nhập để xem địa chỉ."}
+                  {isLoggedIn
+                    ? "Chưa có địa chỉ nào. Vui lòng thêm địa chỉ."
+                    : "Vui lòng đăng nhập để xem địa chỉ."}
                 </p>
               )}
             </div>
@@ -470,10 +547,16 @@ const Payment = () => {
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className={`w-full max-w-lg rounded-xl p-6 ${darkMode ? "bg-gray-800 text-white" : "bg-white text-gray-800"}`}
+                  className={`w-full max-w-lg rounded-xl p-6 ${
+                    darkMode
+                      ? "bg-gray-800 text-white"
+                      : "bg-white text-gray-800"
+                  }`}
                 >
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold">Chọn địa chỉ giao hàng</h3>
+                    <h3 className="text-lg font-semibold">
+                      Chọn địa chỉ giao hàng
+                    </h3>
                     <button onClick={() => setIsModalOpen(false)}>
                       <X size={20} />
                     </button>
@@ -482,21 +565,31 @@ const Payment = () => {
                     {addresses.length > 0 ? (
                       addresses.map((address: Address) => (
                         <motion.div
-                          key={address._id || `${address.name}-${address.phone}`}
-                          className={`p-4 mb-2 border-b ${darkMode ? "border-gray-700" : "border-gray-200"}`}
+                          key={
+                            address._id || `${address.name}-${address.phone}`
+                          }
+                          className={`p-4 mb-2 border-b ${
+                            darkMode ? "border-gray-700" : "border-gray-200"
+                          }`}
                         >
                           <div className="flex items-start gap-2 flex-1">
                             <input
                               type="radio"
                               name="address"
                               checked={checkedAddressId === address._id}
-                              onChange={() => setCheckedAddressId(address._id || null)}
+                              onChange={() =>
+                                setCheckedAddressId(address._id || null)
+                              }
                               className="h-4 w-4 text-blue-500 mt-1"
                             />
                             <div>
                               <div className="flex items-center gap-2">
                                 <p className="font-medium">{address.name}</p>
-                                <p className={darkMode ? "text-gray-400" : "text-gray-600"}>
+                                <p
+                                  className={
+                                    darkMode ? "text-gray-400" : "text-gray-600"
+                                  }
+                                >
                                   | {address.phone}
                                 </p>
                                 {address.isDefault && (
@@ -505,7 +598,13 @@ const Payment = () => {
                                   </span>
                                 )}
                               </div>
-                              <p className={darkMode ? "text-gray-400" : "text-gray-600 mt-1"}>
+                              <p
+                                className={
+                                  darkMode
+                                    ? "text-gray-400"
+                                    : "text-gray-600 mt-1"
+                                }
+                              >
                                 {address.address}
                               </p>
                             </div>
@@ -513,7 +612,9 @@ const Payment = () => {
                         </motion.div>
                       ))
                     ) : (
-                      <p className="text-center text-gray-500">Chưa có địa chỉ nào.</p>
+                      <p className="text-center text-gray-500">
+                        Chưa có địa chỉ nào.
+                      </p>
                     )}
                     <div className="flex justify-end mt-4">
                       <motion.button
@@ -531,7 +632,9 @@ const Payment = () => {
 
             {/* Shipping Method */}
             <div
-              className={`mb-8 rounded-xl p-6 ${darkMode ? "bg-gray-800" : "bg-white"}`}
+              className={`mb-8 rounded-xl p-6 ${
+                darkMode ? "bg-gray-800" : "bg-white"
+              }`}
             >
               <h2 className="mb-6 text-xl font-semibold flex items-center">
                 <Truck className="mr-2" size={20} /> Phương thức vận chuyển
@@ -549,25 +652,36 @@ const Payment = () => {
                             ? "border-blue-500 bg-blue-900/30"
                             : "border-blue-500 bg-blue-50"
                           : darkMode
-                            ? "bg-gray-700"
-                            : "bg-gray-50"
+                          ? "bg-gray-700"
+                          : "bg-gray-50"
                       }`}
                     >
                       <div className="flex items-center">
                         <div
-                          className={`mr-3 rounded-full p-2 ${darkMode ? "bg-gray-600" : "bg-white"}`}
+                          className={`mr-3 rounded-full p-2 ${
+                            darkMode ? "bg-gray-600" : "bg-white"
+                          }`}
                         >
                           <Truck size={18} className="text-blue-500" />
                         </div>
                         <div>
-                          <div className="font-medium">{method.delivery_name}</div>
-                          <div className="text-sm text-gray-500">{method.description}</div>
+                          <div className="font-medium">
+                            {method.delivery_name}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {method.description}
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center">
-                        <span className="font-semibold">{formatPrice(method.delivery_fee)}</span>
+                        <span className="font-semibold">
+                          {formatPrice(method.delivery_fee)}
+                        </span>
                         {selectedShippingMethod?._id === method._id && (
-                          <CheckCircle size={18} className="ml-2 text-green-500" />
+                          <CheckCircle
+                            size={18}
+                            className="ml-2 text-green-500"
+                          />
                         )}
                       </div>
                     </motion.div>
@@ -575,7 +689,9 @@ const Payment = () => {
                 </div>
               ) : (
                 <div
-                  className={`flex h-40 flex-col items-center justify-center rounded-xl ${darkMode ? "bg-gray-700" : "bg-gray-50"}`}
+                  className={`flex h-40 flex-col items-center justify-center rounded-xl ${
+                    darkMode ? "bg-gray-700" : "bg-gray-50"
+                  }`}
                 >
                   <Package
                     size={32}
@@ -590,7 +706,9 @@ const Payment = () => {
 
             {/* Payment Method */}
             <div
-              className={`mb-8 rounded-xl p-6 ${darkMode ? "bg-gray-800" : "bg-white"}`}
+              className={`mb-8 rounded-xl p-6 ${
+                darkMode ? "bg-gray-800" : "bg-white"
+              }`}
             >
               <h2 className="mb-6 text-xl font-semibold flex items-center">
                 <CreditCard className="mr-2" size={20} /> Phương thức thanh toán
@@ -608,32 +726,43 @@ const Payment = () => {
                             ? "border-blue-500 bg-blue-900/30"
                             : "border-blue-500 bg-blue-50"
                           : darkMode
-                            ? "bg-gray-700"
-                            : "bg-gray-50"
+                          ? "bg-gray-700"
+                          : "bg-gray-50"
                       }`}
                     >
                       <div className="mr-3">
                         <div
-                          className={`rounded-full p-2 ${darkMode ? "bg-gray-600" : "bg-white"}`}
+                          className={`rounded-full p-2 ${
+                            darkMode ? "bg-gray-600" : "bg-white"
+                          }`}
                         >
                           {getPaymentIcon(method.payment_type_name)}
                         </div>
                       </div>
                       <div className="flex-grow">
-                        <div className="font-medium">{method.payment_type_name}</div>
+                        <div className="font-medium">
+                          {method.payment_type_name}
+                        </div>
                         {method.description && (
-                          <div className="text-sm text-gray-500">{method.description}</div>
+                          <div className="text-sm text-gray-500">
+                            {method.description}
+                          </div>
                         )}
                       </div>
                       {selectedPayment === method._id && (
-                        <CheckCircle size={18} className="ml-2 text-green-500" />
+                        <CheckCircle
+                          size={18}
+                          className="ml-2 text-green-500"
+                        />
                       )}
                     </motion.div>
                   ))}
                 </div>
               ) : (
                 <div
-                  className={`flex h-40 flex-col items-center justify-center rounded-xl ${darkMode ? "bg-gray-700" : "bg-gray-50"}`}
+                  className={`flex h-40 flex-col items-center justify-center rounded-xl ${
+                    darkMode ? "bg-gray-700" : "bg-gray-50"
+                  }`}
                 >
                   <CreditCard
                     size={32}
@@ -654,7 +783,9 @@ const Payment = () => {
             className="w-full lg:w-2/5"
           >
             <div
-              className={`sticky top-8 rounded-xl p-6 ${darkMode ? "bg-gray-800" : "bg-white"}`}
+              className={`sticky top-8 rounded-xl p-6 ${
+                darkMode ? "bg-gray-800" : "bg-white"
+              }`}
             >
               <h2 className="mb-6 text-xl font-semibold">Đơn hàng của bạn</h2>
               <div className="mb-6 border-b pb-6">
@@ -672,7 +803,11 @@ const Payment = () => {
                       </div>
                       <div>
                         <h3 className="font-medium">{item.name}</h3>
-                        <p className={darkMode ? "text-gray-400" : "text-gray-500"}>
+                        <p
+                          className={
+                            darkMode ? "text-gray-400" : "text-gray-500"
+                          }
+                        >
                           Số lượng: {item.quantity}
                         </p>
                         <p className="mt-2 font-semibold text-blue-500">
@@ -706,20 +841,34 @@ const Payment = () => {
                   </motion.button>
                 </div>
                 {appliedCoupon && (
-  <p className="mt-2 text-green-500">
-    Đã áp dụng mã {appliedCoupon.coupon_code}: Giảm {formatPrice(discount)}
-  </p>
-)}
+                  <p className="mt-2 text-green-500">
+                    Đã áp dụng mã {appliedCoupon.coupon_code}: Giảm{" "}
+                    {formatPrice(discount)}
+                  </p>
+                )}
               </div>
               <div className="mb-6 space-y-3 border-b pb-6">
                 <div className="flex justify-between">
-                  <span className={darkMode ? "text-gray-300" : "text-gray-600"}>Tạm tính</span>
+                  <span
+                    className={darkMode ? "text-gray-300" : "text-gray-600"}
+                  >
+                    Tạm tính
+                  </span>
                   <span className="font-medium">
-                    {formatPrice(cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0))}
+                    {formatPrice(
+                      cartItems.reduce(
+                        (sum, item) => sum + item.price * item.quantity,
+                        0
+                      )
+                    )}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className={darkMode ? "text-gray-300" : "text-gray-600"}>Phí vận chuyển</span>
+                  <span
+                    className={darkMode ? "text-gray-300" : "text-gray-600"}
+                  >
+                    Phí vận chuyển
+                  </span>
                   <span>
                     {selectedShippingMethod ? (
                       formatPrice(selectedShippingMethod.delivery_fee)
@@ -729,15 +878,23 @@ const Payment = () => {
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className={darkMode ? "text-gray-300" : "text-gray-600"}>Giảm giá</span>
+                  <span
+                    className={darkMode ? "text-gray-300" : "text-gray-600"}
+                  >
+                    Giảm giá
+                  </span>
                   <span className="text-green-500">
-                    {discount > 0 ? `-${formatPrice(discount)}` : "Chưa áp dụng"}
+                    {discount > 0
+                      ? `-${formatPrice(discount)}`
+                      : "Chưa áp dụng"}
                   </span>
                 </div>
               </div>
               <div className="flex justify-between">
                 <span className="text-lg font-semibold">Tổng cộng</span>
-                <span className="text-lg font-bold text-blue-500">{formatPrice(calculateTotal())}</span>
+                <span className="text-lg font-bold text-blue-500">
+                  {formatPrice(calculateTotal())}
+                </span>
               </div>
               <motion.button
                 whileHover={{ scale: 1.02 }}

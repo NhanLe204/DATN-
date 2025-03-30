@@ -2,7 +2,7 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import logger from 'morgan';
-import dotenv from 'dotenv'; // Thêm import này
+import dotenv from 'dotenv';
 import ENV_VARS from './config/config.js';
 import { connectDB } from './database/db.js';
 import authRouter from './routes/auth.routes.js';
@@ -20,7 +20,13 @@ import paymentRouter from './routes/payment.routes.js';
 import paymentTypeRouter from './routes/paymentType.routes.js';
 import deliveryRouter from './routes/delivery.routes.js';
 import orderDetailRouter from './routes/orderDetail.routes.js';
+
 import BlogRouter from './routes/blog.routes.js'
+=======
+import contactRouter from './routes/contact.routes.js'; // Import contact router
+import ngrok from '@ngrok/ngrok'; // Thêm ngrok SDK
+
+
 dotenv.config(); // Đọc file .env
 console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID);
 console.log('JWT_SECRET:', process.env.JWT_SECRET);
@@ -39,11 +45,10 @@ app.use(cookieParser());
 app.use(logger('dev'));
 
 app.get('/', (req, res) => {
-  res.send('Hello World');
+  res.send('Hello World1');
 });
 
 // Routes
-
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1', categoryRouter);
 app.use('/api/v1', productRouter);
@@ -56,11 +61,32 @@ app.use('/api/v1', tagRouter);
 app.use('/api/v1', serviceRouter);
 app.use('/api/v1', paymentTypeRouter);
 app.use('/api/v1', deliveryRouter);
+app.use('/api/v1', paymentRouter);
 app.use('/api/v1', orderDetailRouter);
+
 app.use('/api/v1', BlogRouter);
+
+app.use('/api/v1', contactRouter); // Thêm router contact vào đây
+
+
 app.use(errorHandler);
+
+// Hàm khởi tạo ngrok tunnel
+async function startNgrok() {
+  try {
+    const listener = await ngrok.connect({
+      addr: PORT, // Port mà server đang chạy
+      authtoken: process.env.NGROK_AUTH_TOKEN || 'YOUR_AUTH_TOKEN_HERE' // Lấy từ .env hoặc thay trực tiếp
+    });
+    console.log(`Ngrok tunnel created: ${listener.url()}`);
+    console.log(`Webhook URL: ${listener.url()}/api/v1/webhook`);
+  } catch (error) {
+    console.error('Error creating ngrok tunnel:', error);
+  }
+}
 
 app.listen(PORT, () => {
   console.log(`Server is running on port http://localhost:${PORT}`);
   connectDB();
+  startNgrok(); // Khởi động ngrok khi server chạy
 });

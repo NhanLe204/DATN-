@@ -4,3 +4,4 @@ export declare const getAvailableSlots: (req: Request, res: Response) => Promise
 export declare const getAllOrders: (req: Request, res: Response) => Promise<void>;
 export declare const getOrderById: (req: Request, res: Response) => Promise<void>;
 export declare const checkAvailableSlots: (req: Request, res: Response) => Promise<void>;
+export declare const updateOrderStatus: (req: Request, res: Response) => Promise<void>;

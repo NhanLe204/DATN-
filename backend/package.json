@@ -17,6 +17,7 @@
 	"license": "ISC",
 	"description": "",
 	"dependencies": {
+		"@ngrok/ngrok": "^1.4.1",
 		"@payos/node": "^1.0.10",
 		"backend": "file:",
 		"bcryptjs": "^2.4.3",
