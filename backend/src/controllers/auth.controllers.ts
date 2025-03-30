@@ -386,7 +386,23 @@ export const googleLogin: RequestHandler = async (req: Request, res: Response): 
     const { sub: googleId, email, name, picture: avatar } = payload;
 
     let user = (await userModel.findOne({ googleId })) || (await userModel.findOne({ email }));
-    if (!user) {
+
+    if (user) {
+      // ✅ Thêm kiểm tra trạng thái tài khoản trước khi tiếp tục
+      if (user.status === 'inactive') {
+        res.status(401).json({ success: false, message: 'Tài khoản của bạn đã bị khóa!' });
+        return;
+      }
+      if (user.status === 'pending') {
+        res.status(403).json({ success: false, message: 'Vui lòng xác thực email bằng OTP trước khi đăng nhập!' });
+        return;
+      }
+
+      if (!user.googleId) {
+        user.googleId = googleId;
+        await user.save();
+      }
+    } else {
       user = new userModel({
         googleId,
         email,
@@ -396,11 +412,6 @@ export const googleLogin: RequestHandler = async (req: Request, res: Response): 
         status: 'active'
       });
       await user.save();
-    } else {
-      if (!user.googleId) {
-        user.googleId = googleId;
-        await user.save();
-      }
     }
 
     if (!process.env.JWT_SECRET) {
@@ -421,6 +432,7 @@ export const googleLogin: RequestHandler = async (req: Request, res: Response): 
     res.status(401).json({ success: false, message: 'Invalid Google token or server error' });
   }
 };
+
 // Check role and status
 export const checkRoleStatus = async (req: CustomRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
