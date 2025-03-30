@@ -20,12 +20,9 @@ import paymentRouter from './routes/payment.routes.js';
 import paymentTypeRouter from './routes/paymentType.routes.js';
 import deliveryRouter from './routes/delivery.routes.js';
 import orderDetailRouter from './routes/orderDetail.routes.js';
-
-import BlogRouter from './routes/blog.routes.js'
-=======
 import contactRouter from './routes/contact.routes.js'; // Import contact router
 import ngrok from '@ngrok/ngrok'; // Thêm ngrok SDK
-
+import blogRouter from './routes/blog.routes.js';
 
 dotenv.config(); // Đọc file .env
 console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID);
@@ -63,30 +60,28 @@ app.use('/api/v1', paymentTypeRouter);
 app.use('/api/v1', deliveryRouter);
 app.use('/api/v1', paymentRouter);
 app.use('/api/v1', orderDetailRouter);
-
-app.use('/api/v1', BlogRouter);
+app.use('/api/v1', blogRouter);
 
 app.use('/api/v1', contactRouter); // Thêm router contact vào đây
 
-
 app.use(errorHandler);
 
-// Hàm khởi tạo ngrok tunnel
-async function startNgrok() {
-  try {
-    const listener = await ngrok.connect({
-      addr: PORT, // Port mà server đang chạy
-      authtoken: process.env.NGROK_AUTH_TOKEN || 'YOUR_AUTH_TOKEN_HERE' // Lấy từ .env hoặc thay trực tiếp
-    });
-    console.log(`Ngrok tunnel created: ${listener.url()}`);
-    console.log(`Webhook URL: ${listener.url()}/api/v1/webhook`);
-  } catch (error) {
-    console.error('Error creating ngrok tunnel:', error);
-  }
-}
+// // Hàm khởi tạo ngrok tunnel
+// async function startNgrok() {
+//   try {
+//     await ngrok.kill(); // Tắt mọi session cũ trước khi khởi tạo mới
+//     const listener = await ngrok.connect({
+//       addr: PORT,
+//       authtoken: process.env.NGROK_AUTH_TOKEN
+//     });
+//     console.log(`Ngrok tunnel created: ${listener.url()}`);
+//   } catch (error) {
+//     console.error('Error creating ngrok tunnel:', error);
+//   }
+// }
 
 app.listen(PORT, () => {
   console.log(`Server is running on port http://localhost:${PORT}`);
   connectDB();
-  startNgrok(); // Khởi động ngrok khi server chạy
+  // startNgrok(); // Khởi động ngrok khi server chạy
 });

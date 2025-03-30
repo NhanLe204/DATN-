@@ -4,37 +4,27 @@ import orderModel from '../models/order.model.js';
 export const createPaymentLink = async (req, res) => {
     try {
         const { orderCode, amount, description, returnUrl, cancelUrl } = req.body;
-        // Validate required fields
-        if (!orderCode) {
+        if (!orderCode)
             throw new Error('orderCode is required');
-        }
-        if (!amount || isNaN(amount) || amount <= 0) {
+        if (!amount || isNaN(amount) || amount <= 0)
             throw new Error('amount must be a positive number');
-        }
-        if (!returnUrl) {
+        if (!returnUrl)
             throw new Error('returnUrl is required');
-        }
-        if (!cancelUrl) {
+        if (!cancelUrl)
             throw new Error('cancelUrl is required');
-        }
-        // Convert orderCode to number (PayOS requirement)
         const numericOrderCode = Number(orderCode);
-        if (isNaN(numericOrderCode)) {
+        if (isNaN(numericOrderCode))
             throw new Error('orderCode must be a number or numeric string');
-        }
-        // Prepare payment data for PayOS
         const paymentData = {
             orderCode: numericOrderCode,
             amount: Number(amount),
-            description: description || `Thanh toan don hang`,
-            orderType: 'order', // Có thể tùy chỉnh nếu cần
+            description: description || `Thanh toán đơn hàng`,
+            orderType: 'order',
             currency: 'VND',
             returnUrl,
             cancelUrl
         };
-        console.log('Description:', paymentData.description);
         console.log('Payment data sent to PayOS:', paymentData);
-        // Create payment link with PayOS
         const paymentLink = await payos.createPaymentLink(paymentData);
         res.status(200).json({
             success: true,
@@ -47,78 +37,98 @@ export const createPaymentLink = async (req, res) => {
     }
     catch (error) {
         console.error('Error creating payment link:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Failed to create payment link';
-        const errorResponse = {
+        res.status(500).json({
             success: false,
-            message: errorMessage,
-            error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.stack : undefined) : undefined
-        };
-        res.status(500).json(errorResponse);
+            message: error instanceof Error ? error.message : 'Failed to create payment link',
+            error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 };
 export const handlePaymentWebhook = async (req, res) => {
     try {
+        console.log('Webhook received:', req.body);
         const webhookData = req.body;
-        // 1. Xác minh chữ ký từ PayOS (nếu có)
-        const signature = req.headers['x-payos_checksum']; // PayOS gửi chữ ký trong header
-        const secretKey = process.env.PAYOS_CHECKSUM_KEY; // Secret key từ PayOS dashboard
-        const rawBody = JSON.stringify(webhookData);
-        if (!secretKey) {
+        const { signature, ...dataWithoutSignature } = webhookData; // Loại bỏ signature
+        if (!signature) {
+            console.log('Missing signature in webhook body');
+            res.status(400).json({ success: false, message: 'Missing signature' });
+            return;
+        }
+        const secretKey = process.env.PAYOS_CHECKSUM_KEY;
+        if (!secretKey)
             throw new Error('PAYOS_CHECKSUM_KEY is not defined');
+        // Hàm sắp xếp object theo key
+        function sortObjDataByKey(object) {
+            return Object.keys(object)
+                .sort()
+                .reduce((obj, key) => {
+                obj[key] = object[key];
+                return obj;
+            }, {});
         }
-        const computedSignature = crypto.createHmac('sha256', secretKey).update(rawBody).digest('hex');
+        // Hàm chuyển object thành query string theo format PayOS
+        function convertObjToQueryStr(object) {
+            return Object.keys(object)
+                .filter((key) => object[key] !== undefined)
+                .map((key) => {
+                let value = object[key];
+                if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
+                    value = JSON.stringify(sortObjDataByKey(value));
+                }
+                else if (Array.isArray(value)) {
+                    value = JSON.stringify(value.map((val) => sortObjDataByKey(val)));
+                }
+                if ([null, undefined, 'undefined', 'null'].includes(value)) {
+                    value = '';
+                }
+                return `${key}=${value}`;
+            })
+                .join('&');
+        }
+        const sortedDataByKey = sortObjDataByKey(dataWithoutSignature);
+        const dataQueryStr = convertObjToQueryStr(sortedDataByKey);
+        const computedSignature = crypto.createHmac('sha256', secretKey).update(dataQueryStr).digest('hex');
+        console.log('Computed Signature:', computedSignature);
+        console.log('PayOS Signature:', signature);
         if (computedSignature !== signature) {
-            res.status(401).json({
-                success: false,
-                message: 'Invalid signature'
-            });
+            console.log('Invalid signature detected');
+            res.status(401).json({ success: false, message: 'Invalid signature' });
             return;
         }
-        // 2. Xử lý dữ liệu từ webhook
         const { code, data } = webhookData;
+        if (!data || !data.orderCode || !data.status) {
+            res.status(400).json({ success: false, message: 'Invalid webhook data' });
+            return;
+        }
         if (code !== '00') {
-            // "00" là mã thành công của PayOS
-            res.status(200).json({
-                success: true,
-                message: 'Webhook received but payment not successful'
-            });
+            res.status(200).json({ success: true, message: 'Webhook received but payment not successful' });
             return;
         }
-        const { orderCode, status } = data;
-        // 3. Cập nhật trạng thái đơn hàng
-        let newStatus;
-        switch (status) {
-            case 'PAID':
-                newStatus = 'COMPLETED';
-                break;
-            case 'CANCELLED':
-                newStatus = 'CANCELLED';
-                break;
-            default:
-                newStatus = 'PENDING'; // Hoặc xử lý trạng thái khác nếu cần
-        }
-        const updatedOrder = await orderModel.findOneAndUpdate({ transaction_id: `TRANS_${orderCode}` }, // Tìm đơn hàng bằng transaction_id
-        { status: newStatus }, { new: true });
+        const mapPaymentStatus = (payosStatus) => {
+            switch (payosStatus) {
+                case 'PAID':
+                    return 'COMPLETED';
+                case 'CANCELLED':
+                    return 'CANCELLED';
+                default:
+                    return 'PENDING';
+            }
+        };
+        const newStatus = mapPaymentStatus(data.status);
+        const updatedOrder = await orderModel.findOneAndUpdate({ transaction_id: `TRANS_${data.orderCode}` }, { status: newStatus }, { new: true });
         if (!updatedOrder) {
-            res.status(404).json({
-                success: false,
-                message: 'Order not found'
-            });
+            res.status(404).json({ success: false, message: 'Order not found' });
             return;
         }
-        // 4. Trả về phản hồi thành công cho PayOS
-        res.status(200).json({
-            success: true,
-            message: 'Webhook processed successfully',
-            data: updatedOrder
-        });
+        console.log(`Order ${data.orderCode} updated to status: ${newStatus}`);
+        res.status(200).json({ success: true, message: 'Webhook processed successfully', data: updatedOrder });
     }
     catch (error) {
         console.error('Error processing webhook:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to process webhook',
-            error: error instanceof Error ? error.message : 'An unknown error occurred'
+            error: error instanceof Error ? error.message : 'Unknown error'
         });
     }
 };
