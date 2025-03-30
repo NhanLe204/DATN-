@@ -14,4 +14,4 @@ blogRouter.patch('/blogs/:id', verifyToken, requireAdmin, updateBlog);
 // Xóa bài viết theo ID (yêu cầu xác thực và quyền admin)
 blogRouter.delete('/blogs/:id', verifyToken, requireAdmin, deleteBlog);
 export default blogRouter;
-//# sourceMappingURL=service.routes.js.map
+//# sourceMappingURL=blog.routes.js.map
