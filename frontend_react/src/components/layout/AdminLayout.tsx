@@ -14,6 +14,7 @@ import {
   MenuFoldOutlined,
   StarOutlined,
   TagOutlined,
+  HomeOutlined,
 } from "@ant-design/icons";
 import { Outlet, useNavigate } from "react-router-dom";
 import React from "react";
@@ -105,6 +106,11 @@ const AdminLayout = () => {
     navigate("/login");
   };
 
+  // quay lại trang web user
+  const handleBackToUserSite = () => {
+    navigate("/"); 
+  };
+
   return (
     <Layout className="min-h-screen">
       <Sider
@@ -161,6 +167,13 @@ const AdminLayout = () => {
             className="text-lg"
           />
           <div className="flex items-center space-x-4">
+          <Button
+              type="text"
+              icon={<HomeOutlined />}
+              onClick={handleBackToUserSite}
+            >
+              Quay lại trang web
+            </Button>
             <div className="text-sm">
               <span>
                 {currentDate} - {currentTime}
