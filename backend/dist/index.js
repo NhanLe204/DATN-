@@ -21,6 +21,7 @@ import paymentTypeRouter from './routes/paymentType.routes.js';
 import deliveryRouter from './routes/delivery.routes.js';
 import orderDetailRouter from './routes/orderDetail.routes.js';
 import contactRouter from './routes/contact.routes.js'; // Import contact router
+import blogRouter from './routes/blog.routes.js';
 dotenv.config(); // Đọc file .env
 console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID);
 console.log('JWT_SECRET:', process.env.JWT_SECRET);
@@ -53,6 +54,7 @@ app.use('/api/v1', paymentTypeRouter);
 app.use('/api/v1', deliveryRouter);
 app.use('/api/v1', paymentRouter);
 app.use('/api/v1', orderDetailRouter);
+app.use('/api/v1', blogRouter);
 app.use('/api/v1', contactRouter); // Thêm router contact vào đây
 app.use(errorHandler);
 // // Hàm khởi tạo ngrok tunnel
