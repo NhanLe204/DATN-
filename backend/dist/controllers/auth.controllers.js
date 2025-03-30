@@ -344,7 +344,21 @@ export const googleLogin = async (req, res) => {
         const payload = ticket.getPayload();
         const { sub: googleId, email, name, picture: avatar } = payload;
         let user = (await userModel.findOne({ googleId })) || (await userModel.findOne({ email }));
-        if (!user) {
+        if (user) {
+            if (user.status === 'inactive') {
+                res.status(401).json({ success: false, message: 'Tài khoản của bạn đã bị khóa!' });
+                return;
+            }
+            if (user.status === 'pending') {
+                res.status(403).json({ success: false, message: 'Vui lòng xác thực email bằng OTP trước khi đăng nhập!' });
+                return;
+            }
+            if (!user.googleId) {
+                user.googleId = googleId;
+                await user.save();
+            }
+        }
+        else {
             user = new userModel({
                 googleId,
                 email,
@@ -354,12 +368,6 @@ export const googleLogin = async (req, res) => {
                 status: 'active'
             });
             await user.save();
-        }
-        else {
-            if (!user.googleId) {
-                user.googleId = googleId;
-                await user.save();
-            }
         }
         if (!process.env.JWT_SECRET) {
             throw new Error('JWT_SECRET is not defined');
