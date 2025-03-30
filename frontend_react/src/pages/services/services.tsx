@@ -252,6 +252,9 @@ const SpaBookingForm: React.FC = () => {
       const selectedTime = values.pets[index].time;
       const hour = parseInt(selectedTime.replace("h", ""), 10);
 
+      if (!selectedDate) {
+        throw new Error(`Selected date is null for pet ${index + 1}`);
+      }
       const serviceTime = selectedDate.clone().set({
         hour,
         minute: 0,
@@ -345,8 +348,8 @@ const SpaBookingForm: React.FC = () => {
     }
   };
 
-  const disabledDate = (current: moment.Moment) => {
-    return current && current < moment().tz("Asia/Ho_Chi_Minh").startOf("day");
+  const disabledDate = (current: any) => {
+    return current && current.isBefore(moment().tz("Asia/Ho_Chi_Minh").startOf("day"));
   };
 
   const getAvailableTimeSlots = (index: number) => {
