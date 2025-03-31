@@ -159,14 +159,14 @@ const AdminLayout = () => {
           transition: "margin-left 0.2s", // Smooth transition when collapsing/expanding
         }}
       >
-        <Header className="bg-white px-4 flex justify-between items-center shadow-sm fixed top-0 w-full z-9">
+        <Header className="bg-white px-4 flex items-center shadow-sm fixed top-0 w-full z-9">
           <Button
             type="text"
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             onClick={() => setCollapsed(!collapsed)}
-            className="text-lg"
+            className="text-lg mr-96"
           />
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-16">
           <Button
               type="text"
               icon={<HomeOutlined />}

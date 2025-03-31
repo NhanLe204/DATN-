@@ -43,7 +43,7 @@ export const createPaymentLink = async (req: Request, res: Response): Promise<vo
 
     // Create payment link with PayOS
     const paymentLink = await payos.createPaymentLink(paymentData);
-
+    console.log('Payment link created:', paymentLink);
     res.status(200).json({
       success: true,
       message: 'Payment link created successfully',
@@ -76,35 +76,38 @@ export const handlePaymentWebhook = async (req: Request, res: Response): Promise
     console.log('Webhook received:', webhookData);
 
     // Lấy signature từ body thay vì headers
-    const signature = webhookData.signature;
-    if (!signature) {
-      console.log('Missing signature in body');
-      res.status(400).json({ success: false, message: 'Missing signature' });
-      return;
-    }
+    // const signature = webhookData.signature;
+    // if (!signature) {
+    //   console.log('Missing signature in body');
+    //   res.status(400).json({ success: false, message: 'Missing signature' });
+    //   return;
+    // }
 
     // Đọc secret key từ env
-    const secretKey = process.env.PAYOS_CHECKSUM_KEY;
-    console.log('PAYOS_CHECKSUM_KEY:', secretKey); // Log secret key for debugging (remove in production)
-    if (!secretKey) {
-      throw new Error('PAYOS_CHECKSUM_KEY is not defined');
-    }
+    // const secretKey = process.env.PAYOS_CHECKSUM_KEY;
+    // console.log('PAYOS_CHECKSUM_KEY:', secretKey); // Log secret key for debugging (remove in production)
+    // if (!secretKey) {
+    //   throw new Error('PAYOS_CHECKSUM_KEY is not defined');
+    // }
 
     // Tính toán chữ ký từ raw body
-    const rawBody = JSON.stringify(webhookData);
-    const computedSignature = crypto.createHmac('sha256', secretKey).update(rawBody).digest('hex');
+    // const rawBody = JSON.stringify(webhookData);
+    // const computedSignature = crypto.createHmac('sha256', secretKey).update(rawBody).digest('hex');
 
     // So sánh chữ ký
-    if (computedSignature !== signature) {
-      console.log('Invalid signature:', signature);
-      console.log('Computed signature:', computedSignature);
-      res.status(401).json({ success: false, message: 'Invalid signature' });
-      return;
-    }
+    // if (computedSignature !== signature) {
+    //   console.log('Invalid signature:', signature);
+    //   console.log('Computed signature:', computedSignature);
+    //   res.status(401).json({ success: false, message: 'Invalid signature' });
+    //   return;
+    // }
 
     // Kiểm tra dữ liệu webhook
     const { code, data } = webhookData;
-    if (!data || !data.orderCode || !data.status) {
+    console.log(code, 'code');
+    console.log(data, 'data');
+    console.log('Webhook data:', webhookData); // Log dữ liệu webhook để kiểm tra
+    if (!data || !data.code) {
       res.status(400).json({ success: false, message: 'Invalid webhook data: missing required fields' });
       return;
     }
