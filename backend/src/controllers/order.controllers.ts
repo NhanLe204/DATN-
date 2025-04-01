@@ -40,7 +40,7 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       throw new Error('Missing required fields');
     }
 
-    const isBooking = orderDetails.every((detail: any) => detail.serviceID && !detail.productID);
+    const isBooking = orderDetails.every((detail: any) => detail.serviceId && !detail.product);
     const isOrder = orderDetails.some((detail: any) => detail.productID);
 
     if (isOrder && !deliveryID) {
@@ -153,7 +153,7 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
     // 6. Calculate total_price
     let calculatedTotalPrice = 0;
     const orderDetailsPromises = orderDetails.map(async (detail: any) => {
-      const { productID, serviceID, quantity, product_price, booking_date } = detail;
+      const { productID, serviceID, quantity, product_price, booking_date, petName, petType } = detail;
 
       if (!quantity || !product_price || (!productID && !serviceID)) {
         throw new Error('Invalid order detail data');
@@ -173,6 +173,10 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       if (serviceID) {
         const service = await serviceModel.findOne({ _id: serviceID, status: ServiceStatus.ACTIVE }).session(session);
         if (!service) throw new Error(`Service not found or not active: ${serviceID}`);
+        // Yêu cầu petName và petType cho booking
+        if (!petName || !petType) {
+          throw new Error('petName and petType are required for service booking');
+        }
       }
 
       const detailTotalPrice = quantity * product_price;
@@ -189,7 +193,9 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
         quantity,
         product_price,
         total_price: detailTotalPrice,
-        booking_date: standardizedBookingDate
+        booking_date: standardizedBookingDate,
+        petName: serviceID ? petName : null, 
+        petType: serviceID ? petType : null  
       };
     });
 
@@ -247,7 +253,9 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
         quantity: detail.quantity,
         product_price: detail.product_price,
         total_price: detail.total_price,
-        booking_date: detail.booking_date
+        booking_date: detail.booking_date,
+        petName: detail.petName, // Lưu petName
+        petType: detail.petType  // Lưu petType
       });
     });
 
@@ -279,6 +287,7 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
     session.endSession();
   }
 };
+
 
 export const getAvailableSlots = async (req: Request, res: Response): Promise<void> => {
   try {

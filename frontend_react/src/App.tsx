@@ -34,6 +34,7 @@ import BlogContent from "./pages/blog/blog"; // Adjust the path as needed
 import { notification } from "antd";
 import CancelPage from "./pages/orders/cancel";
 import SuccessPage from "./pages/orders/success";
+import BookingManager from "./admin/booking/booking";
 
 interface User {
   id: string;
@@ -169,6 +170,7 @@ function App() {
         { path: "brands", element: <BrandManager /> },
         { path: "tags", element: <TagManager /> },
         { path: "orders", element: <OrderList /> },
+        { path: "bookings", element: <BookingManager /> },
         { path: "services", element: <ServiceList /> },
         { path: "users", element: <UserList /> },
         { path: "settings", element: <SystemSettings /> },

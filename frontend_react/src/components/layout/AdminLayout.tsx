@@ -20,6 +20,8 @@ import { Outlet, useNavigate } from "react-router-dom";
 import React from "react";
 import Navigation from "../navigation";
 import SubMenu from "antd/es/menu/SubMenu";
+import { MdOutlineRoomService } from "react-icons/md";
+
 
 const { Header, Sider, Content } = Layout;
 const { Text } = Typography;
@@ -79,9 +81,10 @@ const AdminLayout = () => {
     { key: "5", icon: <TagOutlined />, label: "Quản lý tags", path: "/admin/tags" },
     { key: "6", icon: <IdcardOutlined />, label: "Quản lý nhân viên", path: "/admin/employees" },
     { key: "7", icon: <FileTextOutlined />, label: "Quản lý đơn hàng", path: "/admin/orders" },
-    { key: "8", icon: <ToolOutlined />, label: "Quản lý dịch vụ", path: "/admin/services" },
-    { key: "9", icon: <UserOutlined />, label: "Quản lý người dùng", path: "/admin/users" },
-    { key: "10", icon: <SettingOutlined />, label: "Cài đặt hệ thống", path: "/admin/settings" },  
+    { key: "8", icon: <MdOutlineRoomService  />, label: "Quản lý lịch hẹn", path: "/admin/bookings" },
+    { key: "9", icon: <ToolOutlined />, label: "Quản lý dịch vụ", path: "/admin/services" },
+    { key: "10", icon: <UserOutlined />, label: "Quản lý người dùng", path: "/admin/users" },
+    { key: "11", icon: <SettingOutlined />, label: "Cài đặt hệ thống", path: "/admin/settings" },  
   ];
 
   // Danh sách menu cho employee (loại bỏ các menu nhạy cảm)
