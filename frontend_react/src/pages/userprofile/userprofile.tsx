@@ -7,6 +7,8 @@ import userApi from "../../api/userApi";
 import Account from "../../components/account";
 import Address from "../../components/address";
 import ChangePassword from "../../components/change-password";
+import { MdOutlineRoomService } from "react-icons/md";
+import BookingHistory from "../../components/bookingHistory";
 
 interface User {
   _id: string;
@@ -372,6 +374,17 @@ export default function UserProfile() {
         >
           <FaMoneyCheckAlt className="text-[#22A6DF]" /> Đơn mua
         </div>
+
+        <div
+          className={`flex items-center gap-2 cursor-pointer ${
+            type === "bookings" ? "text-[#22A6DF]" : "text-gray-600"
+          }`}
+          onClick={() => navigate("/userprofile/bookings")} 
+        >
+          <div className="flex items-center gap-2">
+            <MdOutlineRoomService className="text-[#22A6DF]" /> Lịch đã đặt
+          </div>
+        </div>
       </div>
     </Card>
   );
@@ -385,6 +398,7 @@ export default function UserProfile() {
           <Route path="address" element={<Address />} />
           <Route path="change-password" element={<ChangePassword />} />
           <Route path="orders" element={<OrderHistory />} />
+          <Route path="bookings" element={<BookingHistory />} />
           <Route path="*" element={<div>Trang không tồn tại</div>} />
         </Routes>
       </Card>

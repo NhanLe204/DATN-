@@ -11,7 +11,13 @@ const orderDetailSchema = new Schema(
     quantity: { type: Number, required: true },
     product_price: { type: Number, required: true },
     total_price: { type: Number, required: true },
-    booking_date: { type: String, required: false, default: '' }
+    booking_date: { type: String, required: false, default: '' },
+    petName: { type: String, required: false, default: '' },
+    petType: {
+      type: String,
+      enum: ['dog', 'cat', ''], 
+      default: '', 
+    },
   },
   { timestamps: true }
 );
