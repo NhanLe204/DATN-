@@ -20,6 +20,7 @@ const adminPageNameMapping: { [key: string]: string } = {
   users: "Quản lý người dùng",
   settings: "Cài đặt hệ thống",
   posts: "Quản lý bài viết",
+  bookings:"Quản lí lịch hẹn"
 };
 
 // Mapping cho các trang công khai
