@@ -11,7 +11,7 @@ const blogSchema: Schema<IBlog> = new Schema<IBlog>(
       ref: Product,
       autoPopulate: true
     },
-    user: {
+    userID: {
       type: Schema.Types.ObjectId,
       ref: User,
       autoPopulate: true
@@ -20,7 +20,7 @@ const blogSchema: Schema<IBlog> = new Schema<IBlog>(
       type: [String],
       default: []
     },
-    title: {
+    tittle: {
       type: String,
       required: true
     },
