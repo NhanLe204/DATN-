@@ -1,3 +1,2 @@
-import { Request, Response } from 'express';
-export declare const createPaymentLink: (req: Request, res: Response) => Promise<void>;
-export declare const handleVnpayCallback: (req: Request, res: Response) => Promise<void>;
+export default createPaymentLink;
+declare function createPaymentLink(req: any, res: any): Promise<void>;

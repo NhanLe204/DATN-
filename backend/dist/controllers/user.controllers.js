@@ -1,10 +1,16 @@
-import userModel from '../models/user.model.js';
-import mongoose from 'mongoose';
-import bcryptjs from 'bcryptjs';
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.setDefaultAddress = exports.getNewUsers = exports.changePassword = exports.deleteUserAddress = exports.updateUserAddress = exports.addUserAddress = exports.updateCart = exports.updateUser = exports.getUserById = exports.getAllUser = void 0;
+const user_model_js_1 = __importDefault(require("../models/user.model.js"));
+const mongoose_1 = __importDefault(require("mongoose"));
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
 // lấy hết nè má
-export const getAllUser = async (req, res) => {
+const getAllUser = async (req, res) => {
     try {
-        const result = await userModel.find().select('-password');
+        const result = await user_model_js_1.default.find().select('-password');
         res.status(200).json({ success: true, result });
     }
     catch (error) {
@@ -17,11 +23,12 @@ export const getAllUser = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
+exports.getAllUser = getAllUser;
 // Lấy user theo id nè má
-export const getUserById = async (req, res) => {
+const getUserById = async (req, res) => {
     try {
         const { id } = req.params;
-        const user = await userModel.findById(id).select('-password');
+        const user = await user_model_js_1.default.findById(id).select('-password');
         if (!user) {
             res.status(404).json({ success: false, message: 'Không tìm thấy người dùng' });
         }
@@ -37,8 +44,9 @@ export const getUserById = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
+exports.getUserById = getUserById;
 // Cập nhật user
-export const updateUser = async (req, res) => {
+const updateUser = async (req, res) => {
     try {
         const { id } = req.params;
         console.log(id, 'ID');
@@ -69,7 +77,7 @@ export const updateUser = async (req, res) => {
         if (req.file) {
             updateData.avatar = req.file.path; // URL của ảnh từ Cloudinary
         }
-        const updatedUser = await userModel.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
+        const updatedUser = await user_model_js_1.default.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
         if (!updatedUser) {
             res.status(404).json({ message: 'Không tìm thấy người dùng' });
             return;
@@ -89,7 +97,8 @@ export const updateUser = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
-export const updateCart = async (req, res) => {
+exports.updateUser = updateUser;
+const updateCart = async (req, res) => {
     try {
         if (!req.user) {
             res.status(401).json({ message: 'Unauthorized' });
@@ -101,7 +110,7 @@ export const updateCart = async (req, res) => {
             res.status(400).json({ message: 'Vui lòng cung cấp productId và quantity' });
             return;
         }
-        const user = await userModel.findById(_id);
+        const user = await user_model_js_1.default.findById(_id);
         if (!user) {
             res.status(404).json({ message: 'Không tìm thấy người dùng' });
             return;
@@ -109,7 +118,7 @@ export const updateCart = async (req, res) => {
         console.log(typeof productId, productId, 'productId từ req.body');
         console.log(user.cart, 'Giỏ hàng từ database');
         // Ép productId từ string sang ObjectId
-        const productObjectId = new mongoose.Types.ObjectId(productId);
+        const productObjectId = new mongoose_1.default.Types.ObjectId(productId);
         // So sánh bằng .equals() để tránh lỗi kiểu dữ liệu
         const alreadyProduct = user.cart.find((item) => item.product.equals(productObjectId));
         console.log(alreadyProduct, 'alreadyProduct');
@@ -121,7 +130,7 @@ export const updateCart = async (req, res) => {
         }
         else {
             console.log('Sản phẩm chưa có trong giỏ hàng, thêm mới');
-            const response = await userModel.findByIdAndUpdate(_id, { $push: { cart: { product: productObjectId, quantity } } }, { new: true });
+            const response = await user_model_js_1.default.findByIdAndUpdate(_id, { $push: { cart: { product: productObjectId, quantity } } }, { new: true });
             res.status(200).json({ message: 'Thêm sản phẩm vào giỏ hàng thành công', response });
         }
     }
@@ -130,7 +139,8 @@ export const updateCart = async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
-export const addUserAddress = async (req, res) => {
+exports.updateCart = updateCart;
+const addUserAddress = async (req, res) => {
     try {
         const { id } = req.params;
         const newAddress = req.body;
@@ -143,7 +153,7 @@ export const addUserAddress = async (req, res) => {
             return;
         }
         // Tìm user và thêm địa chỉ mới vào mảng address
-        const user = await userModel.findById(id);
+        const user = await user_model_js_1.default.findById(id);
         if (!user) {
             res.status(404).json({ message: 'Không tìm thấy người dùng' });
             return;
@@ -167,7 +177,8 @@ export const addUserAddress = async (req, res) => {
         }
     }
 };
-export const updateUserAddress = async (req, res) => {
+exports.addUserAddress = addUserAddress;
+const updateUserAddress = async (req, res) => {
     try {
         const { id, index } = req.params;
         const updatedAddress = req.body;
@@ -184,7 +195,7 @@ export const updateUserAddress = async (req, res) => {
             return;
         }
         // Kiểm tra id hợp lệ
-        if (!mongoose.Types.ObjectId.isValid(id)) {
+        if (!mongoose_1.default.Types.ObjectId.isValid(id)) {
             res.status(400).json({
                 success: false,
                 message: 'ID người dùng không hợp lệ!'
@@ -201,7 +212,7 @@ export const updateUserAddress = async (req, res) => {
             return;
         }
         // Tìm user
-        const user = await userModel.findById(id);
+        const user = await user_model_js_1.default.findById(id);
         if (!user) {
             res.status(404).json({ message: 'Không tìm thấy người dùng' });
             return;
@@ -233,11 +244,12 @@ export const updateUserAddress = async (req, res) => {
         }
     }
 };
-export const deleteUserAddress = async (req, res) => {
+exports.updateUserAddress = updateUserAddress;
+const deleteUserAddress = async (req, res) => {
     try {
         const { id, index } = req.params;
         // Kiểm tra id hợp lệ
-        if (!mongoose.Types.ObjectId.isValid(id)) {
+        if (!mongoose_1.default.Types.ObjectId.isValid(id)) {
             res.status(400).json({
                 success: false,
                 message: 'ID người dùng không hợp lệ!'
@@ -254,7 +266,7 @@ export const deleteUserAddress = async (req, res) => {
             return;
         }
         // Tìm user
-        const user = await userModel.findById(id);
+        const user = await user_model_js_1.default.findById(id);
         if (!user) {
             res.status(404).json({ message: 'Không tìm thấy người dùng' });
             return;
@@ -286,7 +298,8 @@ export const deleteUserAddress = async (req, res) => {
         }
     }
 };
-export const changePassword = async (req, res) => {
+exports.deleteUserAddress = deleteUserAddress;
+const changePassword = async (req, res) => {
     try {
         const { id } = req.params;
         const { currentPassword, newPassword } = req.body;
@@ -299,7 +312,7 @@ export const changePassword = async (req, res) => {
             return;
         }
         // Kiểm tra id hợp lệ
-        if (!mongoose.Types.ObjectId.isValid(id)) {
+        if (!mongoose_1.default.Types.ObjectId.isValid(id)) {
             res.status(400).json({
                 success: false,
                 message: 'ID người dùng không hợp lệ!'
@@ -307,7 +320,7 @@ export const changePassword = async (req, res) => {
             return;
         }
         // Tìm user
-        const user = await userModel.findById(id);
+        const user = await user_model_js_1.default.findById(id);
         if (!user) {
             res.status(404).json({
                 success: false,
@@ -324,7 +337,7 @@ export const changePassword = async (req, res) => {
             return;
         }
         // Kiểm tra mật khẩu hiện tại
-        const isMatch = await bcryptjs.compare(currentPassword, user.password);
+        const isMatch = await bcryptjs_1.default.compare(currentPassword, user.password);
         if (!isMatch) {
             res.status(400).json({
                 success: false,
@@ -333,7 +346,7 @@ export const changePassword = async (req, res) => {
             return;
         }
         // Mã hóa mật khẩu mới
-        const hashedPassword = await bcryptjs.hash(newPassword, 10);
+        const hashedPassword = await bcryptjs_1.default.hash(newPassword, 10);
         user.password = hashedPassword;
         // Lưu user với mật khẩu mới
         const updatedUser = await user.save();
@@ -354,12 +367,13 @@ export const changePassword = async (req, res) => {
         }
     }
 };
+exports.changePassword = changePassword;
 // Lấy danh sách người dùng mới
-export const getNewUsers = async (req, res) => {
+const getNewUsers = async (req, res) => {
     try {
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        const newUsers = await userModel
+        const newUsers = await user_model_js_1.default
             .find({ createdAt: { $gte: thirtyDaysAgo } })
             .select('-password')
             .limit(4);
@@ -375,11 +389,12 @@ export const getNewUsers = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
-export const setDefaultAddress = async (req, res) => {
+exports.getNewUsers = getNewUsers;
+const setDefaultAddress = async (req, res) => {
     try {
         const { id, index } = req.params;
         // Kiểm tra id hợp lệ
-        if (!mongoose.Types.ObjectId.isValid(id)) {
+        if (!mongoose_1.default.Types.ObjectId.isValid(id)) {
             res.status(400).json({
                 success: false,
                 message: 'ID người dùng không hợp lệ!'
@@ -396,7 +411,7 @@ export const setDefaultAddress = async (req, res) => {
             return;
         }
         // Tìm user
-        const user = await userModel.findById(id);
+        const user = await user_model_js_1.default.findById(id);
         if (!user) {
             res.status(404).json({ message: 'Không tìm thấy người dùng' });
             return;
@@ -431,4 +446,5 @@ export const setDefaultAddress = async (req, res) => {
         }
     }
 };
+exports.setDefaultAddress = setDefaultAddress;
 //# sourceMappingURL=user.controllers.js.map

@@ -1,30 +1,58 @@
-import mongoose, { Schema, model } from 'mongoose';
-import user from '../models/user.model.js';
-import { OrderStatus, PaymentStatus } from '../enums/order.enum.js';
-import paymentType from '../models/paymentType.model.js';
-import delivery from './delivery.model.js';
-import coupon from '../models/coupon.model.js';
-const orderSchema = new Schema({
-    userID: { type: Schema.Types.ObjectId, ref: user, required: false },
-    payment_typeID: { type: Schema.Types.ObjectId, ref: paymentType, default: null },
-    deliveryID: { type: Schema.Types.ObjectId, ref: delivery, default: null },
-    couponID: { type: Schema.Types.ObjectId, ref: coupon, default: null },
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const mongoose_1 = __importStar(require("mongoose"));
+const user_model_js_1 = __importDefault(require("../models/user.model.js"));
+const order_enum_js_1 = require("../enums/order.enum.js");
+const paymentType_model_js_1 = __importDefault(require("../models/paymentType.model.js"));
+const delivery_model_js_1 = __importDefault(require("./delivery.model.js"));
+const coupon_model_js_1 = __importDefault(require("../models/coupon.model.js"));
+const orderSchema = new mongoose_1.Schema({
+    userID: { type: mongoose_1.Schema.Types.ObjectId, ref: user_model_js_1.default, required: false },
+    payment_typeID: { type: mongoose_1.Schema.Types.ObjectId, ref: paymentType_model_js_1.default, default: null },
+    deliveryID: { type: mongoose_1.Schema.Types.ObjectId, ref: delivery_model_js_1.default, default: null },
+    couponID: { type: mongoose_1.Schema.Types.ObjectId, ref: coupon_model_js_1.default, default: null },
     order_date: { type: Date, default: Date.now },
     total_price: { type: Number, required: true },
     shipping_address: { type: String, required: false },
     payment_status: {
         type: String,
-        enum: PaymentStatus,
-        default: PaymentStatus.PENDING,
+        enum: order_enum_js_1.PaymentStatus,
+        default: order_enum_js_1.PaymentStatus.PENDING,
         required: false
     },
     status: {
         type: String,
-        enum: OrderStatus,
-        default: OrderStatus.PENDING
+        enum: order_enum_js_1.OrderStatus,
+        default: order_enum_js_1.OrderStatus.PENDING
     },
     transaction_id: { type: String, default: '' }
 }, { timestamps: true });
-const orderModel = mongoose.models.Order || model('Order', orderSchema);
-export default orderModel;
+const orderModel = mongoose_1.default.models.Order || (0, mongoose_1.model)('Order', orderSchema);
+exports.default = orderModel;
 //# sourceMappingURL=order.model.js.map

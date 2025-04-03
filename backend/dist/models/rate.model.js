@@ -1,10 +1,38 @@
-import mongoose, { Schema, model } from 'mongoose';
-import orderDetail from './orderdetail.model.js';
-const rateSchema = new Schema({
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const mongoose_1 = __importStar(require("mongoose"));
+const orderdetail_model_js_1 = __importDefault(require("./orderdetail.model.js"));
+const rateSchema = new mongoose_1.Schema({
     orderDetailID: {
         // type: Schema.Types.ObjectId,
         type: String,
-        ref: orderDetail,
+        ref: orderdetail_model_js_1.default,
         required: true
     },
     score: {
@@ -14,6 +42,6 @@ const rateSchema = new Schema({
         max: 5
     }
 }, { timestamps: true });
-const rateModel = mongoose.models.rate || model('rate', rateSchema);
-export default rateModel;
+const rateModel = mongoose_1.default.models.rate || (0, mongoose_1.model)('rate', rateSchema);
+exports.default = rateModel;
 //# sourceMappingURL=rate.model.js.map

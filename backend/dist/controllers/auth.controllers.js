@@ -1,13 +1,19 @@
-import bcryptjs from 'bcryptjs';
-import crypto from 'crypto';
-import jwt from 'jsonwebtoken';
-import sendEmail from '../utils/sendEmail.js';
-import userModel from '../models/user.model.js'; // Adjust the path according to your project structure
-import { generateAccessToken, generateRefreshToken } from '../utils/jwt.js'; // Adjust the path according to your project structure
-import ENV_VARS from '../config/config.js';
-import { OAuth2Client } from 'google-auth-library';
-import { UserRoles, UserStatus } from '../enums/user.enum.js';
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.checkAdminRole = exports.checkRoleStatus = exports.googleLogin = exports.refreshTokenController = exports.resetPasswordController = exports.forgotPasswordController = exports.authCheckController = exports.logoutController = exports.loginController = exports.verifyOTPController = exports.signupController = void 0;
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
+const crypto_1 = __importDefault(require("crypto"));
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const sendEmail_js_1 = __importDefault(require("../utils/sendEmail.js"));
+const user_model_js_1 = __importDefault(require("../models/user.model.js")); // Adjust the path according to your project structure
+const jwt_js_1 = require("../utils/jwt.js"); // Adjust the path according to your project structure
+const config_js_1 = __importDefault(require("../config/config.js"));
+const google_auth_library_1 = require("google-auth-library");
+const user_enum_js_1 = require("../enums/user.enum.js");
+const client = new google_auth_library_1.OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 // Hàm tạo mã màu hex ngẫu nhiên
 const getRandomHexColor = () => {
     const letters = '0123456789ABCDEF';
@@ -18,7 +24,7 @@ const getRandomHexColor = () => {
     return color;
 };
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
-export const signupController = async (req, res) => {
+const signupController = async (req, res) => {
     try {
         const { email, password, fullname } = req.body;
         // Kiểm tra đầu vào
@@ -49,7 +55,7 @@ export const signupController = async (req, res) => {
             return;
         }
         // Kiểm tra email đã tồn tại
-        const existingUserByEmail = await userModel.findOne({ email });
+        const existingUserByEmail = await user_model_js_1.default.findOne({ email });
         if (existingUserByEmail) {
             res.status(400).json({
                 success: false,
@@ -58,8 +64,8 @@ export const signupController = async (req, res) => {
             return;
         }
         // Mã hóa mật khẩu
-        const salt = await bcryptjs.genSalt(10);
-        const hashedPassword = await bcryptjs.hash(password, salt);
+        const salt = await bcryptjs_1.default.genSalt(10);
+        const hashedPassword = await bcryptjs_1.default.hash(password, salt);
         // Tạo URL avatar từ ui-avatars với màu nền ngẫu nhiên
         const randomBackgroundColor = getRandomHexColor(); // Sinh màu ngẫu nhiên
         const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullname)}&background=${randomBackgroundColor}&color=fff&size=256`;
@@ -67,7 +73,7 @@ export const signupController = async (req, res) => {
         const otp = generateOTP();
         const otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5phút
         // Tạo user mới
-        const newUser = new userModel({
+        const newUser = new user_model_js_1.default({
             email,
             password: hashedPassword,
             fullname,
@@ -79,7 +85,7 @@ export const signupController = async (req, res) => {
         await newUser.save();
         // Gửi mail otp
         const message = `Mã OTP của bạn là: ${otp}. Mã này sẽ hết hạn trong ${otpExpiry}`;
-        await sendEmail(email, 'Xác thực email của bạn', message, '');
+        await (0, sendEmail_js_1.default)(email, 'Xác thực email của bạn', message, '');
         res.status(201).json({
             success: true,
             user: { ...newUser._doc, password: '' }
@@ -95,15 +101,16 @@ export const signupController = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
+exports.signupController = signupController;
 // Xác thực OTP
-export const verifyOTPController = async (req, res) => {
+const verifyOTPController = async (req, res) => {
     try {
         const { email, otp } = req.body;
         if (!email || !otp) {
             res.status(400).json({ success: false, message: 'Email và OTP là bắt buộc' });
             return;
         }
-        const user = await userModel.findOne({ email });
+        const user = await user_model_js_1.default.findOne({ email });
         if (!user) {
             res.status(404).json({ success: false, message: 'Email không tồn tại' });
             return;
@@ -116,9 +123,9 @@ export const verifyOTPController = async (req, res) => {
         user.otp = null;
         user.otpExpiry = null;
         user.isVerified = true;
-        user.status = UserStatus.ACTIVE;
+        user.status = user_enum_js_1.UserStatus.ACTIVE;
         await user.save();
-        generateAccessToken(user._id, res);
+        (0, jwt_js_1.generateAccessToken)(user._id, res);
         res.status(200).json({
             success: true,
             message: 'Xác thực OTP thành công, mời bạn đăng nhập',
@@ -135,13 +142,14 @@ export const verifyOTPController = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
+exports.verifyOTPController = verifyOTPController;
 // Login
-export const loginController = async (req, res) => {
+const loginController = async (req, res) => {
     try {
         const { email, password } = req.body;
         console.log('Email', email);
         console.log('Password', password);
-        const user = await userModel
+        const user = await user_model_js_1.default
             .findOne({ email })
             .select('-reset_password_token -reset_password_expires -refreshToken');
         if (!user) {
@@ -152,15 +160,15 @@ export const loginController = async (req, res) => {
             res.status(401).json({ success: false, message: 'Tài khoản của bạn đã bị khóa!' });
             return;
         }
-        if (user.status === UserStatus.INACTIVE) {
+        if (user.status === user_enum_js_1.UserStatus.INACTIVE) {
             res.status(401).json({ success: false, message: 'Tài khoản của bạn đã bị khóa!' });
             return;
         }
-        if (user.status === UserStatus.PENDING) {
+        if (user.status === user_enum_js_1.UserStatus.PENDING) {
             res.status(403).json({ success: false, message: 'Vui lòng xác thực email bằng OTP trước khi đăng nhập!' });
             return;
         }
-        const isPasswordValid = await bcryptjs.compare(password, user.password);
+        const isPasswordValid = await bcryptjs_1.default.compare(password, user.password);
         if (!isPasswordValid) {
             res.status(401).json({ success: false, message: 'Mật khẩu không đúng!' });
             return;
@@ -168,12 +176,12 @@ export const loginController = async (req, res) => {
         const { password: pass, ...userData } = user.toObject();
         userData.role = user.role || 'user';
         userData.status = user.status || 'active';
-        const accessToken = await generateAccessToken(user._id, res);
-        const refreshToken = await generateRefreshToken(user._id, res);
-        await userModel.findByIdAndUpdate(user._id, { refreshToken }, { new: true });
+        const accessToken = await (0, jwt_js_1.generateAccessToken)(user._id, res);
+        const refreshToken = await (0, jwt_js_1.generateRefreshToken)(user._id, res);
+        await user_model_js_1.default.findByIdAndUpdate(user._id, { refreshToken }, { new: true });
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
-            secure: ENV_VARS.NODE_ENV === 'production',
+            secure: config_js_1.default.NODE_ENV === 'production',
             sameSite: 'strict',
             maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
         });
@@ -183,7 +191,8 @@ export const loginController = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal server error' });
     }
 };
-export const logoutController = async (req, res) => {
+exports.loginController = loginController;
+const logoutController = async (req, res) => {
     try {
         res.clearCookie('refreshToken');
         res.status(200).json({ success: true, message: 'Logged out successfully' });
@@ -198,7 +207,8 @@ export const logoutController = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
-export const authCheckController = async (req, res) => {
+exports.logoutController = logoutController;
+const authCheckController = async (req, res) => {
     try {
         console.log('req.user', req.user);
         res.status(200).json({ success: true, user: req.user, token: req.token });
@@ -213,7 +223,8 @@ export const authCheckController = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal server error' });
     }
 };
-export const forgotPasswordController = async (req, res) => {
+exports.authCheckController = authCheckController;
+const forgotPasswordController = async (req, res) => {
     try {
         const { email } = req.body;
         console.log('email', email);
@@ -221,13 +232,13 @@ export const forgotPasswordController = async (req, res) => {
             res.status(400).json({ success: false, message: 'Please provide an email' });
             return;
         }
-        const user = await userModel.findOne({ email });
+        const user = await user_model_js_1.default.findOne({ email });
         if (!user) {
             res.status(404).json({ success: false, message: 'User with this email does not exist' });
             return;
         }
-        const resetToken = crypto.randomBytes(6).toString('hex');
-        const resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+        const resetToken = crypto_1.default.randomBytes(6).toString('hex');
+        const resetPasswordToken = crypto_1.default.createHash('sha256').update(resetToken).digest('hex');
         const resetPasswordExpire = Date.now() + 3 * 60 * 1000; // **3 phút**
         user.reset_password_token = resetPasswordToken;
         user.reset_password_expires = resetPasswordExpire;
@@ -237,7 +248,7 @@ export const forgotPasswordController = async (req, res) => {
 			Mã xác nhận của bạn là: ${resetToken}
     `;
         try {
-            await sendEmail(user.email, 'Reset Your PetShop Password', message, '');
+            await (0, sendEmail_js_1.default)(user.email, 'Reset Your PetShop Password', message, '');
             res.status(200).json({ success: true, message: 'Email sent' });
         }
         catch (error) {
@@ -252,7 +263,8 @@ export const forgotPasswordController = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
-export const resetPasswordController = async (req, res) => {
+exports.forgotPasswordController = forgotPasswordController;
+const resetPasswordController = async (req, res) => {
     try {
         const { resetToken, newPassword } = req.body;
         if (!resetToken || !newPassword) {
@@ -260,10 +272,10 @@ export const resetPasswordController = async (req, res) => {
             return;
         }
         // Hash resetToken để so sánh với token đã lưu trong DB
-        const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+        const hashedToken = crypto_1.default.createHash('sha256').update(resetToken).digest('hex');
         console.log(hashedToken, 'hashedToken');
         // Tìm user có token hợp lệ và chưa hết hạn
-        const user = await userModel.findOne({
+        const user = await user_model_js_1.default.findOne({
             reset_password_token: hashedToken,
             reset_password_expires: { $gt: Date.now() } // Kiểm tra xem token còn hạn không
         });
@@ -271,8 +283,8 @@ export const resetPasswordController = async (req, res) => {
             res.status(400).json({ success: false, message: 'Mã xác nhận không hợp lệ hoặc đã hết hạn' });
             return;
         }
-        const salt = await bcryptjs.genSalt(10);
-        const hashedPassword = await bcryptjs.hash(newPassword, salt);
+        const salt = await bcryptjs_1.default.genSalt(10);
+        const hashedPassword = await bcryptjs_1.default.hash(newPassword, salt);
         // Cập nhật mật khẩu mới
         user.password = hashedPassword;
         user.resetPasswordToken = undefined;
@@ -285,14 +297,15 @@ export const resetPasswordController = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
-export const refreshTokenController = async (req, res) => {
+exports.resetPasswordController = resetPasswordController;
+const refreshTokenController = async (req, res) => {
     try {
         const cookie = req.cookies;
         if (!cookie.refreshToken) {
             res.status(401).json({ success: false, message: 'No refresh token in cookies' });
             return;
         }
-        if (!ENV_VARS.JWT_SECRET) {
+        if (!config_js_1.default.JWT_SECRET) {
             console.error('JWT_SECRET is not defined');
             res.status(500).json({ success: false, message: 'Internal Server Error' });
             return;
@@ -300,7 +313,7 @@ export const refreshTokenController = async (req, res) => {
         console.log('Received refresh token:', cookie.refreshToken);
         let decoded;
         try {
-            decoded = jwt.verify(cookie.refreshToken, ENV_VARS.JWT_SECRET);
+            decoded = jsonwebtoken_1.default.verify(cookie.refreshToken, config_js_1.default.JWT_SECRET);
             console.log('Decoded token payload:', decoded);
         }
         catch (error) {
@@ -312,7 +325,7 @@ export const refreshTokenController = async (req, res) => {
             res.status(401).json({ success: false, message: 'Invalid token payload' });
             return;
         }
-        const user = await userModel.findOne({
+        const user = await user_model_js_1.default.findOne({
             _id: decoded.userId,
             refreshToken: cookie.refreshToken
         });
@@ -320,7 +333,7 @@ export const refreshTokenController = async (req, res) => {
             res.status(403).json({ success: false, message: 'User not found or token mismatch' });
             return;
         }
-        const accessToken = await generateAccessToken(user._id, res);
+        const accessToken = await (0, jwt_js_1.generateAccessToken)(user._id, res);
         res.status(200).json({ success: true, newAccessToken: accessToken });
     }
     catch (error) {
@@ -328,8 +341,9 @@ export const refreshTokenController = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
+exports.refreshTokenController = refreshTokenController;
 // GOOGLE LOGIN
-export const googleLogin = async (req, res) => {
+const googleLogin = async (req, res) => {
     const { idToken } = req.body;
     try {
         console.log('Received idToken:', idToken);
@@ -343,7 +357,7 @@ export const googleLogin = async (req, res) => {
         });
         const payload = ticket.getPayload();
         const { sub: googleId, email, name, picture: avatar } = payload;
-        let user = (await userModel.findOne({ googleId })) || (await userModel.findOne({ email }));
+        let user = (await user_model_js_1.default.findOne({ googleId })) || (await user_model_js_1.default.findOne({ email }));
         if (user) {
             if (user.status === 'inactive') {
                 res.status(401).json({ success: false, message: 'Tài khoản của bạn đã bị khóa!' });
@@ -359,7 +373,7 @@ export const googleLogin = async (req, res) => {
             }
         }
         else {
-            user = new userModel({
+            user = new user_model_js_1.default({
                 googleId,
                 email,
                 fullname: name,
@@ -372,7 +386,7 @@ export const googleLogin = async (req, res) => {
         if (!process.env.JWT_SECRET) {
             throw new Error('JWT_SECRET is not defined');
         }
-        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jsonwebtoken_1.default.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
         const userData = {
             id: user._id.toString(),
             email: user.email,
@@ -388,8 +402,9 @@ export const googleLogin = async (req, res) => {
         res.status(401).json({ success: false, message: 'Invalid Google token or server error' });
     }
 };
+exports.googleLogin = googleLogin;
 // Check role and status
-export const checkRoleStatus = async (req, res, next) => {
+const checkRoleStatus = async (req, res, next) => {
     try {
         const token = req.headers.authorization?.split(' ')[1];
         if (!token) {
@@ -403,20 +418,20 @@ export const checkRoleStatus = async (req, res, next) => {
         // Xác thực JWT
         let decoded;
         try {
-            decoded = jwt.verify(token, process.env.JWT_SECRET);
+            decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET);
         }
         catch (error) {
             res.status(401).json({ success: false, message: 'Invalid token' });
             return;
         }
         // Tìm user trong database
-        const user = await userModel.findById(decoded.userId);
+        const user = await user_model_js_1.default.findById(decoded.userId);
         if (!user) {
             res.status(404).json({ success: false, message: 'User not found' });
             return;
         }
         // Kiểm tra status
-        if (user.status !== UserStatus.ACTIVE) {
+        if (user.status !== user_enum_js_1.UserStatus.ACTIVE) {
             res.status(403).json({ success: false, message: 'User is not active' });
             return;
         }
@@ -428,12 +443,14 @@ export const checkRoleStatus = async (req, res, next) => {
         next(error);
     }
 };
+exports.checkRoleStatus = checkRoleStatus;
 // kiểm tra role ADMIN
-export const checkAdminRole = (req, res, next) => {
-    if (!req.user || req.user.role !== UserRoles.ADMIN) {
+const checkAdminRole = (req, res, next) => {
+    if (!req.user || req.user.role !== user_enum_js_1.UserRoles.ADMIN) {
         res.status(403).json({ success: false, message: 'Access denied. Admin role required' });
         return;
     }
     next();
 };
+exports.checkAdminRole = checkAdminRole;
 //# sourceMappingURL=auth.controllers.js.map

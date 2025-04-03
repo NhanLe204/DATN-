@@ -1,15 +1,17 @@
-import { Router } from 'express';
-import { verifyToken } from '../middlewares/verifyToken.js';
-import { getOrderDetails, getOrderDetailsByOrderId, getAllBookings, getBookingsByUserId } from '@/controllers/orderDetail.controllers.js';
-const orderDetailRouter = Router();
-orderDetailRouter.get('/ordersDetail', verifyToken, getOrderDetails);
-orderDetailRouter.get('/ordersDetail/bookings', verifyToken, getBookingsByUserId);
-orderDetailRouter.get('/ordersDetail/allBookings', verifyToken, getAllBookings);
-orderDetailRouter.get('/ordersDetail/:id', verifyToken, getOrderDetailsByOrderId);
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const verifyToken_js_1 = require("../middlewares/verifyToken.js");
+const orderDetail_controllers_js_1 = require("@/controllers/orderDetail.controllers.js");
+const orderDetailRouter = (0, express_1.Router)();
+orderDetailRouter.get('/ordersDetail', verifyToken_js_1.verifyToken, orderDetail_controllers_js_1.getOrderDetails);
+orderDetailRouter.get('/ordersDetail/bookings', verifyToken_js_1.verifyToken, orderDetail_controllers_js_1.getBookingsByUserId);
+orderDetailRouter.get('/ordersDetail/allBookings', verifyToken_js_1.verifyToken, orderDetail_controllers_js_1.getAllBookings);
+orderDetailRouter.get('/ordersDetail/:id', verifyToken_js_1.verifyToken, orderDetail_controllers_js_1.getOrderDetailsByOrderId);
 // orderRouter.patch('/ratings/:id', updateRating);
 // orderRouter.delete('/ratings/:id', deleteRating);
 // brandRouter.post('/brands', verifyToken, requireAdmin, insertBrand);
 // brandRouter.patch('/brands/:id', verifyToken, requireAdmin, updateBrand);
 // categoryRouter.delete('/categories/:id', protectRoute, requireAdmin, toggleCategory);
-export default orderDetailRouter;
+exports.default = orderDetailRouter;
 //# sourceMappingURL=orderDetail.routes.js.map

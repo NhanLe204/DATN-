@@ -1,8 +1,14 @@
-import mongoose from 'mongoose';
-import brandModel from '../models/brand.model.js';
-export const getAllBrands = async (req, res) => {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.updateBrand = exports.deleteBrand = exports.insertBrand = exports.getBrandById = exports.getAllBrands = void 0;
+const mongoose_1 = __importDefault(require("mongoose"));
+const brand_model_js_1 = __importDefault(require("../models/brand.model.js"));
+const getAllBrands = async (req, res) => {
     try {
-        const result = await brandModel.find();
+        const result = await brand_model_js_1.default.find();
         res.status(200).json({ success: true, result });
     }
     catch (error) {
@@ -16,10 +22,11 @@ export const getAllBrands = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
-export const getBrandById = async (req, res) => {
+exports.getAllBrands = getAllBrands;
+const getBrandById = async (req, res) => {
     try {
         const { id } = req.params;
-        const brand = await brandModel.findById(id);
+        const brand = await brand_model_js_1.default.findById(id);
         if (!brand) {
             res.status(404).json({ message: 'Không tìm thấy thương hiệu của sản phẩm' });
             return;
@@ -37,7 +44,8 @@ export const getBrandById = async (req, res) => {
         }
     }
 };
-export const insertBrand = async (req, res) => {
+exports.getBrandById = getBrandById;
+const insertBrand = async (req, res) => {
     try {
         const { brand_name } = req.body;
         if (!brand_name) {
@@ -46,14 +54,14 @@ export const insertBrand = async (req, res) => {
                 message: 'Please provide an brand name'
             });
         }
-        const existingNameBrand = await brandModel.findOne({ brand_name });
+        const existingNameBrand = await brand_model_js_1.default.findOne({ brand_name });
         if (existingNameBrand) {
             res.status(400).json({
                 success: false,
                 message: 'Brand with this name already exists'
             });
         }
-        const newBrand = new brandModel({
+        const newBrand = new brand_model_js_1.default({
             brand_name
         });
         await newBrand.save();
@@ -72,10 +80,11 @@ export const insertBrand = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
-export const deleteBrand = async (req, res) => {
+exports.insertBrand = insertBrand;
+const deleteBrand = async (req, res) => {
     try {
         const { id } = req.params;
-        const result = await brandModel.findByIdAndDelete(id);
+        const result = await brand_model_js_1.default.findByIdAndDelete(id);
         if (!result) {
             res.status(404).json({ message: 'Brand not found' });
             return;
@@ -91,12 +100,13 @@ export const deleteBrand = async (req, res) => {
         }
     }
 };
-export const updateBrand = async (req, res) => {
+exports.deleteBrand = deleteBrand;
+const updateBrand = async (req, res) => {
     try {
         const { id } = req.params;
         console.log(id, 'ID');
         // Kiểm tra xem ID có hợp lệ không
-        if (!mongoose.Types.ObjectId.isValid(id)) {
+        if (!mongoose_1.default.Types.ObjectId.isValid(id)) {
             res.status(400).json({
                 success: false,
                 message: 'ID không hợp lệ'
@@ -105,7 +115,7 @@ export const updateBrand = async (req, res) => {
         }
         const { brand_name } = req.body;
         // Tìm và cập nhật tên thương hiệu
-        const updatedCategory = await brandModel.findByIdAndUpdate(id, { brand_name }, { new: true, runValidators: true });
+        const updatedCategory = await brand_model_js_1.default.findByIdAndUpdate(id, { brand_name }, { new: true, runValidators: true });
         if (!updatedCategory) {
             res.status(404).json({ success: false, message: 'Tên thương hiệu không tồn tại' });
             return;
@@ -125,6 +135,7 @@ export const updateBrand = async (req, res) => {
         }
     }
 };
+exports.updateBrand = updateBrand;
 // export const toggleCategory = async (req: AuthenticatedRequest, res: Response) => {
 //   try {
 //     const { id } = req.params;

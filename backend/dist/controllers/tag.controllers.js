@@ -1,8 +1,14 @@
-import mongoose from 'mongoose';
-import tagModel from '../models/tag.model.js';
-export const getAllTags = async (req, res) => {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.updateTag = exports.deleteTag = exports.insertTag = exports.getTagById = exports.getAllTags = void 0;
+const mongoose_1 = __importDefault(require("mongoose"));
+const tag_model_js_1 = __importDefault(require("../models/tag.model.js"));
+const getAllTags = async (req, res) => {
     try {
-        const result = await tagModel.find();
+        const result = await tag_model_js_1.default.find();
         res.status(200).json({ success: true, result });
     }
     catch (error) {
@@ -16,10 +22,11 @@ export const getAllTags = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
-export const getTagById = async (req, res) => {
+exports.getAllTags = getAllTags;
+const getTagById = async (req, res) => {
     try {
         const { id } = req.params;
-        const tag = await tagModel.findById(id);
+        const tag = await tag_model_js_1.default.findById(id);
         if (!tag) {
             res.status(404).json({ message: 'Tag name này không tồn tại' });
             return;
@@ -37,7 +44,8 @@ export const getTagById = async (req, res) => {
         }
     }
 };
-export const insertTag = async (req, res) => {
+exports.getTagById = getTagById;
+const insertTag = async (req, res) => {
     try {
         const { tag_name } = req.body;
         if (!tag_name) {
@@ -46,14 +54,14 @@ export const insertTag = async (req, res) => {
                 message: 'Please provide an tag name'
             });
         }
-        const existingNameBrand = await tagModel.findOne({ tag_name });
+        const existingNameBrand = await tag_model_js_1.default.findOne({ tag_name });
         if (existingNameBrand) {
             res.status(400).json({
                 success: false,
                 message: 'Tag with this name already exists'
             });
         }
-        const newTag = new tagModel({
+        const newTag = new tag_model_js_1.default({
             tag_name
         });
         await newTag.save();
@@ -72,10 +80,11 @@ export const insertTag = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
-export const deleteTag = async (req, res) => {
+exports.insertTag = insertTag;
+const deleteTag = async (req, res) => {
     try {
         const { id } = req.params;
-        const result = await tagModel.findByIdAndDelete(id);
+        const result = await tag_model_js_1.default.findByIdAndDelete(id);
         if (!result) {
             res.status(404).json({ message: 'Tag not found' });
             return;
@@ -91,12 +100,13 @@ export const deleteTag = async (req, res) => {
         }
     }
 };
-export const updateTag = async (req, res) => {
+exports.deleteTag = deleteTag;
+const updateTag = async (req, res) => {
     try {
         const { id } = req.params;
         console.log(id, 'ID');
         // Kiểm tra xem ID có hợp lệ không
-        if (!mongoose.Types.ObjectId.isValid(id)) {
+        if (!mongoose_1.default.Types.ObjectId.isValid(id)) {
             res.status(400).json({
                 success: false,
                 message: 'ID không hợp lệ'
@@ -105,7 +115,7 @@ export const updateTag = async (req, res) => {
         }
         const { tag_name } = req.body;
         // Tìm và cập nhật tên thương hiệu
-        const updatedTag = await tagModel.findByIdAndUpdate(id, { tag_name }, { new: true, runValidators: true });
+        const updatedTag = await tag_model_js_1.default.findByIdAndUpdate(id, { tag_name }, { new: true, runValidators: true });
         if (!updatedTag) {
             res.status(404).json({ success: false, message: 'Tag Name không tồn tại' });
             return;
@@ -125,4 +135,5 @@ export const updateTag = async (req, res) => {
         }
     }
 };
+exports.updateTag = updateTag;
 //# sourceMappingURL=tag.controllers.js.map

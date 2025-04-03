@@ -1,22 +1,51 @@
-import mongoose, { Schema, model } from 'mongoose';
-import { BlogStatus } from '../enums/blog.enum.js';
-import Product from '../models/product.model.js';
-const blogSchema = new Schema({
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const mongoose_1 = __importStar(require("mongoose"));
+const blog_enum_js_1 = require("../enums/blog.enum.js");
+const product_model_js_1 = __importDefault(require("../models/product.model.js"));
+const user_model_js_1 = __importDefault(require("../models/user.model.js"));
+const blogSchema = new mongoose_1.Schema({
     product: {
-        type: Schema.Types.ObjectId,
-        ref: Product,
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: product_model_js_1.default,
         autoPopulate: true
     },
-    // user: {
-    //   type: Schema.Types.ObjectId,
-    //   ref: User,
-    //   autoPopulate: true
-    // },
-    // image_url: {
-    //   type: [String],
-    //   default: []
-    // },
-    title: {
+    userID: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: user_model_js_1.default,
+        autoPopulate: true
+    },
+    image_url: {
+        type: [String],
+        default: []
+    },
+    tittle: {
         type: String,
         required: true
     },
@@ -30,10 +59,10 @@ const blogSchema = new Schema({
     },
     status: {
         type: String,
-        enum: BlogStatus,
-        default: BlogStatus.ACTIVE
+        enum: blog_enum_js_1.BlogStatus,
+        default: blog_enum_js_1.BlogStatus.ACTIVE
     }
 }, { timestamps: true });
-const blogModel = mongoose.models.Blog || model('Blog', blogSchema);
-export default blogModel;
+const blogModel = mongoose_1.default.models.Blog || (0, mongoose_1.model)('Blog', blogSchema);
+exports.default = blogModel;
 //# sourceMappingURL=blog.model.js.map

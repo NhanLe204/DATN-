@@ -1,16 +1,21 @@
-import nodemailer from 'nodemailer';
-import ENV_VARS from '../config/config.js';
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const nodemailer_1 = __importDefault(require("nodemailer"));
+const config_js_1 = __importDefault(require("../config/config.js"));
 const sendEmail = async (to, subject, text, html) => {
     try {
-        const transporter = nodemailer.createTransport({
+        const transporter = nodemailer_1.default.createTransport({
             service: 'gmail',
             auth: {
-                user: ENV_VARS.EMAIL_USER,
-                pass: ENV_VARS.EMAIL_PASS
+                user: config_js_1.default.EMAIL_USER,
+                pass: config_js_1.default.EMAIL_PASS
             }
         });
         const mailOptions = {
-            from: `Your App <${ENV_VARS.EMAIL_USER}>`,
+            from: `Your App <${config_js_1.default.EMAIL_USER}>`,
             to,
             subject,
             text,
@@ -24,5 +29,5 @@ const sendEmail = async (to, subject, text, html) => {
         throw new Error('Could not send email');
     }
 };
-export default sendEmail;
+exports.default = sendEmail;
 //# sourceMappingURL=sendEmail.js.map
