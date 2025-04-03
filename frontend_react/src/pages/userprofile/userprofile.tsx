@@ -59,7 +59,6 @@ export default function UserProfile() {
   const type = params["*"] || "account";
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -128,11 +127,6 @@ export default function UserProfile() {
 
     fetchUserData();
   }, []);
-
-  const handleEdit = () => {
-    setIsEditing(true);
-    navigate("/userprofile/account");
-  };
 
   const handleReorder = (order: Order) => {
     setSelectedOrder(order);
@@ -340,7 +334,7 @@ export default function UserProfile() {
           <h2 className="text-lg font-bold text-gray-800">{user?.fullname}</h2>
           <p
             className="flex items-center gap-2 text-sm text-gray-500 cursor-pointer hover:underline"
-            onClick={handleEdit}
+            onClick={() => navigate("/userprofile/account")}
           >
             <FaEdit /> Sửa hồ sơ
           </p>
@@ -394,7 +388,7 @@ export default function UserProfile() {
       {renderSidebar()}
       <Card className="w-full md:w-3/4 rounded-lg border border-gray-200 shadow-md">
         <Routes>
-          <Route path="account" element={<Account isEditing={isEditing} setIsEditing={setIsEditing} />} />
+          <Route path="account" element={<Account />} />
           <Route path="address" element={<Address />} />
           <Route path="change-password" element={<ChangePassword />} />
           <Route path="orders" element={<OrderHistory />} />
