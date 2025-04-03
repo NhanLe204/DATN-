@@ -153,7 +153,7 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
     // 6. Calculate total_price
     let calculatedTotalPrice = 0;
     const orderDetailsPromises = orderDetails.map(async (detail: any) => {
-      const { productID, serviceID, quantity, product_price, booking_date, petName, petType } = detail;
+      const { productID, serviceID, quantity, product_price, booking_date, petName = null, petType = null } = detail;
 
       if (!quantity || !product_price || (!productID && !serviceID)) {
         throw new Error('Invalid order detail data');
@@ -194,8 +194,8 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
         product_price,
         total_price: detailTotalPrice,
         booking_date: standardizedBookingDate,
-        petName: serviceID ? petName : null, 
-        petType: serviceID ? petType : null  
+        petName: serviceID ? petName : null,
+        petType: serviceID ? petType : null
       };
     });
 
@@ -254,8 +254,8 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
         product_price: detail.product_price,
         total_price: detail.total_price,
         booking_date: detail.booking_date,
-        petName: detail.petName, // Lưu petName
-        petType: detail.petType  // Lưu petType
+        petName: detail.serviceID ? detail.petName : undefined, // Chỉ thêm nếu là dịch vụ
+        petType: detail.serviceID ? detail.petType : undefined // Chỉ thêm nếu là dịch vụ
       });
     });
 
@@ -287,7 +287,6 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
     session.endSession();
   }
 };
-
 
 export const getAvailableSlots = async (req: Request, res: Response): Promise<void> => {
   try {

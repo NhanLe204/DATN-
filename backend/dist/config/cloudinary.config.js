@@ -1,10 +1,15 @@
-import { v2 as cloudinary } from 'cloudinary';
-import { CloudinaryStorage } from 'multer-storage-cloudinary';
-import dotenv from 'dotenv';
-import multer from 'multer';
-dotenv.config();
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const cloudinary_1 = require("cloudinary");
+const multer_storage_cloudinary_1 = require("multer-storage-cloudinary");
+const dotenv_1 = __importDefault(require("dotenv"));
+const multer_1 = __importDefault(require("multer"));
+dotenv_1.default.config();
 // Cấu hình Cloudinary
-cloudinary.config({
+cloudinary_1.v2.config({
     cloud_name: process.env.CLOUDINARY_NAME,
     api_key: process.env.CLOUDINARY_KEY,
     api_secret: process.env.CLOUDINARY_SECRET
@@ -33,8 +38,8 @@ const generatePublicId = (originalName) => {
     return `${cleanName}_${Date.now()}`;
 };
 // Cấu hình CloudinaryStorage
-const storage = new CloudinaryStorage({
-    cloudinary,
+const storage = new multer_storage_cloudinary_1.CloudinaryStorage({
+    cloudinary: cloudinary_1.v2,
     params: async (req, file) => {
         const folder = getFolderFromRoute(req);
         const publicId = generatePublicId(file.originalname);
@@ -48,7 +53,7 @@ const storage = new CloudinaryStorage({
     }
 });
 // Khởi tạo multer với storage
-const upload = multer({
+const upload = (0, multer_1.default)({
     storage,
     limits: {
         fileSize: 5 * 1024 * 1024 // Giới hạn file size: 5MB
@@ -61,5 +66,5 @@ const upload = multer({
         cb(null, true);
     }
 });
-export default upload;
+exports.default = upload;
 //# sourceMappingURL=cloudinary.config.js.map

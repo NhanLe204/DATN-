@@ -1,7 +1,12 @@
 import { Router, Request, Response } from 'express';
 import { protectRoute, requireAdmin } from '../middlewares/protectRoute.js';
 import { verifyToken } from '../middlewares/verifyToken.js';
-import { getOrderDetails, getOrderDetailsByOrderId, getAllBookings, getBookingsByUserId } from '@/controllers/orderDetail.controllers.js';
+import {
+  getOrderDetails,
+  getOrderDetailsByOrderId,
+  getAllBookings,
+  getBookingsByUserId
+} from '@/controllers/orderDetail.controllers.js';
 
 const orderDetailRouter = Router();
 

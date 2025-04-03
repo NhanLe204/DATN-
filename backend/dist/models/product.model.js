@@ -1,9 +1,37 @@
-import mongoose, { Schema, model } from 'mongoose';
-import category from './category.model.js';
-import { ProductStatus } from '../enums/product.enum.js';
-import brand from './brand.model.js';
-import tag from './tag.model.js';
-const productSchema = new Schema({
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const mongoose_1 = __importStar(require("mongoose"));
+const category_model_js_1 = __importDefault(require("./category.model.js"));
+const product_enum_js_1 = require("../enums/product.enum.js");
+const brand_model_js_1 = __importDefault(require("./brand.model.js"));
+const tag_model_js_1 = __importDefault(require("./tag.model.js"));
+const productSchema = new mongoose_1.Schema({
     name: {
         type: String,
         required: true
@@ -17,8 +45,8 @@ const productSchema = new Schema({
         required: true
     },
     category_id: {
-        type: Schema.Types.ObjectId,
-        ref: category,
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: category_model_js_1.default,
         autoPopulate: true, // .populate allow to access data of Object references
         required: [true, 'category_id is required']
     },
@@ -27,20 +55,20 @@ const productSchema = new Schema({
         default: []
     },
     brand_id: {
-        type: Schema.Types.ObjectId,
-        ref: brand,
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: brand_model_js_1.default,
         autoPopulate: true,
         required: [true, 'brand_id is required']
     },
     tag_id: {
-        type: Schema.Types.ObjectId,
-        ref: tag,
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: tag_model_js_1.default,
         autoPopulate: true
     },
     status: {
         type: String,
-        enum: ProductStatus,
-        default: ProductStatus.AVAILABLE
+        enum: product_enum_js_1.ProductStatus,
+        default: product_enum_js_1.ProductStatus.AVAILABLE
     },
     discount: {
         type: Number,
@@ -54,6 +82,6 @@ const productSchema = new Schema({
         default: 0
     }
 }, { timestamps: true });
-const productModel = mongoose.models.product || model('product', productSchema);
-export default productModel;
+const productModel = mongoose_1.default.models.product || (0, mongoose_1.model)('product', productSchema);
+exports.default = productModel;
 //# sourceMappingURL=product.model.js.map

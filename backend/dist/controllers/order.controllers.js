@@ -1,19 +1,25 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.updateOrderStatus = exports.checkAvailableSlots = exports.getOrderById = exports.getAllOrders = exports.getAvailableSlots = exports.createOrderAfterPayment = void 0;
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import mongoose from 'mongoose';
-import orderModel from '../models/order.model.js';
-import userModel from '../models/user.model.js';
-import PaymentType from '../models/paymentType.model.js';
-import deliveryModel from '../models/delivery.model.js';
-import couponModel from '../models/coupon.model.js';
-import { CouponStatus } from '../enums/coupon.enum.js';
-import orderDetailModel from '../models/orderdetail.model.js';
-import productModel from '../models/product.model.js';
-import { OrderStatus } from '../enums/order.enum.js';
-import { ProductStatus } from '../enums/product.enum.js';
-import { ServiceStatus } from '../enums/service.enum.js';
-import serviceModel from '../models/service.model.js';
-export const createOrderAfterPayment = async (req, res) => {
-    const session = await mongoose.startSession();
+const mongoose_1 = __importDefault(require("mongoose"));
+const order_model_js_1 = __importDefault(require("../models/order.model.js"));
+const user_model_js_1 = __importDefault(require("../models/user.model.js"));
+const paymentType_model_js_1 = __importDefault(require("../models/paymentType.model.js"));
+const delivery_model_js_1 = __importDefault(require("../models/delivery.model.js"));
+const coupon_model_js_1 = __importDefault(require("../models/coupon.model.js"));
+const coupon_enum_js_1 = require("../enums/coupon.enum.js");
+const orderdetail_model_js_1 = __importDefault(require("../models/orderdetail.model.js"));
+const product_model_js_1 = __importDefault(require("../models/product.model.js"));
+const order_enum_js_1 = require("../enums/order.enum.js");
+const product_enum_js_1 = require("../enums/product.enum.js");
+const service_enum_js_1 = require("../enums/service.enum.js");
+const service_model_js_1 = __importDefault(require("../models/service.model.js"));
+const createOrderAfterPayment = async (req, res) => {
+    const session = await mongoose_1.default.startSession();
     session.startTransaction();
     try {
         const { userID = null, payment_typeID, deliveryID = null, couponID = null, orderdate, total_price, shipping_address = null, transaction_id, orderDetails, paymentOrderCode = null, infoUserGuest = null } = req.body;
@@ -22,20 +28,20 @@ export const createOrderAfterPayment = async (req, res) => {
         if (!total_price || !transaction_id || !orderDetails || !Array.isArray(orderDetails)) {
             throw new Error('Missing required fields');
         }
-        const isBooking = orderDetails.every((detail) => detail.serviceID && !detail.productID);
+        const isBooking = orderDetails.every((detail) => detail.serviceId && !detail.product);
         const isOrder = orderDetails.some((detail) => detail.productID);
         if (isOrder && !deliveryID) {
             throw new Error('Delivery ID is required for product orders');
         }
         // 2. Validate user existence
         if (userID !== null) {
-            const user = await userModel.findById(userID).session(session);
+            const user = await user_model_js_1.default.findById(userID).session(session);
             if (!user)
                 throw new Error('User not found');
         }
         // 3. Validate payment type
         if (payment_typeID) {
-            const paymentType = await PaymentType.findById(payment_typeID).session(session);
+            const paymentType = await paymentType_model_js_1.default.findById(payment_typeID).session(session);
             if (!paymentType)
                 throw new Error('Payment type not found');
         }
@@ -43,7 +49,7 @@ export const createOrderAfterPayment = async (req, res) => {
         let delivery = null;
         let deliveryFee = 0;
         if (deliveryID) {
-            delivery = await deliveryModel.findById(deliveryID).session(session);
+            delivery = await delivery_model_js_1.default.findById(deliveryID).session(session);
             if (!delivery)
                 throw new Error('Delivery method not found');
             deliveryFee = delivery?.delivery_fee || 0;
@@ -61,7 +67,7 @@ export const createOrderAfterPayment = async (req, res) => {
                 bookingDate.setMinutes(0, 0, 0);
                 const date = bookingDate.toISOString().split('T')[0];
                 const hour = bookingDate.getHours();
-                const service = await serviceModel.findOne({ _id: serviceID, status: ServiceStatus.ACTIVE }).session(session);
+                const service = await service_model_js_1.default.findOne({ _id: serviceID, status: service_enum_js_1.ServiceStatus.ACTIVE }).session(session);
                 if (!service)
                     throw new Error(`Service not found or not active: ${serviceID}`);
                 const serviceDuration = service.duration || 60;
@@ -88,7 +94,7 @@ export const createOrderAfterPayment = async (req, res) => {
                 bookingDate.setMinutes(0, 0, 0);
                 const date = bookingDate.toISOString().split('T')[0];
                 const hour = bookingDate.getHours();
-                const service = await serviceModel.findOne({ _id: serviceID, status: ServiceStatus.ACTIVE }).session(session);
+                const service = await service_model_js_1.default.findOne({ _id: serviceID, status: service_enum_js_1.ServiceStatus.ACTIVE }).session(session);
                 const serviceDuration = service.duration || 60;
                 const affectedSlots = Math.ceil(serviceDuration / 60);
                 const timeSlots = [];
@@ -99,7 +105,7 @@ export const createOrderAfterPayment = async (req, res) => {
                     timeSlots.push({ start: startDate, end: endDate, time: `${slotHour}h` });
                 }
                 for (const slot of timeSlots) {
-                    const bookedPets = await orderDetailModel
+                    const bookedPets = await orderdetail_model_js_1.default
                         .countDocuments({
                         booking_date: {
                             $gte: slot.start,
@@ -118,25 +124,29 @@ export const createOrderAfterPayment = async (req, res) => {
         // 6. Calculate total_price
         let calculatedTotalPrice = 0;
         const orderDetailsPromises = orderDetails.map(async (detail) => {
-            const { productID, serviceID, quantity, product_price, booking_date } = detail;
+            const { productID, serviceID, quantity, product_price, booking_date, petName = null, petType = null } = detail;
             if (!quantity || !product_price || (!productID && !serviceID)) {
                 throw new Error('Invalid order detail data');
             }
             if (productID) {
-                const product = await productModel
-                    .findOne({ _id: productID, status: ProductStatus.AVAILABLE })
+                const product = await product_model_js_1.default
+                    .findOne({ _id: productID, status: product_enum_js_1.ProductStatus.AVAILABLE })
                     .session(session);
                 if (!product)
                     throw new Error(`Product not found or not available: ${productID}`);
                 if (product.stock < quantity) {
                     throw new Error(`Insufficient stock for product: ${productID}`);
                 }
-                await productModel.findByIdAndUpdate(productID, { $inc: { stock: -quantity } }, { session });
+                await product_model_js_1.default.findByIdAndUpdate(productID, { $inc: { stock: -quantity } }, { session });
             }
             if (serviceID) {
-                const service = await serviceModel.findOne({ _id: serviceID, status: ServiceStatus.ACTIVE }).session(session);
+                const service = await service_model_js_1.default.findOne({ _id: serviceID, status: service_enum_js_1.ServiceStatus.ACTIVE }).session(session);
                 if (!service)
                     throw new Error(`Service not found or not active: ${serviceID}`);
+                // Yêu cầu petName và petType cho booking
+                if (!petName || !petType) {
+                    throw new Error('petName and petType are required for service booking');
+                }
             }
             const detailTotalPrice = quantity * product_price;
             calculatedTotalPrice += detailTotalPrice;
@@ -150,18 +160,20 @@ export const createOrderAfterPayment = async (req, res) => {
                 quantity,
                 product_price,
                 total_price: detailTotalPrice,
-                booking_date: standardizedBookingDate
+                booking_date: standardizedBookingDate,
+                petName: serviceID ? petName : null,
+                petType: serviceID ? petType : null
             };
         });
         const validatedOrderDetails = await Promise.all(orderDetailsPromises);
         const subtotal = calculatedTotalPrice;
         let discount = 0;
         if (couponID) {
-            const coupon = await couponModel.findById(couponID).session(session);
+            const coupon = await coupon_model_js_1.default.findById(couponID).session(session);
             if (!coupon)
                 throw new Error('Coupon not found');
             const currentDate = new Date();
-            if (coupon.status !== CouponStatus.ACTIVE ||
+            if (coupon.status !== coupon_enum_js_1.CouponStatus.ACTIVE ||
                 currentDate < coupon.start_date ||
                 currentDate > coupon.end_date ||
                 coupon.used_count >= coupon.usage_limit) {
@@ -169,7 +181,7 @@ export const createOrderAfterPayment = async (req, res) => {
             }
             const discountPercentage = coupon.discount_value;
             discount = (subtotal * discountPercentage) / 100;
-            await couponModel.findByIdAndUpdate(couponID, { $inc: { used_count: 1 } }, { session });
+            await coupon_model_js_1.default.findByIdAndUpdate(couponID, { $inc: { used_count: 1 } }, { session });
         }
         const discountedSubtotal = calculatedTotalPrice - discount;
         const finalTotalPrice = discountedSubtotal + deliveryFee;
@@ -177,7 +189,7 @@ export const createOrderAfterPayment = async (req, res) => {
             throw new Error('Total price mismatch');
         }
         // 7. Create and save order
-        const order = new orderModel({
+        const order = new order_model_js_1.default({
             userID: userID ? userID : '',
             payment_typeID,
             deliveryID: isOrder ? deliveryID : null,
@@ -186,21 +198,23 @@ export const createOrderAfterPayment = async (req, res) => {
             total_price: finalTotalPrice,
             shipping_address,
             paymentOrderCode,
-            status: OrderStatus.PENDING,
+            status: order_enum_js_1.OrderStatus.PENDING,
             transaction_id,
             inforUserGuest: infoUserGuest || null
         });
         const savedOrder = await order.save({ session });
         // 8. Create and save order details
         const orderDetailDocs = validatedOrderDetails.map((detail) => {
-            return new orderDetailModel({
+            return new orderdetail_model_js_1.default({
                 orderId: savedOrder._id,
                 productId: detail.productID || null,
                 serviceId: detail.serviceID || null,
                 quantity: detail.quantity,
                 product_price: detail.product_price,
                 total_price: detail.total_price,
-                booking_date: detail.booking_date
+                booking_date: detail.booking_date,
+                petName: detail.serviceID ? detail.petName : undefined, // Chỉ thêm nếu là dịch vụ
+                petType: detail.serviceID ? detail.petType : undefined // Chỉ thêm nếu là dịch vụ
             });
         });
         await Promise.all(orderDetailDocs.map((detail) => detail.save({ session })));
@@ -230,7 +244,8 @@ export const createOrderAfterPayment = async (req, res) => {
         session.endSession();
     }
 };
-export const getAvailableSlots = async (req, res) => {
+exports.createOrderAfterPayment = createOrderAfterPayment;
+const getAvailableSlots = async (req, res) => {
     try {
         const { date } = req.query; // Ngày cần kiểm tra, ví dụ: "2025-03-29"
         if (!date)
@@ -240,7 +255,7 @@ export const getAvailableSlots = async (req, res) => {
         const startOfDay = new Date(`${date}T00:00:00+07:00`);
         const endOfDay = new Date(`${date}T23:59:59.999+07:00`);
         // Lấy tất cả booking trong ngày
-        const bookings = await orderDetailModel
+        const bookings = await orderdetail_model_js_1.default
             .find({
             booking_date: { $gte: startOfDay, $lte: endOfDay }
         })
@@ -278,9 +293,10 @@ export const getAvailableSlots = async (req, res) => {
         });
     }
 };
-export const getAllOrders = async (req, res) => {
+exports.getAvailableSlots = getAvailableSlots;
+const getAllOrders = async (req, res) => {
     try {
-        const orders = await orderModel
+        const orders = await order_model_js_1.default
             .find()
             .populate('userID')
             .populate('payment_typeID')
@@ -294,10 +310,11 @@ export const getAllOrders = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error', details: errorMessage });
     }
 };
-export const getOrderById = async (req, res) => {
+exports.getAllOrders = getAllOrders;
+const getOrderById = async (req, res) => {
     try {
         const { id } = req.params;
-        const order = await orderModel
+        const order = await order_model_js_1.default
             .findById(id)
             .populate('userID')
             .populate('payment_typeID')
@@ -315,7 +332,8 @@ export const getOrderById = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error', details: errorMessage });
     }
 };
-export const checkAvailableSlots = async (req, res) => {
+exports.getOrderById = getOrderById;
+const checkAvailableSlots = async (req, res) => {
     const { date, time } = req.query;
     const maxSlots = 5;
     try {
@@ -346,7 +364,7 @@ export const checkAvailableSlots = async (req, res) => {
             return;
         }
         // Đếm số lượng pet đã đặt trong khung giờ
-        const bookedPets = await orderDetailModel.countDocuments({
+        const bookedPets = await orderdetail_model_js_1.default.countDocuments({
             booking_date: {
                 $gte: startDate,
                 $lt: endDate
@@ -366,13 +384,14 @@ export const checkAvailableSlots = async (req, res) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 };
-export const updateOrderStatus = async (req, res) => {
+exports.checkAvailableSlots = checkAvailableSlots;
+const updateOrderStatus = async (req, res) => {
     try {
         const { id } = req.params;
         const { status } = req.body;
         console.log('status', status);
         // Kiểm tra xem ID có hợp lệ không
-        if (!mongoose.Types.ObjectId.isValid(id)) {
+        if (!mongoose_1.default.Types.ObjectId.isValid(id)) {
             res.status(400).json({
                 success: false,
                 message: 'ID không hợp lệ'
@@ -380,12 +399,12 @@ export const updateOrderStatus = async (req, res) => {
             return;
         }
         // Kiểm tra xem trạng thái có hợp lệ không
-        if (!Object.values(OrderStatus).includes(status)) {
+        if (!Object.values(order_enum_js_1.OrderStatus).includes(status)) {
             res.status(400).json({ success: false, message: 'Trạng thái đơn hàng không hợp lệ' });
             return;
         }
         // Cập nhật trạng thái đơn hàng
-        const updatedOrder = await orderModel.findByIdAndUpdate(id, { status }, { new: true, runValidators: true });
+        const updatedOrder = await order_model_js_1.default.findByIdAndUpdate(id, { status }, { new: true, runValidators: true });
         if (!updatedOrder) {
             res.status(404).json({ success: false, message: 'Đơn hàng không tồn tại' });
             return;
@@ -405,4 +424,5 @@ export const updateOrderStatus = async (req, res) => {
         }
     }
 };
+exports.updateOrderStatus = updateOrderStatus;
 //# sourceMappingURL=order.controllers.js.map

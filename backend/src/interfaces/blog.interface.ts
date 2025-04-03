@@ -5,7 +5,7 @@ import { BlogStatus } from '@/enums/blog.enum.js';
 export interface IBlog {
   _id: ObjectId;
   product?: IProduct;
-	userID?: IUser;
+  userID?: IUser;
   image_url?: string[];
   tittle: string;
   author: string;

@@ -3,6 +3,7 @@ import React, { useState, useEffect, Key } from "react";
 import { motion } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { usePayOS, PayOSConfig } from "payos-checkout";
 import {
   Sun,
   Moon,
@@ -24,16 +25,14 @@ import couponApi from "../../api/couponApi";
 import { clearProduct } from "../../redux/slices/cartslice";
 import paymentApi from "../../api/paymentApi";
 import ENV_VARS from "../../../config";
-import { create } from "domain";
 
-// Định nghĩa interface cho phương thức thanh toán
+// Các interface giữ nguyên như cũ
 interface PaymentType {
   _id: string;
   payment_type_name: string;
   description: string;
 }
 
-// Định nghĩa interface cho phương thức vận chuyển
 interface Delivery {
   _id: string;
   delivery_name: string;
@@ -42,7 +41,6 @@ interface Delivery {
   status: string;
 }
 
-// Định nghĩa interface cho coupon
 interface Coupon {
   _id: string;
   coupon_code: string;
@@ -248,7 +246,6 @@ const Payment = () => {
       const startDate = new Date(matchedCoupon.start_date);
       const endDate = new Date(matchedCoupon.end_date);
 
-      // Tính tổng tiền sản phẩm (không bao gồm phí vận chuyển)
       const subtotal = cartItems.reduce(
         (sum, item) => sum + item.price * item.quantity,
         0
@@ -261,7 +258,6 @@ const Payment = () => {
         return;
       }
 
-      // Kiểm tra min_order_value dựa trên tổng tiền sản phẩm
       if (subtotal < matchedCoupon.min_order_value) {
         message.error(
           `Tổng tiền sản phẩm phải có giá trị tối thiểu ${matchedCoupon.min_order_value} để áp dụng mã này!`
@@ -278,9 +274,8 @@ const Payment = () => {
         return;
       }
 
-      // Tính giá trị giảm giá theo phần trăm (chỉ trên tổng tiền sản phẩm)
-      const discountPercentage = matchedCoupon.discount_value; // 25%
-      const discountValue = (subtotal * discountPercentage) / 100; // Giảm giá = Tổng tiền sản phẩm * (25 / 100)
+      const discountPercentage = matchedCoupon.discount_value;
+      const discountValue = (subtotal * discountPercentage) / 100;
 
       setAppliedCoupon(matchedCoupon);
       setDiscount(discountValue);
@@ -319,7 +314,7 @@ const Payment = () => {
       (sum, item) => sum + item.price * item.quantity,
       0
     );
-    const discountedSubtotal = subtotal - discount; // Giảm giá chỉ trên tổng tiền sản phẩm
+    const discountedSubtotal = subtotal - discount;
     const total =
       discountedSubtotal +
       (selectedShippingMethod ? selectedShippingMethod.delivery_fee : 0);
@@ -328,6 +323,7 @@ const Payment = () => {
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("vi-VN").format(price) + "₫";
+
   const handlePayment = async (paymentData: any) => {
     try {
       const response = await paymentApi.create({
@@ -340,9 +336,9 @@ const Payment = () => {
       message.error("Có lỗi xảy ra khi tạo liên kết thanh toán.");
     }
   };
+
   const handleCheckout = async () => {
     try {
-      // Basic validations
       if (!selectedAddress) {
         message.error("Vui lòng chọn địa chỉ giao hàng!");
         return;
@@ -364,9 +360,8 @@ const Payment = () => {
 
       const shippingAddress = formData.address;
       const totalAmount = calculateTotal();
-      const numericOrderCode = Date.now(); // Tạo mã số duy nhất
 
-      // 1. Create order data
+      // 1. Tạo dữ liệu đơn hàng (không có paymentOrderCode)
       const orderData = {
         userID: userId,
         couponID: appliedCoupon ? appliedCoupon._id : null,
@@ -375,8 +370,7 @@ const Payment = () => {
         orderdate: new Date().toISOString(),
         total_price: totalAmount,
         shipping_address: shippingAddress,
-        transaction_id: `TRANS_${numericOrderCode}`, // Đồng bộ với orderCode
-        paymentOrderCode: numericOrderCode, // Lưu để webhook tra cứu
+        transaction_id: `TRANS_${Date.now()}`, // Tạm thời dùng timestamp
         status: "PENDING",
         orderDetails: cartItems.map((item) => ({
           productID: item.id,
@@ -388,24 +382,23 @@ const Payment = () => {
 
       console.log("Creating order with data:", orderData);
 
-      // 2. Create order
+      // 2. Tạo đơn hàng
       const orderResponse = await orderApi.create(orderData);
       const createdOrder = orderResponse.data;
       console.log("Order created successfully:", createdOrder);
 
-      // 3. Prepare payment data
+      // 3. Chuẩn bị dữ liệu thanh toán, sử dụng _id của đơn hàng
       const paymentData = {
-        orderCode: numericOrderCode, // Dùng số thay vì chuỗi ObjectId
+        orderCode: createdOrder.order._id,
         amount: totalAmount,
-        description: `Thanh toán đơn hàng}`,
-        returnUrl: `http://localhost:3000/success`, // Không cần orderId vì webhook sẽ xử lý
-        cancelUrl: `http://localhost:3000/cancel`,
+        description: `Thanh toán đơn hàng ${createdOrder._id}`,
+        returnUrl: `https://google.com/success`,
+        cancelUrl: `https://youtube.com`,
       };
 
       console.warn("Creating payment with data:", paymentData);
       await handlePayment(paymentData);
 
-      // Không cần xử lý thêm ở đây, webhook sẽ cập nhật trạng thái
       message.destroy();
     } catch (error) {
       console.error("Checkout process error:", error);
@@ -620,7 +613,7 @@ const Payment = () => {
                       <motion.button
                         whileTap={{ scale: 0.98 }}
                         onClick={handleConfirmAddress}
-                        className="rounded-xl bg-blue-500 px-4 py-1 font-medium text-white text-sm"
+                        className="rounded-xl bg-blue-500 px-4 py- [=1 font-medium text-white text-sm"
                       >
                         Xác nhận
                       </motion.button>
@@ -630,7 +623,6 @@ const Payment = () => {
               </div>
             )}
 
-            {/* Shipping Method */}
             <div
               className={`mb-8 rounded-xl p-6 ${
                 darkMode ? "bg-gray-800" : "bg-white"
@@ -704,7 +696,6 @@ const Payment = () => {
               )}
             </div>
 
-            {/* Payment Method */}
             <div
               className={`mb-8 rounded-xl p-6 ${
                 darkMode ? "bg-gray-800" : "bg-white"
@@ -776,7 +767,6 @@ const Payment = () => {
             </div>
           </motion.div>
 
-          {/* Order Summary */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}

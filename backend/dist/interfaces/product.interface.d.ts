@@ -9,7 +9,7 @@ export interface IProduct extends Document {
     description: string;
     price: string;
     category_id: ICategory;
-    image_url: [];
+    image_url: string[];
     brand_id: IBrand;
     tag_id: ITag;
     createdAt: Date;

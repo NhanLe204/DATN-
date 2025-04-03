@@ -1,8 +1,14 @@
-import couponModel from '../models/coupon.model.js';
-import { CouponStatus } from '@/enums/coupon.enum.js';
-export const getAllCoupon = async (req, res) => {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getActiveCoupons = exports.applyCoupon = exports.updateCoupon = exports.deleteCouponById = exports.createCoupon = exports.getCouponById = exports.getAllCoupon = void 0;
+const coupon_model_js_1 = __importDefault(require("../models/coupon.model.js"));
+const coupon_enum_js_1 = require("@/enums/coupon.enum.js");
+const getAllCoupon = async (req, res) => {
     try {
-        const result = await couponModel.find();
+        const result = await coupon_model_js_1.default.find();
         res.status(200).json({ success: true, result });
     }
     catch (error) {
@@ -16,10 +22,11 @@ export const getAllCoupon = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
-export const getCouponById = async (req, res) => {
+exports.getAllCoupon = getAllCoupon;
+const getCouponById = async (req, res) => {
     try {
         const { id } = req.params;
-        const coupon = await couponModel.findById(id);
+        const coupon = await coupon_model_js_1.default.findById(id);
         if (!coupon) {
             res.status(404).json({ message: 'Không tìm thấy mã giảm giá' });
             return;
@@ -37,7 +44,8 @@ export const getCouponById = async (req, res) => {
         }
     }
 };
-export const createCoupon = async (req, res) => {
+exports.getCouponById = getCouponById;
+const createCoupon = async (req, res) => {
     try {
         console.log('Request body:', req.body); // Kiểm tra dữ liệu gửi lên
         const { coupon_code, discount_value, min_order_value, max_discount, start_date, end_date, usage_limit, used_count, score } = req.body;
@@ -46,7 +54,7 @@ export const createCoupon = async (req, res) => {
             res.status(400).json({ success: false, message: 'Thiếu các trường bắt buộc' });
             return;
         }
-        const newCoupon = await couponModel.create({
+        const newCoupon = await coupon_model_js_1.default.create({
             coupon_code,
             discount_value,
             min_order_value: min_order_value || 0,
@@ -66,10 +74,11 @@ export const createCoupon = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error', details: errorMessage });
     }
 };
-export const deleteCouponById = async (req, res) => {
+exports.createCoupon = createCoupon;
+const deleteCouponById = async (req, res) => {
     try {
         const { id } = req.params;
-        const coupon = await couponModel.findByIdAndDelete(id);
+        const coupon = await coupon_model_js_1.default.findByIdAndDelete(id);
         if (!coupon) {
             res.status(404).json({ success: false, message: 'Không tìm thấy mã giảm giá để xóa' });
             return;
@@ -90,12 +99,13 @@ export const deleteCouponById = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
-export const updateCoupon = async (req, res) => {
+exports.deleteCouponById = deleteCouponById;
+const updateCoupon = async (req, res) => {
     try {
         const { id } = req.params;
         const { coupon_code, discount_value, min_order_value, max_discount, start_date, end_date, usage_limit, used_count, score } = req.body;
         // Tìm coupon hiện tại để kiểm tra start_date nếu không gửi lên
-        const existingCoupon = await couponModel.findById(id);
+        const existingCoupon = await coupon_model_js_1.default.findById(id);
         if (!existingCoupon) {
             res.status(404).json({ success: false, message: 'Không tìm thấy mã giảm giá để cập nhật' });
             return;
@@ -115,15 +125,15 @@ export const updateCoupon = async (req, res) => {
         const currentDate = new Date();
         if ((updateData.end_date && updateData.end_date < currentDate) ||
             (updateData.used_count ?? 0) >= (updateData.usage_limit ?? 0)) {
-            updateData.status = CouponStatus.INACTIVE;
+            updateData.status = coupon_enum_js_1.CouponStatus.INACTIVE;
         }
         else if (updateData.start_date &&
             updateData.end_date &&
             updateData.start_date <= currentDate &&
             updateData.end_date >= currentDate) {
-            updateData.status = CouponStatus.ACTIVE;
+            updateData.status = coupon_enum_js_1.CouponStatus.ACTIVE;
         }
-        const updatedCoupon = await couponModel.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
+        const updatedCoupon = await coupon_model_js_1.default.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
         if (!updatedCoupon) {
             res.status(404).json({ success: false, message: 'Không tìm thấy mã giảm giá để cập nhật' });
             return;
@@ -136,34 +146,35 @@ export const updateCoupon = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error', details: errorMessage });
     }
 };
-export const applyCoupon = async (req, res) => {
+exports.updateCoupon = updateCoupon;
+const applyCoupon = async (req, res) => {
     try {
         const { coupon_code } = req.body;
-        const coupon = await couponModel.findOne({ coupon_code });
+        const coupon = await coupon_model_js_1.default.findOne({ coupon_code });
         if (!coupon) {
             res.status(404).json({ success: false, message: 'Mã giảm giá không tồn tại' });
             return;
         }
         const currentDate = new Date();
-        if (coupon.status !== CouponStatus.ACTIVE) {
+        if (coupon.status !== coupon_enum_js_1.CouponStatus.ACTIVE) {
             res.status(400).json({ success: false, message: 'Mã giảm giá không còn hiệu lực (trạng thái không hoạt động)' });
             return;
         }
         if (currentDate < coupon.start_date || currentDate > coupon.end_date) {
-            coupon.status = CouponStatus.INACTIVE;
+            coupon.status = coupon_enum_js_1.CouponStatus.INACTIVE;
             await coupon.save();
             res.status(400).json({ success: false, message: 'Mã giảm giá không còn hiệu lực (hết hạn)' });
             return;
         }
         if (coupon.used_count >= coupon.usage_limit) {
-            coupon.status = CouponStatus.INACTIVE;
+            coupon.status = coupon_enum_js_1.CouponStatus.INACTIVE;
             await coupon.save();
             res.status(400).json({ success: false, message: 'Mã giảm giá đã vượt quá số lần sử dụng cho phép' });
             return;
         }
         coupon.used_count += 1;
         if (coupon.used_count >= coupon.usage_limit) {
-            coupon.status = CouponStatus.INACTIVE;
+            coupon.status = coupon_enum_js_1.CouponStatus.INACTIVE;
         }
         await coupon.save();
         res.status(200).json({
@@ -183,11 +194,12 @@ export const applyCoupon = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error', details: errorMessage });
     }
 };
-export const getActiveCoupons = async (req, res) => {
+exports.applyCoupon = applyCoupon;
+const getActiveCoupons = async (req, res) => {
     try {
         const currentDate = new Date();
         console.log('Fetching active coupons with date:', currentDate);
-        const activeCoupons = await couponModel.find({
+        const activeCoupons = await coupon_model_js_1.default.find({
             status: 'active',
             start_date: { $lte: currentDate },
             end_date: { $gte: currentDate },
@@ -208,4 +220,5 @@ export const getActiveCoupons = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
+exports.getActiveCoupons = getActiveCoupons;
 //# sourceMappingURL=coupon.controllers.js.map

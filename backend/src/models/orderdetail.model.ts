@@ -15,9 +15,9 @@ const orderDetailSchema = new Schema(
     petName: { type: String, required: false, default: '' },
     petType: {
       type: String,
-      enum: ['dog', 'cat', ''], 
-      default: '', 
-    },
+      required: false,
+      default: ''
+    }
   },
   { timestamps: true }
 );

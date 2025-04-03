@@ -7,5 +7,8 @@ declare const ENV_VARS: {
     FE_URL: string | undefined;
     EMAIL_USER: string | undefined;
     EMAIL_PASS: string | undefined;
+    VNP_TMNCODE: string | undefined;
+    VNP_HASHSECRET: string | undefined;
+    VNP_URL: string | undefined;
 };
 export default ENV_VARS;

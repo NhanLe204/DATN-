@@ -1,15 +1,17 @@
-import { Router } from 'express';
-import { verifyToken } from '../middlewares/verifyToken.js';
-import { createOrderAfterPayment, getAllOrders, getOrderById, getAvailableSlots, updateOrderStatus } from '../controllers/order.controllers.js';
-const orderRouter = Router();
-orderRouter.get('/orders', verifyToken, getAllOrders);
-orderRouter.post('/orders', verifyToken, createOrderAfterPayment);
-orderRouter.get('/orders/check/available-slots', verifyToken, getAvailableSlots);
-orderRouter.get('/orders/:id', verifyToken, getOrderById);
-orderRouter.patch('/orders/status/:id', verifyToken, updateOrderStatus);
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const verifyToken_js_1 = require("../middlewares/verifyToken.js");
+const order_controllers_js_1 = require("../controllers/order.controllers.js");
+const orderRouter = (0, express_1.Router)();
+orderRouter.get('/orders', verifyToken_js_1.verifyToken, order_controllers_js_1.getAllOrders);
+orderRouter.post('/orders', verifyToken_js_1.verifyToken, order_controllers_js_1.createOrderAfterPayment);
+orderRouter.get('/orders/check/available-slots', verifyToken_js_1.verifyToken, order_controllers_js_1.getAvailableSlots);
+orderRouter.get('/orders/:id', verifyToken_js_1.verifyToken, order_controllers_js_1.getOrderById);
+orderRouter.patch('/orders/status/:id', verifyToken_js_1.verifyToken, order_controllers_js_1.updateOrderStatus);
 // orderRouter.delete('/ratings/:id', deleteRating);
 // brandRouter.post('/brands', verifyToken, requireAdmin, insertBrand);
 // brandRouter.patch('/brands/:id', verifyToken, requireAdmin, updateBrand);
 // categoryRouter.delete('/categories/:id', protectRoute, requireAdmin, toggleCategory);
-export default orderRouter;
+exports.default = orderRouter;
 //# sourceMappingURL=order.routes.js.map

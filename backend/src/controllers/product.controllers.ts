@@ -176,7 +176,7 @@ export const insertProduct = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    const newProduct = new productModel<IProduct>({
+    const newProduct = new productModel<Partial<IProduct>>({
       name,
       description,
       price,

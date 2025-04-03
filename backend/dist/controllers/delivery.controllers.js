@@ -1,8 +1,14 @@
-import deliveryModel from '../models/delivery.model.js';
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.deleteDelivery = exports.updateDelivery = exports.insertDelivery = exports.getDeliveryById = exports.getAllDeliveries = void 0;
+const delivery_model_js_1 = __importDefault(require("../models/delivery.model.js"));
 // Get all deliveries
-export const getAllDeliveries = async (req, res) => {
+const getAllDeliveries = async (req, res) => {
     try {
-        const deliveries = await deliveryModel.find();
+        const deliveries = await delivery_model_js_1.default.find();
         res.status(200).json({
             success: true,
             count: deliveries.length,
@@ -17,10 +23,11 @@ export const getAllDeliveries = async (req, res) => {
         });
     }
 };
+exports.getAllDeliveries = getAllDeliveries;
 // Get delivery by ID
-export const getDeliveryById = async (req, res) => {
+const getDeliveryById = async (req, res) => {
     try {
-        const delivery = await deliveryModel.findById(req.params.id);
+        const delivery = await delivery_model_js_1.default.findById(req.params.id);
         if (!delivery) {
             res.status(404).json({
                 success: false,
@@ -41,8 +48,9 @@ export const getDeliveryById = async (req, res) => {
         });
     }
 };
+exports.getDeliveryById = getDeliveryById;
 // Create new delivery
-export const insertDelivery = async (req, res) => {
+const insertDelivery = async (req, res) => {
     try {
         const { delivery_name, description, delivery_fee, estimated_delivery_time, status } = req.body;
         // Validate required fields
@@ -53,7 +61,7 @@ export const insertDelivery = async (req, res) => {
             });
             return;
         }
-        const delivery = new deliveryModel({
+        const delivery = new delivery_model_js_1.default({
             delivery_name,
             description,
             delivery_fee,
@@ -75,10 +83,11 @@ export const insertDelivery = async (req, res) => {
         });
     }
 };
+exports.insertDelivery = insertDelivery;
 // Update delivery
-export const updateDelivery = async (req, res) => {
+const updateDelivery = async (req, res) => {
     try {
-        const delivery = await deliveryModel.findByIdAndUpdate(req.params.id, req.body, {
+        const delivery = await delivery_model_js_1.default.findByIdAndUpdate(req.params.id, req.body, {
             new: true,
             runValidators: true
         });
@@ -103,10 +112,11 @@ export const updateDelivery = async (req, res) => {
         });
     }
 };
+exports.updateDelivery = updateDelivery;
 // Delete delivery
-export const deleteDelivery = async (req, res) => {
+const deleteDelivery = async (req, res) => {
     try {
-        const delivery = await deliveryModel.findByIdAndDelete(req.params.id);
+        const delivery = await delivery_model_js_1.default.findByIdAndDelete(req.params.id);
         if (!delivery) {
             res.status(404).json({
                 success: false,
@@ -127,4 +137,5 @@ export const deleteDelivery = async (req, res) => {
         });
     }
 };
+exports.deleteDelivery = deleteDelivery;
 //# sourceMappingURL=delivery.controllers.js.map
