@@ -11,16 +11,16 @@ const blogSchema: Schema<IBlog> = new Schema<IBlog>(
       ref: Product,
       autoPopulate: true
     },
-    // user: {
-    //   type: Schema.Types.ObjectId,
-    //   ref: User,
-    //   autoPopulate: true
-    // },
-    // image_url: {
-    //   type: [String],
-    //   default: []
-    // },
-    title: {
+    userID: {
+      type: Schema.Types.ObjectId,
+      ref: User,
+      autoPopulate: true
+    },
+    image_url: {
+      type: [String],
+      default: []
+    },
+    tittle: {
       type: String,
       required: true
     },
