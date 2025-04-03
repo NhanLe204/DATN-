@@ -30,7 +30,7 @@ import BrandManager from "./admin/brand/brand";
 import TagManager from "./admin/tag/tag";
 import VerifyOtp from "./pages/verifyOTP/verifyOTP";
 import Search from "./pages/search/search";
-import BlogContent from "./pages/blog/blog"; // Adjust the path as needed
+import BlogContent from "./pages/blog/blog";
 import { notification } from "antd";
 import CancelPage from "./pages/orders/cancel";
 import SuccessPage from "./pages/orders/success";
