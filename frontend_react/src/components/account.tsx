@@ -1,6 +1,13 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Avatar, Button, Form, Input, Upload, message } from "antd";
+import {
+    Avatar,
+    Button,
+    Form,
+    Input,
+    Upload,
+    message,
+} from "antd";
 import { DatePicker } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { useParams } from "react-router-dom";
@@ -10,26 +17,26 @@ import userApi from "../api/userApi";
 const { Item } = Form;
 
 interface User {
-  _id: string;
-  email: string;
-  fullname: string;
-  password: string;
-  phone_number: string;
-  //   address: Address[];
-  role: string;
-  avatar: string;
-  reset_password_token: string | null;
-  reset_password_expires: string | null;
-  refreshToken: string;
-  dateOfBirth: string;
-  createdAt: string;
-  updatedAt: string;
-  __v: number;
+    _id: string;
+    email: string;
+    fullname: string;
+    password: string;
+    phone_number: string;
+    //   address: Address[];
+    role: string;
+    avatar: string;
+    reset_password_token: string | null;
+    reset_password_expires: string | null;
+    refreshToken: string;
+    dateOfBirth: string;
+    createdAt: string;
+    updatedAt: string;
+    __v: number;
 }
 
 interface AccountProps {
-  isEditing: boolean;
-  setIsEditing: (isEditing: boolean) => void;
+    isEditing: boolean;
+    setIsEditing: (isEditing: boolean) => void;
 }
 
 export default function Account() {
@@ -40,18 +47,18 @@ export default function Account() {
     const [fileList, setFileList] = useState<any[]>([]);
     const [uploading, setUploading] = useState(false);
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      const token = localStorage.getItem("accessToken");
-      const accountID = localStorage
-        .getItem("accountID")
-        ?.replace(/"/g, "")
-        .trim();
+    useEffect(() => {
+        const fetchUserData = async () => {
+            const token = localStorage.getItem("accessToken");
+            const accountID = localStorage
+                .getItem("accountID")
+                ?.replace(/"/g, "")
+                .trim();
 
-      if (!token || !accountID) {
-        setUser(null);
-        return;
-      }
+            if (!token || !accountID) {
+                setUser(null);
+                return;
+            }
 
             try {
                 const userResponse = await userApi.getUserById(accountID);
@@ -89,79 +96,58 @@ export default function Account() {
         setFileList([]);
     };
 
-    fetchUserData();
-  }, []);
+    const onFinish = async (values: any) => {
+        const token = localStorage.getItem("accessToken");
+        const accountID = localStorage.getItem("accountID")?.replace(/"/g, "").trim();
 
-  useEffect(() => {
-    if (user) {
-      form.setFieldsValue({
-        fullname: user.fullname || "",
-        email: user.email || "",
-        phone: user.phone_number || "",
-        birthDate: user.dateOfBirth
-          ? dayjs(user.dateOfBirth, "YYYY-MM-DD")
-          : null,
-      });
-    }
-  }, [user, form]);
+        if (!token || !accountID) {
+            message.error("Thiếu token hoặc accountID!");
+            return;
+        }
 
-  const handleCancel = () => {
-    if (user) {
-      form.resetFields();
-      form.setFieldsValue({
-        fullname: user.fullname || "",
-        email: user.email || "",
-        phone: user.phone_number || "",
-        birthDate: user.dateOfBirth
-          ? dayjs(user.dateOfBirth, "YYYY-MM-DD")
-          : null,
-      });
-    }
-    setFileList([]);
-    setIsEditing(false);
-  };
+        const formData = new FormData();
+        formData.append("fullname", values.fullname || "");
+        formData.append("email", values.email || "");
+        formData.append("phone_number", values.phone || "");
+        formData.append("dateOfBirth", values.birthDate?.format("YYYY-MM-DD") || "");
 
-  const onFinish = async (values: any) => {
-    const token = localStorage.getItem("accessToken");
-    const accountID = localStorage
-      .getItem("accountID")
-      ?.replace(/"/g, "")
-      .trim();
+        // Nếu có file ảnh, thêm vào FormData
+        if (fileList.length > 0) {
+            const file = fileList[0].originFileObj;
+            if (!file) {
+                message.error("Vui lòng chọn file để upload!");
+                return;
+            }
 
-    if (!token || !accountID) {
-      message.error("Thiếu token hoặc accountID!");
-      return;
-    }
+            // Kiểm tra kích thước file (1MB = 1024 * 1024 bytes)
+            if (file.size > 1024 * 1024) {
+                message.error("Dung lượng file tối đa là 1MB!");
+                return;
+            }
 
-    const formData = new FormData();
-    formData.append("fullname", values.fullname || "");
-    formData.append("email", values.email || "");
-    formData.append("phone_number", values.phone || "");
-    formData.append(
-      "dateOfBirth",
-      values.birthDate?.format("YYYY-MM-DD") || ""
-    );
+            // Kiểm tra định dạng file
+            const allowedTypes = ["image/jpeg", "image/png"];
+            if (!allowedTypes.includes(file.type)) {
+                message.error("Chỉ hỗ trợ định dạng JPG, PNG!");
+                return;
+            }
 
-    // Nếu có file ảnh, thêm vào FormData
-    if (fileList.length > 0) {
-      const file = fileList[0].originFileObj;
-      if (!file) {
-        message.error("Vui lòng chọn file để upload!");
-        return;
-      }
+            formData.append("avatar", file); // Thêm file vào FormData
+        }
 
-      // Kiểm tra kích thước file (1MB = 1024 * 1024 bytes)
-      if (file.size > 1024 * 1024) {
-        message.error("Dung lượng file tối đa là 1MB!");
-        return;
-      }
+        setUploading(true);
 
-      // Kiểm tra định dạng file
-      const allowedTypes = ["image/jpeg", "image/png"];
-      if (!allowedTypes.includes(file.type)) {
-        message.error("Chỉ hỗ trợ định dạng JPG, PNG!");
-        return;
-      }
+        try {
+            const userUpdateResponse = await userApi.update(accountID, formData);
+            const data = userUpdateResponse.data;
+            const updatedUser = {
+                ...user,
+                ...data.data,
+                fullname: values.fullname || data.data?.fullname || user?.fullname,
+                email: values.email || data.data?.email || user?.email,
+                phone_number: values.phone || data.data?.phone_number || user?.phone_number,
+                dateOfBirth: values.birthDate?.format("YYYY-MM-DD") || data.data?.dateOfBirth || user?.dateOfBirth,
+            };
 
             setUser(updatedUser);
             localStorage.setItem("userData", JSON.stringify(updatedUser));
@@ -173,23 +159,31 @@ export default function Account() {
         }
     };
 
-    setUploading(true);
+    const validatePhoneNumber = (_: any, value: string) => {
+        const phoneRegex = /^(03|05|07|08|09)[0-9]{8}$/; // Bắt đầu bằng 03, 05, 07, 08, 09 và đủ 10 số
+        if (value && !phoneRegex.test(value)) {
+            return Promise.reject(new Error('Số điện thoại không hợp lệ! Phải bắt đầu bằng 03, 05, 07, 08, 09 và đủ 10 số.'));
+        }
+        return Promise.resolve();
+    };
 
-    try {
-      const userUpdateResponse = await userApi.update(accountID, formData);
-      const data = userUpdateResponse.data;
-      const updatedUser = {
-        ...user,
-        ...data.data,
-        fullname: values.fullname || data.data?.fullname || user?.fullname,
-        email: values.email || data.data?.email || user?.email,
-        phone_number:
-          values.phone || data.data?.phone_number || user?.phone_number,
-        dateOfBirth:
-          values.birthDate?.format("YYYY-MM-DD") ||
-          data.data?.dateOfBirth ||
-          user?.dateOfBirth,
-      };
+    const uploadProps = {
+        onRemove: () => {
+            setFileList([]);
+        },
+        beforeUpload: (file: any) => {
+            setFileList([file]); // Lưu file vào fileList
+            return false; // Ngăn upload tự động
+        },
+        fileList,
+        onChange: (info: any) => {
+            // Cập nhật fileList khi có thay đổi
+            let newFileList = [...info.fileList];
+            // Giới hạn chỉ cho phép 1 file
+            newFileList = newFileList.slice(-1);
+            setFileList(newFileList);
+        },
+    };
 
     return (
         <>
