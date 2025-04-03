@@ -1,11 +1,15 @@
-import { createPaymentLink, handlePaymentWebhook } from '../controllers/payment.controllers.js';
 import { Router } from 'express';
+import { createPaymentLink, handleVnpayCallback } from '../controllers/payment.controllers.js';
 const paymentRouter = Router();
+// Endpoint để tạo link thanh toán VNPay
 paymentRouter.post('/create-payment-link', createPaymentLink);
-// paymentRouter.get('/info/:orderCode', getOrderByOrderId);
-paymentRouter.post('/webhook', handlePaymentWebhook);
-paymentRouter.get('/webhook', (req, res) => {
-    res.send('Webhook endpoint is active. Use POST to send webhook data from PayOS.');
+// Endpoint xử lý callback từ VNPay (khi thanh toán thành công hoặc thất bại)
+paymentRouter.get('/success', handleVnpayCallback);
+paymentRouter.get('/cancel', (req, res) => {
+    res.status(200).json({
+        success: false,
+        message: 'Payment cancelled by user'
+    });
 });
 export default paymentRouter;
 //# sourceMappingURL=payment.routes.js.map

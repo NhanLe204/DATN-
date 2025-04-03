@@ -8,7 +8,10 @@ const ENV_VARS = {
     TMDB_API_KEY: process.env.TMDB_API_KEY,
     FE_URL: process.env.FE_URL,
     EMAIL_USER: process.env.EMAIL_USER,
-    EMAIL_PASS: process.env.EMAIL_PASS
+    EMAIL_PASS: process.env.EMAIL_PASS,
+    VNP_TMNCODE: process.env.VNP_TMNCODE,
+    VNP_HASHSECRET: process.env.VNP_HASHSECRET,
+    VNP_URL: process.env.VNP_HASHSECRET
 };
 export default ENV_VARS;
 //# sourceMappingURL=config.js.map

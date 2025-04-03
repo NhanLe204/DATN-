@@ -22,7 +22,7 @@ export const createOrderAfterPayment = async (req, res) => {
         if (!total_price || !transaction_id || !orderDetails || !Array.isArray(orderDetails)) {
             throw new Error('Missing required fields');
         }
-        const isBooking = orderDetails.every((detail) => detail.serviceID && !detail.productID);
+        const isBooking = orderDetails.every((detail) => detail.serviceId && !detail.product);
         const isOrder = orderDetails.some((detail) => detail.productID);
         if (isOrder && !deliveryID) {
             throw new Error('Delivery ID is required for product orders');
@@ -118,7 +118,7 @@ export const createOrderAfterPayment = async (req, res) => {
         // 6. Calculate total_price
         let calculatedTotalPrice = 0;
         const orderDetailsPromises = orderDetails.map(async (detail) => {
-            const { productID, serviceID, quantity, product_price, booking_date } = detail;
+            const { productID, serviceID, quantity, product_price, booking_date, petName = null, petType = null } = detail;
             if (!quantity || !product_price || (!productID && !serviceID)) {
                 throw new Error('Invalid order detail data');
             }
@@ -137,6 +137,10 @@ export const createOrderAfterPayment = async (req, res) => {
                 const service = await serviceModel.findOne({ _id: serviceID, status: ServiceStatus.ACTIVE }).session(session);
                 if (!service)
                     throw new Error(`Service not found or not active: ${serviceID}`);
+                // Yêu cầu petName và petType cho booking
+                if (!petName || !petType) {
+                    throw new Error('petName and petType are required for service booking');
+                }
             }
             const detailTotalPrice = quantity * product_price;
             calculatedTotalPrice += detailTotalPrice;
@@ -150,7 +154,9 @@ export const createOrderAfterPayment = async (req, res) => {
                 quantity,
                 product_price,
                 total_price: detailTotalPrice,
-                booking_date: standardizedBookingDate
+                booking_date: standardizedBookingDate,
+                petName: serviceID ? petName : null,
+                petType: serviceID ? petType : null
             };
         });
         const validatedOrderDetails = await Promise.all(orderDetailsPromises);
@@ -200,7 +206,9 @@ export const createOrderAfterPayment = async (req, res) => {
                 quantity: detail.quantity,
                 product_price: detail.product_price,
                 total_price: detail.total_price,
-                booking_date: detail.booking_date
+                booking_date: detail.booking_date,
+                petName: detail.serviceID ? detail.petName : undefined, // Chỉ thêm nếu là dịch vụ
+                petType: detail.serviceID ? detail.petType : undefined // Chỉ thêm nếu là dịch vụ
             });
         });
         await Promise.all(orderDetailDocs.map((detail) => detail.save({ session })));

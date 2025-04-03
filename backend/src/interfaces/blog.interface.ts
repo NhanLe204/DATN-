@@ -7,7 +7,7 @@ export interface IBlog {
   product?: IProduct;
   // user?: IUser;
   // image_url: string[];
-  tittle: string;
+  title: string;
   author: string;
   createdAt: Date;
   updatedAt: Date;

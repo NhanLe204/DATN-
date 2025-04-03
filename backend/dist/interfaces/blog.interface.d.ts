@@ -1,12 +1,9 @@
 import { ObjectId } from 'mongoose';
-import { IUser } from './user.interface.js';
 import { IProduct } from './product.interface.js';
 import { BlogStatus } from '@/enums/blog.enum.js';
 export interface IBlog {
     _id: ObjectId;
     product?: IProduct;
-    user?: IUser;
-    image_url: string[];
     title: string;
     author: string;
     createdAt: Date;

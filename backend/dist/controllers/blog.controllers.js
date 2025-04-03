@@ -1,6 +1,5 @@
 import blogModel from '../models/blog.model.js';
 import { BlogStatus } from '../enums/blog.enum.js';
-// Create a new blog
 export const createBlog = async (req, res) => {
     try {
         const { title, content, image_url, author, product, user, status } = req.body;
@@ -30,7 +29,6 @@ export const createBlog = async (req, res) => {
         });
     }
 };
-// Get all blogs
 export const getAllBlogs = async (req, res) => {
     try {
         const blogs = await blogModel.find();
@@ -40,7 +38,6 @@ export const getAllBlogs = async (req, res) => {
         res.status(500).json({ success: false, message: 'Server error when fetching blogs' });
     }
 };
-// Get active blogs with pagination
 export const getActiveBlogs = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;

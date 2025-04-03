@@ -18,7 +18,6 @@ const orderSchema = new Schema({
         default: PaymentStatus.PENDING,
         required: false
     },
-    paymentOrderCode: { type: Number, default: 0 },
     status: {
         type: String,
         enum: OrderStatus,

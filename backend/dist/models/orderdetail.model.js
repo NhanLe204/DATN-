@@ -9,7 +9,13 @@ const orderDetailSchema = new Schema({
     quantity: { type: Number, required: true },
     product_price: { type: Number, required: true },
     total_price: { type: Number, required: true },
-    booking_date: { type: String, required: false, default: '' }
+    booking_date: { type: String, required: false, default: '' },
+    petName: { type: String, required: false, default: '' },
+    petType: {
+        type: String,
+        required: false,
+        default: ''
+    }
 }, { timestamps: true });
 const orderDetailModel = mongoose.models.orderDetail || model('orderDetail', orderDetailSchema);
 export default orderDetailModel;

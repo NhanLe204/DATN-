@@ -89,7 +89,6 @@ export const deleteOrderDetail = async (req: Request, res: Response) => {
   }
 };
 
-
 export const getBookingsByUserId = async (
   req: Request<{}, {}, {}, { userId?: string }>,
   res: Response,
@@ -105,23 +104,23 @@ export const getBookingsByUserId = async (
 
     // Bước 1: Kiểm tra xem user có order nào không
     const userOrders = await orderModel.find({ userID: userId }).select('_id');
-    console.log("User orders:", userOrders);
+    console.log('User orders:', userOrders);
 
     if (!userOrders.length) {
       return res.status(404).json({ success: false, message: 'No orders found for this user' });
     }
 
     // Lấy danh sách orderId
-    const orderIds = userOrders.map(order => order._id);
+    const orderIds = userOrders.map((order) => order._id);
 
     // Bước 2: Tìm orderDetail có serviceId từ các order của user
     const bookings = await orderDetailModel.aggregate([
       { $match: { orderId: { $in: orderIds }, serviceId: { $ne: null } } },
       { $lookup: { from: 'orders', localField: 'orderId', foreignField: '_id', as: 'order' } },
-      { $lookup: { from: 'services', localField: 'serviceId', foreignField: '_id', as: 'service' } },
+      { $lookup: { from: 'services', localField: 'serviceId', foreignField: '_id', as: 'service' } }
     ]);
 
-    console.log("Raw bookings:", bookings);
+    console.log('Raw bookings:', bookings);
 
     if (!bookings.length) {
       return res.status(404).json({ success: false, message: 'No bookings found for this user' });
@@ -133,12 +132,7 @@ export const getBookingsByUserId = async (
   }
 };
 
-
-export const getAllBookings = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const getAllBookings = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     // Bước 1: Lấy tất cả các order
     const allOrders = await orderModel.find().select('_id');
@@ -149,7 +143,7 @@ export const getAllBookings = async (
     }
 
     // Lấy danh sách orderId
-    const orderIds = allOrders.map(order => order._id);
+    const orderIds = allOrders.map((order) => order._id);
 
     // Bước 2: Tìm orderDetail có serviceId từ tất cả các order
     const bookings = await orderDetailModel.aggregate([
@@ -165,20 +159,20 @@ export const getAllBookings = async (
           orderId: '$order._id',
           user: {
             name: '$user.fullname',
-            email: '$user.email',
+            email: '$user.email'
           },
           service: {
             name: '$service.service_name',
             price: '$service.service_price',
-            duration: '$service.duration',
+            duration: '$service.duration'
           },
           booking_date: 1, // Từ orderDetail
           order_date: '$order.order_date', // Từ orderModel
           status: '$order.status',
           petName: 1, // Thêm petName từ orderDetail
-          petType: 1, // Thêm petType từ orderDetail
-        },
-      },
+          petType: 1 // Thêm petType từ orderDetail
+        }
+      }
     ]);
 
     if (!bookings.length) {
