@@ -39,7 +39,7 @@ interface AccountProps {
     setIsEditing: (isEditing: boolean) => void;
 }
 
-export default function Account({ isEditing, setIsEditing }: AccountProps) {
+export default function Account() {
     const params = useParams();
     const type = params["*"] || "account";
     const [form] = Form.useForm();
@@ -94,7 +94,6 @@ export default function Account({ isEditing, setIsEditing }: AccountProps) {
             });
         }
         setFileList([]);
-        setIsEditing(false);
     };
 
     const onFinish = async (values: any) => {
@@ -153,12 +152,10 @@ export default function Account({ isEditing, setIsEditing }: AccountProps) {
             setUser(updatedUser);
             localStorage.setItem("userData", JSON.stringify(updatedUser));
             message.success("Cập nhật thành công!");
-            setIsEditing(false);
             setFileList([]);
             window.location.reload();
         } catch (error) {
             message.error(`Cập nhật thất bại: ${error.message}`);
-            setIsEditing(false);
         }
     };
 
@@ -202,7 +199,7 @@ export default function Account({ isEditing, setIsEditing }: AccountProps) {
                                 { required: true, message: 'Vui lòng nhập họ và tên!' }
                             ]}
                         >
-                            <Input className="rounded border border-gray-300 p-2" disabled={!isEditing} />
+                            <Input className="rounded border border-gray-300 p-2"/>
                         </Item>
                         <Item name="email" label={<span className="text-base font-semibold">Email</span>}>
                             <Input className="rounded border border-gray-300 p-2" disabled />
@@ -215,22 +212,19 @@ export default function Account({ isEditing, setIsEditing }: AccountProps) {
                                 { validator: validatePhoneNumber }
                             ]}
                         >
-                            <Input placeholder="Nhập số điện thoại" className="rounded border border-gray-300 p-2" disabled={!isEditing} />
+                            <Input placeholder="Nhập số điện thoại" className="rounded border border-gray-300 p-2"/>
                         </Item>
                         <Item name="birthDate" label={<span className="text-base font-semibold">Ngày sinh</span>}>
                             <DatePicker
                                 placeholder="Chọn ngày sinh"
                                 className="w-full rounded border border-gray-300 p-2 text-sm focus:ring-2 focus:ring-[#22A6DF]"
-                                disabled={!isEditing}
                                 format="DD-MM-YYYY"
                             />
                         </Item>
-                        {isEditing && (
                             <Item>
                                 <Button htmlType="submit" className="w-1/4 bg-[#22A6DF] hover:bg-[#1890ff] rounded text-white mr-2" loading={uploading}>Lưu</Button>
                                 <Button className="w-1/4 bg-gray-300 hover:bg-gray-400 rounded text-gray-700" onClick={handleCancel} disabled={uploading}>Hủy</Button>
                             </Item>
-                        )}
                     </Form>
                 </div>
                 <div className="w-full md:w-1/2 flex flex-col justify-center items-center">
@@ -239,7 +233,6 @@ export default function Account({ isEditing, setIsEditing }: AccountProps) {
                         <Button
                             icon={<UploadOutlined />}
                             className="bg-[#22A6DF] text-white hover:bg-[#1890ff] rounded my-3"
-                            disabled={!isEditing || uploading}
                         >
                             Chọn
                         </Button>

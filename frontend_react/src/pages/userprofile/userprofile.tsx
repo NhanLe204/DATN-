@@ -7,6 +7,8 @@ import userApi from "../../api/userApi";
 import Account from "../../components/account";
 import Address from "../../components/address";
 import ChangePassword from "../../components/change-password";
+import { MdOutlineRoomService } from "react-icons/md";
+import BookingHistory from "../../components/bookingHistory";
 
 interface User {
   _id: string;
@@ -57,7 +59,6 @@ export default function UserProfile() {
   const type = params["*"] || "account";
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -126,11 +127,6 @@ export default function UserProfile() {
 
     fetchUserData();
   }, []);
-
-  const handleEdit = () => {
-    setIsEditing(true);
-    navigate("/userprofile/account");
-  };
 
   const handleReorder = (order: Order) => {
     setSelectedOrder(order);
@@ -338,7 +334,7 @@ export default function UserProfile() {
           <h2 className="text-lg font-bold text-gray-800">{user?.fullname}</h2>
           <p
             className="flex items-center gap-2 text-sm text-gray-500 cursor-pointer hover:underline"
-            onClick={handleEdit}
+            onClick={() => navigate("/userprofile/account")}
           >
             <FaEdit /> Sửa hồ sơ
           </p>
@@ -372,6 +368,17 @@ export default function UserProfile() {
         >
           <FaMoneyCheckAlt className="text-[#22A6DF]" /> Đơn mua
         </div>
+
+        <div
+          className={`flex items-center gap-2 cursor-pointer ${
+            type === "bookings" ? "text-[#22A6DF]" : "text-gray-600"
+          }`}
+          onClick={() => navigate("/userprofile/bookings")} 
+        >
+          <div className="flex items-center gap-2">
+            <MdOutlineRoomService className="text-[#22A6DF]" /> Lịch đã đặt
+          </div>
+        </div>
       </div>
     </Card>
   );
@@ -381,10 +388,11 @@ export default function UserProfile() {
       {renderSidebar()}
       <Card className="w-full md:w-3/4 rounded-lg border border-gray-200 shadow-md">
         <Routes>
-          <Route path="account" element={<Account isEditing={isEditing} setIsEditing={setIsEditing} />} />
+          <Route path="account" element={<Account />} />
           <Route path="address" element={<Address />} />
           <Route path="change-password" element={<ChangePassword />} />
           <Route path="orders" element={<OrderHistory />} />
+          <Route path="bookings" element={<BookingHistory />} />
           <Route path="*" element={<div>Trang không tồn tại</div>} />
         </Routes>
       </Card>
