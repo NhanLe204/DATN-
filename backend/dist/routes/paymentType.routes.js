@@ -1,12 +1,14 @@
-import { Router } from 'express';
-import { requireAdmin } from '../middlewares/protectRoute.js';
-import { verifyToken } from '../middlewares/verifyToken.js';
-import { getAllPayments, getPaymentById, insertPayment, updatePayment, deletePayments } from '@/controllers/paymentType.controllers.js';
-const paymentTypeRouter = Router();
-paymentTypeRouter.get('/payments', getAllPayments);
-paymentTypeRouter.get('/payments/:id', getPaymentById);
-paymentTypeRouter.post('/payments', verifyToken, requireAdmin, insertPayment);
-paymentTypeRouter.patch('/payments/:id', verifyToken, requireAdmin, updatePayment);
-paymentTypeRouter.delete('/payments/:id', verifyToken, requireAdmin, deletePayments);
-export default paymentTypeRouter;
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const protectRoute_js_1 = require("../middlewares/protectRoute.js");
+const verifyToken_js_1 = require("../middlewares/verifyToken.js");
+const paymentType_controllers_js_1 = require("@/controllers/paymentType.controllers.js");
+const paymentTypeRouter = (0, express_1.Router)();
+paymentTypeRouter.get('/payments', paymentType_controllers_js_1.getAllPayments);
+paymentTypeRouter.get('/payments/:id', paymentType_controllers_js_1.getPaymentById);
+paymentTypeRouter.post('/payments', verifyToken_js_1.verifyToken, protectRoute_js_1.requireAdmin, paymentType_controllers_js_1.insertPayment);
+paymentTypeRouter.patch('/payments/:id', verifyToken_js_1.verifyToken, protectRoute_js_1.requireAdmin, paymentType_controllers_js_1.updatePayment);
+paymentTypeRouter.delete('/payments/:id', verifyToken_js_1.verifyToken, protectRoute_js_1.requireAdmin, paymentType_controllers_js_1.deletePayments);
+exports.default = paymentTypeRouter;
 //# sourceMappingURL=paymentType.routes.js.map

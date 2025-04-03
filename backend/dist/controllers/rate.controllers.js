@@ -1,19 +1,26 @@
-import rateModel from '../models/rate.model.js';
-export const getAllRatings = async (req, res) => {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.deleteRating = exports.updateRating = exports.createRating = exports.getRatingID = exports.getAllRatings = void 0;
+const rate_model_js_1 = __importDefault(require("../models/rate.model.js"));
+const getAllRatings = async (req, res) => {
     try {
         // .populate('orderDetailID');
-        const ratings = await rateModel.find();
+        const ratings = await rate_model_js_1.default.find();
         res.status(200).json({ success: true, data: ratings });
     }
     catch (error) {
         res.status(500).json({ message: 'Lỗi khi lấy danh sách rating', error });
     }
 };
-export const getRatingID = async (req, res) => {
+exports.getAllRatings = getAllRatings;
+const getRatingID = async (req, res) => {
     try {
         const { id } = req.params;
         // .populate('orderDetailID');
-        const rate = await rateModel.findById(id);
+        const rate = await rate_model_js_1.default.findById(id);
         // .populate('orderDetailID');
         if (!rate) {
             res.status(404).json({ success: false, message: 'Không tìm thấy đánh giá' });
@@ -31,11 +38,12 @@ export const getRatingID = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
-export const createRating = async (req, res) => {
+exports.getRatingID = getRatingID;
+const createRating = async (req, res) => {
     try {
         const { orderDetailID, score } = req.body;
         console.log(orderDetailID, score);
-        const newRating = await rateModel.create({ orderDetailID, score });
+        const newRating = await rate_model_js_1.default.create({ orderDetailID, score });
         res.status(201).json(newRating);
     }
     catch (error) {
@@ -43,11 +51,12 @@ export const createRating = async (req, res) => {
         res.status(500).json({ error: 'Failed to create rating', details: errorMessage });
     }
 };
-export const updateRating = async (req, res) => {
+exports.createRating = createRating;
+const updateRating = async (req, res) => {
     try {
         const { id } = req.params;
         const { score } = req.body;
-        const rate = await rateModel.findByIdAndUpdate(id, { score }, { new: true });
+        const rate = await rate_model_js_1.default.findByIdAndUpdate(id, { score }, { new: true });
         // .populate('orderDetailID');
         if (!rate) {
             res.status(404).json({ success: false, message: 'Không tìm thấy đánh giá để cập nhật' });
@@ -69,10 +78,11 @@ export const updateRating = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
-export const deleteRating = async (req, res) => {
+exports.updateRating = updateRating;
+const deleteRating = async (req, res) => {
     try {
         const { id } = req.params;
-        const rate = await rateModel.findByIdAndDelete(id);
+        const rate = await rate_model_js_1.default.findByIdAndDelete(id);
         if (!rate) {
             res.status(404).json({ success: false, message: 'Không tìm thấy đánh giá để xóa' });
             return;
@@ -92,4 +102,5 @@ export const deleteRating = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
+exports.deleteRating = deleteRating;
 //# sourceMappingURL=rate.controllers.js.map

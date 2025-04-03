@@ -1,9 +1,15 @@
-import categoryModel from '../models/category.model.js';
-import { CategoryStatus } from '../enums/category.enum.js';
-import mongoose from 'mongoose';
-export const getAllCategory = async (req, res) => {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.deleteCategory = exports.getCategoriesActive = exports.toggleCategory = exports.updateCategory = exports.insertCategory = exports.getCategoryById = exports.getAllCategory = void 0;
+const category_model_js_1 = __importDefault(require("../models/category.model.js"));
+const category_enum_js_1 = require("../enums/category.enum.js");
+const mongoose_1 = __importDefault(require("mongoose"));
+const getAllCategory = async (req, res) => {
     try {
-        const result = await categoryModel.find();
+        const result = await category_model_js_1.default.find();
         res.status(200).json({ success: true, result });
     }
     catch (error) {
@@ -16,10 +22,11 @@ export const getAllCategory = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
-export const getCategoryById = async (req, res) => {
+exports.getAllCategory = getAllCategory;
+const getCategoryById = async (req, res) => {
     try {
         const { id } = req.params;
-        const category = await categoryModel.findById(id);
+        const category = await category_model_js_1.default.findById(id);
         if (!category) {
             res.status(404).json({ message: 'Không tìm thấy danh mục' });
             return;
@@ -37,7 +44,8 @@ export const getCategoryById = async (req, res) => {
         }
     }
 };
-export const insertCategory = async (req, res) => {
+exports.getCategoryById = getCategoryById;
+const insertCategory = async (req, res) => {
     try {
         const { name, description } = req.body;
         if (!name || !description) {
@@ -46,14 +54,14 @@ export const insertCategory = async (req, res) => {
                 message: 'Please provide an name and description product'
             });
         }
-        const existingNameCategory = await categoryModel.findOne({ name });
+        const existingNameCategory = await category_model_js_1.default.findOne({ name });
         if (existingNameCategory) {
             res.status(400).json({
                 success: false,
                 message: 'Category with this name already exists'
             });
         }
-        const newCategory = new categoryModel({
+        const newCategory = new category_model_js_1.default({
             name,
             description
         });
@@ -73,13 +81,14 @@ export const insertCategory = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
+exports.insertCategory = insertCategory;
 // vẫn để nó hoạt động ( những chuyển qua api khác)
-export const updateCategory = async (req, res) => {
+const updateCategory = async (req, res) => {
     try {
         const { id } = req.params;
         console.log(id, 'ID');
         // Kiểm tra xem ID có hợp lệ không
-        if (!mongoose.Types.ObjectId.isValid(id)) {
+        if (!mongoose_1.default.Types.ObjectId.isValid(id)) {
             res.status(400).json({
                 success: false,
                 message: 'ID không hợp lệ'
@@ -94,12 +103,12 @@ export const updateCategory = async (req, res) => {
             });
             return;
         }
-        if (!Object.values(CategoryStatus).includes(status)) {
+        if (!Object.values(category_enum_js_1.CategoryStatus).includes(status)) {
             res.status(400).json({ success: false, message: 'Trạng thái danh mục không hợp lệ' });
             return;
         }
         // Tìm và cập nhật danh mục
-        const updatedCategory = await categoryModel.findByIdAndUpdate(id, { name, description, status }, { new: true, runValidators: true });
+        const updatedCategory = await category_model_js_1.default.findByIdAndUpdate(id, { name, description, status }, { new: true, runValidators: true });
         if (!updatedCategory) {
             res.status(404).json({ success: false, message: 'Danh mục không tồn tại' });
             return;
@@ -117,7 +126,8 @@ export const updateCategory = async (req, res) => {
         }
     }
 };
-export const toggleCategory = async (req, res) => {
+exports.updateCategory = updateCategory;
+const toggleCategory = async (req, res) => {
     try {
         const { id } = req.params;
         const { status } = req.query;
@@ -129,20 +139,20 @@ export const toggleCategory = async (req, res) => {
         }
         // Kiểm tra status có hợp lệ không
         const statusString = String(status).toLowerCase();
-        if (!Object.values(CategoryStatus).includes(statusString)) {
+        if (!Object.values(category_enum_js_1.CategoryStatus).includes(statusString)) {
             res.status(400).json({
                 message: 'Trạng thái không hợp lệ. Chỉ chấp nhận "active" hoặc "inactive"'
             });
             return;
         }
         // Tìm danh mục theo ID
-        const category = await categoryModel.findById(id);
+        const category = await category_model_js_1.default.findById(id);
         if (!category) {
             res.status(404).json({ message: 'Danh mục không tồn tại' });
             return;
         }
         // Chuyển đổi status sang boolean (inactive = true, active = false)
-        const isHidden = statusString === CategoryStatus.INACTIVE;
+        const isHidden = statusString === category_enum_js_1.CategoryStatus.INACTIVE;
         // Cập nhật trạng thái `isHidden`
         category.status = isHidden ? 'inactive' : 'active';
         await category.save();
@@ -156,25 +166,27 @@ export const toggleCategory = async (req, res) => {
         return;
     }
 };
-export const getCategoriesActive = async (req, res) => {
+exports.toggleCategory = toggleCategory;
+const getCategoriesActive = async (req, res) => {
     try {
-        const result = await categoryModel.find({ status: CategoryStatus.ACTIVE });
+        const result = await category_model_js_1.default.find({ status: category_enum_js_1.CategoryStatus.ACTIVE });
         res.status(200).json({ success: true, result });
     }
     catch (error) {
         res.status(500).json({ success: false, error });
     }
 };
+exports.getCategoriesActive = getCategoriesActive;
 // Xóa category
-export const deleteCategory = async (req, res) => {
+const deleteCategory = async (req, res) => {
     try {
         const { id } = req.params;
-        const category = await categoryModel.findById(id);
+        const category = await category_model_js_1.default.findById(id);
         if (!category) {
             res.status(404).json({ message: 'Không tìm thấy danh mục' });
             return;
         }
-        await categoryModel.findByIdAndDelete(id);
+        await category_model_js_1.default.findByIdAndDelete(id);
         res.status(200).json({ message: 'Xóa danh mục thành công' });
     }
     catch (error) {
@@ -188,4 +200,5 @@ export const deleteCategory = async (req, res) => {
         }
     }
 };
+exports.deleteCategory = deleteCategory;
 //# sourceMappingURL=category.controllers.js.map

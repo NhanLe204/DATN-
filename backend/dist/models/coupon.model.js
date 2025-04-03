@@ -1,7 +1,32 @@
-import { CouponStatus } from '../enums/coupon.enum.js';
-import mongoose, { Schema, model } from 'mongoose';
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const coupon_enum_js_1 = require("../enums/coupon.enum.js");
+const mongoose_1 = __importStar(require("mongoose"));
 // Định nghĩa schema cho Coupon
-const couponSchema = new Schema({
+const couponSchema = new mongoose_1.Schema({
     coupon_code: {
         type: String,
         required: [true, 'Mã coupon là bắt buộc'],
@@ -44,10 +69,10 @@ const couponSchema = new Schema({
     },
     status: {
         type: String,
-        enum: CouponStatus,
-        default: CouponStatus.ACTIVE
+        enum: coupon_enum_js_1.CouponStatus,
+        default: coupon_enum_js_1.CouponStatus.ACTIVE
     }
 });
-const couponModel = mongoose.models.coupon || model('coupon', couponSchema);
-export default couponModel;
+const couponModel = mongoose_1.default.models.coupon || (0, mongoose_1.model)('coupon', couponSchema);
+exports.default = couponModel;
 //# sourceMappingURL=coupon.model.js.map

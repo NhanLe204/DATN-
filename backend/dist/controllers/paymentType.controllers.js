@@ -1,8 +1,14 @@
-import paymentModel from '../models/paymentType.model.js'; // Assuming there's a Payment model
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.deletePayments = exports.updatePayment = exports.insertPayment = exports.getPaymentById = exports.getAllPayments = void 0;
+const paymentType_model_js_1 = __importDefault(require("../models/paymentType.model.js")); // Assuming there's a Payment model
 // Get all payments
-export const getAllPayments = async (req, res) => {
+const getAllPayments = async (req, res) => {
     try {
-        const payments = await paymentModel.find();
+        const payments = await paymentType_model_js_1.default.find();
         res.status(200).json({
             success: true,
             count: payments.length,
@@ -17,10 +23,11 @@ export const getAllPayments = async (req, res) => {
         });
     }
 };
+exports.getAllPayments = getAllPayments;
 // Get payment by ID
-export const getPaymentById = async (req, res) => {
+const getPaymentById = async (req, res) => {
     try {
-        const payment = await paymentModel.findById(req.params.id);
+        const payment = await paymentType_model_js_1.default.findById(req.params.id);
         if (!payment) {
             res.status(404).json({
                 success: false,
@@ -41,8 +48,9 @@ export const getPaymentById = async (req, res) => {
         });
     }
 };
+exports.getPaymentById = getPaymentById;
 // Create new payment
-export const insertPayment = async (req, res) => {
+const insertPayment = async (req, res) => {
     try {
         const { payment_type_name, description } = req.body;
         if (!payment_type_name || !description) {
@@ -52,7 +60,7 @@ export const insertPayment = async (req, res) => {
             });
             return;
         }
-        const payment = new paymentModel({
+        const payment = new paymentType_model_js_1.default({
             payment_type_name,
             description
         });
@@ -71,10 +79,11 @@ export const insertPayment = async (req, res) => {
         });
     }
 };
+exports.insertPayment = insertPayment;
 // Update payment
-export const updatePayment = async (req, res) => {
+const updatePayment = async (req, res) => {
     try {
-        const payment = await paymentModel.findByIdAndUpdate(req.params.id, req.body, {
+        const payment = await paymentType_model_js_1.default.findByIdAndUpdate(req.params.id, req.body, {
             new: true,
             runValidators: true
         });
@@ -99,10 +108,11 @@ export const updatePayment = async (req, res) => {
         });
     }
 };
+exports.updatePayment = updatePayment;
 // Delete payment
-export const deletePayments = async (req, res) => {
+const deletePayments = async (req, res) => {
     try {
-        const payment = await paymentModel.findByIdAndDelete(req.params.id);
+        const payment = await paymentType_model_js_1.default.findByIdAndDelete(req.params.id);
         if (!payment) {
             res.status(404).json({
                 success: false,
@@ -123,4 +133,5 @@ export const deletePayments = async (req, res) => {
         });
     }
 };
+exports.deletePayments = deletePayments;
 //# sourceMappingURL=paymentType.controllers.js.map

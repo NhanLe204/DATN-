@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { usePayOS, PayOSConfig } from "payos-checkout";
 import {
   ChevronRight,
   Package,
@@ -24,14 +25,13 @@ import paymentApi from "../../api/paymentApi";
 import ENV_VARS from "../../../config";
 const { Item } = Form;
 
-// Định nghĩa interface cho phương thức thanh toán
+// Các interface giữ nguyên như cũ
 interface PaymentType {
   _id: string;
   payment_type_name: string;
   description: string;
 }
 
-// Định nghĩa interface cho phương thức vận chuyển
 interface Delivery {
   _id: string;
   delivery_name: string;
@@ -40,7 +40,6 @@ interface Delivery {
   status: string;
 }
 
-// Định nghĩa interface cho coupon
 interface Coupon {
   _id: string;
   coupon_code: string;

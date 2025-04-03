@@ -6,12 +6,32 @@ import User from '../models/user.model.js';
 
 const blogSchema: Schema<IBlog> = new Schema<IBlog>(
   {
-    title: { type: String, required: true },
-    content: { type: String, required: true },
-    image_url: { type: [String], default: [] },
-    author: { type: String, required: true },
-    product: { type: Schema.Types.ObjectId, ref: Product, required: true },
-    user: { type: Schema.Types.ObjectId, ref: User, required: true },
+    product: {
+      type: Schema.Types.ObjectId,
+      ref: Product,
+      autoPopulate: true
+    },
+    userID: {
+      type: Schema.Types.ObjectId,
+      ref: User,
+      autoPopulate: true
+    },
+    image_url: {
+      type: [String],
+      default: []
+    },
+    tittle: {
+      type: String,
+      required: true
+    },
+    author: {
+      type: String,
+      required: true
+    },
+    content: {
+      type: String,
+      required: true
+    },
     status: {
       type: String,
       enum: BlogStatus,

@@ -1,6 +1,12 @@
-import serviceModel from '../models/service.model.js';
-import { ServiceStatus } from '@/enums/service.enum.js';
-export const createService = async (req, res) => {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.deleteService = exports.updateService = exports.getServiceById = exports.getServiceActive = exports.getAllServices = exports.createService = void 0;
+const service_model_js_1 = __importDefault(require("../models/service.model.js"));
+const service_enum_js_1 = require("@/enums/service.enum.js");
+const createService = async (req, res) => {
     try {
         const { service_name, description, service_price, duration, status } = req.body;
         // Validate dữ liệu đầu vào
@@ -22,12 +28,12 @@ export const createService = async (req, res) => {
             return;
         }
         // Kiểm tra service_name đã tồn tại chưa
-        const existingService = await serviceModel.findOne({ service_name });
+        const existingService = await service_model_js_1.default.findOne({ service_name });
         if (existingService) {
             res.status(400).json({ success: false, message: 'Dịch vụ đã tồn tại' });
             return;
         }
-        const newService = new serviceModel({
+        const newService = new service_model_js_1.default({
             service_name,
             description: description || '',
             service_price: price,
@@ -42,9 +48,10 @@ export const createService = async (req, res) => {
         res.status(500).json({ success: false, message: 'Lỗi server khi tạo dịch vụ', details: errorMessage });
     }
 };
-export const getAllServices = async (req, res) => {
+exports.createService = createService;
+const getAllServices = async (req, res) => {
     try {
-        const result = await serviceModel.find();
+        const result = await service_model_js_1.default.find();
         res.status(200).json({ success: true, result });
     }
     catch (error) {
@@ -58,13 +65,14 @@ export const getAllServices = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
-export const getServiceActive = async (req, res) => {
+exports.getAllServices = getAllServices;
+const getServiceActive = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
-        const services = await serviceModel.find({ status: ServiceStatus.ACTIVE }).skip(skip).limit(limit);
-        const total = await serviceModel.countDocuments({ status: ServiceStatus.ACTIVE });
+        const services = await service_model_js_1.default.find({ status: service_enum_js_1.ServiceStatus.ACTIVE }).skip(skip).limit(limit);
+        const total = await service_model_js_1.default.countDocuments({ status: service_enum_js_1.ServiceStatus.ACTIVE });
         res.status(200).json({
             success: true,
             data: services,
@@ -81,18 +89,19 @@ export const getServiceActive = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error', details: errorMessage });
     }
 };
+exports.getServiceActive = getServiceActive;
 // Lấy dịch vụ theo _id (ObjectId của MongoDB)
-export const getServiceById = async (req, res) => {
+const getServiceById = async (req, res) => {
     try {
         const { id } = req.params; // Lấy _id từ params
         const { showAll } = req.query;
-        const service = await serviceModel.findById(id);
+        const service = await service_model_js_1.default.findById(id);
         if (!service) {
             res.status(404).json({ success: false, message: 'Không tìm thấy dịch vụ với ID này' });
             return;
         }
         // Kiểm tra status (nếu không có showAll=true)
-        if (showAll !== 'true' && service.status !== ServiceStatus.ACTIVE) {
+        if (showAll !== 'true' && service.status !== service_enum_js_1.ServiceStatus.ACTIVE) {
             res.status(404).json({
                 success: false,
                 message: 'Dịch vụ không hoạt động'
@@ -106,11 +115,12 @@ export const getServiceById = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error', details: errorMessage });
     }
 };
-export const updateService = async (req, res) => {
+exports.getServiceById = getServiceById;
+const updateService = async (req, res) => {
     try {
         const { id } = req.params;
         const { service_name, description, service_price, duration, status } = req.body;
-        const service = await serviceModel.findById(id);
+        const service = await service_model_js_1.default.findById(id);
         if (!service) {
             res.status(404).json({ success: false, message: 'Không tìm thấy dịch vụ' });
             return;
@@ -146,16 +156,17 @@ export const updateService = async (req, res) => {
         res.status(500).json({ success: false, message: 'Lỗi server khi cập nhật dịch vụ', details: errorMessage });
     }
 };
+exports.updateService = updateService;
 // xóa
-export const deleteService = async (req, res) => {
+const deleteService = async (req, res) => {
     try {
         const { id } = req.params;
-        const service = await serviceModel.findById(id);
+        const service = await service_model_js_1.default.findById(id);
         if (!service) {
             res.status(404).json({ success: false, message: 'Không tìm thấy dịch vụ' });
             return;
         }
-        await serviceModel.findByIdAndDelete(id);
+        await service_model_js_1.default.findByIdAndDelete(id);
         res.status(200).json({ success: true, message: 'Xóa dịch vụ thành công' });
     }
     catch (error) {
@@ -163,4 +174,5 @@ export const deleteService = async (req, res) => {
         res.status(500).json({ success: false, message: 'Lỗi server khi xóa dịch vụ', details: errorMessage });
     }
 };
+exports.deleteService = deleteService;
 //# sourceMappingURL=service.controllers.js.map

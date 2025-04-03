@@ -16,7 +16,6 @@ import {
   FaGift,
   FaCheckCircle,
   FaShoppingCart,
-  // FaUserAlt,
   FaPhoneAlt,
   FaSearch,
   FaBars,
@@ -209,12 +208,12 @@ export default function Header() {
   const userMenu = (
     <Menu>
       {(user?.role === "admin" || user?.role === "employee") && (
-      <Menu.Item key="1">
-        <a href="/admin">
-          <i className="fas fa-cog mr-2"></i>Quản lý website
-        </a>
-      </Menu.Item>
-    )}
+        <Menu.Item key="1">
+          <a href="/admin">
+            <i className="fas fa-cog mr-2"></i>Quản lý website
+          </a>
+        </Menu.Item>
+      )}
       <Menu.Item key="2">
         <a href={`/userprofile/account`}>
           <i className="fas fa-user mr-2"></i>Tài khoản
@@ -276,10 +275,19 @@ export default function Header() {
               {searchResults.map((product) => (
                 <div
                   key={product._id}
-                  className="rounded bg-gray-50 p-4 shadow-md"
+                  className="rounded bg-gray-50 p-4 shadow-md cursor-pointer hover:bg-gray-100"
+                  onClick={() => {
+                    console.log("Navigating to:", `/detail/${product._id}`); // Thêm log để kiểm tra
+                    navigate(`/detail/${product._id}`); // Đúng route
+                    setSearchDesktopOpen(false);
+                  }}
                 >
-                  <img src={`${product.image_url[0]}`} alt="" />
-                  <p>{product.name}</p>
+                  <img
+                    src={`${product.image_url[0]}`}
+                    alt={product.name}
+                    className="w-full h-32 object-cover mb-2"
+                  />
+                  <p className="text-sm font-medium">{product.name}</p>
                   <p className="text-[#22A6DF] font-bold">
                     {new Intl.NumberFormat("vi-VN", {
                       style: "currency",
@@ -349,9 +357,21 @@ export default function Header() {
         {searchResults.length > 0 ? (
           <div className="grid grid-cols-2 gap-4">
             {searchResults.map((product) => (
-              <div key={product._id} className="rounded bg-gray-50 p-4">
-                <img src={`${product.image_url[0]}`} alt="" />
-                <p>{product.name}</p>
+              <div
+                key={product._id}
+                className="rounded bg-gray-50 p-4 cursor-pointer hover:bg-gray-100"
+                onClick={() => {
+                  console.log("Navigating to:", `/detail/${product._id}`); // Thêm log để kiểm tra
+                  navigate(`/detail/${product._id}`); // Đúng route
+                  setSearchMobileOpen(false);
+                }}
+              >
+                <img
+                  src={`${product.image_url[0]}`}
+                  alt={product.name}
+                  className="w-full h-32 object-cover mb-2"
+                />
+                <p className="text-sm font-medium">{product.name}</p>
                 <p className="text-[#22A6DF] font-bold">
                   {new Intl.NumberFormat("vi-VN", {
                     style: "currency",
@@ -582,7 +602,7 @@ export default function Header() {
             { key: "home", label: <a href="/">Trang chủ</a> },
             { key: "products", label: <a href="/product">Sản phẩm</a> },
             { key: "services", label: <a href="/info">Dịch vụ thú cưng</a> },
-            { key: "blog", label: <a href="">Blog</a> },
+            { key: "blog", label: <a href="/blog">Blog</a> },
             { key: "about", label: <a href="/about-us">Giới thiệu</a> },
             { key: "contact", label: <a href="/contact">Liên hệ</a> },
           ]}

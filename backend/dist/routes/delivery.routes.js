@@ -1,12 +1,14 @@
-import { Router } from 'express';
-import { requireAdmin } from '../middlewares/protectRoute.js';
-import { verifyToken } from '../middlewares/verifyToken.js';
-import { deleteDelivery, getAllDeliveries, getDeliveryById, insertDelivery, updateDelivery } from '@/controllers/delivery.controllers.js';
-const deliveryRouter = Router();
-deliveryRouter.get('/delivery', getAllDeliveries);
-deliveryRouter.get('/delivery/:id', getDeliveryById);
-deliveryRouter.post('/delivery', verifyToken, requireAdmin, insertDelivery);
-deliveryRouter.patch('/delivery/:id', verifyToken, requireAdmin, updateDelivery);
-deliveryRouter.delete('/delivery/:id', verifyToken, requireAdmin, deleteDelivery);
-export default deliveryRouter;
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const protectRoute_js_1 = require("../middlewares/protectRoute.js");
+const verifyToken_js_1 = require("../middlewares/verifyToken.js");
+const delivery_controllers_js_1 = require("@/controllers/delivery.controllers.js");
+const deliveryRouter = (0, express_1.Router)();
+deliveryRouter.get('/delivery', delivery_controllers_js_1.getAllDeliveries);
+deliveryRouter.get('/delivery/:id', delivery_controllers_js_1.getDeliveryById);
+deliveryRouter.post('/delivery', verifyToken_js_1.verifyToken, protectRoute_js_1.requireAdmin, delivery_controllers_js_1.insertDelivery);
+deliveryRouter.patch('/delivery/:id', verifyToken_js_1.verifyToken, protectRoute_js_1.requireAdmin, delivery_controllers_js_1.updateDelivery);
+deliveryRouter.delete('/delivery/:id', verifyToken_js_1.verifyToken, protectRoute_js_1.requireAdmin, delivery_controllers_js_1.deleteDelivery);
+exports.default = deliveryRouter;
 //# sourceMappingURL=delivery.routes.js.map
