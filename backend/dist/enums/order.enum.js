@@ -3,9 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.OrderStatus = exports.PaymentStatus = void 0;
 var PaymentStatus;
 (function (PaymentStatus) {
-    PaymentStatus["PENDING"] = "pending";
-    PaymentStatus["PAID"] = "paid";
-    PaymentStatus["CANCELLED"] = "cancelled";
+    PaymentStatus["PENDING"] = "PENDING";
+    PaymentStatus["PAID"] = "PAID";
+    PaymentStatus["CANCELLED"] = "CANCELLED";
 })(PaymentStatus || (exports.PaymentStatus = PaymentStatus = {}));
 var OrderStatus;
 (function (OrderStatus) {

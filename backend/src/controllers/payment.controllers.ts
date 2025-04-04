@@ -65,38 +65,6 @@ export const createPayment = async (req: Request, res: Response): Promise<void> 
     res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 };
-export const vnpayCallBack = async (req: Request, res: Response): Promise<void> => {
-  const vnp_Params = req.query;
-  const vnp_SecureHash = vnp_Params.vnp_SecureHash as string;
-
-  delete vnp_Params.vnp_SecureHash;
-  delete vnp_Params.vnp_SecureHashType;
-
-  const orderId = vnp_Params.vnp_TxnRef as string;
-  console.log('orderId', orderId);
-  if (!mongoose.Types.ObjectId.isValid(orderId)) {
-    res.status(400).json({ message: 'Invalid order ID' });
-    return;
-  }
-
-  const secretKey = process.env.VNP_HASHSECRET!;
-
-  const sortedParams = sortObject(vnp_Params as Record<string, string | number>);
-  const signData = qs.stringify(sortedParams, { encode: false });
-  const checkHash = crypto.createHmac('sha512', secretKey).update(signData, 'utf-8').digest('hex');
-
-  if (checkHash !== vnp_SecureHash) {
-    return res.redirect(`${process.env.CLIENT_RETURN_FAIL}?orderId=${orderId}&error=invalid-signature`);
-  }
-
-  if (vnp_Params.vnp_TransactionStatus === '00') {
-    await orderModel.findByIdAndUpdate(orderId, { payment_status: 'PAID' });
-    return res.redirect(`${process.env.CLIENT_RETURN_SUCCESS}?orderId=${orderId}`);
-  } else {
-    await orderModel.findByIdAndUpdate(orderId, { payment_status: 'FAILED' });
-    return res.redirect(`${process.env.CLIENT_RETURN_FAIL}?orderId=${orderId}`);
-  }
-};
 
 // Hàm sắp xếp object để tạo chữ ký đúng
 function sortObject(obj: Record<string, string | number>): Record<string, string> {

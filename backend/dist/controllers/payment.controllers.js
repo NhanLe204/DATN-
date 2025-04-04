@@ -3,13 +3,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.vnpayCallBack = exports.createPayment = void 0;
+exports.createPayment = void 0;
 const crypto_1 = __importDefault(require("crypto"));
 const qs_1 = __importDefault(require("qs"));
 const moment_1 = __importDefault(require("moment"));
 const dotenv_1 = __importDefault(require("dotenv"));
-const order_model_1 = __importDefault(require("@/models/order.model"));
-const mongoose_1 = __importDefault(require("mongoose"));
 dotenv_1.default.config();
 const createPayment = async (req, res) => {
     try {
@@ -62,34 +60,6 @@ const createPayment = async (req, res) => {
     }
 };
 exports.createPayment = createPayment;
-const vnpayCallBack = async (req, res) => {
-    const vnp_Params = req.query;
-    const vnp_SecureHash = vnp_Params.vnp_SecureHash;
-    delete vnp_Params.vnp_SecureHash;
-    delete vnp_Params.vnp_SecureHashType;
-    const orderId = vnp_Params.vnp_TxnRef;
-    console.log('orderId', orderId);
-    if (!mongoose_1.default.Types.ObjectId.isValid(orderId)) {
-        res.status(400).json({ message: 'Invalid order ID' });
-        return;
-    }
-    const secretKey = process.env.VNP_HASHSECRET;
-    const sortedParams = sortObject(vnp_Params);
-    const signData = qs_1.default.stringify(sortedParams, { encode: false });
-    const checkHash = crypto_1.default.createHmac('sha512', secretKey).update(signData, 'utf-8').digest('hex');
-    if (checkHash !== vnp_SecureHash) {
-        return res.redirect(`${process.env.CLIENT_RETURN_FAIL}?orderId=${orderId}&error=invalid-signature`);
-    }
-    if (vnp_Params.vnp_TransactionStatus === '00') {
-        await order_model_1.default.findByIdAndUpdate(orderId, { payment_status: 'PAID' });
-        return res.redirect(`${process.env.CLIENT_RETURN_SUCCESS}?orderId=${orderId}`);
-    }
-    else {
-        await order_model_1.default.findByIdAndUpdate(orderId, { payment_status: 'FAILED' });
-        return res.redirect(`${process.env.CLIENT_RETURN_FAIL}?orderId=${orderId}`);
-    }
-};
-exports.vnpayCallBack = vnpayCallBack;
 // Hàm sắp xếp object để tạo chữ ký đúng
 function sortObject(obj) {
     const sorted = {};
