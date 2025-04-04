@@ -1,5 +1,5 @@
 import React from "react";
-import PetInfoForm from "./petInfoForm";
+import PetInfoForm from "./PetInfoForm";
 import { message } from "antd";
 import moment from "moment-timezone";
 
@@ -16,7 +16,9 @@ interface PetFormContainerProps {
   setSlotAvailability: (availability: any) => void;
   handleServiceChange: (value: string, index: number) => void;
   handleDateChange: (date: moment.Moment | null, index: number) => void;
+  handleTimeChange: (time: string, index: number) => void; 
   getAvailableTimeSlots: (index: number) => string[];
+  onViewPriceClick?: () => void;
 }
 
 const PetFormContainer: React.FC<PetFormContainerProps> = ({
@@ -32,7 +34,9 @@ const PetFormContainer: React.FC<PetFormContainerProps> = ({
   setSlotAvailability,
   handleServiceChange,
   handleDateChange,
+  handleTimeChange, 
   getAvailableTimeSlots,
+  onViewPriceClick,
 }) => {
   const addPetForm = () => {
     if (petForms.length < 2) {
@@ -81,8 +85,10 @@ const PetFormContainer: React.FC<PetFormContainerProps> = ({
           slotAvailability={slotAvailability[index] || {}}
           handleServiceChange={handleServiceChange}
           handleDateChange={handleDateChange}
+          handleTimeChange={handleTimeChange} 
           removePetForm={index === 1 ? removePetForm : undefined}
           isRemovable={petForms.length > 1 && index === 1}
+          onViewPriceClick={onViewPriceClick}
         />
       ))}
       {petForms.length < 2 && (

@@ -15,10 +15,14 @@ import { OrderStatus, PaymentStatus } from '../enums/order.enum.js';
 import { ProductStatus } from '../enums/product.enum.js';
 import { ServiceStatus } from '../enums/service.enum.js';
 import serviceModel from '../models/service.model.js';
+import { BookingStatus } from '@/enums/booking.enum.js';
+import sendBookingEmail from '@/utils/sendBookingEmail.js';
+import sendEmail from '@/utils/sendEmail.js';
 
 export const createOrderAfterPayment = async (req: Request, res: Response): Promise<void> => {
   const session = await mongoose.startSession();
   session.startTransaction();
+  let transactionCommitted = false;
 
   try {
     const {
@@ -29,151 +33,74 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       orderdate,
       total_price,
       shipping_address = null,
-      transaction_id,
       orderDetails,
       paymentOrderCode = null,
-      infoUserGuest = null
+      infoUserGuest = null,
     } = req.body;
-    console.log(paymentOrderCode, 'paymentOrderCode');
+
+    console.log('req.body.orderDetails:', JSON.stringify(orderDetails, null, 2));
+
     // 1. Validate input data
     if (!total_price || !orderDetails || !Array.isArray(orderDetails)) {
       throw new Error('Missing required fields');
     }
 
-    const isBooking = orderDetails.every((detail: any) => detail.serviceId && !detail.product);
-    const isOrder = orderDetails.some((detail: any) => detail.productID);
+    // Ánh xạ key để đồng nhất
+    const normalizedOrderDetails = orderDetails.map((detail: any) => ({
+      productId: detail.productId || detail.productID || null,
+      serviceId: detail.serviceId || detail.serviceID || null,
+      quantity: detail.quantity,
+      product_price: detail.product_price || detail.productPrice,
+      booking_date: detail.booking_date || detail.bookingDate,
+      petName: detail.petName,
+      petType: detail.petType,
+    }));
+
+    const isBooking = normalizedOrderDetails.every((detail: any) => detail.serviceId && !detail.productId);
+    const isOrder = normalizedOrderDetails.some((detail: any) => detail.productId);
+
+    console.log('normalizedOrderDetails:', JSON.stringify(normalizedOrderDetails, null, 2));
+    console.log('isBooking:', isBooking);
+    console.log('isOrder:', isOrder);
 
     if (isOrder && !deliveryID) {
       throw new Error('Delivery ID is required for product orders');
     }
 
-    // 2. Validate user existence
-    if (userID !== null) {
-      const user = await userModel.findById(userID).session(session);
-      if (!user) throw new Error('User not found');
-    }
-
-    // 3. Validate payment type
-    if (payment_typeID) {
-      const paymentType = await PaymentType.findById(payment_typeID).session(session);
-      if (!paymentType) throw new Error('Payment type not found');
-    }
-
     // 4. Validate delivery
-    let delivery = null;
     let deliveryFee = 0;
-    if (deliveryID) {
-      delivery = await deliveryModel.findById(deliveryID).session(session);
+    if (isOrder && deliveryID) {
+      const delivery = await deliveryModel.findById(deliveryID).session(session);
       if (!delivery) throw new Error('Delivery method not found');
       deliveryFee = delivery?.delivery_fee || 0;
     }
 
-    // 5. Kiểm tra slot trống cho các booking
-    const maxSlots = 5;
-    const slotUsage: { [key: string]: number } = {}; // Theo dõi số pet trong từng slot
-
-    for (const detail of orderDetails) {
-      const { serviceID, booking_date } = detail;
-
-      if (serviceID && booking_date) {
-        const bookingDate = new Date(booking_date);
-        if (isNaN(bookingDate.getTime())) {
-          throw new Error(`Invalid booking_date format: ${booking_date}`);
-        }
-
-        bookingDate.setMinutes(0, 0, 0);
-        const date = bookingDate.toISOString().split('T')[0];
-        const hour = bookingDate.getHours();
-
-        const service = await serviceModel.findOne({ _id: serviceID, status: ServiceStatus.ACTIVE }).session(session);
-        if (!service) throw new Error(`Service not found or not active: ${serviceID}`);
-
-        const serviceDuration = service.duration || 60;
-        const affectedSlots = Math.ceil(serviceDuration / 60);
-
-        const timeSlots: { start: Date; end: Date; time: string }[] = [];
-        for (let i = 0; i < affectedSlots; i++) {
-          const slotHour = hour + i;
-          const startDate = new Date(`${date}T${slotHour.toString().padStart(2, '0')}:00:00+07:00`);
-          const endDate = new Date(`${date}T${slotHour.toString().padStart(2, '0')}:59:59.999+07:00`);
-          timeSlots.push({ start: startDate, end: endDate, time: `${slotHour}h` });
-        }
-
-        // Đếm số pet trong request cho từng slot
-        for (const slot of timeSlots) {
-          const slotKey = `${date}-${slot.time}`;
-          slotUsage[slotKey] = (slotUsage[slotKey] || 0) + 1;
-        }
-      }
-    }
-
-    // Kiểm tra slot còn lại so với slotUsage
-    for (const detail of orderDetails) {
-      const { serviceID, booking_date } = detail;
-
-      if (serviceID && booking_date) {
-        const bookingDate = new Date(booking_date);
-        bookingDate.setMinutes(0, 0, 0);
-        const date = bookingDate.toISOString().split('T')[0];
-        const hour = bookingDate.getHours();
-
-        const service = await serviceModel.findOne({ _id: serviceID, status: ServiceStatus.ACTIVE }).session(session);
-        const serviceDuration = service.duration || 60;
-        const affectedSlots = Math.ceil(serviceDuration / 60);
-
-        const timeSlots: { start: Date; end: Date; time: string }[] = [];
-        for (let i = 0; i < affectedSlots; i++) {
-          const slotHour = hour + i;
-          const startDate = new Date(`${date}T${slotHour.toString().padStart(2, '0')}:00:00+07:00`);
-          const endDate = new Date(`${date}T${slotHour.toString().padStart(2, '0')}:59:59.999+07:00`);
-          timeSlots.push({ start: startDate, end: endDate, time: `${slotHour}h` });
-        }
-
-        for (const slot of timeSlots) {
-          const bookedPets = await orderDetailModel
-            .countDocuments({
-              booking_date: {
-                $gte: slot.start,
-                $lte: slot.end
-              }
-            })
-            .session(session);
-
-          const slotKey = `${date}-${slot.time}`;
-          const totalPetsInSlot = bookedPets + (slotUsage[slotKey] || 0);
-          if (totalPetsInSlot > maxSlots) {
-            throw new Error(
-              `Not enough slots for booking on ${date} at ${slot.time}. Only ${maxSlots - bookedPets} slot(s) remaining.`
-            );
-          }
-        }
-      }
-    }
-
     // 6. Calculate total_price
     let calculatedTotalPrice = 0;
-    const orderDetailsPromises = orderDetails.map(async (detail: any) => {
-      const { productID, serviceID, quantity, product_price, booking_date, petName = null, petType = null } = detail;
+    const orderDetailsPromises = normalizedOrderDetails.map(async (detail: any) => {
+      const { productId, serviceId, quantity, product_price, booking_date, petName, petType } = detail;
 
-      if (!quantity || !product_price || (!productID && !serviceID)) {
+      if (!quantity || !product_price || (!productId && !serviceId)) {
+        console.log('Invalid detail:', JSON.stringify(detail, null, 2));
         throw new Error('Invalid order detail data');
       }
 
-      if (productID) {
+      if (productId) {
         const product = await productModel
-          .findOne({ _id: productID, status: ProductStatus.AVAILABLE })
+          .findOne({ _id: productId, status: ProductStatus.AVAILABLE })
           .session(session);
-        if (!product) throw new Error(`Product not found or not available: ${productID}`);
+        if (!product) throw new Error(`Product not found or not available: ${productId}`);
         if (product.stock < quantity) {
-          throw new Error(`Insufficient stock for product: ${productID}`);
+          throw new Error(`Insufficient stock for product: ${productId}`);
         }
-        await productModel.findByIdAndUpdate(productID, { $inc: { stock: -quantity } }, { session });
+        await productModel.findByIdAndUpdate(productId, { $inc: { stock: -quantity } }, { session });
       }
 
-      if (serviceID) {
-        const service = await serviceModel.findOne({ _id: serviceID, status: ServiceStatus.ACTIVE }).session(session);
-        if (!service) throw new Error(`Service not found or not active: ${serviceID}`);
-        // Yêu cầu petName và petType cho booking
+      if (serviceId) {
+        const service = await serviceModel
+          .findOne({ _id: serviceId, status: ServiceStatus.ACTIVE })
+          .session(session);
+        if (!service) throw new Error(`Service not found or not active: ${serviceId}`);
         if (!petName || !petType) {
           throw new Error('petName and petType are required for service booking');
         }
@@ -182,20 +109,20 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       const detailTotalPrice = quantity * product_price;
       calculatedTotalPrice += detailTotalPrice;
 
-      const standardizedBookingDate = serviceID && booking_date ? new Date(booking_date) : null;
+      const standardizedBookingDate = serviceId && booking_date ? new Date(booking_date) : null;
       if (standardizedBookingDate) {
         standardizedBookingDate.setMinutes(0, 0, 0);
       }
 
       return {
-        productID,
-        serviceID,
+        productId,
+        serviceId,
         quantity,
         product_price,
         total_price: detailTotalPrice,
         booking_date: standardizedBookingDate,
-        petName: serviceID ? petName : null,
-        petType: serviceID ? petType : null
+        petName: serviceId ? petName : null,
+        petType: serviceId ? petType : null,
       };
     });
 
@@ -220,8 +147,8 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       await couponModel.findByIdAndUpdate(couponID, { $inc: { used_count: 1 } }, { session });
     }
 
-    const discountedSubtotal = calculatedTotalPrice - discount;
-    const finalTotalPrice = discountedSubtotal + deliveryFee;
+    const discountedSubtotal = subtotal - discount;
+    const finalTotalPrice = isOrder ? discountedSubtotal + deliveryFee : discountedSubtotal;
 
     if (Math.abs(finalTotalPrice - total_price) > 1) {
       throw new Error('Total price mismatch');
@@ -233,13 +160,14 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       payment_typeID,
       deliveryID: isOrder ? deliveryID : null,
       couponID: couponID || null,
-      orderdate: orderdate ? new Date(orderdate) : new Date(),
+      order_date: orderdate ? new Date(orderdate) : new Date(),
       total_price: finalTotalPrice,
       shipping_address,
       paymentOrderCode,
-      status: OrderStatus.PENDING,
-      transaction_id,
-      inforUserGuest: infoUserGuest || null
+      status: isOrder ? OrderStatus.PENDING : null,
+      bookingStatus: isBooking ? BookingStatus.CONFIRMED : null,
+      payment_status: PaymentStatus.PAID,
+      inforUserGuest: infoUserGuest || null,
     });
 
     const savedOrder = await order.save({ session });
@@ -248,14 +176,14 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
     const orderDetailDocs = validatedOrderDetails.map((detail: any) => {
       return new orderDetailModel({
         orderId: savedOrder._id,
-        productId: detail.productID || null,
-        serviceId: detail.serviceID || null,
+        productId: detail.productId || null,
+        serviceId: detail.serviceId || null,
         quantity: detail.quantity,
         product_price: detail.product_price,
         total_price: detail.total_price,
         booking_date: detail.booking_date,
-        petName: detail.serviceID ? detail.petName : undefined, // Chỉ thêm nếu là dịch vụ
-        petType: detail.serviceID ? detail.petType : undefined // Chỉ thêm nếu là dịch vụ
+        petName: detail.petName,
+        petType: detail.petType,
       });
     });
 
@@ -263,25 +191,84 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
 
     // 9. Commit transaction
     await session.commitTransaction();
+    transactionCommitted = true;
 
-    // 10. Send response
+    // 10. Send email confirmation
+    let recipientEmail: string | null = null;
+    if (userID) {
+      const user = await mongoose.model('user').findById(userID); // Sửa từ 'User' thành 'user'
+      recipientEmail = user?.email || null;
+    } else if (infoUserGuest && infoUserGuest.email) {
+      recipientEmail = infoUserGuest.email;
+    }
+
+    if (recipientEmail) {
+      if (isBooking) {
+        try {
+          await sendBookingEmail({
+            recipientEmail,
+            orderDetails: validatedOrderDetails.map((detail) => ({
+              serviceId: detail.serviceId,
+              booking_date: detail.booking_date,
+              petName: detail.petName,
+              petType: detail.petType,
+            })),
+            orderId: savedOrder._id.toString(), 
+          });
+          console.log('Booking email sent to:', recipientEmail);
+        } catch (emailError) {
+          console.error('Failed to send booking email:', emailError);
+        }
+      } else {
+        const subject = 'Xác nhận đơn hàng thành công';
+        const text = `Kính gửi ${infoUserGuest?.fullName || 'Khách hàng'},\n\nĐơn hàng của bạn đã được xác nhận:\n${validatedOrderDetails
+          .map(
+            (detail) =>
+              `- Sản phẩm: ${detail.productId || detail.serviceId} | Số lượng: ${detail.quantity} | Giá: ${detail.product_price}`
+          )
+          .join('\n')}\nTổng tiền: ${finalTotalPrice} VND\n\nTrân trọng,\nPet Heaven`;
+        const html = `<p>Kính gửi ${infoUserGuest?.fullName || 'Khách hàng'},</p>
+          <p>Đơn hàng của bạn đã được xác nhận:</p>
+          <ul>${validatedOrderDetails
+            .map(
+              (detail) =>
+                `<li>Sản phẩm: ${detail.productId || detail.serviceId} | Số lượng: ${detail.quantity} | Giá: ${detail.product_price}</li>`
+            )
+            .join('')}</ul>
+          <p>Tổng tiền: ${finalTotalPrice} VND</p>
+          <p>Trân trọng,<br>Pet Heaven</p>`;
+
+        try {
+          await sendEmail(recipientEmail, subject, text, html);
+          console.log('Order email sent to:', recipientEmail);
+        } catch (emailError) {
+          console.error('Failed to send order email:', emailError);
+        }
+      }
+    } else {
+      console.warn('No recipient email found, skipping email notification');
+    }
+
+    // 11. Send response
     res.status(201).json({
       success: true,
       message: 'Order and order details created successfully',
       data: {
         order: savedOrder,
-        orderDetails: orderDetailDocs
-      }
+        orderDetails: orderDetailDocs,
+      },
     });
   } catch (error) {
-    await session.abortTransaction();
+    if (!transactionCommitted) {
+      await session.abortTransaction();
+    }
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Error in createOrderAfterPayment:', errorMessage);
 
     res.status(400).json({
       success: false,
       message: errorMessage,
-      error: error instanceof Error ? error.stack : 'Unknown error stack'
+      error: error instanceof Error ? error.stack : 'Unknown error stack',
     });
   } finally {
     session.endSession();

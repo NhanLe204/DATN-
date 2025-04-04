@@ -1,12 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { Form, Button, message } from "antd";
 import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import moment from "moment-timezone";
 import serviceApi from "../../api/serviceApi";
 import orderApi from "../../api/orderApi";
 import CustomerInfoForm from "../../components/booking/CustomerInfoForm";
 import PetFormContainer from "../../components/booking/PetFormContainer";
+import {
+  setFormData,
+  setPetForms,
+  setPetFormData,
+  setSelectedDates,
+  resetForm,
+} from "../../redux/slices/spaBookingSlice";
 
 interface Service {
   _id: string;
@@ -26,37 +33,40 @@ interface User {
   email: string;
 }
 
+interface SpaBookingState {
+  formData: any;
+  petForms: number[];
+  petFormData: { estimatedPrice?: number; estimatedDuration?: string }[];
+  selectedDates: (string | null)[];
+}
+
 const SpaBookingForm: React.FC = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { userId } = useSelector((state: { cart: CartState }) => state.cart);
-  const [petForms, setPetForms] = useState<number[]>([0]);
+  const spaBooking = useSelector((state: { spaBooking: SpaBookingState }) => state.spaBooking);
+
   const [services, setServices] = useState<Service[]>([]);
-  const [petFormData, setPetFormData] = useState<
-    { estimatedPrice?: number; estimatedDuration?: string }[]
-  >([{ estimatedPrice: undefined, estimatedDuration: undefined }]);
-  const [selectedDates, setSelectedDates] = useState<(moment.Moment | null)[]>([
-    null,
-  ]);
-  const [currentDateTime, setCurrentDateTime] = useState(
-    moment().tz("Asia/Ho_Chi_Minh")
-  );
+  const [currentDateTime, setCurrentDateTime] = useState(moment().tz("Asia/Ho_Chi_Minh"));
   const [slotAvailability, setSlotAvailability] = useState<{
     [key: string]: { [key: string]: number };
   }>({});
-  const [userData, setUserData] = useState<User | null>(null); 
+  const [userData, setUserData] = useState<User | null>(null);
 
-  const availableTimeSlots = [
-    "8h",
-    "9h",
-    "10h",
-    "11h",
-    "13h",
-    "14h",
-    "15h",
-    "16h",
-    "17h",
-  ];
+  const availableTimeSlots = ["8h", "9h", "10h", "11h", "13h", "14h", "15h", "16h", "17h"];
+
+  // Khôi phục dữ liệu từ Redux khi mount
+  useEffect(() => {
+    form.setFieldsValue(spaBooking.formData);
+    const restoredDates = spaBooking.selectedDates.map((date) =>
+      date ? moment(date) : null
+    );
+    setSelectedDates(restoredDates);
+    restoredDates.forEach((date, index) => {
+      if (date) fetchAvailableSlots(date, index);
+    });
+  }, [form, spaBooking.formData, spaBooking.selectedDates]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -65,7 +75,6 @@ const SpaBookingForm: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Lấy dữ liệu người dùng từ localStorage
   useEffect(() => {
     const fetchUserDataFromLocalStorage = () => {
       const userDataFromStorage = localStorage.getItem("userData");
@@ -83,7 +92,7 @@ const SpaBookingForm: React.FC = () => {
     };
 
     fetchUserDataFromLocalStorage();
-  }, []); // Chỉ chạy một lần khi component mount
+  }, []);
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -100,10 +109,7 @@ const SpaBookingForm: React.FC = () => {
     fetchServices();
   }, []);
 
-  const fetchAvailableSlots = async (
-    date: moment.Moment | null,
-    index: number
-  ) => {
+  const fetchAvailableSlots = async (date: moment.Moment | null, index: number) => {
     if (!date) {
       setSlotAvailability((prev) => {
         const newAvailability = { ...prev };
@@ -115,23 +121,25 @@ const SpaBookingForm: React.FC = () => {
     try {
       const dateStr = date.format("YYYY-MM-DD");
       const response = await orderApi.getAvailableSlots(dateStr);
+      console.log(`Available slots for ${dateStr}:`, response.data);
       setSlotAvailability((prev) => ({
         ...prev,
         [index]: response.data,
       }));
     } catch (error) {
+      console.error("Error fetching slots:", error);
       message.error("Không thể tải danh sách khung giờ, vui lòng thử lại!");
     }
   };
 
   const onFinish = async (values: any) => {
     console.log("Form values on submit:", values);
-  
-    const totalPrice = petFormData.reduce(
+
+    const totalPrice = spaBooking.petFormData.reduce(
       (sum, pet) => sum + (pet.estimatedPrice || 0),
       0
     );
-  
+
     if (!userId) {
       message.error("Vui lòng đăng nhập để đặt lịch!");
       return;
@@ -140,67 +148,63 @@ const SpaBookingForm: React.FC = () => {
       message.error("Vui lòng chọn ít nhất một dịch vụ để đặt lịch!");
       return;
     }
-  
+
     const slotUsage: { [key: string]: number } = {};
-    for (let index = 0; index < petForms.length; index++) {
-      const selectedDate = selectedDates[index];
+    for (let index = 0; index < spaBooking.petForms.length; index++) {
+      const selectedDate = moment(spaBooking.selectedDates[index]);
       const selectedTime = values.pets[index]?.time;
-  
+
       if (!selectedDate || !selectedTime) {
         message.error(`Vui lòng chọn ngày và giờ hẹn cho pet ${index + 1}!`);
         return;
       }
-  
+
       const selectedServiceId = values.pets[index].service;
       const selectedService = services.find((s) => s._id === selectedServiceId);
-      const duration = selectedService?.duration
-        ? parseInt(selectedService.duration)
-        : 60;
+      const duration = selectedService?.duration ? parseInt(selectedService.duration) : 60;
       const slotsNeeded = Math.ceil(duration / 60);
       const hour = parseInt(selectedTime.replace("h", ""), 10);
       const dateStr = selectedDate.format("YYYY-MM-DD");
-  
+
       for (let i = 0; i < slotsNeeded; i++) {
         const checkHour = hour + i;
         const checkTime = `${checkHour}h`;
         const slotKey = `${dateStr}-${checkTime}`;
         slotUsage[slotKey] = (slotUsage[slotKey] || 0) + 1;
-  
+
         const slotsAvailable = slotAvailability[index]?.[checkTime] || 0;
         if (slotUsage[slotKey] > slotsAvailable) {
           message.error(
-            `Không đủ slot cho khung giờ ${checkTime} ngày ${selectedDate.format(
-              "DD/MM/YYYY"
-            )}!`
+            `Không đủ slot cho khung giờ ${checkTime} ngày ${selectedDate.format("DD/MM/YYYY")}!`
           );
           return;
         }
       }
     }
-  
-    const orderDetails = petForms.map((index) => {
-      const selectedDate = selectedDates[index];
+
+    const orderDetails = spaBooking.petForms.map((index) => {
+      const selectedDate = moment(spaBooking.selectedDates[index]);
       const selectedTime = values.pets[index].time;
       const hour = parseInt(selectedTime.replace("h", ""), 10);
-      const serviceTime = selectedDate!.clone().set({
+      const serviceTime = selectedDate.clone().set({
         hour,
         minute: 0,
         second: 0,
         millisecond: 0,
       });
       const serviceTimeString = serviceTime.format("YYYY-MM-DDTHH:00:00.000+07:00");
-  
+
       return {
         productID: null,
         serviceID: values.pets[index].service,
         quantity: 1,
-        product_price: petFormData[index].estimatedPrice || 0,
+        product_price: spaBooking.petFormData[index].estimatedPrice || 0,
         booking_date: serviceTimeString,
-        petName: values.pets[index].petName || "", // Thêm petName
-        petType: values.pets[index].petType || "", // Thêm petType
+        petName: values.pets[index].petName || "",
+        petType: values.pets[index].petType || "",
       };
     });
-  
+
     const orderData = {
       userID: userId,
       payment_typeID: null,
@@ -209,7 +213,6 @@ const SpaBookingForm: React.FC = () => {
       orderdate: moment().tz("Asia/Ho_Chi_Minh").format("YYYY-MM-DD HH:mm:ss"),
       total_price: totalPrice,
       shipping_address: null,
-      transaction_id: `TRANS_${Date.now()}`,
       orderDetails,
       inforUserGuest: {
         fullName: values.fullName,
@@ -218,52 +221,48 @@ const SpaBookingForm: React.FC = () => {
       },
       note: values.note || "",
     };
-  
+
     console.log("Order data being sent:", orderData);
-  
+
     try {
       const response = await orderApi.create(orderData);
+      console.log("test",response);
+      
       message.success("Đặt lịch thành công!");
       form.resetFields();
-      setPetFormData(
-        petForms.map(() => ({
-          estimatedPrice: undefined,
-          estimatedDuration: undefined,
-        }))
-      );
-      setSelectedDates(petForms.map(() => null));
-      setPetForms([0]);
-      navigate("/userprofile/bookings")
+      dispatch(resetForm());
+      navigate("/userprofile/bookings");
     } catch (error) {
       console.error("API Error Details:", error.response?.data);
-      const errorMessage =
-        error.response?.data?.message || "Có lỗi xảy ra khi đặt lịch!";
+      const errorMessage = error.response?.data?.message || "Có lỗi xảy ra khi đặt lịch!";
       message.error(errorMessage);
     }
   };
 
   const handleServiceChange = (value: string, index: number) => {
     const selectedService = services.find((service) => service._id === value);
-    const updatedPetFormData = [...petFormData];
+    const updatedPetFormData = [...spaBooking.petFormData];
     updatedPetFormData[index] = {
       estimatedPrice: selectedService?.service_price || 0,
       estimatedDuration: selectedService?.duration,
     };
-    setPetFormData(updatedPetFormData);
+    dispatch(setPetFormData(updatedPetFormData));
     form.setFieldsValue({
       pets: {
         [index]: {
           estimatedPrice: selectedService?.service_price || 0,
           estimatedDuration: selectedService?.duration,
-          time: undefined,
+          time: form.getFieldValue(["pets", index, "time"]), 
         },
       },
     });
-    if (selectedDates[index]) fetchAvailableSlots(selectedDates[index], index);
+    const selectedDate = spaBooking.selectedDates[index] ? moment(spaBooking.selectedDates[index]) : null;
+    if (selectedDate) fetchAvailableSlots(selectedDate, index);
+    dispatch(setFormData(form.getFieldsValue()));
   };
 
   const handleDateChange = (date: moment.Moment | null, index: number) => {
-    const updatedDates = [...selectedDates];
+    const updatedDates = [...spaBooking.selectedDates];
     if (date) {
       const newDate = moment.tz(
         {
@@ -277,24 +276,35 @@ const SpaBookingForm: React.FC = () => {
         },
         "Asia/Ho_Chi_Minh"
       );
-      updatedDates[index] = newDate;
+      updatedDates[index] = newDate.toISOString();
       fetchAvailableSlots(newDate, index);
     } else {
       updatedDates[index] = null;
       fetchAvailableSlots(null, index);
     }
-    setSelectedDates(updatedDates);
+    dispatch(setSelectedDates(updatedDates));
     form.setFieldsValue({ pets: { [index]: { time: undefined } } });
+    dispatch(setFormData(form.getFieldsValue()));
+  };
+
+  const handleTimeChange = (time: string, index: number) => {
+    form.setFieldsValue({
+      pets: {
+        [index]: {
+          time,
+        },
+      },
+    });
+    dispatch(setFormData(form.getFieldsValue())); 
   };
 
   const getAvailableTimeSlots = (index: number) => {
-    const selectedDate = selectedDates[index];
+    const selectedDate = spaBooking.selectedDates[index]
+      ? moment(spaBooking.selectedDates[index])
+      : null;
     if (!selectedDate) return availableTimeSlots;
 
-    const isToday = selectedDate.isSame(
-      moment().tz("Asia/Ho_Chi_Minh"),
-      "day"
-    );
+    const isToday = selectedDate.isSame(moment().tz("Asia/Ho_Chi_Minh"), "day");
     let baseSlots = availableTimeSlots;
 
     if (isToday) {
@@ -308,9 +318,7 @@ const SpaBookingForm: React.FC = () => {
     const slotsForDate = slotAvailability[index] || {};
     const selectedServiceId = form.getFieldValue(["pets", index, "service"]);
     const selectedService = services.find((s) => s._id === selectedServiceId);
-    const duration = selectedService?.duration
-      ? parseInt(selectedService.duration)
-      : 60;
+    const duration = selectedService?.duration ? parseInt(selectedService.duration) : 60;
     const slotsNeeded = Math.ceil(duration / 60);
 
     if (Object.keys(slotsForDate).length === 0) return baseSlots;
@@ -321,18 +329,19 @@ const SpaBookingForm: React.FC = () => {
         const checkHour = hour + i;
         const checkTime = `${checkHour}h`;
         const slotsAvailable = slotsForDate[checkTime] || 0;
-        if (slotsAvailable <= 0 || !availableTimeSlots.includes(checkTime))
-          return false;
+        if (slotsAvailable <= 0 || !availableTimeSlots.includes(checkTime)) return false;
       }
       return true;
     });
   };
 
+  const handleViewPriceClick = () => {
+    navigate("/info");
+  };
+
   return (
     <div className="min-h-screen p-6 bg-gray-100">
-      <h1 className="mb-4 text-3xl font-bold text-center">
-        ĐẶT LỊCH SPA CHO THÚ CƯNG
-      </h1>
+      <h1 className="mb-4 text-3xl font-bold text-center">ĐẶT LỊCH SPA CHO THÚ CƯNG</h1>
       <p
         className="text-[#22A6DF] text-center mb-6 cursor-pointer hover:underline"
         onClick={() => navigate("/info")}
@@ -352,18 +361,22 @@ const SpaBookingForm: React.FC = () => {
           />
           <PetFormContainer
             form={form}
-            petForms={petForms}
+            petForms={spaBooking.petForms}
             services={services}
-            petFormData={petFormData}
-            selectedDates={selectedDates}
+            petFormData={spaBooking.petFormData}
+            selectedDates={spaBooking.selectedDates.map((date) => (date ? moment(date) : null))}
             slotAvailability={slotAvailability}
-            setPetForms={setPetForms}
-            setPetFormData={setPetFormData}
-            setSelectedDates={setSelectedDates}
+            setPetForms={(newPetForms) => dispatch(setPetForms(newPetForms))}
+            setPetFormData={(newPetFormData) => dispatch(setPetFormData(newPetFormData))}
+            setSelectedDates={(newDates) =>
+              dispatch(setSelectedDates(newDates.map((date) => (date ? date.toISOString() : null))))
+            }
             setSlotAvailability={setSlotAvailability}
             handleServiceChange={handleServiceChange}
             handleDateChange={handleDateChange}
+            handleTimeChange={handleTimeChange}
             getAvailableTimeSlots={getAvailableTimeSlots}
+            onViewPriceClick={handleViewPriceClick}
           />
           <Form.Item>
             <Button

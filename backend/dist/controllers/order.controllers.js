@@ -22,7 +22,7 @@ const createOrderAfterPayment = async (req, res) => {
     const session = await mongoose_1.default.startSession();
     session.startTransaction();
     try {
-        const { userID = null, payment_typeID, deliveryID = null, couponID = null, orderdate, total_price, shipping_address = null, transaction_id, orderDetails, paymentOrderCode = null, infoUserGuest = null } = req.body;
+        const { userID = null, payment_typeID, deliveryID = null, couponID = null, orderdate, total_price, shipping_address = null,  orderDetails, paymentOrderCode = null, infoUserGuest = null } = req.body;
         console.log(paymentOrderCode, 'paymentOrderCode');
         // 1. Validate input data
         if (!total_price || !orderDetails || !Array.isArray(orderDetails)) {
@@ -199,7 +199,6 @@ const createOrderAfterPayment = async (req, res) => {
             shipping_address,
             paymentOrderCode,
             status: order_enum_js_1.OrderStatus.PENDING,
-            transaction_id,
             inforUserGuest: infoUserGuest || null
         });
         const savedOrder = await order.save({ session });
