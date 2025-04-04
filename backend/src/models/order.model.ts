@@ -25,8 +25,7 @@ const orderSchema: Schema<IOrder> = new Schema<IOrder>(
       type: String,
       enum: OrderStatus,
       default: OrderStatus.PENDING
-    },
-    transaction_id: { type: String, default: '' }
+    }
   },
   { timestamps: true }
 );
