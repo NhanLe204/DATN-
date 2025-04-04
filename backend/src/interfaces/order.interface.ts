@@ -13,5 +13,4 @@ export interface IOrder {
   payment_status: PaymentStatus;
   paymentOrderCode: number;
   status: OrderStatus;
-  transaction_id?: string;
 }

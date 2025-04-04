@@ -25,7 +25,7 @@ const createOrderAfterPayment = async (req, res) => {
         const { userID = null, payment_typeID, deliveryID = null, couponID = null, orderdate, total_price, shipping_address = null, transaction_id, orderDetails, paymentOrderCode = null, infoUserGuest = null } = req.body;
         console.log(paymentOrderCode, 'paymentOrderCode');
         // 1. Validate input data
-        if (!total_price || !transaction_id || !orderDetails || !Array.isArray(orderDetails)) {
+        if (!total_price || !orderDetails || !Array.isArray(orderDetails)) {
             throw new Error('Missing required fields');
         }
         const isBooking = orderDetails.every((detail) => detail.serviceId && !detail.product);

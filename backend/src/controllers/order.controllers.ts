@@ -36,7 +36,7 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
     } = req.body;
     console.log(paymentOrderCode, 'paymentOrderCode');
     // 1. Validate input data
-    if (!total_price || !transaction_id || !orderDetails || !Array.isArray(orderDetails)) {
+    if (!total_price || !orderDetails || !Array.isArray(orderDetails)) {
       throw new Error('Missing required fields');
     }
 

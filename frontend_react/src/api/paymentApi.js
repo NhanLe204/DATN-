@@ -2,7 +2,7 @@ import api from "./axios";
 
 const paymentApi = {
   create: async (data) => {
-    const response = await api.post("/v1/create-payment-link", data);
+    const response = await api.post("/v1/create_payment", data);
     return response.data;
   },
   updateOrder: async (orderId, updateData) => {

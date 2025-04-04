@@ -50,8 +50,7 @@ const orderSchema = new mongoose_1.Schema({
         type: String,
         enum: order_enum_js_1.OrderStatus,
         default: order_enum_js_1.OrderStatus.PENDING
-    },
-    transaction_id: { type: String, default: '' }
+    }
 }, { timestamps: true });
 const orderModel = mongoose_1.default.models.Order || (0, mongoose_1.model)('Order', orderSchema);
 exports.default = orderModel;

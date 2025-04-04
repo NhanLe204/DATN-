@@ -292,22 +292,32 @@ const Payment = () => {
     addressForm
       .validateFields()
       .then(async (values) => {
-        const accountID = localStorage.getItem("accountID")?.replace(/"/g, "").trim();
+        const accountID = localStorage
+          .getItem("accountID")
+          ?.replace(/"/g, "")
+          .trim();
         if (!accountID) {
-          message.error("Không tìm thấy ID người dùng trong localStorage! Vui lòng đăng nhập lại.");
-          navigate('/login');
+          message.error(
+            "Không tìm thấy ID người dùng trong localStorage! Vui lòng đăng nhập lại."
+          );
+          navigate("/login");
           return;
         }
 
         if (!user) {
-          message.error("Không tìm thấy thông tin người dùng! Vui lòng thử lại.");
+          message.error(
+            "Không tìm thấy thông tin người dùng! Vui lòng thử lại."
+          );
           return;
         }
 
-        const provinceName = provinces.find((p) => p.code === values.province)?.name || "";
-        const districtName = districts.find((d) => d.code === values.district)?.name || "";
+        const provinceName =
+          provinces.find((p) => p.code === values.province)?.name || "";
+        const districtName =
+          districts.find((d) => d.code === values.district)?.name || "";
         const wardName = wards.find((w) => w.code === values.ward)?.name || "";
-        const fullAddress = `${values.address}, ${wardName}, ${districtName}, ${provinceName}`.trim();
+        const fullAddress =
+          `${values.address}, ${wardName}, ${districtName}, ${provinceName}`.trim();
 
         const newAddress: Address = {
           name: values.name,
@@ -317,7 +327,10 @@ const Payment = () => {
         };
 
         try {
-          const userUpdateResponse = await userApi.addAddress(accountID, newAddress);
+          const userUpdateResponse = await userApi.addAddress(
+            accountID,
+            newAddress
+          );
           const updatedAddresses = [...(user.address || []), newAddress];
           const updatedUser = { ...user, address: updatedAddresses };
           setUser(updatedUser);
@@ -339,7 +352,10 @@ const Payment = () => {
           resetAddressForm();
           message.success("Thêm địa chỉ thành công!");
         } catch (error) {
-          const errorMessage = error.response?.data?.message || error.message || "Lỗi không xác định";
+          const errorMessage =
+            error.response?.data?.message ||
+            error.message ||
+            "Lỗi không xác định";
           message.error(`Thêm địa chỉ thất bại: ${errorMessage}`);
           console.log("Dữ liệu gửi lên API:", newAddress);
           console.error("Lỗi từ server:", error);
@@ -354,16 +370,22 @@ const Payment = () => {
     addressForm
       .validateFields()
       .then(async (values) => {
-        const accountID = localStorage.getItem("accountID")?.replace(/"/g, "").trim();
+        const accountID = localStorage
+          .getItem("accountID")
+          ?.replace(/"/g, "")
+          .trim();
         if (!accountID || !user || editAddressIndex === null) {
           message.error("Không tìm thấy thông tin người dùng hoặc địa chỉ!");
           return;
         }
 
-        const provinceName = provinces.find((p) => p.code === values.province)?.name || "";
-        const districtName = districts.find((d) => d.code === values.district)?.name || "";
+        const provinceName =
+          provinces.find((p) => p.code === values.province)?.name || "";
+        const districtName =
+          districts.find((d) => d.code === values.district)?.name || "";
         const wardName = wards.find((w) => w.code === values.ward)?.name || "";
-        const fullAddress = `${values.address}, ${wardName}, ${districtName}, ${provinceName}`.trim();
+        const fullAddress =
+          `${values.address}, ${wardName}, ${districtName}, ${provinceName}`.trim();
 
         const updatedAddress: Address = {
           name: values.name,
@@ -373,7 +395,11 @@ const Payment = () => {
         };
 
         try {
-          const userUpdateResponse = await userApi.updateAddress(accountID, editAddressIndex, updatedAddress);
+          const userUpdateResponse = await userApi.updateAddress(
+            accountID,
+            editAddressIndex,
+            updatedAddress
+          );
           const updatedAddresses = [...(user.address || [])];
           updatedAddresses[editAddressIndex] = updatedAddress;
           const updatedUser = { ...user, address: updatedAddresses };
@@ -384,7 +410,10 @@ const Payment = () => {
           setEditAddressIndex(null);
           message.success("Cập nhật địa chỉ thành công!");
         } catch (error) {
-          const errorMessage = error.response?.data?.message || error.message || "Lỗi không xác định";
+          const errorMessage =
+            error.response?.data?.message ||
+            error.message ||
+            "Lỗi không xác định";
           message.error(`Cập nhật địa chỉ thất bại: ${errorMessage}`);
           console.log("Dữ liệu gửi lên API:", updatedAddress);
           console.error("Lỗi từ server:", error);
@@ -398,7 +427,11 @@ const Payment = () => {
   const validatePhoneNumber = (_: any, value: string) => {
     const phoneRegex = /^(03|05|07|08|09)[0-9]{8}$/; // Bắt đầu bằng 03, 05, 07, 08, 09 và đủ 10 số
     if (value && !phoneRegex.test(value)) {
-      return Promise.reject(new Error('Số điện thoại không hợp lệ! Phải bắt đầu bằng 03, 05, 07, 08, 09 và đủ 10 số.'));
+      return Promise.reject(
+        new Error(
+          "Số điện thoại không hợp lệ! Phải bắt đầu bằng 03, 05, 07, 08, 09 và đủ 10 số."
+        )
+      );
     }
     return Promise.resolve();
   };
@@ -505,7 +538,7 @@ const Payment = () => {
       const response = await paymentApi.create({
         ...paymentData,
       });
-      const checkoutUrl = response.data.checkoutUrl;
+      const checkoutUrl = response.url;
       window.location.href = checkoutUrl;
     } catch (error) {
       console.error("Error creating payment link:", error);
@@ -536,7 +569,6 @@ const Payment = () => {
 
       const shippingAddress = formData.address;
       const totalAmount = calculateTotal();
-      const numericOrderCode = Date.now();
 
       const orderData = {
         userID: userId,
@@ -546,8 +578,6 @@ const Payment = () => {
         orderdate: new Date().toISOString(),
         total_price: totalAmount,
         shipping_address: shippingAddress,
-        transaction_id: `TRANS_${numericOrderCode}`,
-        paymentOrderCode: numericOrderCode,
         status: "PENDING",
         orderDetails: cartItems.map((item) => ({
           productID: item.id,
@@ -558,13 +588,13 @@ const Payment = () => {
       };
 
       console.log("Creating order with data:", orderData);
-
+      let orderDataCreated = {};
       const orderResponse = await orderApi.create(orderData);
       const createdOrder = orderResponse.data;
-      console.log("Order created successfully:", createdOrder);
-
+      const order = createdOrder.order;
+      console.log("Order created:", order);
       const paymentData = {
-        orderCode: numericOrderCode,
+        orderId: order._id,
         amount: totalAmount,
         description: `Thanh toán đơn hàng`,
         returnUrl: `http://localhost:3000/success`,
@@ -574,14 +604,14 @@ const Payment = () => {
       console.warn("Creating payment with data:", paymentData);
       await handlePayment(paymentData);
 
-      message.destroy();
+      // message.destroy();
     } catch (error) {
       console.error("Checkout process error:", error);
       message.destroy();
       message.error(
         error.response?.data?.message ||
-        error.message ||
-        "Có lỗi xảy ra khi xử lý đơn hàng. Vui lòng thử lại!"
+          error.message ||
+          "Có lỗi xảy ra khi xử lý đơn hàng. Vui lòng thử lại!"
       );
     }
   };
@@ -592,7 +622,9 @@ const Payment = () => {
         <div className="container mx-auto px-[154px] py-8">
           <nav className="mb-6 rounded-xl p-4 bg-white shadow-[inset_-2px_-2px_5px_rgba(255,255,255,0.7),inset_2px_2px_5px_rgba(0,0,0,0.05)]">
             <div className="flex items-center gap-2">
-              <span className="text-gray-600 hover:text-gray-900">Trang chủ</span>
+              <span className="text-gray-600 hover:text-gray-900">
+                Trang chủ
+              </span>
               <ChevronRight size={16} className="text-gray-400" />
               <span className="text-gray-900">Thông tin giao hàng</span>
             </div>
@@ -606,7 +638,10 @@ const Payment = () => {
             >
               <span>
                 Bạn đã có tài khoản?{" "}
-                <span className="ml-1 cursor-pointer font-bold text-blue-500 hover:text-blue-600" onClick={() => navigate('/login')}>
+                <span
+                  className="ml-1 cursor-pointer font-bold text-blue-500 hover:text-blue-600"
+                  onClick={() => navigate("/login")}
+                >
                   Đăng nhập
                 </span>
               </span>
@@ -629,15 +664,21 @@ const Payment = () => {
                     <div className="flex justify-between items-start border-b pb-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <p className="font-medium text-lg">{selectedAddress.name}</p>
-                          <p className="text-gray-600">| {selectedAddress.phone}</p>
+                          <p className="font-medium text-lg">
+                            {selectedAddress.name}
+                          </p>
+                          <p className="text-gray-600">
+                            | {selectedAddress.phone}
+                          </p>
                           {selectedAddress.isDefault && (
                             <span className="inline-block px-2 py-1 text-xs font-semibold text-orange-600 bg-orange-100 rounded">
                               Mặc định
                             </span>
                           )}
                         </div>
-                        <p className="text-gray-600 mt-1">{selectedAddress.address}</p>
+                        <p className="text-gray-600 mt-1">
+                          {selectedAddress.address}
+                        </p>
                       </div>
                       <motion.button
                         whileHover={{ scale: 1.02 }}
@@ -695,7 +736,9 @@ const Payment = () => {
                       {addresses.length > 0 ? (
                         addresses.map((address: Address, index) => (
                           <motion.div
-                            key={address._id || `${address.name}-${address.phone}`}
+                            key={
+                              address._id || `${address.name}-${address.phone}`
+                            }
                             className="p-4 mb-3 border-b border-gray-200 hover:bg-gray-50 rounded-lg transition-colors"
                           >
                             <div className="flex items-start gap-3">
@@ -704,7 +747,9 @@ const Payment = () => {
                                 type="radio"
                                 name="address"
                                 checked={checkedAddressId === address._id}
-                                onChange={() => setCheckedAddressId(address._id || null)}
+                                onChange={() =>
+                                  setCheckedAddressId(address._id || null)
+                                }
                                 className="h-5 w-5 text-blue-600 mt-1 cursor-pointer"
                               />
                               {/* Thông tin địa chỉ */}
@@ -751,7 +796,9 @@ const Payment = () => {
                                     Sửa
                                   </motion.button>
                                 </div>
-                                <p className="text-gray-600 mt-1">{address.address}</p>
+                                <p className="text-gray-600 mt-1">
+                                  {address.address}
+                                </p>
                               </div>
                             </div>
                           </motion.div>
@@ -803,10 +850,11 @@ const Payment = () => {
                         whileHover={{ scale: 1.01 }}
                         key={method._id}
                         onClick={() => setSelectedShippingMethod(method)}
-                        className={`flex cursor-pointer items-center justify-between rounded-xl p-4 ${selectedShippingMethod?._id === method._id
-                          ? "border-blue-500 bg-blue-50"
-                          : "bg-gray-50"
-                          }`}
+                        className={`flex cursor-pointer items-center justify-between rounded-xl p-4 ${
+                          selectedShippingMethod?._id === method._id
+                            ? "border-blue-500 bg-blue-50"
+                            : "bg-gray-50"
+                        }`}
                       >
                         <div className="flex items-center">
                           <div className="mr-3 rounded-full p-2 bg-white">
@@ -848,7 +896,8 @@ const Payment = () => {
               {/* Payment Method */}
               <div className="mb-8 rounded-xl p-6 bg-white">
                 <h2 className="mb-6 text-xl font-semibold flex items-center">
-                  <CreditCard className="mr-2" size={20} /> Phương thức thanh toán
+                  <CreditCard className="mr-2" size={20} /> Phương thức thanh
+                  toán
                 </h2>
                 {paymentMethods.length > 0 ? (
                   <div className="space-y-3">
@@ -857,10 +906,11 @@ const Payment = () => {
                         whileHover={{ scale: 1.01 }}
                         key={method._id}
                         onClick={() => setSelectedPayment(method._id)}
-                        className={`flex cursor-pointer items-center rounded-xl p-4 ${selectedPayment === method._id
-                          ? "border-blue-500 bg-blue-50"
-                          : "bg-gray-50"
-                          }`}
+                        className={`flex cursor-pointer items-center rounded-xl p-4 ${
+                          selectedPayment === method._id
+                            ? "border-blue-500 bg-blue-50"
+                            : "bg-gray-50"
+                        }`}
                       >
                         <div className="mr-3">
                           <div className="rounded-full p-2 bg-white">
@@ -1008,7 +1058,11 @@ const Payment = () => {
       </div>
 
       <Modal
-        title={<span className="text-xl font-semibold text-gray-800">Thêm địa chỉ mới</span>}
+        title={
+          <span className="text-xl font-semibold text-gray-800">
+            Thêm địa chỉ mới
+          </span>
+        }
         open={isModalVisible}
         onOk={handleOk}
         onCancel={() => {
@@ -1018,22 +1072,24 @@ const Payment = () => {
         okText="Lưu"
         cancelText="Hủy"
         okButtonProps={{
-          className: "bg-[#22A6DF] hover:bg-[#1890ff] text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
+          className:
+            "bg-[#22A6DF] hover:bg-[#1890ff] text-white font-semibold py-2 px-4 rounded-lg transition duration-200",
         }}
         cancelButtonProps={{
-          className: "bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg transition duration-200"
+          className:
+            "bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg transition duration-200",
         }}
         width={600}
         bodyStyle={{ padding: "24px" }}
       >
-        <Form
-          form={addressForm}
-          layout="vertical"
-          className="space-y-6"
-        >
+        <Form form={addressForm} layout="vertical" className="space-y-6">
           <Item
             name="name"
-            label={<span className="text-base font-semibold text-gray-700">Họ và tên</span>}
+            label={
+              <span className="text-base font-semibold text-gray-700">
+                Họ và tên
+              </span>
+            }
             rules={[{ required: true, message: "Vui lòng nhập họ và tên!" }]}
           >
             <Input
@@ -1043,10 +1099,14 @@ const Payment = () => {
           </Item>
           <Item
             name="phone"
-            label={<span className="text-base font-semibold text-gray-700">Số điện thoại</span>}
+            label={
+              <span className="text-base font-semibold text-gray-700">
+                Số điện thoại
+              </span>
+            }
             rules={[
-              { required: true, message: 'Vui lòng nhập số điện thoại!' },
-              { validator: validatePhoneNumber }
+              { required: true, message: "Vui lòng nhập số điện thoại!" },
+              { validator: validatePhoneNumber },
             ]}
           >
             <Input
@@ -1057,8 +1117,14 @@ const Payment = () => {
           <div className="grid grid-cols-2 gap-4">
             <Item
               name="province"
-              label={<span className="text-base font-semibold text-gray-700">Tỉnh/Thành phố</span>}
-              rules={[{ required: true, message: "Vui lòng chọn tỉnh/thành phố!" }]}
+              label={
+                <span className="text-base font-semibold text-gray-700">
+                  Tỉnh/Thành phố
+                </span>
+              }
+              rules={[
+                { required: true, message: "Vui lòng chọn tỉnh/thành phố!" },
+              ]}
             >
               <Select
                 placeholder="Chọn tỉnh/thành phố"
@@ -1077,7 +1143,11 @@ const Payment = () => {
             </Item>
             <Item
               name="district"
-              label={<span className="text-base font-semibold text-gray-700">Quận/Huyện</span>}
+              label={
+                <span className="text-base font-semibold text-gray-700">
+                  Quận/Huyện
+                </span>
+              }
               rules={[{ required: true, message: "Vui lòng chọn quận/huyện!" }]}
             >
               <Select
@@ -1100,7 +1170,11 @@ const Payment = () => {
           <div className="grid grid-cols-2 gap-4">
             <Item
               name="ward"
-              label={<span className="text-base font-semibold text-gray-700">Phường/Xã</span>}
+              label={
+                <span className="text-base font-semibold text-gray-700">
+                  Phường/Xã
+                </span>
+              }
               rules={[{ required: true, message: "Vui lòng chọn phường/xã!" }]}
             >
               <Select
@@ -1120,8 +1194,14 @@ const Payment = () => {
             </Item>
             <Item
               name="address"
-              label={<span className="text-base font-semibold text-gray-700">Địa chỉ nhà</span>}
-              rules={[{ required: true, message: "Vui lòng nhập địa chỉ nhà!" }]}
+              label={
+                <span className="text-base font-semibold text-gray-700">
+                  Địa chỉ nhà
+                </span>
+              }
+              rules={[
+                { required: true, message: "Vui lòng nhập địa chỉ nhà!" },
+              ]}
             >
               <Input
                 placeholder="Nhập địa chỉ nhà"
@@ -1133,7 +1213,11 @@ const Payment = () => {
       </Modal>
 
       <Modal
-        title={<span className="text-xl font-semibold text-gray-800">Chỉnh sửa địa chỉ</span>}
+        title={
+          <span className="text-xl font-semibold text-gray-800">
+            Chỉnh sửa địa chỉ
+          </span>
+        }
         open={isEditModalVisible}
         onOk={handleEditOk}
         onCancel={() => {
@@ -1144,22 +1228,24 @@ const Payment = () => {
         okText="Lưu"
         cancelText="Hủy"
         okButtonProps={{
-          className: "bg-[#22A6DF] hover:bg-[#1890ff] text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
+          className:
+            "bg-[#22A6DF] hover:bg-[#1890ff] text-white font-semibold py-2 px-4 rounded-lg transition duration-200",
         }}
         cancelButtonProps={{
-          className: "bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg transition duration-200"
+          className:
+            "bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg transition duration-200",
         }}
         width={600}
         bodyStyle={{ padding: "24px" }}
       >
-        <Form
-          form={addressForm}
-          layout="vertical"
-          className="space-y-6"
-        >
+        <Form form={addressForm} layout="vertical" className="space-y-6">
           <Item
             name="name"
-            label={<span className="text-base font-semibold text-gray-700">Họ và tên</span>}
+            label={
+              <span className="text-base font-semibold text-gray-700">
+                Họ và tên
+              </span>
+            }
             rules={[{ required: true, message: "Vui lòng nhập họ và tên!" }]}
           >
             <Input
@@ -1169,10 +1255,14 @@ const Payment = () => {
           </Item>
           <Item
             name="phone"
-            label={<span className="text-base font-semibold text-gray-700">Số điện thoại</span>}
+            label={
+              <span className="text-base font-semibold text-gray-700">
+                Số điện thoại
+              </span>
+            }
             rules={[
-              { required: true, message: 'Vui lòng nhập số điện thoại!' },
-              { validator: validatePhoneNumber }
+              { required: true, message: "Vui lòng nhập số điện thoại!" },
+              { validator: validatePhoneNumber },
             ]}
           >
             <Input
@@ -1183,8 +1273,14 @@ const Payment = () => {
           <div className="grid grid-cols-2 gap-4">
             <Item
               name="province"
-              label={<span className="text-base font-semibold text-gray-700">Tỉnh/Thành phố</span>}
-              rules={[{ required: true, message: "Vui lòng chọn tỉnh/thành phố!" }]}
+              label={
+                <span className="text-base font-semibold text-gray-700">
+                  Tỉnh/Thành phố
+                </span>
+              }
+              rules={[
+                { required: true, message: "Vui lòng chọn tỉnh/thành phố!" },
+              ]}
             >
               <Select
                 placeholder="Chọn tỉnh/thành phố"
@@ -1203,7 +1299,11 @@ const Payment = () => {
             </Item>
             <Item
               name="district"
-              label={<span className="text-base font-semibold text-gray-700">Quận/Huyện</span>}
+              label={
+                <span className="text-base font-semibold text-gray-700">
+                  Quận/Huyện
+                </span>
+              }
               rules={[{ required: true, message: "Vui lòng chọn quận/huyện!" }]}
             >
               <Select
@@ -1225,7 +1325,11 @@ const Payment = () => {
           <div className="grid grid-cols-2 gap-4">
             <Item
               name="ward"
-              label={<span className="text-base font-semibold text-gray-700">Phường/Xã</span>}
+              label={
+                <span className="text-base font-semibold text-gray-700">
+                  Phường/Xã
+                </span>
+              }
               rules={[{ required: true, message: "Vui lòng chọn phường/xã!" }]}
             >
               <Select
@@ -1244,8 +1348,14 @@ const Payment = () => {
             </Item>
             <Item
               name="address"
-              label={<span className="text-base font-semibold text-gray-700">Địa chỉ nhà</span>}
-              rules={[{ required: true, message: "Vui lòng nhập địa chỉ nhà!" }]}
+              label={
+                <span className="text-base font-semibold text-gray-700">
+                  Địa chỉ nhà
+                </span>
+              }
+              rules={[
+                { required: true, message: "Vui lòng nhập địa chỉ nhà!" },
+              ]}
             >
               <Input
                 placeholder="Nhập địa chỉ nhà"
@@ -1255,7 +1365,6 @@ const Payment = () => {
           </div>
         </Form>
       </Modal>
-
     </>
   );
 };
