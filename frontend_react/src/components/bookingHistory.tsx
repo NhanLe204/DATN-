@@ -13,6 +13,14 @@ interface Service {
   _id: string;
 }
 
+interface Order {
+  _id: string;
+  bookingStatus?: string | null;
+  status?: string | null;
+  total_price: number;
+  // ...các trường khác nếu cần
+}
+
 interface Booking {
   _id: string;
   orderId: string;
@@ -24,7 +32,7 @@ interface Booking {
   total_price: number;
   booking_date: string;
   service: Service[];
-  status?: string;
+  order: Order[]; // Thêm mảng order vào interface
   petName?: string;
   petType?: string;
 }
@@ -50,7 +58,8 @@ const BookingHistory = () => {
         if (response.success) {
           const bookingsWithStatus = response.data.map((booking: Booking) => ({
             ...booking,
-            status: booking.status?.toLowerCase() || "pending",
+            // Lấy bookingStatus từ order[0], mặc định là "pending" nếu không có
+            status: booking.order[0]?.bookingStatus?.toLowerCase() || "pending",
           }));
           setBookings(bookingsWithStatus);
         } else {
@@ -198,7 +207,7 @@ const BookingHistory = () => {
       key: "status",
       render: (status: keyof typeof statusText) => (
         <Tag color={statusColors[status]} className="text-xs">
-          {statusText[status]}
+          {statusText[status] || "Không xác định"}
         </Tag>
       ),
     },
@@ -243,7 +252,6 @@ const BookingHistory = () => {
 
   const tabItems = [
     { label: "Tất cả", key: "all" },
-    { label: "Chưa xác nhận", key: "pending" },
     { label: "Đã xác nhận", key: "confirmed" },
     { label: "Đã hoàn thành", key: "completed" },
     { label: "Đã hủy", key: "cancelled" },
@@ -256,8 +264,8 @@ const BookingHistory = () => {
 
   return (
     <Card
-      style={{ padding: "8px" }} // Giảm padding của Card
-      bodyStyle={{ padding: "8px" }} // Giảm padding bên trong Card
+      style={{ padding: "8px" }}
+      bodyStyle={{ padding: "8px" }}
     >
       <h2 className="text-xl font-bold text-gray-800 mb-2">Lịch đã đặt</h2>
       <Tabs

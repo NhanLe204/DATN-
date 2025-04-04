@@ -6,6 +6,8 @@ import paymentType from '../models/paymentType.model.js';
 import delivery from './delivery.model.js';
 import coupon from '../models/coupon.model.js';
 import { DeliveryStatus } from '../enums/delivery.enum.js';
+import { BookingStatus } from '@/enums/booking.enum.js';
+
 const orderSchema: Schema<IOrder> = new Schema<IOrder>(
   {
     userID: { type: Schema.Types.ObjectId, ref: user, required: false },
@@ -23,9 +25,14 @@ const orderSchema: Schema<IOrder> = new Schema<IOrder>(
     },
     status: {
       type: String,
-      enum: OrderStatus,
-      default: OrderStatus.PENDING
-    }
+      enum: [...Object.values(OrderStatus), null],
+      default: null
+    },
+    bookingStatus: {
+      type: String,
+      enum: [...Object.values(BookingStatus), null],
+      default: null
+    },
   },
   { timestamps: true }
 );

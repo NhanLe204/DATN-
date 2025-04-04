@@ -22,8 +22,10 @@ interface PetInfoFormProps {
   slotAvailability: { [key: string]: number };
   handleServiceChange: (value: string, index: number) => void;
   handleDateChange: (date: moment.Moment | null, index: number) => void;
+  handleTimeChange: (time: string, index: number) => void; // Thêm prop mới
   removePetForm?: (index: number) => void;
   isRemovable?: boolean;
+  onViewPriceClick?: () => void;
 }
 
 const PetInfoForm: React.FC<PetInfoFormProps> = ({
@@ -36,8 +38,10 @@ const PetInfoForm: React.FC<PetInfoFormProps> = ({
   slotAvailability,
   handleServiceChange,
   handleDateChange,
+  handleTimeChange, 
   removePetForm,
   isRemovable,
+  onViewPriceClick,
 }) => {
   const parseDuration = (duration: string | undefined): string => {
     if (!duration) return "Chưa chọn dịch vụ";
@@ -137,6 +141,7 @@ const PetInfoForm: React.FC<PetInfoFormProps> = ({
             placeholder="Vui lòng chọn ngày trước"
             className="w-full"
             disabled={!selectedDate}
+            onChange={(value) => handleTimeChange(value, index)} 
           >
             {availableTimeSlots.map((time) => (
               <Option key={time} value={time}>
@@ -148,7 +153,10 @@ const PetInfoForm: React.FC<PetInfoFormProps> = ({
       </div>
       <p className="text-sm text-gray-500">
         *Giá có thể thay đổi tùy thuộc vào loại thú cưng, khối lượng và chiều dài lông.{" "}
-        <span className="text-[#22A6DF] cursor-pointer hover:underline">
+        <span
+          className="text-[#22A6DF] cursor-pointer hover:underline"
+          onClick={onViewPriceClick}
+        >
           Xem bảng giá
         </span>
       </p>
