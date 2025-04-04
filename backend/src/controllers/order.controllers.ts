@@ -35,7 +35,7 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       shipping_address = null,
       orderDetails,
       paymentOrderCode = null,
-      infoUserGuest = null,
+      infoUserGuest = null
     } = req.body;
 
     console.log('req.body.orderDetails:', JSON.stringify(orderDetails, null, 2));
@@ -53,7 +53,7 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       product_price: detail.product_price || detail.productPrice,
       booking_date: detail.booking_date || detail.bookingDate,
       petName: detail.petName,
-      petType: detail.petType,
+      petType: detail.petType
     }));
 
     const isBooking = normalizedOrderDetails.every((detail: any) => detail.serviceId && !detail.productId);
@@ -97,9 +97,7 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       }
 
       if (serviceId) {
-        const service = await serviceModel
-          .findOne({ _id: serviceId, status: ServiceStatus.ACTIVE })
-          .session(session);
+        const service = await serviceModel.findOne({ _id: serviceId, status: ServiceStatus.ACTIVE }).session(session);
         if (!service) throw new Error(`Service not found or not active: ${serviceId}`);
         if (!petName || !petType) {
           throw new Error('petName and petType are required for service booking');
@@ -122,7 +120,7 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
         total_price: detailTotalPrice,
         booking_date: standardizedBookingDate,
         petName: serviceId ? petName : null,
-        petType: serviceId ? petType : null,
+        petType: serviceId ? petType : null
       };
     });
 
@@ -153,10 +151,12 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
     if (Math.abs(finalTotalPrice - total_price) > 1) {
       throw new Error('Total price mismatch');
     }
-
+    console.log(infoUserGuest, 'infoUserGuest');
     // 7. Create and save order
     const order = new orderModel({
-      userID: userID ? userID : '',
+      userID: userID ? userID : null,
+      fullname: infoUserGuest?.fullName || null,
+      phone: infoUserGuest?.phone || null,
       payment_typeID,
       deliveryID: isOrder ? deliveryID : null,
       couponID: couponID || null,
@@ -166,8 +166,8 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       paymentOrderCode,
       status: isOrder ? OrderStatus.PENDING : null,
       bookingStatus: isBooking ? BookingStatus.CONFIRMED : null,
-      payment_status: PaymentStatus.PAID,
-      inforUserGuest: infoUserGuest || null,
+      payment_status: PaymentStatus.PENDING,
+      inforUserGuest: infoUserGuest || null
     });
 
     const savedOrder = await order.save({ session });
@@ -183,7 +183,7 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
         total_price: detail.total_price,
         booking_date: detail.booking_date,
         petName: detail.petName,
-        petType: detail.petType,
+        petType: detail.petType
       });
     });
 
@@ -211,9 +211,9 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
               serviceId: detail.serviceId,
               booking_date: detail.booking_date,
               petName: detail.petName,
-              petType: detail.petType,
+              petType: detail.petType
             })),
-            orderId: savedOrder._id.toString(), 
+            orderId: savedOrder._id.toString()
           });
           console.log('Booking email sent to:', recipientEmail);
         } catch (emailError) {
@@ -255,8 +255,8 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       message: 'Order and order details created successfully',
       data: {
         order: savedOrder,
-        orderDetails: orderDetailDocs,
-      },
+        orderDetails: orderDetailDocs
+      }
     });
   } catch (error) {
     if (!transactionCommitted) {
@@ -268,7 +268,7 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
     res.status(400).json({
       success: false,
       message: errorMessage,
-      error: error instanceof Error ? error.stack : 'Unknown error stack',
+      error: error instanceof Error ? error.stack : 'Unknown error stack'
     });
   } finally {
     session.endSession();

@@ -1,7 +1,4 @@
 "use strict";
-/**
- * Created by CTT VNPAY
- */
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -12,6 +9,5 @@ const payment_controllers_1 = require("../controllers/payment.controllers");
 dotenv_1.default.config();
 const paymentRouter = (0, express_1.Router)();
 paymentRouter.post('/create_payment', payment_controllers_1.createPayment);
-paymentRouter.get('/success', payment_controllers_1.vnpayCallBack);
 exports.default = paymentRouter;
 //# sourceMappingURL=payment.routes.js.map

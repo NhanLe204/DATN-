@@ -10,5 +10,7 @@ declare const ENV_VARS: {
     VNP_TMNCODE: string | undefined;
     VNP_HASHSECRET: string | undefined;
     VNP_URL: string | undefined;
+    HOTLINE: string | undefined;
+    ADDRESS: string | undefined;
 };
 export default ENV_VARS;

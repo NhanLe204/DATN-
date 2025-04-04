@@ -4,6 +4,8 @@ import { OrderStatus, PaymentStatus } from '../enums/order.enum.js';
 import { BookingStatus } from '@/enums/booking.enum.js';
 export interface IOrder {
   userID?: IUser;
+  fullname?: string;
+  phone?: string;
   payment_typeID?: ObjectId;
   deliveryID?: ObjectId;
   couponID?: ObjectId;
@@ -14,5 +16,4 @@ export interface IOrder {
   paymentOrderCode: number;
   status: OrderStatus;
   bookingStatus?: BookingStatus;
-
 }

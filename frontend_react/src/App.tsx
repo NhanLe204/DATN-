@@ -35,6 +35,7 @@ import { notification } from "antd";
 import CancelPage from "./pages/orders/cancel";
 import SuccessPage from "./pages/orders/success";
 import BookingManager from "./admin/booking/booking";
+import SuccessBooking from "./pages/orders/booking/successBooking";
 
 interface User {
   id: string;
@@ -71,55 +72,55 @@ const ProtectedRoute = ({
   console.log("ProtectedRoute - Path:", path);
   console.log("ProtectedRoute - User:", user);
 
-  if (!user || user.status !== "active") {
-    notification.error({
-      message: "Truy cập bị từ chối",
-      description: `Vui lòng đăng nhập hoặc kiểm tra trạng thái tài khoản (status: ${
-        user?.status || "không xác định"
-      }).`,
-      placement: "topRight",
-    });
-    return <Navigate to="/login" replace />;
-  }
+  // if (!user || user.status !== "active") {
+  //   notification.error({
+  //     message: "Truy cập bị từ chối",
+  //     description: `Vui lòng đăng nhập hoặc kiểm tra trạng thái tài khoản (status: ${
+  //       user?.status || "không xác định"
+  //     }).`,
+  //     placement: "topRight",
+  //   });
+  //   return <Navigate to="/login" replace />;
+  // }
 
-  const validRoles = ["user", "admin", "employee"];
-  if (!validRoles.includes(user.role)) {
-    notification.error({
-      message: "Truy cập bị từ chối",
-      description: `Vai trò không hợp lệ: ${user.role}. Vui lòng liên hệ quản trị viên.`,
-      placement: "topRight",
-    });
-    return <Navigate to="/login" replace />;
-  }
+  // const validRoles = ["user", "admin", "employee"];
+  // if (!validRoles.includes(user.role)) {
+  //   notification.error({
+  //     message: "Truy cập bị từ chối",
+  //     description: `Vai trò không hợp lệ: ${user.role}. Vui lòng liên hệ quản trị viên.`,
+  //     placement: "topRight",
+  //   });
+  //   return <Navigate to="/login" replace />;
+  // }
 
-  if (allowedRole && user.role !== allowedRole) {
-    notification.error({
-      message: "Truy cập bị từ chối",
-      description: `Bạn không có quyền truy cập trang này (yêu cầu vai trò: ${allowedRole}).`,
-      placement: "topRight",
-    });
-    return <Navigate to="/" replace />;
-  }
+  // if (allowedRole && user.role !== allowedRole) {
+  //   notification.error({
+  //     message: "Truy cập bị từ chối",
+  //     description: `Bạn không có quyền truy cập trang này (yêu cầu vai trò: ${allowedRole}).`,
+  //     placement: "topRight",
+  //   });
+  //   return <Navigate to="/" replace />;
+  // }
 
-  if (path && path.startsWith("/admin")) {
-    if (user.role !== "admin" && user.role !== "employee") {
-      notification.error({
-        message: "Truy cập bị từ chối",
-        description: "Chỉ admin và nhân viên mới có thể truy cập trang này.",
-        placement: "topRight",
-      });
-      return <Navigate to="/" replace />;
-    }
+  // if (path && path.startsWith("/admin")) {
+  //   if (user.role !== "admin" && user.role !== "employee") {
+  //     notification.error({
+  //       message: "Truy cập bị từ chối",
+  //       description: "Chỉ admin và nhân viên mới có thể truy cập trang này.",
+  //       placement: "topRight",
+  //     });
+  //     return <Navigate to="/" replace />;
+  //   }
 
-    if (user.role === "employee" && !EMPLOYEE_ALLOWED_PAGES.includes(path)) {
-      notification.warning({
-        message: "Truy cập bị từ chối",
-        description: "Bạn không có quyền truy cập trang này.",
-        placement: "topRight",
-      });
-      return <Navigate to="/admin" replace />;
-    }
-  }
+  //   if (user.role === "employee" && !EMPLOYEE_ALLOWED_PAGES.includes(path)) {
+  //     notification.warning({
+  //       message: "Truy cập bị từ chối",
+  //       description: "Bạn không có quyền truy cập trang này.",
+  //       placement: "topRight",
+  //     });
+  //     return <Navigate to="/admin" replace />;
+  //   }
+  // }
 
   return children;
 };
@@ -273,6 +274,14 @@ function App() {
           element: (
             <PublicRoute>
               <SuccessPage />
+            </PublicRoute>
+          ),
+        },
+        {
+          path: "/success-booking",
+          element: (
+            <PublicRoute>
+              <SuccessBooking />
             </PublicRoute>
           ),
         },

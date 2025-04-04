@@ -32,8 +32,12 @@ const order_enum_js_1 = require("../enums/order.enum.js");
 const paymentType_model_js_1 = __importDefault(require("../models/paymentType.model.js"));
 const delivery_model_js_1 = __importDefault(require("./delivery.model.js"));
 const coupon_model_js_1 = __importDefault(require("../models/coupon.model.js"));
+const booking_enum_js_1 = require("@/enums/booking.enum.js");
 const orderSchema = new mongoose_1.Schema({
     userID: { type: mongoose_1.Schema.Types.ObjectId, ref: user_model_js_1.default, required: false },
+    fullname: { type: String, required: false },
+    phone: { type: String, required: false },
+    paymentOrderCode: { type: Number, required: false },
     payment_typeID: { type: mongoose_1.Schema.Types.ObjectId, ref: paymentType_model_js_1.default, default: null },
     deliveryID: { type: mongoose_1.Schema.Types.ObjectId, ref: delivery_model_js_1.default, default: null },
     couponID: { type: mongoose_1.Schema.Types.ObjectId, ref: coupon_model_js_1.default, default: null },
@@ -48,8 +52,13 @@ const orderSchema = new mongoose_1.Schema({
     },
     status: {
         type: String,
-        enum: order_enum_js_1.OrderStatus,
-        default: order_enum_js_1.OrderStatus.PENDING
+        enum: [...Object.values(order_enum_js_1.OrderStatus), null],
+        default: null
+    },
+    bookingStatus: {
+        type: String,
+        enum: [...Object.values(booking_enum_js_1.BookingStatus), null],
+        default: null
     }
 }, { timestamps: true });
 const orderModel = mongoose_1.default.models.Order || (0, mongoose_1.model)('Order', orderSchema);

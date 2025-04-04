@@ -1,7 +1,7 @@
 export enum PaymentStatus {
-  PENDING = 'pending',
-  PAID = 'paid',
-  CANCELLED = 'cancelled'
+  PENDING = 'PENDING',
+  PAID = 'PAID',
+  CANCELLED = 'CANCELLED'
 }
 export enum OrderStatus {
   PENDING = 'PENDING', // Đơn hàng đang chờ xử lý

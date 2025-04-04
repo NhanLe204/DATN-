@@ -16,7 +16,9 @@ const ENV_VARS = {
     EMAIL_PASS: process.env.EMAIL_PASS,
     VNP_TMNCODE: process.env.VNP_TMNCODE,
     VNP_HASHSECRET: process.env.VNP_HASHSECRET,
-    VNP_URL: process.env.VNP_HASHSECRET
+    VNP_URL: process.env.VNP_HASHSECRET,
+    HOTLINE: process.env.HOTLINE,
+    ADDRESS: process.env.ADDRESS
 };
 exports.default = ENV_VARS;
 //# sourceMappingURL=config.js.map

@@ -12,8 +12,8 @@ import {
 const orderRouter = Router();
 
 orderRouter.get('/orders', verifyToken, getAllOrders);
-orderRouter.post('/orders', verifyToken, createOrderAfterPayment);
-orderRouter.get('/orders/check/available-slots', verifyToken, getAvailableSlots);
+orderRouter.post('/orders', createOrderAfterPayment);
+orderRouter.get('/orders/check/available-slots', getAvailableSlots);
 orderRouter.get('/orders/:id', verifyToken, getOrderById);
 orderRouter.patch('/orders/status/:id', verifyToken, updateOrderStatus);
 // orderRouter.delete('/ratings/:id', deleteRating);
