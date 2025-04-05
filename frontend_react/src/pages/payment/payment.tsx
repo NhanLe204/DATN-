@@ -588,7 +588,6 @@ const Payment = () => {
       };
 
       console.log("Creating order with data:", orderData);
-      let orderDataCreated = {};
       const orderResponse = await orderApi.create(orderData);
       const createdOrder = orderResponse.data;
       const order = createdOrder.order;

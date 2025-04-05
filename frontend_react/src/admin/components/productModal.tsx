@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 import {
   Modal,
   Form,
@@ -352,8 +354,18 @@ const ProductModal: React.FC<ProductModalProps> = ({
           </Row>
           <Row gutter={16}>
             <Col span={24}>
-              <Form.Item name="description" label="Mô tả sản phẩm">
+              {/* <Form.Item name="description" label="Mô tả sản phẩm">
                 <TextArea rows={4} placeholder="Nhập mô tả sản phẩm" />
+              </Form.Item> */}
+              <Form.Item name="description" label="Mô tả sản phẩm">
+                <ReactQuill
+                  theme="snow"
+                  value={form.getFieldValue("description")}
+                  onChange={(value) =>
+                    form.setFieldsValue({ description: value })
+                  }
+                  placeholder="Nhập mô tả sản phẩm"
+                />
               </Form.Item>
             </Col>
           </Row>

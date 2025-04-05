@@ -5,3 +5,4 @@ export declare const getAllOrders: (req: Request, res: Response) => Promise<void
 export declare const getOrderById: (req: Request, res: Response) => Promise<void>;
 export declare const checkAvailableSlots: (req: Request, res: Response) => Promise<void>;
 export declare const updateOrderStatus: (req: Request, res: Response) => Promise<void>;
+export declare const updatePaymentStatus: (req: Request, res: Response) => Promise<void>;

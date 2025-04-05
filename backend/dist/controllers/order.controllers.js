@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateOrderStatus = exports.checkAvailableSlots = exports.getOrderById = exports.getAllOrders = exports.getAvailableSlots = exports.createOrderAfterPayment = void 0;
+exports.updatePaymentStatus = exports.updateOrderStatus = exports.checkAvailableSlots = exports.getOrderById = exports.getAllOrders = exports.getAvailableSlots = exports.createOrderAfterPayment = void 0;
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const mongoose_1 = __importDefault(require("mongoose"));
 const order_model_js_1 = __importDefault(require("../models/order.model.js"));
@@ -419,4 +419,43 @@ const updateOrderStatus = async (req, res) => {
     }
 };
 exports.updateOrderStatus = updateOrderStatus;
+const updatePaymentStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { payment_status } = req.body;
+        // Kiểm tra xem ID có hợp lệ không
+        if (!mongoose_1.default.Types.ObjectId.isValid(id)) {
+            res.status(400).json({
+                success: false,
+                message: 'ID không hợp lệ'
+            });
+            return;
+        }
+        // Kiểm tra xem trạng thái thanh toán có hợp lệ không
+        if (!Object.values(order_enum_js_1.PaymentStatus).includes(payment_status)) {
+            res.status(400).json({ success: false, message: 'Trạng thái thanh toán không hợp lệ' });
+            return;
+        }
+        // Cập nhật trạng thái thanh toán
+        const updatedOrder = await order_model_js_1.default.findByIdAndUpdate(id, { payment_status }, { new: true, runValidators: true });
+        if (!updatedOrder) {
+            res.status(404).json({ success: false, message: 'Đơn hàng không tồn tại' });
+            return;
+        }
+        res
+            .status(200)
+            .json({ success: true, message: 'Trạng thái thanh toán được cập nhật thành công', order: updatedOrder });
+    }
+    catch (error) {
+        if (error instanceof Error) {
+            console.error(`Error updating payment status: ${error.message}`);
+            res.status(500).json({ success: false, message: 'Lỗi máy chủ' });
+        }
+        else {
+            console.error('Lỗi không xác định khi cập nhật trạng thái thanh toán:', error);
+            res.status(500).json({ success: false, message: 'Lỗi máy chủ' });
+        }
+    }
+};
+exports.updatePaymentStatus = updatePaymentStatus;
 //# sourceMappingURL=order.controllers.js.map

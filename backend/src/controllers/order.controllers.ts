@@ -467,3 +467,45 @@ export const updateOrderStatus = async (req: Request, res: Response): Promise<vo
     }
   }
 };
+
+export const updatePaymentStatus = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { payment_status } = req.body;
+
+    // Kiểm tra xem ID có hợp lệ không
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json({
+        success: false,
+        message: 'ID không hợp lệ'
+      });
+      return;
+    }
+
+    // Kiểm tra xem trạng thái thanh toán có hợp lệ không
+    if (!Object.values(PaymentStatus).includes(payment_status as PaymentStatus)) {
+      res.status(400).json({ success: false, message: 'Trạng thái thanh toán không hợp lệ' });
+      return;
+    }
+
+    // Cập nhật trạng thái thanh toán
+    const updatedOrder = await orderModel.findByIdAndUpdate(id, { payment_status }, { new: true, runValidators: true });
+
+    if (!updatedOrder) {
+      res.status(404).json({ success: false, message: 'Đơn hàng không tồn tại' });
+      return;
+    }
+
+    res
+      .status(200)
+      .json({ success: true, message: 'Trạng thái thanh toán được cập nhật thành công', order: updatedOrder });
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error updating payment status: ${error.message}`);
+      res.status(500).json({ success: false, message: 'Lỗi máy chủ' });
+    } else {
+      console.error('Lỗi không xác định khi cập nhật trạng thái thanh toán:', error);
+      res.status(500).json({ success: false, message: 'Lỗi máy chủ' });
+    }
+  }
+};

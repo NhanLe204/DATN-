@@ -25,8 +25,12 @@ const orderApi = {
     const response = await api.post("/v1/orders", data);
     return response.data;
   },
-  update: async (id, data) => {
+  updateStatus: async (id, data) => {
     const response = await api.patch(`/v1/orders/${id}`, data);
+    return response.data;
+  },
+  updatePaymentStatus: async (id, data) => {
+    const response = await api.patch(`/v1/orders/payment-status/${id}`, data);
     return response.data;
   },
   delete: async (id) => {
