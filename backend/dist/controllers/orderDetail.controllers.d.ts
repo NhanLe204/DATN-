@@ -8,3 +8,4 @@ export declare const getBookingsByUserId: (req: Request<{}, {}, {}, {
     userId?: string;
 }>, res: Response, next: NextFunction) => Promise<void>;
 export declare const getAllBookings: (req: Request, res: Response, next: NextFunction) => Promise<void>;
+export declare const getOrderByUserId: (req: Request, res: Response) => Promise<void>;

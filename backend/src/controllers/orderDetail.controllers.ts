@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import orderDetailModel from '../models/orderdetail.model.js';
 import orderModel from '@/models/order.model.js';
+import mongoose from 'mongoose';
 
 // Lấy danh sách tất cả order details
 export const getOrderDetails = async (req: Request, res: Response) => {
@@ -184,5 +185,75 @@ export const getAllBookings = async (req: Request, res: Response, next: NextFunc
   } catch (error) {
     console.error('Error retrieving bookings:', error);
     res.status(500).json({ success: false, message: 'Error retrieving bookings', error });
+  }
+};
+
+export const getOrderByUserId = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.query;
+
+    if (!userId || typeof userId !== 'string' || !mongoose.Types.ObjectId.isValid(userId)) {
+      res.status(400).json({ success: false, message: 'Invalid user ID', data: [] });
+      return;
+    }
+
+    const userOrders = await orderModel
+      .find({ userID: userId })
+      .populate('payment_typeID', 'payment_type_name')
+      .populate('deliveryID', 'delivery_fee')
+      .populate('couponID', 'discount_value coupon_code');
+
+    if (!userOrders || userOrders.length === 0) {
+      res.status(404).json({ success: false, message: 'No orders found for this user', data: [] });
+      return;
+    }
+
+    const orderIds = userOrders.map((order) => order._id);
+
+    const orderDetails = await orderDetailModel
+      .find({
+        orderId: { $in: orderIds },
+        productId: { $ne: null },
+        serviceId: null
+      })
+      .populate('productId', 'name price image_url')
+      .populate('orderId');
+
+    if (!orderDetails || orderDetails.length === 0) {
+      res.status(404).json({ success: false, message: 'No product orders found for this user', data: [] });
+      return;
+    }
+
+    const formattedOrders = userOrders
+      .map((order) => {
+        const relatedDetails = orderDetails.filter((detail) => detail.orderId._id.toString() === order._id.toString());
+
+        if (relatedDetails.length === 0) return null;
+
+        return {
+          id: order._id.toString(),
+          orderNumber: order.transaction || `${order._id}`,
+          date: order.order_date || order.createdAt,
+          status: order.status.toLowerCase(),
+          total: order.total_price || 0,
+          items: relatedDetails.map((detail) => ({
+            id: detail.productId?._id.toString(),
+            name: detail.productId?.name,
+            quantity: detail.quantity,
+            price: detail.product_price,
+            image_url: detail.productId?.image_url || []
+          })),
+          paymentMethod: order.payment_typeID?.payment_type_name,
+          shippingAddress: order.shipping_address,
+          deliveryFee: order.deliveryID?.delivery_fee,
+          discountValue: order.couponID?.discount_value,
+          couponCode: order.couponID?.coupon_code
+        };
+      })
+      .filter((order) => order !== null);
+
+    res.status(200).json({ success: true, data: formattedOrders });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error retrieving orders by user ID', data: [] });
   }
 };

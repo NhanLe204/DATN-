@@ -8,6 +8,7 @@ orderDetailRouter.get('/ordersDetail', verifyToken_js_1.verifyToken, orderDetail
 orderDetailRouter.get('/ordersDetail/bookings', verifyToken_js_1.verifyToken, orderDetail_controllers_js_1.getBookingsByUserId);
 orderDetailRouter.get('/ordersDetail/allBookings', verifyToken_js_1.verifyToken, orderDetail_controllers_js_1.getAllBookings);
 orderDetailRouter.get('/ordersDetail/:id', verifyToken_js_1.verifyToken, orderDetail_controllers_js_1.getOrderDetailsByOrderId);
+orderDetailRouter.get('/getOrderByUserId', verifyToken_js_1.verifyToken, orderDetail_controllers_js_1.getOrderByUserId);
 // orderRouter.patch('/ratings/:id', updateRating);
 // orderRouter.delete('/ratings/:id', deleteRating);
 // brandRouter.post('/brands', verifyToken, requireAdmin, insertBrand);
