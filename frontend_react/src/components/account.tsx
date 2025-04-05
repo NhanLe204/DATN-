@@ -208,7 +208,6 @@ export default function Account() {
                             name="phone" 
                             label={<span className="text-base font-semibold">Số điện thoại</span>}
                             rules={[
-                                { required: true, message: 'Vui lòng nhập số điện thoại!' },
                                 { validator: validatePhoneNumber }
                             ]}
                         >
