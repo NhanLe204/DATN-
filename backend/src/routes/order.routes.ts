@@ -6,7 +6,8 @@ import {
   getAllOrders,
   getOrderById,
   getAvailableSlots,
-  updateOrderStatus
+  updateOrderStatus,
+  updatePaymentStatus
 } from '../controllers/order.controllers.js';
 
 const orderRouter = Router();
@@ -16,6 +17,7 @@ orderRouter.post('/orders', createOrderAfterPayment);
 orderRouter.get('/orders/check/available-slots', getAvailableSlots);
 orderRouter.get('/orders/:id', verifyToken, getOrderById);
 orderRouter.patch('/orders/status/:id', verifyToken, updateOrderStatus);
+orderRouter.patch('/orders/payment-status/:id', updatePaymentStatus);
 // orderRouter.delete('/ratings/:id', deleteRating);
 // brandRouter.post('/brands', verifyToken, requireAdmin, insertBrand);
 // brandRouter.patch('/brands/:id', verifyToken, requireAdmin, updateBrand);

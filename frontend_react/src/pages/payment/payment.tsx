@@ -206,7 +206,6 @@ const Payment = () => {
             (method) => method.delivery_fee === 0
           );
 
-
           // Logic chọn phương thức mặc định
           if (subtotal >= 200000 && freeShipping) {
             setSelectedShippingMethod(freeShipping);
@@ -219,7 +218,9 @@ const Payment = () => {
           }
         } catch (error) {
           console.error("Failed to fetch delivery methods:", error);
-          message.error("Không thể tải phương thức vận chuyển. Vui lòng thử lại!");
+          message.error(
+            "Không thể tải phương thức vận chuyển. Vui lòng thử lại!"
+          );
           setShippingMethods([]);
           setSelectedShippingMethod(null);
         }
@@ -249,7 +250,6 @@ const Payment = () => {
       if (location.state?.reorderItems) {
         setIsReorder(true);
       }
-
     } else {
       setIsLoggedIn(false);
       setAddresses([]);
@@ -468,7 +468,8 @@ const Payment = () => {
       const activeCoupons: Coupon[] = response.data.result;
 
       const matchedCoupon = activeCoupons.find(
-        (coupon) => coupon.coupon_code.toUpperCase() === couponCode.toUpperCase()
+        (coupon) =>
+          coupon.coupon_code.toUpperCase() === couponCode.toUpperCase()
       );
 
       if (!matchedCoupon) {
@@ -482,7 +483,10 @@ const Payment = () => {
       const startDate = new Date(matchedCoupon.start_date);
       const endDate = new Date(matchedCoupon.end_date);
 
-      const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const subtotal = cartItems.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0
+      );
 
       if (currentDate < startDate || currentDate > endDate) {
         message.error("Mã giảm giá đã hết hạn!");
@@ -492,7 +496,9 @@ const Payment = () => {
       }
 
       if (subtotal < matchedCoupon.min_order_value) {
-        message.error(`Tổng tiền sản phẩm phải có giá trị tối thiểu ${matchedCoupon.min_order_value} để áp dụng mã này!`);
+        message.error(
+          `Tổng tiền sản phẩm phải có giá trị tối thiểu ${matchedCoupon.min_order_value} để áp dụng mã này!`
+        );
         setAppliedCoupon(null);
         setDiscount(0);
         return;
@@ -510,7 +516,11 @@ const Payment = () => {
 
       setAppliedCoupon(matchedCoupon);
       setDiscount(discountValue);
-      message.success(`Áp dụng mã giảm giá thành công! Bạn được giảm ${formatPrice(discountValue)}`);
+      message.success(
+        `Áp dụng mã giảm giá thành công! Bạn được giảm ${formatPrice(
+          discountValue
+        )}`
+      );
     } catch (error) {
       console.error("Error applying coupon:", error);
       message.error("Có lỗi xảy ra khi áp dụng mã giảm giá. Vui lòng thử lại!");
@@ -535,9 +545,14 @@ const Payment = () => {
   };
 
   const calculateTotal = useMemo(() => {
-    const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const subtotal = cartItems.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
     const discountedSubtotal = subtotal - discount;
-    const total = discountedSubtotal + (selectedShippingMethod ? selectedShippingMethod.delivery_fee : 0);
+    const total =
+      discountedSubtotal +
+      (selectedShippingMethod ? selectedShippingMethod.delivery_fee : 0);
     return Math.max(total, 0);
   }, [cartItems, discount, selectedShippingMethod]);
 
@@ -555,7 +570,6 @@ const Payment = () => {
         orderdate: new Date().toISOString(),
         total_price: calculateTotal,
         shipping_address: shippingAddress,
-        transaction_id: `TRANS_${Date.now()}`,
         orderDetails: cartItems.map((item) => ({
           productID: item.id,
           serviceID: null,
@@ -564,54 +578,87 @@ const Payment = () => {
         })),
       };
 
-      const response = await orderApi.create(orderData);
-      console.log("Order created:", response);
+      const totalAmount = calculateTotal;
+      const orderResponse = await orderApi.create(orderData);
+      const createdOrder = orderResponse.data;
+      const order = createdOrder.order;
+      console.log("Order created:", order);
+      const paymentData = {
+        orderId: order._id,
+        amount: totalAmount,
+        description: `Thanh toán đơn hàng`,
+        returnUrl: `http://localhost:3000/success`,
+        cancelUrl: `http://localhost:3000/cancel`,
+      };
 
-      const existingOrders = JSON.parse(localStorage.getItem("orders") || "[]");
-      existingOrders.push(orderData);
-      localStorage.setItem("orders", JSON.stringify(existingOrders));
-
-      dispatch(clearProduct());
-      message.success("Đơn hàng của bạn đã được tạo thành công!");
-      navigate("/userprofile/orders");
+      console.warn("Creating payment with data:", paymentData);
+      if (orderResponse) {
+        // Backend sẽ tự động chuyển đến trang thanh toán và trả về URL
+        message.success("Đơn hàng của bạn đã được tạo thành công!");
+        await handlePayment(paymentData);
+      } else {
+        message.error("Không thể tạo đơn hàng!");
+      }
     } catch (error) {
       console.error("Error creating order:", error);
       message.error("Có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại!");
     }
   };
 
-  const handleCheckout = () => {
-    if (!userId) {
-      message.error("Vui lòng đăng nhập để tiến hành đặt hàng!");
-      return;
-    }
-    if (!formData.fullName || !formData.phone || !formData.address) {
-      message.error("Vui lòng điền đầy đủ thông tin giao hàng!");
-      return;
-    }
-    if (cartItems.length === 0) {
-      message.error("Giỏ hàng của bạn đang trống!");
-      return;
-    }
-    if (!selectedPayment || selectedPayment === "") {
-      message.error("Vui lòng chọn phương thức thanh toán!");
-      return;
-    }
-    if (!selectedShippingMethod || !selectedShippingMethod._id) {
-      message.error("Vui lòng chọn phương thức vận chuyển!");
-      return;
-    }
-
-    if (isReorder) {
-      Modal.confirm({
-        title: "Xác nhận đặt lại đơn hàng",
-        content: "Bạn đang đặt lại một đơn hàng cũ. Bạn có chắc chắn muốn tiếp tục?",
-        onOk: processCheckout,
-        okText: "Xác nhận",
-        cancelText: "Hủy",
+  const handlePayment = async (paymentData: any) => {
+    try {
+      const response = await paymentApi.create({
+        ...paymentData,
       });
-    } else {
-      processCheckout();
+      const checkoutUrl = response.url;
+      window.location.href = checkoutUrl;
+    } catch (error) {
+      console.error("Error creating payment link:", error);
+      message.error("Có lỗi xảy ra khi tạo liên kết thanh toán.");
+    }
+  };
+
+  const handleCheckout = async () => {
+    try {
+      if (!selectedAddress) {
+        message.error("Vui lòng chọn địa chỉ giao hàng!");
+        return;
+      }
+      if (!selectedShippingMethod) {
+        message.error("Vui lòng chọn phương thức vận chuyển!");
+        return;
+      }
+      if (!selectedPayment) {
+        message.error("Vui lòng chọn phương thức thanh toán!");
+        return;
+      }
+      if (cartItems.length === 0) {
+        message.error("Giỏ hàng của bạn đang trống!");
+        return;
+      }
+      if (isReorder) {
+        Modal.confirm({
+          title: "Xác nhận đặt lại đơn hàng",
+          content:
+            "Bạn đang đặt lại một đơn hàng cũ. Bạn có chắc chắn muốn tiếp tục?",
+          onOk: processCheckout,
+          okText: "Xác nhận",
+          cancelText: "Hủy",
+        });
+      } else {
+        processCheckout();
+      }
+
+      message.loading("Đang xử lý đơn hàng...", 0);
+      // message.destroy();
+    } catch (error) {
+      console.error("Checkout process error:", error);
+      message.destroy();
+      message.error(
+        error.response?.data?.message ||
+          error.message ||
+          "Có lỗi xảy ra khi xử lý đơn hàng. Vui lòng thử lại!"
+      );
     }
   };
 
@@ -641,7 +688,8 @@ const Payment = () => {
               className={`mb-6 rounded-xl p-4 bg-green-50`}
             >
               <span className="text-green-500">
-                Đây là đơn hàng được tái tạo từ đơn cũ. Vui lòng kiểm tra thông tin trước khi đặt lại!
+                Đây là đơn hàng được tái tạo từ đơn cũ. Vui lòng kiểm tra thông
+                tin trước khi đặt lại!
               </span>
             </motion.div>
           )}
@@ -863,25 +911,33 @@ const Payment = () => {
                   <div className="space-y-3">
                     {shippingMethods.map((method) => {
                       // Vô hiệu hóa nếu là phương thức miễn phí và subtotal < 200.000
-                      const isDisabled = method.delivery_fee === 0 && subtotal < 200000;
+                      const isDisabled =
+                        method.delivery_fee === 0 && subtotal < 200000;
                       return (
                         <motion.div
                           whileHover={{ scale: isDisabled ? 1 : 1.01 }}
                           key={method._id}
-                          onClick={() => !isDisabled && setSelectedShippingMethod(method)}
-                          className={`flex items-center justify-between rounded-xl p-4 ${selectedShippingMethod?._id === method._id
-                            ? "border-blue-500 bg-blue-50"
-                            : isDisabled
+                          onClick={() =>
+                            !isDisabled && setSelectedShippingMethod(method)
+                          }
+                          className={`flex items-center justify-between rounded-xl p-4 ${
+                            selectedShippingMethod?._id === method._id
+                              ? "border-blue-500 bg-blue-50"
+                              : isDisabled
                               ? "bg-gray-200 opacity-50 cursor-not-allowed"
                               : "bg-gray-50"
-                            } ${isDisabled ? "cursor-not-allowed" : "cursor-pointer"}`}
+                          } ${
+                            isDisabled ? "cursor-not-allowed" : "cursor-pointer"
+                          }`}
                         >
                           <div className="flex items-center">
                             <div className="mr-3 rounded-full p-2 bg-white">
                               <Truck size={18} className="text-blue-500" />
                             </div>
                             <div>
-                              <div className="font-medium">{method.delivery_name}</div>
+                              <div className="font-medium">
+                                {method.delivery_name}
+                              </div>
                               <div className="text-sm text-gray-500">
                                 {method.description}
                               </div>
@@ -892,7 +948,10 @@ const Payment = () => {
                               {formatPrice(method.delivery_fee)}
                             </span>
                             {selectedShippingMethod?._id === method._id && (
-                              <CheckCircle size={18} className="ml-2 text-green-500" />
+                              <CheckCircle
+                                size={18}
+                                className="ml-2 text-green-500"
+                              />
                             )}
                           </div>
                         </motion.div>
@@ -922,10 +981,11 @@ const Payment = () => {
                         whileHover={{ scale: 1.01 }}
                         key={method._id}
                         onClick={() => setSelectedPayment(method._id)}
-                        className={`flex cursor-pointer items-center rounded-xl p-4 ${selectedPayment === method._id
+                        className={`flex cursor-pointer items-center rounded-xl p-4 ${
+                          selectedPayment === method._id
                             ? "border-blue-500 bg-blue-50"
                             : "bg-gray-50"
-                          }`}
+                        }`}
                       >
                         <div className="mr-3">
                           <div className="rounded-full p-2 bg-white">
@@ -1000,7 +1060,9 @@ const Payment = () => {
                           onClick={() => {
                             dispatch(clearProduct());
                             setIsReorder(false);
-                            message.success("Đã xóa đơn hàng cũ. Bạn có thể chọn sản phẩm mới!");
+                            message.success(
+                              "Đã xóa đơn hàng cũ. Bạn có thể chọn sản phẩm mới!"
+                            );
                           }}
                           className="mt-4 w-full rounded-xl bg-red-500 py-2 font-medium text-white hover:bg-red-600"
                         >
@@ -1030,7 +1092,8 @@ const Payment = () => {
                   </div>
                   {appliedCoupon && (
                     <p className="mt-2 text-green-500">
-                      Đã áp dụng mã {appliedCoupon.coupon_code}: Giảm {formatPrice(discount)}
+                      Đã áp dụng mã {appliedCoupon.coupon_code}: Giảm{" "}
+                      {formatPrice(discount)}
                     </p>
                   )}
                 </div>
@@ -1067,7 +1130,9 @@ const Payment = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-lg font-semibold">Tổng cộng</span>
-                  <span className="text-lg font-bold text-blue-500">{formatPrice(calculateTotal)}</span>
+                  <span className="text-lg font-bold text-blue-500">
+                    {formatPrice(calculateTotal)}
+                  </span>
                 </div>
                 <motion.button
                   whileHover={{ scale: 1.02 }}
