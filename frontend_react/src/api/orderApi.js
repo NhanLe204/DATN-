@@ -37,5 +37,9 @@ const orderApi = {
     const response = await api.delete(`/v1/orders/${id}`);
     return response.data;
   },
+  updateOrderStatus: async (id, status) => {
+    const response = await api.patch(`/v1/orders/status/${id}`, {status} );
+    return response.data;
+  },
 };
 export default orderApi;

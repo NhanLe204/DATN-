@@ -1,9 +1,9 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import { usePayOS, PayOSConfig } from "payos-checkout";
+import { useLocation, useNavigate } from "react-router-dom";
+// import { usePayOS, PayOSConfig } from "payos-checkout";
 import {
   ChevronRight,
   Package,
@@ -20,9 +20,8 @@ import userApi from "../../api/userApi";
 import deliveryApi from "../../api/deliveryApi";
 import paymentTypeApi from "../../api/paymentTypeApi";
 import couponApi from "../../api/couponApi";
-import { clearProduct } from "../../redux/slices/cartslice";
 import paymentApi from "../../api/paymentApi";
-import ENV_VARS from "../../../config";
+import { clearProduct } from "../../redux/slices/cartslice";
 const { Item } = Form;
 
 // Các interface giữ nguyên như cũ
@@ -82,8 +81,10 @@ interface User {
 const Payment = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isReorder, setIsReorder] = useState(false);
 
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
@@ -234,7 +235,7 @@ const Payment = () => {
       setPaymentMethods([]);
       setSelectedPayment("");
     }
-  }, []);
+  }, [location.state]);
 
   useEffect(() => {
     fetch("https://provinces.open-api.vn/api/p/")
@@ -528,7 +529,7 @@ const Payment = () => {
       discountedSubtotal +
       (selectedShippingMethod ? selectedShippingMethod.delivery_fee : 0);
     return Math.max(total, 0);
-  };
+  }, [cartItems, discount, selectedShippingMethod]);
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("vi-VN").format(price) + "₫";
@@ -614,6 +615,11 @@ const Payment = () => {
       );
     }
   };
+
+  const subtotal = cartItems.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
 
   return (
     <>
@@ -958,18 +964,18 @@ const Payment = () => {
                   {cartItems.length === 0 ? (
                     <p className="text-center text-gray-500">Giỏ hàng trống</p>
                   ) : (
-                    cartItems.map((item) => (
-                      <div key={item.id} className="flex gap-4 mb-4">
-                        <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl">
-                          <img
-                            src={item.image}
-                            alt={item.name}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                        <div>
-                          <h3 className="font-medium">{item.name}</h3>
-                          <p className="text-gray-500">
+                    <>
+                      {cartItems.map((item) => (
+                        <div key={item.id} className="flex gap-4 mb-4">
+                          <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl">
+                            <img
+                              src={item.image}
+                              alt={item.name}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                          <div>
+                            <h3 className="font-medium">{item.name}</h3>
                             Số lượng: {item.quantity}
                           </p>
                           <p className="mt-2 font-semibold text-blue-500">
