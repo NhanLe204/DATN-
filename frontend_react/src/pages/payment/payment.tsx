@@ -195,11 +195,32 @@ const Payment = () => {
           const deliveryMethods: Delivery[] = deliveryResponse.data.data || [];
           setShippingMethods(deliveryMethods);
 
-          if (deliveryMethods.length > 0) {
-            setSelectedShippingMethod(deliveryMethods[0]);
+          // Tính tổng giá trị đơn hàng (subtotal)
+          const subtotal = cartItems.reduce(
+            (sum, item) => sum + item.price * item.quantity,
+            0
+          );
+
+          // Tìm phương thức miễn phí vận chuyển (delivery_fee === 0)
+          const freeShipping = deliveryMethods.find(
+            (method) => method.delivery_fee === 0
+          );
+
+          // Logic chọn phương thức mặc định
+          if (subtotal >= 200000 && freeShipping) {
+            setSelectedShippingMethod(freeShipping);
+          } else if (deliveryMethods.length > 0) {
+            // Nếu không có phương thức tiêu chuẩn, chọn phương thức đầu tiên không phải miễn phí
+            const firstNonFreeMethod = deliveryMethods.find(
+              (method) => method.delivery_fee > 0
+            );
+            setSelectedShippingMethod(firstNonFreeMethod || deliveryMethods[0]);
           }
         } catch (error) {
           console.error("Failed to fetch delivery methods:", error);
+          message.error(
+            "Không thể tải phương thức vận chuyển. Vui lòng thử lại!"
+          );
           setShippingMethods([]);
           setSelectedShippingMethod(null);
         }
@@ -225,6 +246,10 @@ const Payment = () => {
       fetchUserData();
       fetchDeliveryMethods();
       fetchPaymentMethods();
+
+      if (location.state?.reorderItems) {
+        setIsReorder(true);
+      }
     } else {
       setIsLoggedIn(false);
       setAddresses([]);
@@ -519,7 +544,7 @@ const Payment = () => {
     setIsModalOpen(false);
   };
 
-  const calculateTotal = () => {
+  const calculateTotal = useMemo(() => {
     const subtotal = cartItems.reduce(
       (sum, item) => sum + item.price * item.quantity,
       0
@@ -533,6 +558,52 @@ const Payment = () => {
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("vi-VN").format(price) + "₫";
+
+  const processCheckout = async () => {
+    try {
+      const shippingAddress = formData.address;
+      const orderData = {
+        userID: userId,
+        couponID: appliedCoupon ? appliedCoupon._id : null,
+        payment_typeID: selectedPayment,
+        deliveryID: selectedShippingMethod?._id,
+        orderdate: new Date().toISOString(),
+        total_price: calculateTotal,
+        shipping_address: shippingAddress,
+        orderDetails: cartItems.map((item) => ({
+          productID: item.id,
+          serviceID: null,
+          quantity: item.quantity,
+          product_price: item.price,
+        })),
+      };
+
+      const totalAmount = calculateTotal;
+      const orderResponse = await orderApi.create(orderData);
+      const createdOrder = orderResponse.data;
+      const order = createdOrder.order;
+      console.log("Order created:", order);
+      const paymentData = {
+        orderId: order._id,
+        amount: totalAmount,
+        description: `Thanh toán đơn hàng`,
+        returnUrl: `http://localhost:3000/success`,
+        cancelUrl: `http://localhost:3000/cancel`,
+      };
+
+      console.warn("Creating payment with data:", paymentData);
+      if (orderResponse) {
+        // Backend sẽ tự động chuyển đến trang thanh toán và trả về URL
+        message.success("Đơn hàng của bạn đã được tạo thành công!");
+        await handlePayment(paymentData);
+      } else {
+        message.error("Không thể tạo đơn hàng!");
+      }
+    } catch (error) {
+      console.error("Error creating order:", error);
+      message.error("Có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại!");
+    }
+  };
 
   const handlePayment = async (paymentData: any) => {
     try {
@@ -565,45 +636,20 @@ const Payment = () => {
         message.error("Giỏ hàng của bạn đang trống!");
         return;
       }
+      if (isReorder) {
+        Modal.confirm({
+          title: "Xác nhận đặt lại đơn hàng",
+          content:
+            "Bạn đang đặt lại một đơn hàng cũ. Bạn có chắc chắn muốn tiếp tục?",
+          onOk: processCheckout,
+          okText: "Xác nhận",
+          cancelText: "Hủy",
+        });
+      } else {
+        processCheckout();
+      }
 
       message.loading("Đang xử lý đơn hàng...", 0);
-
-      const shippingAddress = formData.address;
-      const totalAmount = calculateTotal();
-
-      const orderData = {
-        userID: userId,
-        couponID: appliedCoupon ? appliedCoupon._id : null,
-        payment_typeID: selectedPayment,
-        deliveryID: selectedShippingMethod?._id,
-        orderdate: new Date().toISOString(),
-        total_price: totalAmount,
-        shipping_address: shippingAddress,
-        status: "PENDING",
-        orderDetails: cartItems.map((item) => ({
-          productID: item.id,
-          serviceID: null,
-          quantity: item.quantity,
-          product_price: item.price,
-        })),
-      };
-
-      console.log("Creating order with data:", orderData);
-      const orderResponse = await orderApi.create(orderData);
-      const createdOrder = orderResponse.data;
-      const order = createdOrder.order;
-      console.log("Order created:", order);
-      const paymentData = {
-        orderId: order._id,
-        amount: totalAmount,
-        description: `Thanh toán đơn hàng`,
-        returnUrl: `http://localhost:3000/success`,
-        cancelUrl: `http://localhost:3000/cancel`,
-      };
-
-      console.warn("Creating payment with data:", paymentData);
-      await handlePayment(paymentData);
-
       // message.destroy();
     } catch (error) {
       console.error("Checkout process error:", error);
@@ -634,6 +680,19 @@ const Payment = () => {
               <span className="text-gray-900">Thông tin giao hàng</span>
             </div>
           </nav>
+
+          {isReorder && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`mb-6 rounded-xl p-4 bg-green-50`}
+            >
+              <span className="text-green-500">
+                Đây là đơn hàng được tái tạo từ đơn cũ. Vui lòng kiểm tra thông
+                tin trước khi đặt lại!
+              </span>
+            </motion.div>
+          )}
 
           {!isLoggedIn && (
             <motion.div
@@ -850,43 +909,54 @@ const Payment = () => {
                 </h2>
                 {shippingMethods.length > 0 ? (
                   <div className="space-y-3">
-                    {shippingMethods.map((method) => (
-                      <motion.div
-                        whileHover={{ scale: 1.01 }}
-                        key={method._id}
-                        onClick={() => setSelectedShippingMethod(method)}
-                        className={`flex cursor-pointer items-center justify-between rounded-xl p-4 ${
-                          selectedShippingMethod?._id === method._id
-                            ? "border-blue-500 bg-blue-50"
-                            : "bg-gray-50"
-                        }`}
-                      >
-                        <div className="flex items-center">
-                          <div className="mr-3 rounded-full p-2 bg-white">
-                            <Truck size={18} className="text-blue-500" />
-                          </div>
-                          <div>
-                            <div className="font-medium">
-                              {method.delivery_name}
+                    {shippingMethods.map((method) => {
+                      // Vô hiệu hóa nếu là phương thức miễn phí và subtotal < 200.000
+                      const isDisabled =
+                        method.delivery_fee === 0 && subtotal < 200000;
+                      return (
+                        <motion.div
+                          whileHover={{ scale: isDisabled ? 1 : 1.01 }}
+                          key={method._id}
+                          onClick={() =>
+                            !isDisabled && setSelectedShippingMethod(method)
+                          }
+                          className={`flex items-center justify-between rounded-xl p-4 ${
+                            selectedShippingMethod?._id === method._id
+                              ? "border-blue-500 bg-blue-50"
+                              : isDisabled
+                              ? "bg-gray-200 opacity-50 cursor-not-allowed"
+                              : "bg-gray-50"
+                          } ${
+                            isDisabled ? "cursor-not-allowed" : "cursor-pointer"
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <div className="mr-3 rounded-full p-2 bg-white">
+                              <Truck size={18} className="text-blue-500" />
                             </div>
-                            <div className="text-sm text-gray-500">
-                              {method.description}
+                            <div>
+                              <div className="font-medium">
+                                {method.delivery_name}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {method.description}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <div className="flex items-center">
-                          <span className="font-semibold">
-                            {formatPrice(method.delivery_fee)}
-                          </span>
-                          {selectedShippingMethod?._id === method._id && (
-                            <CheckCircle
-                              size={18}
-                              className="ml-2 text-green-500"
-                            />
-                          )}
-                        </div>
-                      </motion.div>
-                    ))}
+                          <div className="flex items-center">
+                            <span className="font-semibold">
+                              {formatPrice(method.delivery_fee)}
+                            </span>
+                            {selectedShippingMethod?._id === method._id && (
+                              <CheckCircle
+                                size={18}
+                                className="ml-2 text-green-500"
+                              />
+                            )}
+                          </div>
+                        </motion.div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="flex h-40 flex-col items-center justify-center rounded-xl bg-gray-50">
@@ -977,13 +1047,29 @@ const Payment = () => {
                           <div>
                             <h3 className="font-medium">{item.name}</h3>
                             Số lượng: {item.quantity}
-                          </p>
-                          <p className="mt-2 font-semibold text-blue-500">
-                            {formatPrice(item.price * item.quantity)}
-                          </p>
+                            <p className="mt-2 font-semibold text-blue-500">
+                              {formatPrice(item.price * item.quantity)}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      ))}
+                      {isReorder && (
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => {
+                            dispatch(clearProduct());
+                            setIsReorder(false);
+                            message.success(
+                              "Đã xóa đơn hàng cũ. Bạn có thể chọn sản phẩm mới!"
+                            );
+                          }}
+                          className="mt-4 w-full rounded-xl bg-red-500 py-2 font-medium text-white hover:bg-red-600"
+                        >
+                          Xóa và chọn lại
+                        </motion.button>
+                      )}
+                    </>
                   )}
                 </div>
                 <div className="mb-6">
@@ -1045,7 +1131,7 @@ const Payment = () => {
                 <div className="flex justify-between">
                   <span className="text-lg font-semibold">Tổng cộng</span>
                   <span className="text-lg font-bold text-blue-500">
-                    {formatPrice(calculateTotal())}
+                    {formatPrice(calculateTotal)}
                   </span>
                 </div>
                 <motion.button

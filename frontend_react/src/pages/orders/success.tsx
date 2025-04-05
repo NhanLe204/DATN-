@@ -2,9 +2,13 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { message, Button } from "antd";
 import orderApi from "../../api/orderApi";
+import { clearProduct } from "../../redux/slices/cartslice";
+import { useDispatch } from "react-redux";
+import Loader from "../../components/LoaderPayment";
 
 const SuccessPage = () => {
   const location = useLocation();
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const [isInvalidAccess, setIsInvalidAccess] = useState(false); // Trạng thái để kiểm tra truy cập không hợp lệ
 
@@ -32,6 +36,7 @@ const SuccessPage = () => {
       message.success(
         "Thanh toán thành công! Đơn hàng của bạn đã được xác nhận."
       );
+      dispatch(clearProduct());
 
       // Cập nhật trạng thái đơn hàng
       orderApi
@@ -48,13 +53,15 @@ const SuccessPage = () => {
         });
     } else {
       // Thanh toán thất bại
-      message.error(`Thanh toán thất bại. Mã lỗi: ${responseCode}`);
+      message.error(`Thanh toán thất bại`);
       orderApi
-        .update(orderId, { payment_status: "FAILED" })
+        .updatePaymentStatus(orderId, { payment_status: "CANCELLED" })
         .then(() => {
-          setTimeout(() => navigate("/cancel"), 3000);
+          setTimeout(() => navigate("/cancel"), 1000);
         })
         .catch((error) => {
+          navigate("/");
+          message.error("Có lỗi xảy ra khi cập nhật đơn hàng.");
           console.error("Error updating order:", error);
         });
     }
@@ -85,7 +92,9 @@ const SuccessPage = () => {
   // Nếu truy cập hợp lệ, hiển thị thông báo xử lý
   return (
     <div>
-      <h2>Đang xử lý kết quả thanh toán...</h2>
+      <h2>
+        <Loader />
+      </h2>
     </div>
   );
 };
