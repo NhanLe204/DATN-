@@ -15,11 +15,11 @@ import { motion } from "framer-motion";
 import orderDetailApi from "../../api/orderDetailApi";
 
 export enum BookingStatus {
-  PENDING = "PENDING",
-  CONFIRMED = "CONFIRMED",
-  IN_PROGRESS = "IN_PROGRESS",
-  COMPLETED = "COMPLETED",
-  CANCELLED = "CANCELLED",
+  PENDING = "ĐANG CHỜ",
+  CONFIRMED = "ĐÃ XÁC NHẬN",
+  IN_PROGRESS = "ĐANG THỰC HIỆN",
+  COMPLETED = "HOÀN THÀNH",
+  CANCELLED = "ĐÃ HỦY",
 }
 
 const { Option } = Select;
@@ -79,7 +79,16 @@ const BookingManager: React.FC = () => {
           : "N/A",
         estimatedPrice: booking.service?.price || 0,
         duration: booking.service?.duration || 0,
-        bookingStatus: booking.bookingStatus || BookingStatus.PENDING,
+        bookingStatus:
+          booking.bookingStatus === "PENDING"
+            ? BookingStatus.PENDING
+            : booking.bookingStatus === "CONFIRMED"
+            ? BookingStatus.CONFIRMED
+            : booking.bookingStatus === "IN_PROGRESS"
+            ? BookingStatus.IN_PROGRESS
+            : booking.bookingStatus === "COMPLETED"
+            ? BookingStatus.COMPLETED
+            : BookingStatus.CANCELLED,
         petName: booking.petName || "N/A",
         petType: booking.petType || "N/A",
         petWeight: booking.petWeight || 0,
@@ -115,7 +124,7 @@ const BookingManager: React.FC = () => {
         normalizedServiceName.includes(normalizedSearchText) ||
         booking.orderId.toLowerCase().includes(normalizedSearchText) ||
         normalizedUsername.includes(normalizedSearchText) ||
-        booking.bookingStatus.toLowerCase().includes(normalizedSearchText) ||
+        removeAccents(booking.bookingStatus.toLowerCase()).includes(normalizedSearchText) ||
         normalizedPetName.includes(normalizedSearchText) ||
         normalizedPetType.includes(normalizedSearchText)
       );
@@ -136,7 +145,7 @@ const BookingManager: React.FC = () => {
         try {
           await orderDetailApi.changeBookingStatus(
             selectedBooking.orderId,
-            BookingStatus.IN_PROGRESS
+            "IN_PROGRESS" // Gửi giá trị gốc cho API
           );
           const updatedBookings = bookings.map((b) =>
             b.orderId === selectedBooking.orderId
@@ -173,10 +182,12 @@ const BookingManager: React.FC = () => {
     try {
       await orderDetailApi.changeBookingStatus(
         orderId,
-        BookingStatus.COMPLETED
+        "COMPLETED" // Gửi giá trị gốc cho API
       );
       const updatedBookings = bookings.map((b) =>
-        b.orderId === orderId ? { ...b, bookingStatus: BookingStatus.COMPLETED } : b
+        b.orderId === orderId
+          ? { ...b, bookingStatus: BookingStatus.COMPLETED }
+          : b
       );
       setBookings(updatedBookings);
       setFilteredBookings(updatedBookings);
@@ -202,9 +213,21 @@ const BookingManager: React.FC = () => {
     form.validateFields().then(async (values) => {
       if (selectedBooking) {
         try {
+          // Chuyển đổi trạng thái tiếng Việt về giá trị gốc để gửi API
+          const statusToSend =
+            values.bookingStatus === BookingStatus.PENDING
+              ? "PENDING"
+              : values.bookingStatus === BookingStatus.CONFIRMED
+              ? "CONFIRMED"
+              : values.bookingStatus === BookingStatus.IN_PROGRESS
+              ? "IN_PROGRESS"
+              : values.bookingStatus === BookingStatus.COMPLETED
+              ? "COMPLETED"
+              : "CANCELLED";
+
           await orderDetailApi.changeBookingStatus(
             selectedBooking.orderId,
-            values.bookingStatus
+            statusToSend
           );
           const updatedBookings = bookings.map((b) =>
             b.orderId === selectedBooking.orderId
@@ -257,16 +280,16 @@ const BookingManager: React.FC = () => {
         <div
           style={{
             width: "50px",
-            wordBreak: "break-all", 
-            overflowWrap: "break-word", 
-            whiteSpace: "normal", 
-            lineHeight: "1.2", 
+            wordBreak: "break-all",
+            overflowWrap: "break-word",
+            whiteSpace: "normal",
+            lineHeight: "1.2",
           }}
-          title={text} 
+          title={text}
         >
           {text}
         </div>
-      )
+      ),
     },
     {
       title: "Người đặt",
@@ -454,11 +477,11 @@ const BookingManager: React.FC = () => {
               rules={[{ required: true, message: "Vui lòng chọn trạng thái!" }]}
             >
               <Select>
-                <Option value={BookingStatus.PENDING}>PENDING</Option>
-                <Option value={BookingStatus.CONFIRMED}>CONFIRMED</Option>
-                <Option value={BookingStatus.IN_PROGRESS}>IN_PROGRESS</Option>
-                <Option value={BookingStatus.COMPLETED}>COMPLETED</Option>
-                <Option value={BookingStatus.CANCELLED}>CANCELLED</Option>
+                <Option value={BookingStatus.PENDING}>ĐANG CHỜ</Option>
+                <Option value={BookingStatus.CONFIRMED}>ĐÃ XÁC NHẬN</Option>
+                <Option value={BookingStatus.IN_PROGRESS}>ĐANG THỰC HIỆN</Option>
+                <Option value={BookingStatus.COMPLETED}>HOÀN THÀNH</Option>
+                <Option value={BookingStatus.CANCELLED}>ĐÃ HỦY</Option>
               </Select>
             </Form.Item>
           </Form>
