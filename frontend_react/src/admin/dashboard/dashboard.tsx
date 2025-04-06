@@ -6,12 +6,15 @@ import {
   ShoppingCartOutlined,
   FileTextOutlined,
   ExceptionOutlined,
+  CalendarOutlined,
+  CloseCircleOutlined,
 } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { Typography } from "antd";
 import userApi from "../../api/userApi";
 import productApi from "../../api/productsApi";
 import orderApi from "../../api/orderApi";
+import orderDetailApi from "../../api/orderDetailApi";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -23,14 +26,7 @@ import {
 } from "chart.js";
 
 // Đăng ký các thành phần cần thiết của Chart.js
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend
-);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 const { Text } = Typography;
 
@@ -40,13 +36,15 @@ const Dashboard: React.FC = () => {
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalOrders, setTotalOrders] = useState(0);
   const [canceledOrders, setCanceledOrders] = useState(0);
+  const [totalAppointments, setTotalAppointments] = useState(0);
+  const [canceledAppointments, setCanceledAppointments] = useState(0);
   interface Customer {
     avatar?: string;
     fullname?: string;
     name?: string;
     status?: string;
   }
-  
+
   const [newCustomers, setNewCustomers] = useState<Customer[]>([]);
   const [outOfStockProducts, setOutOfStockProducts] = useState([]);
   const [hotProducts, setHotProducts] = useState([]);
@@ -54,7 +52,6 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [currentPageHotProducts, setCurrentPageHotProducts] = useState(1);
 
-  // Cập nhật thời gian và ngày hiện tại
   useEffect(() => {
     const updateTime = () => {
       const today = new Date();
@@ -84,46 +81,34 @@ const Dashboard: React.FC = () => {
     return () => clearInterval(timerId);
   }, []);
 
-  // Lấy dữ liệu cho dashboard
   useEffect(() => {
     const fetchDashboardData = async () => {
       setLoading(true);
       try {
-        // Lấy danh sách người dùng
         const usersResponse = await userApi.getAllUsers();
         setTotalUsers(usersResponse.data.result?.length || 0);
 
-        // Lấy khách hàng mới
         const newUserResponse = await userApi.getNewUsers();
         setNewCustomers(newUserResponse.data.result || []);
 
-        // Lấy danh sách đơn hàng
         const ordersResponse = await orderApi.getAll();
         const allOrders = ordersResponse.data.result || [];
-
         setTotalOrders(allOrders.length);
-        const canceled = allOrders.filter(
-          (order) => order.status === "canceled"
-        ).length;
+        const canceled = allOrders.filter((order) => order.status === "canceled").length;
         setCanceledOrders(canceled);
 
-        // Định dạng dữ liệu đơn hàng cho bảng "TỔNG ĐƠN HÀNG"
         const formattedOrders = allOrders.map((order, index) => ({
           key: index.toString(),
           id: order._id || "N/A",
-          customer:
-            order.userID?.fullname || order.userID?.name || "Khách vãng lai",
+          customer: order.userID?.fullname || order.userID?.name || "Khách vãng lai",
           paymentType: order.payment_typeID?.name || "Không xác định",
           delivery: order.deliveryID?.delivery_name || "Không xác định",
           total: `${order.total_price?.toLocaleString() || 0} VNĐ`,
         }));
         setOrders(formattedOrders);
 
-        // Lấy sản phẩm hết hàng
         const outOfStockResponse = await productApi.getProductOutStock();
         const outOfStockItems = outOfStockResponse.data.result || [];
-        
-        
         const formattedOutOfStockItems = outOfStockItems.map((product) => ({
           key: product._id,
           _id: product._id,
@@ -137,10 +122,8 @@ const Dashboard: React.FC = () => {
           brand: product.brand_id?.brand_name || "Không có thương hiệu",
           tag: product.tag_id?.tag_name || "Không có thẻ",
         }));
-        setOutOfStockProducts(formattedOutOfStockItems.length);
         setOutOfStockProducts(formattedOutOfStockItems);
 
-        // Lấy sản phẩm bán chạy
         const hotProductsResponse = await productApi.getHotproducts();
         const hotProductsItems = hotProductsResponse.data.result || [];
         const formattedHotProducts = hotProductsItems.map((product) => ({
@@ -157,6 +140,16 @@ const Dashboard: React.FC = () => {
           tag: product.tag_id?.tag_name || "Không có thẻ",
         }));
         setHotProducts(formattedHotProducts);
+
+        const allBookingsResponse = await orderDetailApi.getAllBookings();
+        console.log("tất cả booking", allBookingsResponse);
+        const allBookings = allBookingsResponse.data || [];
+        setTotalAppointments(allBookings.length);
+
+        const cancelledBookingsResponse = await orderDetailApi.getCancelledBookings();
+        console.log("hủy booking", cancelledBookingsResponse);
+        const cancelledBookings = cancelledBookingsResponse.data || [];
+        setCanceledAppointments(cancelledBookings.length);
       } catch (error) {
         console.error("Lỗi khi lấy dữ liệu dashboard:", error);
         message.error("Không thể tải dữ liệu dashboard. Vui lòng thử lại sau!");
@@ -168,7 +161,6 @@ const Dashboard: React.FC = () => {
     fetchDashboardData();
   }, []);
 
-  // Dữ liệu doanh số cho biểu đồ
   const salesData = [
     { name: "Tháng 1", sales2024: 20, sales2025: 25 },
     { name: "Tháng 2", sales2024: 59, sales2025: 62 },
@@ -184,7 +176,6 @@ const Dashboard: React.FC = () => {
     { name: "Tháng 12", sales2024: 110, sales2025: null },
   ];
 
-  // Cập nhật chartData
   const chartData = {
     labels: salesData.map((data) => data.name),
     datasets: [
@@ -205,49 +196,27 @@ const Dashboard: React.FC = () => {
     ],
   };
 
-  // Tùy chọn cho biểu đồ Chart.js
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: {
-        position: "top" as const,
-      },
-      title: {
-        display: false,
-      },
+      legend: { position: "top" as const },
+      title: { display: false },
     },
     scales: {
-      x: {
-        title: {
-          display: true,
-          text: "Tháng",
-        },
-      },
-      y: {
-        title: {
-          display: true,
-          text: "Doanh số",
-        },
-        beginAtZero: true,
-      },
+      x: { title: { display: true, text: "Tháng" } },
+      y: { title: { display: true, text: "Doanh số" }, beginAtZero: true },
     },
   };
 
-  // Cấu hình cột cho bảng "TỔNG ĐƠN HÀNG"
   const ordersColumns = [
     { title: "ID đơn hàng", dataIndex: "id", key: "id" },
     { title: "Khách hàng", dataIndex: "customer", key: "customer" },
-    {
-      title: "Phương thức thanh toán",
-      dataIndex: "paymentType",
-      key: "paymentType",
-    },
+    { title: "Phương thức thanh toán", dataIndex: "paymentType", key: "paymentType" },
     { title: "Phương thức giao hàng", dataIndex: "delivery", key: "delivery" },
     { title: "Tổng tiền", dataIndex: "total", key: "total" },
   ];
 
-  // Cấu hình cột cho bảng sản phẩm
   const productColumns = [
     { title: "Mã sản phẩm", dataIndex: "_id", key: "_id", width: 150 },
     { title: "Tên sản phẩm", dataIndex: "name", key: "name", width: 200 },
@@ -301,32 +270,21 @@ const Dashboard: React.FC = () => {
       dataIndex: "tag",
       key: "tag",
       width: 100,
-      render: (tag: string) =>
-        tag ? <Tag color="blue">{tag}</Tag> : "Không có thẻ",
+      render: (tag: string) => (tag ? <Tag color="blue">{tag}</Tag> : "Không có thẻ"),
     },
   ];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
       <div className="mb-6">
-        {/* Thống kê tổng quan */}
         <Row gutter={[16, 16]} className="mb-6">
           <Col xs={24} sm={12} md={8} lg={8}>
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
+            <motion.div whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
               <Card bordered={false} className="shadow-sm">
                 <Statistic
                   title="Tổng số người dùng"
                   value={totalUsers}
-                  prefix={
-                    <UserOutlined className="mr-2 text-xl text-cyan-500" />
-                  }
+                  prefix={<UserOutlined className="mr-2 text-xl text-cyan-500" />}
                   suffix="tài khoản"
                   loading={loading}
                 />
@@ -334,17 +292,12 @@ const Dashboard: React.FC = () => {
             </motion.div>
           </Col>
           <Col xs={24} sm={12} md={8} lg={8}>
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
+            <motion.div whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
               <Card bordered={false} className="shadow-sm">
                 <Statistic
                   title="Tổng đơn hàng"
                   value={totalOrders}
-                  prefix={
-                    <ShoppingCartOutlined className="mr-2 text-xl text-yellow-500" />
-                  }
+                  prefix={<ShoppingCartOutlined className="mr-2 text-xl text-yellow-500" />}
                   suffix="đơn hàng"
                   loading={loading}
                 />
@@ -352,10 +305,7 @@ const Dashboard: React.FC = () => {
             </motion.div>
           </Col>
           <Col xs={24} sm={12} md={8} lg={8}>
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
+            <motion.div whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
               <Card bordered={false} className="shadow-sm">
                 <Statistic
                   title="Hết hàng"
@@ -368,18 +318,39 @@ const Dashboard: React.FC = () => {
             </motion.div>
           </Col>
           <Col xs={24} sm={12} md={8} lg={8}>
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
+            <motion.div whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
               <Card bordered={false} className="shadow-sm">
                 <Statistic
                   title="Đơn hàng hủy"
                   value={canceledOrders}
-                  prefix={
-                    <FileTextOutlined className="mr-2 text-xl text-red-500" />
-                  }
+                  prefix={<FileTextOutlined className="mr-2 text-xl text-red-500" />}
                   suffix="đơn hàng"
+                  loading={loading}
+                />
+              </Card>
+            </motion.div>
+          </Col>
+          <Col xs={24} sm={12} md={8} lg={8}>
+            <motion.div whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
+              <Card bordered={false} className="shadow-sm">
+                <Statistic
+                  title="Tổng lịch hẹn"
+                  value={totalAppointments}
+                  prefix={<CalendarOutlined className="mr-2 text-xl text-green-500" />}
+                  suffix="lịch hẹn"
+                  loading={loading}
+                />
+              </Card>
+            </motion.div>
+          </Col>
+          <Col xs={24} sm={12} md={8} lg={8}>
+            <motion.div whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
+              <Card bordered={false} className="shadow-sm">
+                <Statistic
+                  title="Lịch đã hủy"
+                  value={canceledAppointments}
+                  prefix={<CloseCircleOutlined className="mr-2 text-xl text-red-500" />}
+                  suffix="lịch hẹn"
                   loading={loading}
                 />
               </Card>
@@ -387,25 +358,16 @@ const Dashboard: React.FC = () => {
           </Col>
         </Row>
 
-        {/* Biểu đồ doanh số và khách hàng mới */}
         <Row gutter={[32, 16]} className="mb-6">
           <Col xs={24} lg={16}>
-            <Card
-              title="THỐNG KẾ DOANH SỐ"
-              bordered={false}
-              className="shadow-sm"
-            >
+            <Card title="THỐNG KẾ DOANH SỐ" bordered={false} className="shadow-sm">
               <div className="h-80">
                 <Bar data={chartData} options={chartOptions} />
               </div>
             </Card>
           </Col>
           <Col xs={24} lg={8}>
-            <Card
-              title="Khách hàng mới"
-              bordered={false}
-              className="w-full shadow-sm"
-            >
+            <Card title="Khách hàng mới" bordered={false} className="w-full shadow-sm">
               <div className="space-y-6">
                 {newCustomers.map((customer, index) => (
                   <div key={index} className="flex items-center space-x-4">
@@ -418,16 +380,11 @@ const Dashboard: React.FC = () => {
                       className="rounded-full w-14 h-14"
                     />
                     <div>
-                      <Text
-                        type="secondary"
-                        className="text-base text-gray-500"
-                      >
+                      <Text type="secondary" className="text-base text-gray-500">
                         {customer.fullname || customer.name}
                       </Text>
                       <br />
-                      <Text className="text-sm text-blue-600">
-                        {customer.status || "Hoạt động"}
-                      </Text>
+                      <Text className="text-sm text-blue-600">{customer.status || "Hoạt động"}</Text>
                     </div>
                   </div>
                 ))}
@@ -436,12 +393,7 @@ const Dashboard: React.FC = () => {
           </Col>
         </Row>
 
-        {/* Bảng sản phẩm bán chạy */}
-        <Card
-          title="SẢN PHẨM BÁN CHẠY"
-          bordered={false}
-          className="mb-6 shadow-sm"
-        >
+        <Card title="SẢN PHẨM BÁN CHẠY" bordered={false} className="mb-6 shadow-sm">
           <Table
             columns={productColumns}
             dataSource={hotProducts}
@@ -456,15 +408,11 @@ const Dashboard: React.FC = () => {
           />
         </Card>
 
-        {/* Bảng tổng đơn hàng */}
         <Card title="TỔNG ĐƠN HÀNG" bordered={false} className="mb-6 shadow-sm">
           <Table
             columns={ordersColumns}
             dataSource={orders}
-            pagination={{
-              pageSize: 4,
-              total: orders.length,
-            }}
+            pagination={{ pageSize: 4, total: orders.length }}
             className="overflow-x-auto"
             loading={loading}
           />

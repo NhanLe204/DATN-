@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import orderDetailModel from '../models/orderdetail.model.js';
 import orderModel from '@/models/order.model.js';
 import mongoose from 'mongoose';
+import { BookingStatus } from '@/enums/booking.enum.js';
 
 // Lấy danh sách tất cả order details
 export const getOrderDetails = async (req: Request, res: Response) => {
@@ -170,6 +171,7 @@ export const getAllBookings = async (req: Request, res: Response, next: NextFunc
           booking_date: 1, // Từ orderDetail
           order_date: '$order.order_date', // Từ orderModel
           status: '$order.status',
+          bookingStatus: '$order.bookingStatus',
           petName: 1, // Thêm petName từ orderDetail
           petType: 1 // Thêm petType từ orderDetail
         }
@@ -255,5 +257,211 @@ export const getOrderByUserId = async (req: Request, res: Response): Promise<voi
     res.status(200).json({ success: true, data: formattedOrders });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error retrieving orders by user ID', data: [] });
+  }
+};
+export const changeBookingStatus = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { orderId, bookingStatus } = req.body;
+
+    // Validate input
+    if (!orderId || !bookingStatus) {
+      res.status(400).json({ 
+        success: false, 
+        message: 'orderId and bookingStatus are required' 
+      });
+      return;
+    }
+
+    // Validate bookingStatus
+    if (!Object.values(BookingStatus).includes(bookingStatus)) {
+      res.status(400).json({ 
+        success: false, 
+        message: `Invalid booking status. Must be one of: ${Object.values(BookingStatus).join(', ')}` 
+      });
+      return;
+    }
+
+    // Check if order exists and has booking (service)
+    const order = await orderModel.findById(orderId);
+    if (!order) {
+      res.status(404).json({ 
+        success: false, 
+        message: 'Order not found' 
+      });
+      return;
+    }
+
+    // Check if this order has any booking (service) details
+    const bookingDetail = await orderDetailModel.findOne({ 
+      orderId: orderId, 
+      serviceId: { $ne: null } 
+    });
+
+    if (!bookingDetail) {
+      res.status(404).json({ 
+        success: false, 
+        message: 'No booking found for this order' 
+      });
+      return;
+    }
+
+    // Update booking status
+    const updatedOrder = await orderModel.findByIdAndUpdate(
+      orderId,
+      { bookingStatus: bookingStatus },
+      { new: true }
+    );
+
+    if (!updatedOrder) {
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to update booking status' 
+      });
+      return;
+    }
+
+    // Optionally, you might want to update related order status based on booking status
+    let newOrderStatus = updatedOrder.status;
+    switch (bookingStatus) {
+      case BookingStatus.PENDING:
+        newOrderStatus = 'pending';
+        break;
+      case BookingStatus.CONFIRMED:
+        newOrderStatus = 'confirmed';
+        break;
+      case BookingStatus.IN_PROGRESS:
+        newOrderStatus = 'processing';
+        break;
+      case BookingStatus.COMPLETED:
+        newOrderStatus = 'completed';
+        break;
+      case BookingStatus.CANCELLED:
+        newOrderStatus = 'cancelled';
+        break;
+    }
+
+    // Update order status if needed
+    if (newOrderStatus !== updatedOrder.status) {
+      await orderModel.findByIdAndUpdate(
+        orderId,
+        { status: newOrderStatus },
+        { new: true }
+      );
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Booking status updated successfully',
+      data: {
+        orderId: updatedOrder._id,
+        bookingStatus: updatedOrder.bookingStatus,
+        orderStatus: newOrderStatus
+      }
+    });
+
+  } catch (error) {
+    console.error('Error changing booking status:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error updating booking status', 
+      error 
+    });
+  }
+};
+
+export const getCancelledBookings = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // Lấy tất cả các order có bookingStatus là CANCELLED
+    const cancelledOrders = await orderModel.find({ 
+      bookingStatus: BookingStatus.CANCELLED 
+    }).select('_id');
+
+    if (!cancelledOrders.length) {
+      res.status(404).json({ 
+        success: false, 
+        message: 'No cancelled bookings found' 
+      });
+      return;
+    }
+
+    // Lấy danh sách orderId
+    const orderIds = cancelledOrders.map((order) => order._id);
+
+    // Tìm các orderDetail liên quan đến các booking đã hủy
+    const cancelledBookings = await orderDetailModel.aggregate([
+      { 
+        $match: { 
+          orderId: { $in: orderIds }, 
+          serviceId: { $ne: null } 
+        } 
+      },
+      { 
+        $lookup: { 
+          from: 'orders', 
+          localField: 'orderId', 
+          foreignField: '_id', 
+          as: 'order' 
+        } 
+      },
+      { 
+        $lookup: { 
+          from: 'services', 
+          localField: 'serviceId', 
+          foreignField: '_id', 
+          as: 'service' 
+        } 
+      },
+      { 
+        $lookup: { 
+          from: 'users', 
+          localField: 'order.userID', 
+          foreignField: '_id', 
+          as: 'user' 
+        } 
+      },
+      { $unwind: '$order' },
+      { $unwind: '$service' },
+      { $unwind: '$user' },
+      {
+        $project: {
+          orderId: '$order._id',
+          user: {
+            name: '$user.fullname',
+            email: '$user.email'
+          },
+          service: {
+            name: '$service.service_name',
+            price: '$service.service_price',
+            duration: '$service.duration'
+          },
+          booking_date: 1,
+          order_date: '$order.order_date',
+          status: '$order.status',
+          bookingStatus: '$order.bookingStatus',
+          petName: 1,
+          petType: 1
+        }
+      }
+    ]);
+
+    if (!cancelledBookings.length) {
+      res.status(404).json({ 
+        success: false, 
+        message: 'No cancelled bookings found' 
+      });
+      return;
+    }
+
+    res.status(200).json({ 
+      success: true, 
+      data: cancelledBookings 
+    });
+  } catch (error) {
+    console.error('Error retrieving cancelled bookings:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error retrieving cancelled bookings', 
+      error 
+    });
   }
 };

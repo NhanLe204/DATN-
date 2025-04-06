@@ -41,5 +41,12 @@ const orderApi = {
     const response = await api.patch(`/v1/orders/status/${id}`, {status} );
     return response.data;
   },
+  cancelBooking: async (orderId, orderDetailId) => {
+      const response = await api.post("/v1/orders/cancel-booking", {
+        orderId,
+        orderDetailId,
+      });
+      return response.data;
+  },
 };
 export default orderApi;

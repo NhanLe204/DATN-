@@ -6,16 +6,20 @@ import {
   getOrderDetailsByOrderId,
   getAllBookings,
   getBookingsByUserId,
-  getOrderByUserId
+  getOrderByUserId,
+  changeBookingStatus,
+  getCancelledBookings
 } from '@/controllers/orderDetail.controllers.js';
 
 const orderDetailRouter = Router();
 
 orderDetailRouter.get('/ordersDetail', verifyToken, getOrderDetails);
+orderDetailRouter.get('/cancelled-bookings', getCancelledBookings);
 orderDetailRouter.get('/ordersDetail/bookings', verifyToken, getBookingsByUserId);
 orderDetailRouter.get('/ordersDetail/allBookings', verifyToken, getAllBookings);
 orderDetailRouter.get('/ordersDetail/:id', verifyToken, getOrderDetailsByOrderId);
 orderDetailRouter.get('/getOrderByUserId', verifyToken, getOrderByUserId);
+orderDetailRouter.patch('/bookings/status', changeBookingStatus);
 // orderRouter.patch('/ratings/:id', updateRating);
 // orderRouter.delete('/ratings/:id', deleteRating);
 // brandRouter.post('/brands', verifyToken, requireAdmin, insertBrand);

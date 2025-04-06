@@ -13,21 +13,22 @@ interface BookingEmailData {
     petName: string | null;
     petType: string | null;
   }>;
-  orderId: string; // Bắt buộc để lấy từ orderModel
+  orderId: string;
+  isCancellation?: boolean;
 }
 
 const sendBookingEmail = async ({
   recipientEmail,
   customerName,
   orderDetails,
-  orderId
+  orderId,
+  isCancellation = false,
 }: BookingEmailData): Promise<void> => {
-  console.log('Input data:', { recipientEmail, customerName, orderDetails, orderId });
+  console.log('Input data:', { recipientEmail, customerName, orderDetails, orderId, isCancellation });
 
   let finalOrderId = orderId;
   let finalCustomerName = customerName || 'Khách hàng';
 
-  // Lấy thông tin từ orderModel
   try {
     const order = await orderModel.findById(orderId);
     if (order) {
@@ -36,7 +37,7 @@ const sendBookingEmail = async ({
       if (user && user.fullname) {
         finalCustomerName = user.fullname;
       } else {
-        finalCustomerName = order.fullname;
+        finalCustomerName = order.fullname || 'Khách hàng';
         console.log(`No fullname found for userID: ${order.userID}`);
       }
     } else {
@@ -70,7 +71,7 @@ const sendBookingEmail = async ({
       service_name: serviceName,
       service_price: servicePrice,
       duration: duration,
-      customerName: finalCustomerName
+      customerName: finalCustomerName,
     };
   });
 
@@ -85,7 +86,7 @@ const sendBookingEmail = async ({
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-      timeZone: 'Asia/Ho_Chi_Minh'
+      timeZone: 'Asia/Ho_Chi_Minh',
     }).format(date);
   };
 
@@ -98,10 +99,10 @@ const sendBookingEmail = async ({
 
   console.log('Final data:', { finalCustomerName, finalOrderId });
 
-  const subject = 'Xác nhận đặt lịch thành công';
+  const subject = isCancellation ? 'Thông báo hủy lịch đặt dịch vụ' : 'Xác nhận đặt lịch thành công';
   const text = `Kính gửi ${finalCustomerName},
 
-Cảm ơn bạn đã đặt lịch với chúng tôi! Dưới đây là thông tin chi tiết về lịch hẹn của bạn:
+${isCancellation ? 'Lịch đặt dịch vụ của bạn đã được hủy thành công' : 'Cảm ơn bạn đã đặt lịch với chúng tôi! Dưới đây là thông tin chi tiết về lịch hẹn của bạn'}:
 
 ${enrichedOrderDetails
   .map(
@@ -112,7 +113,7 @@ ${enrichedOrderDetails
 - Địa điểm: ${ENV_VARS.ADDRESS}
 - Mã đặt lịch: ${finalOrderId}
 
-Nếu bạn cần thay đổi hoặc hủy lịch hẹn, vui lòng liên hệ với chúng tôi qua số 0888-666-333 hoặc email ${ENV_VARS.EMAIL_USER}.
+Nếu bạn cần thêm thông tin hoặc hỗ trợ, vui lòng liên hệ với chúng tôi qua số 0888-666-333 hoặc email ${ENV_VARS.EMAIL_USER}.
 
 Trân trọng,
 Pet Heaven
@@ -121,7 +122,7 @@ Email: ${ENV_VARS.EMAIL_USER}`;
 
   const html = `
     <p>Kính gửi <strong>${finalCustomerName}</strong>,</p>
-    <p>Cảm ơn bạn đã đặt lịch với chúng tôi! Dưới đây là thông tin chi tiết về lịch hẹn của bạn:</p>
+    <p>${isCancellation ? 'Lịch đặt dịch vụ của bạn đã được hủy thành công' : 'Cảm ơn bạn đã đặt lịch với chúng tôi! Dưới đây là thông tin chi tiết về lịch hẹn của bạn'}:</p>
     <ul>
       ${enrichedOrderDetails
         .map(
@@ -129,27 +130,27 @@ Email: ${ENV_VARS.EMAIL_USER}`;
             <li>
               <strong>Dịch vụ:</strong> ${detail.service_name}<br>
               <strong>Thời gian:</strong> ${formatDateTime(detail.booking_date)}<br>
-              <strong>Thú cưng:</strong> ${detail.petName} <strong>Loại:</strong> (${detail.petType})<br>
+              <strong>Thú cưng:</strong> ${detail.petName} (${detail.petType})<br>
               <strong>Giá dự tính:</strong> ${formatPrice(detail.service_price)}<br>
-              <strong>Thời gian dự tính:</strong> ${detail.duration} phút
+              <strong>Thời gian dự kiến:</strong> ${detail.duration} phút
             </li>
           `
         )
         .join('')}
     </ul>
     <p>
-      <strong>Địa điểm:</strong> Pet Heaven, 123 Đường Thú Cưng, TP. HCM<br>
+      <strong>Địa điểm:</strong> ${ENV_VARS.ADDRESS}<br>
       <strong>Mã đặt lịch:</strong> ${finalOrderId}
     </p>
-    <p>Nếu bạn cần thay đổi hoặc hủy lịch hẹn, vui lòng liên hệ với chúng tôi sớm 12 tiếng trước lịch hẹn của quý khách.</p>
-    <p>Trân trọng,<br><strong>Pet Heaven</strong><br>Hotline: ${ENV_VARS.HOTLINE}<br>Email: ${ENV_VARS.EMAIL_USER}</p>
+    <p>Nếu bạn cần thêm thông tin hoặc hỗ trợ, vui lòng liên hệ với chúng tôi qua hotline <strong>${ENV_VARS.HOTLINE}</strong> hoặc email <strong>${ENV_VARS.EMAIL_USER}</strong>.</p>
+    <p>Trân trọng,<br><strong>Pet Heaven</strong></p>
   `;
 
   try {
     await sendEmail(recipientEmail, subject, text, html);
-    console.log('Booking email sent to:', recipientEmail);
+    console.log(`${isCancellation ? 'Cancellation' : 'Booking'} email sent to:`, recipientEmail);
   } catch (error) {
-    console.error('Error sending booking email:', error);
+    console.error(`Error sending ${isCancellation ? 'cancellation' : 'booking'} email:`, error);
     throw error;
   }
 };

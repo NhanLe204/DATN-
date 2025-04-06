@@ -14,6 +14,14 @@ import { SearchOutlined, EditOutlined } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import orderDetailApi from "../../api/orderDetailApi";
 
+export enum BookingStatus {
+  PENDING = "PENDING",
+  CONFIRMED = "CONFIRMED",
+  IN_PROGRESS = "IN_PROGRESS",
+  COMPLETED = "COMPLETED",
+  CANCELLED = "CANCELLED",
+}
+
 const { Option } = Select;
 
 interface Booking {
@@ -27,9 +35,10 @@ interface Booking {
   bookingTime: string;
   estimatedPrice: number;
   duration: number;
-  status: string;
-  petName?: string; 
-  petType?: string; 
+  bookingStatus: string;
+  petName?: string;
+  petType?: string;
+  petWeight?: number;
 }
 
 const removeAccents = (str: string) => {
@@ -42,20 +51,20 @@ const removeAccents = (str: string) => {
 
 const BookingManager: React.FC = () => {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [isStartModalVisible, setIsStartModalVisible] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
   const [searchText, setSearchText] = useState("");
   const [form] = Form.useForm();
+  const [startForm] = Form.useForm();
 
   const fetchBookings = async () => {
     try {
       const response = await orderDetailApi.getAllBookings();
-      console.log("dulieu", response);
-
       const bookingData = response.data.map((booking: any) => ({
-        key: booking._id,
-        id: booking._id,
+        key: booking.orderId,
+        id: booking.orderId,
         orderId: booking.orderId,
         username: booking.user?.name || "Unknown User",
         orderDate: booking.order_date
@@ -70,9 +79,10 @@ const BookingManager: React.FC = () => {
           : "N/A",
         estimatedPrice: booking.service?.price || 0,
         duration: booking.service?.duration || 0,
-        status: booking.status || "PENDING",
-        petName: booking.petName || "N/A", // Lấy petName từ API
-        petType: booking.petType || "N/A", // Lấy petType từ API
+        bookingStatus: booking.bookingStatus || BookingStatus.PENDING,
+        petName: booking.petName || "N/A",
+        petType: booking.petType || "N/A",
+        petWeight: booking.petWeight || 0,
       }));
 
       setBookings(bookingData);
@@ -91,15 +101,21 @@ const BookingManager: React.FC = () => {
     const normalizedSearchText = removeAccents(value.toLowerCase());
 
     const filtered = bookings.filter((booking) => {
-      const normalizedServiceName = removeAccents(booking.serviceName.toLowerCase());
+      const normalizedServiceName = removeAccents(
+        booking.serviceName.toLowerCase()
+      );
       const normalizedUsername = removeAccents(booking.username.toLowerCase());
-      const normalizedPetName = removeAccents(booking.petName?.toLowerCase() || "");
-      const normalizedPetType = removeAccents(booking.petType?.toLowerCase() || "");
+      const normalizedPetName = removeAccents(
+        booking.petName?.toLowerCase() || ""
+      );
+      const normalizedPetType = removeAccents(
+        booking.petType?.toLowerCase() || ""
+      );
       return (
         normalizedServiceName.includes(normalizedSearchText) ||
         booking.orderId.toLowerCase().includes(normalizedSearchText) ||
         normalizedUsername.includes(normalizedSearchText) ||
-        booking.status.toLowerCase().includes(normalizedSearchText) ||
+        booking.bookingStatus.toLowerCase().includes(normalizedSearchText) ||
         normalizedPetName.includes(normalizedSearchText) ||
         normalizedPetType.includes(normalizedSearchText)
       );
@@ -107,11 +123,60 @@ const BookingManager: React.FC = () => {
 
     setFilteredBookings(filtered);
   };
-  const handleComplete = async (bookingId: string) => {
+
+  const handleStart = (record: Booking) => {
+    setSelectedBooking(record);
+    startForm.setFieldsValue({ petWeight: record.petWeight || 0 });
+    setIsStartModalVisible(true);
+  };
+
+  const handleStartModalOk = () => {
+    startForm.validateFields().then(async (values) => {
+      if (selectedBooking) {
+        try {
+          await orderDetailApi.changeBookingStatus(
+            selectedBooking.orderId,
+            BookingStatus.IN_PROGRESS
+          );
+          const updatedBookings = bookings.map((b) =>
+            b.orderId === selectedBooking.orderId
+              ? {
+                  ...b,
+                  bookingStatus: BookingStatus.IN_PROGRESS,
+                  petWeight: values.petWeight,
+                  estimatedPrice: calculatePrice(
+                    b.serviceName,
+                    values.petWeight
+                  ),
+                }
+              : b
+          );
+
+          setBookings(updatedBookings);
+          setFilteredBookings(updatedBookings);
+          setIsStartModalVisible(false);
+          notification.success({
+            message: "Thành công",
+            description: "Đã bắt đầu dịch vụ!",
+          });
+        } catch (error) {
+          notification.error({
+            message: "Lỗi",
+            description: "Không thể cập nhật trạng thái!",
+          });
+        }
+      }
+    });
+  };
+
+  const handleComplete = async (orderId: string) => {
     try {
-      await orderDetailApi.updateStatus(bookingId, { status: "COMPLETED" });
+      await orderDetailApi.changeBookingStatus(
+        orderId,
+        BookingStatus.COMPLETED
+      );
       const updatedBookings = bookings.map((b) =>
-        b.id === bookingId ? { ...b, status: "COMPLETED" } : b
+        b.orderId === orderId ? { ...b, bookingStatus: BookingStatus.COMPLETED } : b
       );
       setBookings(updatedBookings);
       setFilteredBookings(updatedBookings);
@@ -127,8 +192,82 @@ const BookingManager: React.FC = () => {
     }
   };
 
-  
+  const handleEdit = (record: Booking) => {
+    setSelectedBooking(record);
+    form.setFieldsValue({ bookingStatus: record.bookingStatus });
+    setIsEditModalVisible(true);
+  };
+
+  const handleEditModalOk = () => {
+    form.validateFields().then(async (values) => {
+      if (selectedBooking) {
+        try {
+          await orderDetailApi.changeBookingStatus(
+            selectedBooking.orderId,
+            values.bookingStatus
+          );
+          const updatedBookings = bookings.map((b) =>
+            b.orderId === selectedBooking.orderId
+              ? { ...b, bookingStatus: values.bookingStatus }
+              : b
+          );
+
+          setBookings(updatedBookings);
+          setFilteredBookings(updatedBookings);
+
+          setIsEditModalVisible(false);
+          notification.success({
+            message: "Thành công",
+            description: "Trạng thái đặt lịch đã được cập nhật!",
+            placement: "topRight",
+            duration: 2,
+          });
+        } catch (error) {
+          console.error("Error updating booking status:", error);
+          Modal.error({
+            title: "Lỗi",
+            content: "Không thể cập nhật trạng thái đặt lịch!",
+          });
+        }
+      }
+    });
+  };
+
+  const handleModalCancel = () => {
+    setIsEditModalVisible(false);
+    setIsStartModalVisible(false);
+    form.resetFields();
+    startForm.resetFields();
+  };
+
+  const calculatePrice = (serviceName: string, petWeight: number) => {
+    const basePrice = 50000;
+    const weightFactor = 10000;
+    return basePrice + petWeight * weightFactor;
+  };
+
   const columns = [
+    {
+      title: "Order ID",
+      dataIndex: "orderId",
+      key: "orderId",
+      width: 50,
+      align: "left" as const,
+      render: (text: string) => (
+        <div
+          style={{
+            width: "50px",
+            wordBreak: "break-all", 
+            overflowWrap: "break-word", 
+            whiteSpace: "normal", 
+            lineHeight: "1.2", 
+          }}
+          title={text} 
+        >
+          {text}
+        </div>
+      )
+    },
     {
       title: "Người đặt",
       dataIndex: "username",
@@ -198,31 +337,33 @@ const BookingManager: React.FC = () => {
     },
     {
       title: "Trạng thái",
-      dataIndex: "status",
-      key: "status",
+      dataIndex: "bookingStatus",
+      key: "bookingStatus",
       width: 120,
-      render: (status: string) => (
+      render: (bookingStatus: string) => (
         <span
           style={{
             color:
-              status === "PENDING"
+              bookingStatus === BookingStatus.PENDING
                 ? "#fa8c16"
-                : status === "CONFIRMED"
+                : bookingStatus === BookingStatus.CONFIRMED
                 ? "#52c41a"
-                : status === "COMPLETED"
+                : bookingStatus === BookingStatus.IN_PROGRESS
+                ? "#722ed1"
+                : bookingStatus === BookingStatus.COMPLETED
                 ? "#1890ff"
                 : "#ff4d4f",
           }}
         >
-          {status}
+          {bookingStatus}
         </span>
       ),
       align: "left" as const,
-    },  
+    },
     {
       title: "Chức năng",
       key: "action",
-      width: 150,
+      width: 250,
       render: (_: any, record: Booking) => (
         <Space>
           <Button
@@ -232,8 +373,16 @@ const BookingManager: React.FC = () => {
           />
           <Button
             type="primary"
-            disabled={record.status !== "CONFIRMED"} 
-            onClick={() => handleComplete(record.id)}
+            disabled={record.bookingStatus !== BookingStatus.CONFIRMED}
+            onClick={() => handleStart(record)}
+            size="small"
+          >
+            Bắt đầu
+          </Button>
+          <Button
+            type="primary"
+            disabled={record.bookingStatus !== BookingStatus.IN_PROGRESS}
+            onClick={() => handleComplete(record.orderId)}
             size="small"
           >
             Hoàn thành
@@ -243,49 +392,6 @@ const BookingManager: React.FC = () => {
       align: "left" as const,
     },
   ];
-
-  const handleEdit = (record: Booking) => {
-    setSelectedBooking(record);
-    form.setFieldsValue({ status: record.status });
-    setIsEditModalVisible(true);
-  };
-
-  const handleEditModalOk = () => {
-    form.validateFields().then(async (values) => {
-      if (selectedBooking) {
-        try {
-          await orderDetailApi.updateStatus(selectedBooking.id, {
-            status: values.status,
-          });
-          const updatedBookings = bookings.map((b) =>
-            b.key === selectedBooking.key ? { ...b, status: values.status } : b
-          );
-
-          setBookings(updatedBookings);
-          setFilteredBookings(updatedBookings);
-
-          setIsEditModalVisible(false);
-          notification.success({
-            message: "Thành công",
-            description: "Trạng thái đặt lịch đã được cập nhật!",
-            placement: "topRight",
-            duration: 2,
-          });
-        } catch (error) {
-          console.error("Error updating booking status:", error);
-          Modal.error({
-            title: "Lỗi",
-            content: "Không thể cập nhật trạng thái đặt lịch!",
-          });
-        }
-      }
-    });
-  };
-
-  const handleModalCancel = () => {
-    setIsEditModalVisible(false);
-    form.resetFields();
-  };
 
   return (
     <motion.div
@@ -344,15 +450,53 @@ const BookingManager: React.FC = () => {
             </Form.Item>
             <Form.Item
               label="Trạng thái"
-              name="status"
+              name="bookingStatus"
               rules={[{ required: true, message: "Vui lòng chọn trạng thái!" }]}
             >
               <Select>
-                <Option value="PENDING">PENDING</Option>
-                <Option value="CONFIRMED">CONFIRMED</Option>
-                <Option value="COMPLETED">COMPLETED</Option>
-                <Option value="CANCELLED">CANCELLED</Option>
+                <Option value={BookingStatus.PENDING}>PENDING</Option>
+                <Option value={BookingStatus.CONFIRMED}>CONFIRMED</Option>
+                <Option value={BookingStatus.IN_PROGRESS}>IN_PROGRESS</Option>
+                <Option value={BookingStatus.COMPLETED}>COMPLETED</Option>
+                <Option value={BookingStatus.CANCELLED}>CANCELLED</Option>
               </Select>
+            </Form.Item>
+          </Form>
+        )}
+      </Modal>
+
+      <Modal
+        title="Bắt đầu dịch vụ - Cân thú cưng"
+        open={isStartModalVisible}
+        onOk={handleStartModalOk}
+        onCancel={handleModalCancel}
+        okText="Bắt đầu"
+        cancelText="Hủy bỏ"
+      >
+        {selectedBooking && (
+          <Form form={startForm} layout="vertical">
+            <Form.Item label="Order ID">
+              <Input value={selectedBooking.orderId} disabled />
+            </Form.Item>
+            <Form.Item label="Tên thú cưng">
+              <Input value={selectedBooking.petName} disabled />
+            </Form.Item>
+            <Form.Item label="Dịch vụ">
+              <Input value={selectedBooking.serviceName} disabled />
+            </Form.Item>
+            <Form.Item
+              label="Cân nặng (kg)"
+              name="petWeight"
+              rules={[
+                { required: true, message: "Vui lòng nhập cân nặng thú cưng!" },
+                {
+                  type: "number",
+                  min: 0,
+                  message: "Cân nặng phải lớn hơn hoặc bằng 0!",
+                },
+              ]}
+            >
+              <Input type="number" step="0.1" />
             </Form.Item>
           </Form>
         )}
