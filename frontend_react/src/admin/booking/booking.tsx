@@ -62,37 +62,46 @@ const BookingManager: React.FC = () => {
   const fetchBookings = async () => {
     try {
       const response = await orderDetailApi.getAllBookings();
-      const bookingData = response.data.map((booking: any) => ({
-        key: booking.orderId,
-        id: booking.orderId,
-        orderId: booking.orderId,
-        username: booking.user?.name || "Unknown User",
-        orderDate: booking.order_date
-          ? new Date(booking.order_date).toLocaleString()
-          : "N/A",
-        serviceName: booking.service?.name || "Unknown Service",
-        bookingDate: booking.booking_date
-          ? new Date(booking.booking_date).toLocaleDateString()
-          : "N/A",
-        bookingTime: booking.booking_date
-          ? new Date(booking.booking_date).toLocaleTimeString()
-          : "N/A",
-        estimatedPrice: booking.service?.price || 0,
-        duration: booking.service?.duration || 0,
-        bookingStatus:
-          booking.bookingStatus === "PENDING"
-            ? BookingStatus.PENDING
-            : booking.bookingStatus === "CONFIRMED"
-            ? BookingStatus.CONFIRMED
-            : booking.bookingStatus === "IN_PROGRESS"
-            ? BookingStatus.IN_PROGRESS
-            : booking.bookingStatus === "COMPLETED"
-            ? BookingStatus.COMPLETED
-            : BookingStatus.CANCELLED,
-        petName: booking.petName || "N/A",
-        petType: booking.petType || "N/A",
-        petWeight: booking.petWeight || 0,
-      }));
+      const bookingData = response.data.map((booking: any) => {
+        // Ánh xạ petType từ tiếng Anh sang tiếng Việt
+        const petTypeMap: { [key: string]: string } = {
+          dog: "Chó",
+          cat: "Mèo",
+        };
+        const petType = petTypeMap[booking.petType?.toLowerCase()] || booking.petType || "N/A";
+
+        return {
+          key: booking.orderId,
+          id: booking.orderId,
+          orderId: booking.orderId,
+          username: booking.user?.name || "Unknown User",
+          orderDate: booking.order_date
+            ? new Date(booking.order_date).toLocaleString()
+            : "N/A",
+          serviceName: booking.service?.name || "Unknown Service",
+          bookingDate: booking.booking_date
+            ? new Date(booking.booking_date).toLocaleDateString()
+            : "N/A",
+          bookingTime: booking.booking_date
+            ? new Date(booking.booking_date).toLocaleTimeString()
+            : "N/A",
+          estimatedPrice: booking.service?.price || 0,
+          duration: booking.service?.duration || 0,
+          bookingStatus:
+            booking.bookingStatus === "PENDING"
+              ? BookingStatus.PENDING
+              : booking.bookingStatus === "CONFIRMED"
+              ? BookingStatus.CONFIRMED
+              : booking.bookingStatus === "IN_PROGRESS"
+              ? BookingStatus.IN_PROGRESS
+              : booking.bookingStatus === "COMPLETED"
+              ? BookingStatus.COMPLETED
+              : BookingStatus.CANCELLED,
+          petName: booking.petName || "N/A",
+          petType: petType, // Sử dụng giá trị đã ánh xạ
+          petWeight: booking.petWeight || 0,
+        };
+      });
 
       setBookings(bookingData);
       setFilteredBookings(bookingData);
@@ -213,7 +222,6 @@ const BookingManager: React.FC = () => {
     form.validateFields().then(async (values) => {
       if (selectedBooking) {
         try {
-          // Chuyển đổi trạng thái tiếng Việt về giá trị gốc để gửi API
           const statusToSend =
             values.bookingStatus === BookingStatus.PENDING
               ? "PENDING"
