@@ -1,3 +1,2 @@
-import mongoose from 'mongoose';
-declare const productModel: mongoose.Model<any, {}, {}, {}, any>;
+declare const productModel: any;
 export default productModel;

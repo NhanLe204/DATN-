@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteService = exports.updateService = exports.getServiceById = exports.getServiceActive = exports.getAllServices = exports.createService = void 0;
 const service_model_js_1 = __importDefault(require("../models/service.model.js"));
-const service_enum_js_1 = require("@/enums/service.enum.js");
+const service_enum_js_1 = require("../enums/service.enum.js");
 const createService = async (req, res) => {
     try {
         const { service_name, description, service_price, duration, status } = req.body;

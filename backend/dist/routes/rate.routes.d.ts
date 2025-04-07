@@ -1,2 +1,2 @@
-declare const rateRouter: import("express-serve-static-core").Router;
+declare const rateRouter: any;
 export default rateRouter;

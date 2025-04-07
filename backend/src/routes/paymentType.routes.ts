@@ -7,7 +7,7 @@ import {
   insertPayment,
   updatePayment,
   deletePayments
-} from '@/controllers/paymentType.controllers.js';
+} from '../controllers/paymentType.controllers.js';
 
 const paymentTypeRouter = Router();
 

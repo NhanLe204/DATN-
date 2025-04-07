@@ -1,2 +1,2 @@
-declare const authRouter: import("express-serve-static-core").Router;
+declare const authRouter: any;
 export default authRouter;

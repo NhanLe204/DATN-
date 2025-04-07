@@ -3,7 +3,7 @@ import { CategoryStatus } from '../enums/category.enum.js';
 import mongoose from 'mongoose';
 import couponModel from '../models/coupon.model.js';
 import { ICoupon } from '../interfaces/coupon.interface.js';
-import { CouponStatus } from '@/enums/coupon.enum.js';
+import { CouponStatus } from '../enums/coupon.enum.js';
 
 export const getAllCoupon = async (req: Request, res: Response): Promise<void> => {
   try {

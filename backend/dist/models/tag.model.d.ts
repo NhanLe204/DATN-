@@ -1,3 +1,2 @@
-import mongoose from 'mongoose';
-declare const tagModel: mongoose.Model<any, {}, {}, {}, any>;
+declare const tagModel: any;
 export default tagModel;

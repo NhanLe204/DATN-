@@ -9,7 +9,7 @@ import {
   getOrderByUserId,
   changeBookingStatus,
   getCancelledBookings
-} from '@/controllers/orderDetail.controllers.js';
+} from '../controllers/orderDetail.controllers.js';
 
 const orderDetailRouter = Router();
 

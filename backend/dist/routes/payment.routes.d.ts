@@ -1,2 +1,2 @@
-declare const paymentRouter: import("express-serve-static-core").Router;
+declare const paymentRouter: any;
 export default paymentRouter;

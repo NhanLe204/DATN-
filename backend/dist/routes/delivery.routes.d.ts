@@ -1,2 +1,2 @@
-declare const deliveryRouter: import("express-serve-static-core").Router;
+declare const deliveryRouter: any;
 export default deliveryRouter;

@@ -17,9 +17,9 @@ const order_enum_js_1 = require("../enums/order.enum.js");
 const product_enum_js_1 = require("../enums/product.enum.js");
 const service_enum_js_1 = require("../enums/service.enum.js");
 const service_model_js_1 = __importDefault(require("../models/service.model.js"));
-const booking_enum_js_1 = require("@/enums/booking.enum.js");
-const sendBookingEmail_js_1 = __importDefault(require("@/utils/sendBookingEmail.js"));
-const sendEmail_js_1 = __importDefault(require("@/utils/sendEmail.js"));
+const booking_enum_js_1 = require("../enums/booking.enum.js");
+const sendBookingEmail_js_1 = __importDefault(require("../utils/sendBookingEmail.js"));
+const sendEmail_js_1 = __importDefault(require("../utils/sendEmail.js"));
 const createOrderAfterPayment = async (req, res) => {
     const session = await mongoose_1.default.startSession();
     session.startTransaction();

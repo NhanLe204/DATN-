@@ -7,7 +7,7 @@ import {
   getDeliveryById,
   insertDelivery,
   updateDelivery
-} from '@/controllers/delivery.controllers.js';
+} from '../controllers/delivery.controllers.js';
 
 const deliveryRouter = Router();
 

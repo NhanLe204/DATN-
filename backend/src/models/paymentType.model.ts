@@ -1,4 +1,4 @@
-import { IPaymentType } from '@/interfaces/paymentType.interface.js';
+import { IPaymentType } from '../interfaces/paymentType.interface.js';
 import { Request, Response } from 'express';
 import mongoose, { Schema } from 'mongoose';
 

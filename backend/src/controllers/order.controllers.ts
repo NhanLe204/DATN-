@@ -15,9 +15,9 @@ import { OrderStatus, PaymentStatus } from '../enums/order.enum.js';
 import { ProductStatus } from '../enums/product.enum.js';
 import { ServiceStatus } from '../enums/service.enum.js';
 import serviceModel from '../models/service.model.js';
-import { BookingStatus } from '@/enums/booking.enum.js';
-import sendBookingEmail from '@/utils/sendBookingEmail.js';
-import sendEmail from '@/utils/sendEmail.js';
+import { BookingStatus } from '../enums/booking.enum.js';
+import sendBookingEmail from '../utils/sendBookingEmail.js';
+import sendEmail from '../utils/sendEmail.js';
 
 export const createOrderAfterPayment = async (req: Request, res: Response): Promise<void> => {
   const session = await mongoose.startSession();

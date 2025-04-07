@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const protectRoute_js_1 = require("../middlewares/protectRoute.js");
 const verifyToken_js_1 = require("../middlewares/verifyToken.js");
-const delivery_controllers_js_1 = require("@/controllers/delivery.controllers.js");
+const delivery_controllers_js_1 = require("../controllers/delivery.controllers.js");
 const deliveryRouter = (0, express_1.Router)();
 deliveryRouter.get('/delivery', delivery_controllers_js_1.getAllDeliveries);
 deliveryRouter.get('/delivery/:id', delivery_controllers_js_1.getDeliveryById);

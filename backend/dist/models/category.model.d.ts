@@ -1,3 +1,2 @@
-import mongoose from 'mongoose';
-declare const categoryModel: mongoose.Model<any, {}, {}, {}, any>;
+declare const categoryModel: any;
 export default categoryModel;

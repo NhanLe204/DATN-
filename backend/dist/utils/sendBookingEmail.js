@@ -4,9 +4,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const sendEmail_js_1 = __importDefault(require("./sendEmail.js"));
-const service_model_js_1 = __importDefault(require("@/models/service.model.js"));
-const user_model_js_1 = __importDefault(require("@/models/user.model.js"));
-const order_model_js_1 = __importDefault(require("@/models/order.model.js"));
+const service_model_js_1 = __importDefault(require("../models/service.model.js"));
+const user_model_js_1 = __importDefault(require("../models/user.model.js"));
+const order_model_js_1 = __importDefault(require("../models/order.model.js"));
 const config_js_1 = __importDefault(require("../config/config.js"));
 const sendBookingEmail = async ({ recipientEmail, customerName, orderDetails, orderId, isCancellation = false, }) => {
     console.log('Input data:', { recipientEmail, customerName, orderDetails, orderId, isCancellation });

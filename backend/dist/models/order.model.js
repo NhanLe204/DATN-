@@ -32,7 +32,7 @@ const order_enum_js_1 = require("../enums/order.enum.js");
 const paymentType_model_js_1 = __importDefault(require("../models/paymentType.model.js"));
 const delivery_model_js_1 = __importDefault(require("./delivery.model.js"));
 const coupon_model_js_1 = __importDefault(require("../models/coupon.model.js"));
-const booking_enum_js_1 = require("@/enums/booking.enum.js");
+const booking_enum_js_1 = require("../enums/booking.enum.js");
 const orderSchema = new mongoose_1.Schema({
     userID: { type: mongoose_1.Schema.Types.ObjectId, ref: user_model_js_1.default, required: false },
     fullname: { type: String, required: false },

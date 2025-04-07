@@ -1,3 +1,2 @@
-import multer from 'multer';
-declare const upload: multer.Multer;
+declare const upload: any;
 export default upload;

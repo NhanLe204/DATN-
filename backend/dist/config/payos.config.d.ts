@@ -1,3 +1,2 @@
-import PayOS from '@payos/node';
-declare const payos: PayOS;
+declare const payos: any;
 export default payos;
