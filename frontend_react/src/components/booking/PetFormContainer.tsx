@@ -16,7 +16,7 @@ interface PetFormContainerProps {
   setSlotAvailability: (availability: any) => void;
   handleServiceChange: (value: string, index: number) => void;
   handleDateChange: (date: moment.Moment | null, index: number) => void;
-  handleTimeChange: (time: string, index: number) => void; 
+  handleTimeChange: (time: string, index: number) => void;
   getAvailableTimeSlots: (index: number) => string[];
   onViewPriceClick?: () => void;
 }
@@ -34,14 +34,17 @@ const PetFormContainer: React.FC<PetFormContainerProps> = ({
   setSlotAvailability,
   handleServiceChange,
   handleDateChange,
-  handleTimeChange, 
+  handleTimeChange,
   getAvailableTimeSlots,
   onViewPriceClick,
 }) => {
   const addPetForm = () => {
     if (petForms.length < 2) {
       setPetForms([...petForms, petForms.length]);
-      setPetFormData([...petFormData, { estimatedPrice: undefined, estimatedDuration: undefined }]);
+      setPetFormData([
+        ...petFormData,
+        { estimatedPrice: undefined, estimatedDuration: undefined },
+      ]);
       setSelectedDates([...selectedDates, null]);
     } else {
       message.warning("Pet Heaven chỉ nhận tối đa 2 thú cưng cho 1 lịch hẹn!");
@@ -51,8 +54,12 @@ const PetFormContainer: React.FC<PetFormContainerProps> = ({
   const removePetForm = (indexToRemove: number) => {
     if (petForms.length > 1) {
       setPetForms(petForms.filter((_, index) => index !== indexToRemove));
-      setPetFormData(petFormData.filter((_, index) => index !== indexToRemove));
-      setSelectedDates(selectedDates.filter((_, index) => index !== indexToRemove));
+      setPetFormData(
+        petFormData.filter((_, index) => index !== indexToRemove)
+      );
+      setSelectedDates(
+        selectedDates.filter((_, index) => index !== indexToRemove)
+      );
       setSlotAvailability((prev) => {
         const newAvailability = { ...prev };
         delete newAvailability[indexToRemove];
@@ -85,7 +92,7 @@ const PetFormContainer: React.FC<PetFormContainerProps> = ({
           slotAvailability={slotAvailability[index] || {}}
           handleServiceChange={handleServiceChange}
           handleDateChange={handleDateChange}
-          handleTimeChange={handleTimeChange} 
+          handleTimeChange={handleTimeChange}
           removePetForm={index === 1 ? removePetForm : undefined}
           isRemovable={petForms.length > 1 && index === 1}
           onViewPriceClick={onViewPriceClick}

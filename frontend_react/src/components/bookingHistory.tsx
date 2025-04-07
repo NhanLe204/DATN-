@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Card, Table, Tag, Button, Modal, message, Tabs } from "antd";
-import orderDetailApi from "../api/orderDetailApi";
+import orderApi from "../api/orderApi";
 
 interface Service {
   service_name: string;
   service_price: number;
-  duration: number; // Duration in minutes
+  duration: number;
   description: string;
   status: string;
   createdAt: string;
@@ -13,28 +13,51 @@ interface Service {
   _id: string;
 }
 
+interface Product {
+  _id: string;
+  name: string;
+  price: string;
+}
+
+interface OrderDetail {
+  _id: string;
+  orderId: string;
+  productId?: Product;
+  serviceId?: Service;
+  quantity: number;
+  product_price: number;
+  total_price: number;
+  booking_date?: string;
+  petName?: string;
+  petType?: string;
+}
+
 interface Order {
   _id: string;
+  userID: { _id: string; fullname: string } | null; // Allow null
   bookingStatus?: string | null;
   status?: string | null;
   total_price: number;
-  // ...các trường khác nếu cần
+  order_date: string;
+  orderDetails?: OrderDetail[];
 }
 
 interface Booking {
   _id: string;
   orderId: string;
   userID?: string;
-  serviceId: string;
-  productId: string | null;
-  quantity: number;
-  product_price: number;
+  serviceId?: string;
+  productId?: string;
+  quantity?: number;
+  product_price?: number;
   total_price: number;
-  booking_date: string;
-  service: Service[];
-  order: Order[]; // Thêm mảng order vào interface
+  booking_date?: string;
+  service?: Service[];
+  product?: Product;
+  order?: Order[];
   petName?: string;
   petType?: string;
+  status: string;
 }
 
 const BookingHistory = () => {
@@ -53,19 +76,48 @@ const BookingHistory = () => {
 
       setLoading(true);
       try {
-        const response = await orderDetailApi.getBookingsByUserId(userID);
-        console.log("Bookings response:", response);
-        if (response.success) {
-          const bookingsWithStatus = response.data.map((booking: Booking) => ({
-            ...booking,
-            // Lấy bookingStatus từ order[0], mặc định là "pending" nếu không có
-            status: booking.order[0]?.bookingStatus?.toLowerCase() || "pending",
-          }));
-          setBookings(bookingsWithStatus);
-        } else {
+        const response = await orderApi.getAll();
+
+        if (!response.data.success || !response.data.result) {
           setBookings([]);
-          console.log(response.message);
+          setLoading(false);
+          return;
         }
+
+        const userBookings = response.data.result
+          .filter((order: Order) => order.userID && order.userID._id === userID)
+          .flatMap((order: Order) => {
+            if (order.orderDetails && order.orderDetails.length > 0) {
+              return order.orderDetails.map((detail) => ({
+                _id: detail._id,
+                orderId: order._id,
+                userID: order.userID?._id,
+                serviceId: detail.serviceId?._id,
+                productId: detail.productId?._id,
+                service: detail.serviceId ? [detail.serviceId] : [],
+                product: detail.productId,
+                quantity: detail.quantity,
+                product_price: detail.product_price,
+                total_price: detail.total_price,
+                booking_date: detail.booking_date || order.order_date,
+                petName: detail.petName,
+                petType: detail.petType,
+                order: [order],
+                status: order.bookingStatus?.toLowerCase() || order.status?.toLowerCase() || "pending",
+              }));
+            } else {
+              return [{
+                _id: order._id,
+                orderId: order._id,
+                userID: order.userID?._id,
+                total_price: order.total_price,
+                booking_date: order.order_date,
+                order: [order],
+                status: order.bookingStatus?.toLowerCase() || order.status?.toLowerCase() || "pending",
+              }];
+            }
+          });
+        setBookings(userBookings);
       } catch (error) {
         console.error("Failed to fetch bookings:", error);
         if (error.response?.status === 404) {
@@ -84,16 +136,16 @@ const BookingHistory = () => {
 
   const canCancel = (booking: Booking) => {
     const now = new Date();
-    const serviceDateTime = new Date(booking.booking_date);
+    const serviceDateTime = new Date(booking.booking_date || "");
     const hoursDiff = (serviceDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
     return (
-      hoursDiff > 24 &&
+      hoursDiff > 12 &&
       booking.status !== "cancelled" &&
       booking.status !== "completed"
     );
   };
 
-  const handleCancelBooking = (bookingId: string) => {
+  const handleCancelBooking = async (bookingId: string) => {
     const booking = bookings.find((b) => b._id === bookingId);
     if (!booking || !canCancel(booking)) {
       message.warning(
@@ -110,13 +162,23 @@ const BookingHistory = () => {
       onOk: async () => {
         setLoading(true);
         try {
-          setBookings((prevBookings) =>
-            prevBookings.map((b) =>
-              b._id === bookingId ? { ...b, status: "cancelled" } : b
-            )
+          const orderDetailId = booking.serviceId || booking.productId ? booking._id : null;
+          const response = await orderApi.cancelBooking(
+            booking.orderId,
+            orderDetailId || booking.orderId
           );
-          message.success("Đã hủy lịch thành công!");
+          if (response.success) {
+            setBookings((prevBookings) =>
+              prevBookings.map((b) =>
+                b._id === bookingId ? { ...b, status: "cancelled" } : b
+              )
+            );
+            message.success("Đã hủy lịch thành công!");
+          } else {
+            throw new Error(response.message || "Hủy lịch thất bại");
+          }
         } catch (error) {
+          console.error("Failed to cancel booking:", error);
           message.error("Có lỗi xảy ra khi hủy lịch!");
         } finally {
           setLoading(false);
@@ -141,14 +203,13 @@ const BookingHistory = () => {
 
   const columns = [
     {
-      title: "Dịch vụ",
-      dataIndex: "service",
-      key: "service",
-      render: (service: Service[]) => (
+      title: "Dịch vụ/Sản phẩm",
+      key: "serviceOrProduct",
+      render: (_: any, record: Booking) => (
         <span className="font-medium text-xs">
-          {service && service[0]?.service_name
-            ? service[0].service_name
-            : "Dịch vụ không xác định"}
+          {record.service && record.service[0]?.service_name
+            ? record.service[0].service_name
+            : record.product?.name || "Chưa xác định"}
         </span>
       ),
     },
@@ -170,14 +231,16 @@ const BookingHistory = () => {
     },
     {
       title: "Đặt lúc",
-      dataIndex: "createdAt",
+      dataIndex: "booking_date",
       key: "createdAt",
-      render: (createdAt: string) => (
+      render: (booking_date: string) => (
         <span className="text-xs">
-          {new Date(createdAt).toLocaleString("vi-VN", {
-            dateStyle: "short",
-            timeStyle: "short",
-          })}
+          {booking_date
+            ? new Date(booking_date).toLocaleString("vi-VN", {
+                dateStyle: "short",
+                timeStyle: "short",
+              })
+            : "Chưa xác định"}
         </span>
       ),
     },
@@ -187,7 +250,9 @@ const BookingHistory = () => {
       key: "booking_date_display",
       render: (booking_date: string) => (
         <span className="text-xs">
-          {new Date(booking_date).toLocaleDateString("vi-VN")}
+          {booking_date
+            ? new Date(booking_date).toLocaleDateString("vi-VN")
+            : "Chưa xác định"}
         </span>
       ),
     },
@@ -197,7 +262,9 @@ const BookingHistory = () => {
       key: "booking_time",
       render: (booking_date: string) => (
         <span className="text-xs">
-          {new Date(booking_date).toLocaleTimeString("vi-VN", { timeStyle: "short" })}
+          {booking_date
+            ? new Date(booking_date).toLocaleTimeString("vi-VN", { timeStyle: "short" })
+            : "Chưa xác định"}
         </span>
       ),
     },
@@ -212,7 +279,7 @@ const BookingHistory = () => {
       ),
     },
     {
-      title: "Giá dự tính",
+      title: "Giá",
       dataIndex: "total_price",
       key: "total_price",
       render: (total_price: number) => (
@@ -263,11 +330,12 @@ const BookingHistory = () => {
       : bookings.filter((booking) => booking.status === activeTab);
 
   return (
-    <Card
-      style={{ padding: "8px" }}
-      bodyStyle={{ padding: "8px" }}
-    >
+    <Card style={{ padding: "8px" }} styles={{ body: { padding: "8px" } }}>
       <h2 className="text-xl font-bold text-gray-800 mb-2">Lịch đã đặt</h2>
+      <div className="text-sm text-red-600 mb-4">
+        <p>1. Có thể hủy lịch đã hẹn trước 12h</p>
+        <p>2. Nếu sau 15ph giờ hẹn mà quý khách không đến, và không có liên lạc thì lịch sẽ bị hủy</p>
+      </div>
       <Tabs
         activeKey={activeTab}
         onChange={setActiveTab}

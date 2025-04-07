@@ -75,7 +75,7 @@ const Navigation: React.FC = () => {
   }, [id, isDetailPage]);
 
   // Không hiển thị breadcrumb ở trang Dashboard hoặc Trang chủ
-  if (location.pathname === "/admin/dashboard" || location.pathname === "/") {
+  if (location.pathname === "/admin" || location.pathname === "/admin/dashboard" || location.pathname === "/") {
     return null;
   }
 

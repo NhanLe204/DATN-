@@ -6,11 +6,19 @@ interface PetFormData {
   estimatedDuration?: string;
 }
 
+interface GuestUserInfo {
+  fullName?: string;
+  phone?: string;
+  email?: string;
+  note?: string;
+}
+
 interface SpaBookingState {
-  formData: any; // Dữ liệu từ Form Antd
+  formData: any;
   petForms: number[];
   petFormData: PetFormData[];
-  selectedDates: (string | null)[]; // Lưu dưới dạng ISO string để serialize
+  selectedDates: (string | null)[];
+  guestUserInfo: GuestUserInfo; 
 }
 
 const initialState: SpaBookingState = {
@@ -18,6 +26,7 @@ const initialState: SpaBookingState = {
   petForms: [0],
   petFormData: [{ estimatedPrice: undefined, estimatedDuration: undefined }],
   selectedDates: [null],
+  guestUserInfo: {},
 };
 
 const spaBookingSlice = createSlice({
@@ -36,15 +45,25 @@ const spaBookingSlice = createSlice({
     setSelectedDates(state, action: PayloadAction<(string | null)[]>) {
       state.selectedDates = action.payload;
     },
+    setGuestUserInfo(state, action: PayloadAction<GuestUserInfo>) {
+      state.guestUserInfo = action.payload;
+    },
     resetForm(state) {
       state.formData = initialState.formData;
       state.petForms = initialState.petForms;
       state.petFormData = initialState.petFormData;
       state.selectedDates = initialState.selectedDates;
+      state.guestUserInfo = initialState.guestUserInfo; 
     },
   },
 });
 
-export const { setFormData, setPetForms, setPetFormData, setSelectedDates, resetForm } =
-  spaBookingSlice.actions;
+export const {
+  setFormData,
+  setPetForms,
+  setPetFormData,
+  setSelectedDates,
+  setGuestUserInfo, 
+  resetForm,
+} = spaBookingSlice.actions;
 export default spaBookingSlice.reducer;

@@ -156,7 +156,6 @@ export default function Header() {
     if (storedUserData) {
       try {
         const parsedUser = JSON.parse(storedUserData);
-        console.log("User data in header.js:", parsedUser);
         setUser(JSON.parse(storedUserData));
       } catch (error) {
         console.error("Lỗi khi parse userData từ localStorage:", error);

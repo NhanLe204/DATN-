@@ -69,8 +69,6 @@ const ProtectedRoute = ({
   const userData = localStorage.getItem("userData");
   const user: User | null = userData ? JSON.parse(userData) : null;
 
-  console.log("ProtectedRoute - Path:", path);
-  console.log("ProtectedRoute - User:", user);
 
   // if (!user || user.status !== "active") {
   //   notification.error({
