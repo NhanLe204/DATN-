@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const verifyToken_js_1 = require("../middlewares/verifyToken.js");
-const orderDetail_controllers_js_1 = require("@/controllers/orderDetail.controllers.js");
+const orderDetail_controllers_js_1 = require("../controllers/orderDetail.controllers.js");
 const orderDetailRouter = (0, express_1.Router)();
 orderDetailRouter.get('/ordersDetail', verifyToken_js_1.verifyToken, orderDetail_controllers_js_1.getOrderDetails);
 orderDetailRouter.get('/cancelled-bookings', orderDetail_controllers_js_1.getCancelledBookings);

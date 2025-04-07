@@ -1,3 +1,2 @@
-import mongoose from 'mongoose';
-declare const bookingModel: mongoose.Model<any, {}, {}, {}, any>;
+declare const bookingModel: any;
 export default bookingModel;

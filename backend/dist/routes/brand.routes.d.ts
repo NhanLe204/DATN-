@@ -1,2 +1,2 @@
-declare const brandRouter: import("express-serve-static-core").Router;
+declare const brandRouter: any;
 export default brandRouter;

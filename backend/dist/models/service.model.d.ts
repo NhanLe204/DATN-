@@ -1,3 +1,2 @@
-import mongoose from 'mongoose';
-declare const ServiceModel: mongoose.Model<any, {}, {}, {}, any>;
+declare const ServiceModel: any;
 export default ServiceModel;

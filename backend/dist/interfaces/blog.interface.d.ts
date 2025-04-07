@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongoose';
 import { IUser } from './user.interface.js';
 import { IProduct } from './product.interface.js';
-import { BlogStatus } from '@/enums/blog.enum.js';
+import { BlogStatus } from '../enums/blog.enum.js';
 export interface IBlog {
     _id: ObjectId;
     product?: IProduct;

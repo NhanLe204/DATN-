@@ -1,3 +1,2 @@
-import mongoose from 'mongoose';
-declare const PaymentType: mongoose.Model<any, {}, {}, {}, any>;
+declare const PaymentType: any;
 export default PaymentType;

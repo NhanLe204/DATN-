@@ -1,2 +1,2 @@
-declare const blogRouter: import("express-serve-static-core").Router;
+declare const blogRouter: any;
 export default blogRouter;

@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getActiveCoupons = exports.applyCoupon = exports.updateCoupon = exports.deleteCouponById = exports.createCoupon = exports.getCouponById = exports.getAllCoupon = void 0;
 const coupon_model_js_1 = __importDefault(require("../models/coupon.model.js"));
-const coupon_enum_js_1 = require("@/enums/coupon.enum.js");
+const coupon_enum_js_1 = require("../enums/coupon.enum.js");
 const getAllCoupon = async (req, res) => {
     try {
         const result = await coupon_model_js_1.default.find();

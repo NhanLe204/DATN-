@@ -5,8 +5,8 @@ import productModel from '../models/product.model.js';
 import { ProductStatus, ProductStatusMapping } from '../enums/product.enum.js';
 import categoryModel from '../models/category.model.js';
 import tagModel from '../models/tag.model.js';
-import { IProduct } from '@/interfaces/product.interface.js';
-import brandModel from '@/models/brand.model.js';
+import { IProduct } from '../interfaces/product.interface.js';
+import brandModel from '../models/brand.model.js';
 
 const removeVietnameseTones = (str: string): string => {
   str = str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');

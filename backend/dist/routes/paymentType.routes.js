@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const protectRoute_js_1 = require("../middlewares/protectRoute.js");
 const verifyToken_js_1 = require("../middlewares/verifyToken.js");
-const paymentType_controllers_js_1 = require("@/controllers/paymentType.controllers.js");
+const paymentType_controllers_js_1 = require("../controllers/paymentType.controllers.js");
 const paymentTypeRouter = (0, express_1.Router)();
 paymentTypeRouter.get('/payments', paymentType_controllers_js_1.getAllPayments);
 paymentTypeRouter.get('/payments/:id', paymentType_controllers_js_1.getPaymentById);

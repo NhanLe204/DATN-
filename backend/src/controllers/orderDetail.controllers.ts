@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
 import orderDetailModel from '../models/orderdetail.model.js';
-import orderModel from '@/models/order.model.js';
+import orderModel from '../models/order.model.js';
 import mongoose from 'mongoose';
-import { BookingStatus } from '@/enums/booking.enum.js';
+import { BookingStatus } from '../enums/booking.enum.js';
 
 // Lấy danh sách tất cả order details
 export const getOrderDetails = async (req: Request, res: Response) => {

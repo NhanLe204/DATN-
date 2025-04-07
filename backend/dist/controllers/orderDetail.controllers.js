@@ -5,9 +5,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getCancelledBookings = exports.changeBookingStatus = exports.getOrderByUserId = exports.getAllBookings = exports.getBookingsByUserId = exports.deleteOrderDetail = exports.updateOrderDetail = exports.createOrderDetail = exports.getOrderDetailsByOrderId = exports.getOrderDetails = void 0;
 const orderdetail_model_js_1 = __importDefault(require("../models/orderdetail.model.js"));
-const order_model_js_1 = __importDefault(require("@/models/order.model.js"));
+const order_model_js_1 = __importDefault(require("../models/order.model.js"));
 const mongoose_1 = __importDefault(require("mongoose"));
-const booking_enum_js_1 = require("@/enums/booking.enum.js");
+const booking_enum_js_1 = require("../enums/booking.enum.js");
 // Lấy danh sách tất cả order details
 const getOrderDetails = async (req, res) => {
     try {

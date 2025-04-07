@@ -1,3 +1,2 @@
-import mongoose from 'mongoose';
-declare const couponModel: mongoose.Model<any, {}, {}, {}, any>;
+declare const couponModel: any;
 export default couponModel;

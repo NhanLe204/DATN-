@@ -1,3 +1,2 @@
-import mongoose from 'mongoose';
-declare const rateModel: mongoose.Model<any, {}, {}, {}, any>;
+declare const rateModel: any;
 export default rateModel;

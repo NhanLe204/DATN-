@@ -10,7 +10,7 @@ const product_model_js_1 = __importDefault(require("../models/product.model.js")
 const product_enum_js_1 = require("../enums/product.enum.js");
 const category_model_js_1 = __importDefault(require("../models/category.model.js"));
 const tag_model_js_1 = __importDefault(require("../models/tag.model.js"));
-const brand_model_js_1 = __importDefault(require("@/models/brand.model.js"));
+const brand_model_js_1 = __importDefault(require("../models/brand.model.js"));
 const removeVietnameseTones = (str) => {
     str = str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     str = str.replace(/[đĐ]/g, (match) => (match === 'đ' ? 'd' : 'D'));

@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 import brandModel from '../models/brand.model.js';
 import { IService } from '../interfaces/service.interface.js';
 import serviceModel from '../models/service.model.js';
-import { ServiceStatus } from '@/enums/service.enum.js';
+import { ServiceStatus } from '../enums/service.enum.js';
 
 export const createService = async (req: Request, res: Response): Promise<void> => {
   try {

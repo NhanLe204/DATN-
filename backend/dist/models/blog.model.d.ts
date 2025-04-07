@@ -1,3 +1,2 @@
-import mongoose from 'mongoose';
-declare const blogModel: mongoose.Model<any, {}, {}, {}, any>;
+declare const blogModel: any;
 export default blogModel;

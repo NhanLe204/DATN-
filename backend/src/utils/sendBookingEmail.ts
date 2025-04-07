@@ -1,7 +1,7 @@
 import sendEmail from './sendEmail.js';
-import ServiceModel from '@/models/service.model.js';
-import userModel from '@/models/user.model.js';
-import orderModel from '@/models/order.model.js';
+import ServiceModel from '../models/service.model.js';
+import userModel from '../models/user.model.js';
+import orderModel from '../models/order.model.js';
 import ENV_VARS from '../config/config.js';
 
 interface BookingEmailData {
