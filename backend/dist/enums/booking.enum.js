@@ -5,6 +5,7 @@ var BookingStatus;
 (function (BookingStatus) {
     BookingStatus["PENDING"] = "PENDING";
     BookingStatus["CONFIRMED"] = "CONFIRMED";
+    BookingStatus["IN_PROGRESS"] = "IN_PROGRESS";
     BookingStatus["CANCELLED"] = "CANCELLED";
     BookingStatus["COMPLETED"] = "COMPLETED";
 })(BookingStatus || (exports.BookingStatus = BookingStatus = {}));

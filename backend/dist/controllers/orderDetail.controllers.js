@@ -3,10 +3,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getOrderByUserId = exports.getAllBookings = exports.getBookingsByUserId = exports.deleteOrderDetail = exports.updateOrderDetail = exports.createOrderDetail = exports.getOrderDetailsByOrderId = exports.getOrderDetails = void 0;
+exports.getCancelledBookings = exports.changeBookingStatus = exports.getOrderByUserId = exports.getAllBookings = exports.getBookingsByUserId = exports.deleteOrderDetail = exports.updateOrderDetail = exports.createOrderDetail = exports.getOrderDetailsByOrderId = exports.getOrderDetails = void 0;
 const orderdetail_model_js_1 = __importDefault(require("../models/orderdetail.model.js"));
 const order_model_js_1 = __importDefault(require("@/models/order.model.js"));
 const mongoose_1 = __importDefault(require("mongoose"));
+const booking_enum_js_1 = require("@/enums/booking.enum.js");
 // Lấy danh sách tất cả order details
 const getOrderDetails = async (req, res) => {
     try {
@@ -133,6 +134,7 @@ const getAllBookings = async (req, res, next) => {
         }
         // Lấy danh sách orderId
         const orderIds = allOrders.map((order) => order._id);
+        console.log(orderIds, 'orderIds');
         // Bước 2: Tìm orderDetail có serviceId từ tất cả các order
         const bookings = await orderdetail_model_js_1.default.aggregate([
             { $match: { orderId: { $in: orderIds }, serviceId: { $ne: null } } },
@@ -141,13 +143,18 @@ const getAllBookings = async (req, res, next) => {
             { $lookup: { from: 'users', localField: 'order.userID', foreignField: '_id', as: 'user' } },
             { $unwind: '$order' },
             { $unwind: '$service' },
-            { $unwind: '$user' },
+            { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } }, // Cho phép user null
             {
                 $project: {
                     orderId: '$order._id',
                     user: {
-                        name: '$user.fullname',
-                        email: '$user.email'
+                        name: {
+                            $ifNull: ['$user.fullname', '$order.fullname'] // Kiểm tra user.fullname, nếu null thì lấy fullName từ order
+                        },
+                        email: '$user.email',
+                        phone: {
+                            $ifNull: ['$user.phone_number', '$order.phone'] // Kiểm tra user.phone, nếu null thì lấy phone từ order
+                        }
                     },
                     service: {
                         name: '$service.service_name',
@@ -157,6 +164,7 @@ const getAllBookings = async (req, res, next) => {
                     booking_date: 1, // Từ orderDetail
                     order_date: '$order.order_date', // Từ orderModel
                     status: '$order.status',
+                    bookingStatus: '$order.bookingStatus',
                     petName: 1, // Thêm petName từ orderDetail
                     petType: 1 // Thêm petType từ orderDetail
                 }
@@ -236,4 +244,189 @@ const getOrderByUserId = async (req, res) => {
     }
 };
 exports.getOrderByUserId = getOrderByUserId;
+const changeBookingStatus = async (req, res) => {
+    try {
+        const { orderId, bookingStatus } = req.body;
+        // Validate input
+        if (!orderId || !bookingStatus) {
+            res.status(400).json({
+                success: false,
+                message: 'orderId and bookingStatus are required'
+            });
+            return;
+        }
+        // Validate bookingStatus
+        if (!Object.values(booking_enum_js_1.BookingStatus).includes(bookingStatus)) {
+            res.status(400).json({
+                success: false,
+                message: `Invalid booking status. Must be one of: ${Object.values(booking_enum_js_1.BookingStatus).join(', ')}`
+            });
+            return;
+        }
+        // Check if order exists and has booking (service)
+        const order = await order_model_js_1.default.findById(orderId);
+        if (!order) {
+            res.status(404).json({
+                success: false,
+                message: 'Order not found'
+            });
+            return;
+        }
+        // Check if this order has any booking (service) details
+        const bookingDetail = await orderdetail_model_js_1.default.findOne({
+            orderId: orderId,
+            serviceId: { $ne: null }
+        });
+        if (!bookingDetail) {
+            res.status(404).json({
+                success: false,
+                message: 'No booking found for this order'
+            });
+            return;
+        }
+        // Update booking status
+        const updatedOrder = await order_model_js_1.default.findByIdAndUpdate(orderId, { bookingStatus: bookingStatus }, { new: true });
+        if (!updatedOrder) {
+            res.status(500).json({
+                success: false,
+                message: 'Failed to update booking status'
+            });
+            return;
+        }
+        // Optionally, you might want to update related order status based on booking status
+        let newOrderStatus = updatedOrder.status;
+        switch (bookingStatus) {
+            case booking_enum_js_1.BookingStatus.PENDING:
+                newOrderStatus = 'pending';
+                break;
+            case booking_enum_js_1.BookingStatus.CONFIRMED:
+                newOrderStatus = 'confirmed';
+                break;
+            case booking_enum_js_1.BookingStatus.IN_PROGRESS:
+                newOrderStatus = 'processing';
+                break;
+            case booking_enum_js_1.BookingStatus.COMPLETED:
+                newOrderStatus = 'completed';
+                break;
+            case booking_enum_js_1.BookingStatus.CANCELLED:
+                newOrderStatus = 'cancelled';
+                break;
+        }
+        // Update order status if needed
+        if (newOrderStatus !== updatedOrder.status) {
+            await order_model_js_1.default.findByIdAndUpdate(orderId, { status: newOrderStatus }, { new: true });
+        }
+        res.status(200).json({
+            success: true,
+            message: 'Booking status updated successfully',
+            data: {
+                orderId: updatedOrder._id,
+                bookingStatus: updatedOrder.bookingStatus,
+                orderStatus: newOrderStatus
+            }
+        });
+    }
+    catch (error) {
+        console.error('Error changing booking status:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error updating booking status',
+            error
+        });
+    }
+};
+exports.changeBookingStatus = changeBookingStatus;
+const getCancelledBookings = async (req, res) => {
+    try {
+        // Lấy tất cả các order có bookingStatus là CANCELLED
+        const cancelledOrders = await order_model_js_1.default.find({
+            bookingStatus: booking_enum_js_1.BookingStatus.CANCELLED
+        }).select('_id');
+        if (!cancelledOrders.length) {
+            res.status(404).json({
+                success: false,
+                message: 'No cancelled bookings found'
+            });
+            return;
+        }
+        // Lấy danh sách orderId
+        const orderIds = cancelledOrders.map((order) => order._id);
+        // Tìm các orderDetail liên quan đến các booking đã hủy
+        const cancelledBookings = await orderdetail_model_js_1.default.aggregate([
+            {
+                $match: {
+                    orderId: { $in: orderIds },
+                    serviceId: { $ne: null }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'orders',
+                    localField: 'orderId',
+                    foreignField: '_id',
+                    as: 'order'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'services',
+                    localField: 'serviceId',
+                    foreignField: '_id',
+                    as: 'service'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'order.userID',
+                    foreignField: '_id',
+                    as: 'user'
+                }
+            },
+            { $unwind: '$order' },
+            { $unwind: '$service' },
+            { $unwind: '$user' },
+            {
+                $project: {
+                    orderId: '$order._id',
+                    user: {
+                        name: '$user.fullname',
+                        email: '$user.email'
+                    },
+                    service: {
+                        name: '$service.service_name',
+                        price: '$service.service_price',
+                        duration: '$service.duration'
+                    },
+                    booking_date: 1,
+                    order_date: '$order.order_date',
+                    status: '$order.status',
+                    bookingStatus: '$order.bookingStatus',
+                    petName: 1,
+                    petType: 1
+                }
+            }
+        ]);
+        if (!cancelledBookings.length) {
+            res.status(404).json({
+                success: false,
+                message: 'No cancelled bookings found'
+            });
+            return;
+        }
+        res.status(200).json({
+            success: true,
+            data: cancelledBookings
+        });
+    }
+    catch (error) {
+        console.error('Error retrieving cancelled bookings:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error retrieving cancelled bookings',
+            error
+        });
+    }
+};
+exports.getCancelledBookings = getCancelledBookings;
 //# sourceMappingURL=orderDetail.controllers.js.map

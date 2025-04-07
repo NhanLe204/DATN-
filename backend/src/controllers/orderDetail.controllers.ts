@@ -146,6 +146,7 @@ export const getAllBookings = async (req: Request, res: Response, next: NextFunc
 
     // Lấy danh sách orderId
     const orderIds = allOrders.map((order) => order._id);
+    console.log(orderIds, 'orderIds');
 
     // Bước 2: Tìm orderDetail có serviceId từ tất cả các order
     const bookings = await orderDetailModel.aggregate([
@@ -155,13 +156,18 @@ export const getAllBookings = async (req: Request, res: Response, next: NextFunc
       { $lookup: { from: 'users', localField: 'order.userID', foreignField: '_id', as: 'user' } },
       { $unwind: '$order' },
       { $unwind: '$service' },
-      { $unwind: '$user' },
+      { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } }, // Cho phép user null
       {
         $project: {
           orderId: '$order._id',
           user: {
-            name: '$user.fullname',
-            email: '$user.email'
+            name: {
+              $ifNull: ['$user.fullname', '$order.fullname'] // Kiểm tra user.fullname, nếu null thì lấy fullName từ order
+            },
+            email: '$user.email',
+            phone: {
+              $ifNull: ['$user.phone_number', '$order.phone'] // Kiểm tra user.phone, nếu null thì lấy phone từ order
+            }
           },
           service: {
             name: '$service.service_name',
