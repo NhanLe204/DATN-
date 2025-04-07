@@ -8,11 +8,10 @@ const service_model_js_1 = __importDefault(require("@/models/service.model.js"))
 const user_model_js_1 = __importDefault(require("@/models/user.model.js"));
 const order_model_js_1 = __importDefault(require("@/models/order.model.js"));
 const config_js_1 = __importDefault(require("../config/config.js"));
-const sendBookingEmail = async ({ recipientEmail, customerName, orderDetails, orderId }) => {
-    console.log('Input data:', { recipientEmail, customerName, orderDetails, orderId });
+const sendBookingEmail = async ({ recipientEmail, customerName, orderDetails, orderId, isCancellation = false, }) => {
+    console.log('Input data:', { recipientEmail, customerName, orderDetails, orderId, isCancellation });
     let finalOrderId = orderId;
     let finalCustomerName = customerName || 'Khách hàng';
-    // Lấy thông tin từ orderModel
     try {
         const order = await order_model_js_1.default.findById(orderId);
         if (order) {
@@ -22,7 +21,7 @@ const sendBookingEmail = async ({ recipientEmail, customerName, orderDetails, or
                 finalCustomerName = user.fullname;
             }
             else {
-                finalCustomerName = order.fullname;
+                finalCustomerName = order.fullname || 'Khách hàng';
                 console.log(`No fullname found for userID: ${order.userID}`);
             }
         }
@@ -56,7 +55,7 @@ const sendBookingEmail = async ({ recipientEmail, customerName, orderDetails, or
             service_name: serviceName,
             service_price: servicePrice,
             duration: duration,
-            customerName: finalCustomerName
+            customerName: finalCustomerName,
         };
     });
     const enrichedOrderDetails = await Promise.all(servicePromises);
@@ -70,7 +69,7 @@ const sendBookingEmail = async ({ recipientEmail, customerName, orderDetails, or
             year: 'numeric',
             hour: '2-digit',
             minute: '2-digit',
-            timeZone: 'Asia/Ho_Chi_Minh'
+            timeZone: 'Asia/Ho_Chi_Minh',
         }).format(date);
     };
     const formatPrice = (price) => {
@@ -80,10 +79,10 @@ const sendBookingEmail = async ({ recipientEmail, customerName, orderDetails, or
         return price;
     };
     console.log('Final data:', { finalCustomerName, finalOrderId });
-    const subject = 'Xác nhận đặt lịch thành công';
+    const subject = isCancellation ? 'Thông báo hủy lịch đặt dịch vụ' : 'Xác nhận đặt lịch thành công';
     const text = `Kính gửi ${finalCustomerName},
 
-Cảm ơn bạn đã đặt lịch với chúng tôi! Dưới đây là thông tin chi tiết về lịch hẹn của bạn:
+${isCancellation ? 'Lịch đặt dịch vụ của bạn đã được hủy thành công' : 'Cảm ơn bạn đã đặt lịch với chúng tôi! Dưới đây là thông tin chi tiết về lịch hẹn của bạn'}:
 
 ${enrichedOrderDetails
         .map((detail) => `- Dịch vụ: ${detail.service_name}\n- Thời gian: ${formatDateTime(detail.booking_date)}\n- Thú cưng: ${detail.petName} (${detail.petType})\n- Giá dự tính: ${formatPrice(detail.service_price)}\n- Thời gian dự tính: ${detail.duration} phút`)
@@ -91,7 +90,7 @@ ${enrichedOrderDetails
 - Địa điểm: ${config_js_1.default.ADDRESS}
 - Mã đặt lịch: ${finalOrderId}
 
-Nếu bạn cần thay đổi hoặc hủy lịch hẹn, vui lòng liên hệ với chúng tôi qua số 0888-666-333 hoặc email ${config_js_1.default.EMAIL_USER}.
+Nếu bạn cần thêm thông tin hoặc hỗ trợ, vui lòng liên hệ với chúng tôi qua số 0888-666-333 hoặc email ${config_js_1.default.EMAIL_USER}.
 
 Trân trọng,
 Pet Heaven
@@ -99,33 +98,33 @@ Hotline: ${config_js_1.default.HOTLINE}
 Email: ${config_js_1.default.EMAIL_USER}`;
     const html = `
     <p>Kính gửi <strong>${finalCustomerName}</strong>,</p>
-    <p>Cảm ơn bạn đã đặt lịch với chúng tôi! Dưới đây là thông tin chi tiết về lịch hẹn của bạn:</p>
+    <p>${isCancellation ? 'Lịch đặt dịch vụ của bạn đã được hủy thành công' : 'Cảm ơn bạn đã đặt lịch với chúng tôi! Dưới đây là thông tin chi tiết về lịch hẹn của bạn'}:</p>
     <ul>
       ${enrichedOrderDetails
         .map((detail) => `
             <li>
               <strong>Dịch vụ:</strong> ${detail.service_name}<br>
               <strong>Thời gian:</strong> ${formatDateTime(detail.booking_date)}<br>
-              <strong>Thú cưng:</strong> ${detail.petName} <strong>Loại:</strong> (${detail.petType})<br>
+              <strong>Thú cưng:</strong> ${detail.petName} (${detail.petType})<br>
               <strong>Giá dự tính:</strong> ${formatPrice(detail.service_price)}<br>
-              <strong>Thời gian dự tính:</strong> ${detail.duration} phút
+              <strong>Thời gian dự kiến:</strong> ${detail.duration} phút
             </li>
           `)
         .join('')}
     </ul>
     <p>
-      <strong>Địa điểm:</strong> Pet Heaven, 123 Đường Thú Cưng, TP. HCM<br>
+      <strong>Địa điểm:</strong> ${config_js_1.default.ADDRESS}<br>
       <strong>Mã đặt lịch:</strong> ${finalOrderId}
     </p>
-    <p>Nếu bạn cần thay đổi hoặc hủy lịch hẹn, vui lòng liên hệ với chúng tôi sớm 12 tiếng trước lịch hẹn của quý khách.</p>
-    <p>Trân trọng,<br><strong>Pet Heaven</strong><br>Hotline: ${config_js_1.default.HOTLINE}<br>Email: ${config_js_1.default.EMAIL_USER}</p>
+    <p>Nếu bạn cần thêm thông tin hoặc hỗ trợ, vui lòng liên hệ với chúng tôi qua hotline <strong>${config_js_1.default.HOTLINE}</strong> hoặc email <strong>${config_js_1.default.EMAIL_USER}</strong>.</p>
+    <p>Trân trọng,<br><strong>Pet Heaven</strong></p>
   `;
     try {
         await (0, sendEmail_js_1.default)(recipientEmail, subject, text, html);
-        console.log('Booking email sent to:', recipientEmail);
+        console.log(`${isCancellation ? 'Cancellation' : 'Booking'} email sent to:`, recipientEmail);
     }
     catch (error) {
-        console.error('Error sending booking email:', error);
+        console.error(`Error sending ${isCancellation ? 'cancellation' : 'booking'} email:`, error);
         throw error;
     }
 };

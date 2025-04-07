@@ -10,7 +10,7 @@ import {
   Space,
   notification,
 } from "antd";
-import { SearchOutlined, EditOutlined } from "@ant-design/icons";
+import { SearchOutlined, EditOutlined, EyeOutlined } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import orderDetailApi from "../../api/orderDetailApi";
 
@@ -29,6 +29,7 @@ interface Booking {
   id: string;
   orderId: string;
   username: string;
+  phone: string; // Thêm field phone
   orderDate: string;
   serviceName: string;
   bookingDate: string;
@@ -39,6 +40,7 @@ interface Booking {
   petName?: string;
   petType?: string;
   petWeight?: number;
+  userId?: string; // Thêm userId để lấy phone từ bảng user
 }
 
 const removeAccents = (str: string) => {
@@ -52,6 +54,7 @@ const removeAccents = (str: string) => {
 const BookingManager: React.FC = () => {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isStartModalVisible, setIsStartModalVisible] = useState(false);
+  const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
@@ -68,13 +71,17 @@ const BookingManager: React.FC = () => {
           dog: "Chó",
           cat: "Mèo",
         };
-        const petType = petTypeMap[booking.petType?.toLowerCase()] || booking.petType || "N/A";
+        const petType =
+          petTypeMap[booking.petType?.toLowerCase()] ||
+          booking.petType ||
+          "N/A";
 
         return {
           key: booking.orderId,
           id: booking.orderId,
           orderId: booking.orderId,
           username: booking.user?.name || "Unknown User",
+          phone: booking.user?.phone || "Unknown Phone",
           orderDate: booking.order_date
             ? new Date(booking.order_date).toLocaleString()
             : "N/A",
@@ -133,7 +140,9 @@ const BookingManager: React.FC = () => {
         normalizedServiceName.includes(normalizedSearchText) ||
         booking.orderId.toLowerCase().includes(normalizedSearchText) ||
         normalizedUsername.includes(normalizedSearchText) ||
-        removeAccents(booking.bookingStatus.toLowerCase()).includes(normalizedSearchText) ||
+        removeAccents(booking.bookingStatus.toLowerCase()).includes(
+          normalizedSearchText
+        ) ||
         normalizedPetName.includes(normalizedSearchText) ||
         normalizedPetType.includes(normalizedSearchText)
       );
@@ -141,7 +150,10 @@ const BookingManager: React.FC = () => {
 
     setFilteredBookings(filtered);
   };
-
+  const handleViewDetail = (record: Booking) => {
+    setSelectedBooking(record);
+    setIsDetailModalVisible(true);
+  };
   const handleStart = (record: Booking) => {
     setSelectedBooking(record);
     startForm.setFieldsValue({ petWeight: record.petWeight || 0 });
@@ -308,20 +320,12 @@ const BookingManager: React.FC = () => {
       render: (text: string) => <span>{text}</span>,
     },
     {
-      title: "Tên thú cưng",
-      dataIndex: "petName",
-      key: "petName",
-      width: 120,
+      title: "Số điện thoại",
+      dataIndex: "phone",
+      key: "phone",
+      width: 150,
       align: "left" as const,
-      render: (petName: string) => <span>{petName}</span>,
-    },
-    {
-      title: "Loại thú cưng",
-      dataIndex: "petType",
-      key: "petType",
-      width: 120,
-      align: "left" as const,
-      render: (petType: string) => <span>{petType}</span>,
+      render: (phone: string) => <span>{phone}</span>,
     },
     {
       title: "Đặt lúc",
@@ -394,9 +398,14 @@ const BookingManager: React.FC = () => {
     {
       title: "Chức năng",
       key: "action",
-      width: 250,
+      width: 280,
       render: (_: any, record: Booking) => (
         <Space>
+          <Button
+            icon={<EyeOutlined />}
+            onClick={() => handleViewDetail(record)}
+            size="small"
+          />
           <Button
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
@@ -453,6 +462,65 @@ const BookingManager: React.FC = () => {
           rowKey="key"
         />
       </Card>
+      {/* Modal xem chi tiết */}
+      <Modal
+        title="Chi tiết đơn hàng"
+        open={isDetailModalVisible}
+        onCancel={() => setIsDetailModalVisible(false)}
+        footer={null}
+        width={800}
+      >
+        {selectedBooking && (
+          <div className="p-4">
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <p>
+                  <strong>Mã đơn hàng:</strong> {selectedBooking.orderId}
+                </p>
+                <p>
+                  <strong>Người đặt:</strong> {selectedBooking.username}
+                </p>
+                <p>
+                  <strong>Số điện thoại:</strong> {selectedBooking.phone}
+                </p>
+                <p>
+                  <strong>Giá dự tính:</strong>{" "}
+                  {selectedBooking.estimatedPrice.toLocaleString()}đ
+                </p>
+              </div>
+              <div>
+                <p>
+                  <strong>Ngày đặt:</strong>{" "}
+                  {new Date(selectedBooking.orderDate).toLocaleDateString(
+                    "vi-VN"
+                  )}
+                </p>
+                <p>
+                  <strong>Ngày thực hiện:</strong> {selectedBooking.bookingDate}
+                </p>
+                <p>
+                  <strong>Giờ thực hiện:</strong> {selectedBooking.bookingTime}
+                </p>
+                <p>
+                  <strong>Trạng thái:</strong> {selectedBooking.bookingStatus}
+                </p>
+              </div>
+            </div>
+            <div className="mt-4">
+              <h3 className="font-medium text-lg mb-2">Chi tiết dịch vụ:</h3>
+              <div style={{ maxHeight: "400px", overflowY: "auto" }}>
+                <Table
+                  columns={columns}
+                  dataSource={[selectedBooking]} // Vì mỗi booking chỉ có 1 dịch vụ
+                  rowKey="orderId"
+                  pagination={false}
+                  className="border rounded-lg"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       <Modal
         title="Cập nhật trạng thái đặt lịch"
@@ -487,7 +555,9 @@ const BookingManager: React.FC = () => {
               <Select>
                 <Option value={BookingStatus.PENDING}>ĐANG CHỜ</Option>
                 <Option value={BookingStatus.CONFIRMED}>ĐÃ XÁC NHẬN</Option>
-                <Option value={BookingStatus.IN_PROGRESS}>ĐANG THỰC HIỆN</Option>
+                <Option value={BookingStatus.IN_PROGRESS}>
+                  ĐANG THỰC HIỆN
+                </Option>
                 <Option value={BookingStatus.COMPLETED}>HOÀN THÀNH</Option>
                 <Option value={BookingStatus.CANCELLED}>ĐÃ HỦY</Option>
               </Select>

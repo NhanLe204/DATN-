@@ -3,10 +3,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updatePaymentStatus = exports.updateOrderStatus = exports.checkAvailableSlots = exports.getOrderById = exports.getAllOrders = exports.getAvailableSlots = exports.createOrderAfterPayment = void 0;
+exports.cancelServiceBooking = exports.updatePaymentStatus = exports.updateOrderStatus = exports.checkAvailableSlots = exports.getOrderById = exports.getAllOrders = exports.getAvailableSlots = exports.createOrderAfterPayment = void 0;
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const mongoose_1 = __importDefault(require("mongoose"));
 const order_model_js_1 = __importDefault(require("../models/order.model.js"));
+const user_model_js_1 = __importDefault(require("../models/user.model.js"));
 const delivery_model_js_1 = __importDefault(require("../models/delivery.model.js"));
 const coupon_model_js_1 = __importDefault(require("../models/coupon.model.js"));
 const coupon_enum_js_1 = require("../enums/coupon.enum.js");
@@ -24,7 +25,7 @@ const createOrderAfterPayment = async (req, res) => {
     session.startTransaction();
     let transactionCommitted = false;
     try {
-        const { userID = null, payment_typeID, deliveryID = null, couponID = null, orderdate, total_price, shipping_address = null, orderDetails, paymentOrderCode = null, infoUserGuest = null } = req.body;
+        const { userID = null, payment_typeID, deliveryID = null, couponID = null, orderdate, total_price, shipping_address = null, orderDetails, paymentOrderCode = null, infoUserGuest = null, } = req.body;
         console.log('req.body.orderDetails:', JSON.stringify(orderDetails, null, 2));
         // 1. Validate input data
         if (!total_price || !orderDetails || !Array.isArray(orderDetails)) {
@@ -38,7 +39,7 @@ const createOrderAfterPayment = async (req, res) => {
             product_price: detail.product_price || detail.productPrice,
             booking_date: detail.booking_date || detail.bookingDate,
             petName: detail.petName,
-            petType: detail.petType
+            petType: detail.petType,
         }));
         const isBooking = normalizedOrderDetails.every((detail) => detail.serviceId && !detail.productId);
         const isOrder = normalizedOrderDetails.some((detail) => detail.productId);
@@ -76,7 +77,9 @@ const createOrderAfterPayment = async (req, res) => {
                 await product_model_js_1.default.findByIdAndUpdate(productId, { $inc: { stock: -quantity } }, { session });
             }
             if (serviceId) {
-                const service = await service_model_js_1.default.findOne({ _id: serviceId, status: service_enum_js_1.ServiceStatus.ACTIVE }).session(session);
+                const service = await service_model_js_1.default
+                    .findOne({ _id: serviceId, status: service_enum_js_1.ServiceStatus.ACTIVE })
+                    .session(session);
                 if (!service)
                     throw new Error(`Service not found or not active: ${serviceId}`);
                 if (!petName || !petType) {
@@ -97,7 +100,7 @@ const createOrderAfterPayment = async (req, res) => {
                 total_price: detailTotalPrice,
                 booking_date: standardizedBookingDate,
                 petName: serviceId ? petName : null,
-                petType: serviceId ? petType : null
+                petType: serviceId ? petType : null,
             };
         });
         const validatedOrderDetails = await Promise.all(orderDetailsPromises);
@@ -139,7 +142,7 @@ const createOrderAfterPayment = async (req, res) => {
             status: isOrder ? order_enum_js_1.OrderStatus.PENDING : null,
             bookingStatus: isBooking ? booking_enum_js_1.BookingStatus.CONFIRMED : null,
             payment_status: order_enum_js_1.PaymentStatus.PENDING,
-            inforUserGuest: infoUserGuest || null
+            inforUserGuest: infoUserGuest || null,
         });
         const savedOrder = await order.save({ session });
         // 8. Create and save order details
@@ -153,61 +156,42 @@ const createOrderAfterPayment = async (req, res) => {
                 total_price: detail.total_price,
                 booking_date: detail.booking_date,
                 petName: detail.petName,
-                petType: detail.petType
+                petType: detail.petType,
             });
         });
         await Promise.all(orderDetailDocs.map((detail) => detail.save({ session })));
         // 9. Commit transaction
         await session.commitTransaction();
         transactionCommitted = true;
-        // 10. Send email confirmation
+        // 10. Send email confirmation (chỉ cho booking)
         let recipientEmail = null;
         if (userID) {
-            const user = await mongoose_1.default.model('user').findById(userID); // Sửa từ 'User' thành 'user'
+            const user = await user_model_js_1.default.findById(userID); // Sửa lại để dùng userModel
             recipientEmail = user?.email || null;
         }
         else if (infoUserGuest && infoUserGuest.email) {
             recipientEmail = infoUserGuest.email;
         }
-        if (recipientEmail) {
-            if (isBooking) {
-                try {
-                    await (0, sendBookingEmail_js_1.default)({
-                        recipientEmail,
-                        orderDetails: validatedOrderDetails.map((detail) => ({
-                            serviceId: detail.serviceId,
-                            booking_date: detail.booking_date,
-                            petName: detail.petName,
-                            petType: detail.petType
-                        })),
-                        orderId: savedOrder._id.toString()
-                    });
-                    console.log('Booking email sent to:', recipientEmail);
-                }
-                catch (emailError) {
-                    console.error('Failed to send booking email:', emailError);
-                }
+        if (recipientEmail && isBooking) { // Chỉ gửi email nếu là booking
+            try {
+                await (0, sendBookingEmail_js_1.default)({
+                    recipientEmail,
+                    orderDetails: validatedOrderDetails.map((detail) => ({
+                        serviceId: detail.serviceId,
+                        booking_date: detail.booking_date,
+                        petName: detail.petName,
+                        petType: detail.petType,
+                    })),
+                    orderId: savedOrder._id.toString(),
+                });
+                console.log('Booking email sent to:', recipientEmail);
             }
-            else {
-                const subject = 'Xác nhận đơn hàng thành công';
-                const text = `Kính gửi ${infoUserGuest?.fullName || 'Khách hàng'},\n\nĐơn hàng của bạn đã được xác nhận:\n${validatedOrderDetails
-                    .map((detail) => `- Sản phẩm: ${detail.productId || detail.serviceId} | Số lượng: ${detail.quantity} | Giá: ${detail.product_price}`)
-                    .join('\n')}\nTổng tiền: ${finalTotalPrice} VND\n\nTrân trọng,\nPet Heaven`;
-                const html = `<p>Kính gửi ${infoUserGuest?.fullName || 'Khách hàng'},</p>
-          <p>Đơn hàng của bạn đã được xác nhận:</p>
-          <ul>${validatedOrderDetails
-                    .map((detail) => `<li>Sản phẩm: ${detail.productId || detail.serviceId} | Số lượng: ${detail.quantity} | Giá: ${detail.product_price}</li>`)
-                    .join('')}</ul>
-          <p>Tổng tiền: ${finalTotalPrice} VND</p>
-          <p>Trân trọng,<br>Pet Heaven</p>`;
-                try {
-                    await (0, sendEmail_js_1.default)(recipientEmail, subject, text, html);
-                    console.log('Order email sent to:', recipientEmail);
-                }
-                catch (emailError) {
-                    console.error('Failed to send order email:', emailError);
-                }
+            catch (emailError) {
+                console.error('Failed to send booking email:', emailError);
             }
+        }
+        else if (recipientEmail && isOrder) {
+            console.log('Skipping email for product order as per requirement');
         }
         else {
             console.warn('No recipient email found, skipping email notification');
@@ -218,8 +202,8 @@ const createOrderAfterPayment = async (req, res) => {
             message: 'Order and order details created successfully',
             data: {
                 order: savedOrder,
-                orderDetails: orderDetailDocs
-            }
+                orderDetails: orderDetailDocs,
+            },
         });
     }
     catch (error) {
@@ -231,7 +215,7 @@ const createOrderAfterPayment = async (req, res) => {
         res.status(400).json({
             success: false,
             message: errorMessage,
-            error: error instanceof Error ? error.stack : 'Unknown error stack'
+            error: error instanceof Error ? error.stack : 'Unknown error stack',
         });
     }
     finally {
@@ -295,8 +279,21 @@ const getAllOrders = async (req, res) => {
             .populate('userID')
             .populate('payment_typeID')
             .populate('deliveryID')
-            .populate('couponID');
-        res.status(200).json({ success: true, result: orders });
+            .populate('couponID')
+            .lean();
+        // Lấy order details cho mỗi order
+        const ordersWithDetails = await Promise.all(orders.map(async (order) => {
+            const details = await orderdetail_model_js_1.default
+                .find({ orderId: order._id })
+                .populate('serviceId')
+                .populate('productId')
+                .lean();
+            return {
+                ...order,
+                orderDetails: details, // Thêm orderDetails vào response
+            };
+        }));
+        res.status(200).json({ success: true, result: ordersWithDetails });
     }
     catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -458,4 +455,149 @@ const updatePaymentStatus = async (req, res) => {
     }
 };
 exports.updatePaymentStatus = updatePaymentStatus;
+const cancelServiceBooking = async (req, res) => {
+    try {
+        const { orderId, orderDetailId } = req.body;
+        // 1. Kiểm tra đầu vào
+        if (!orderId || !mongoose_1.default.Types.ObjectId.isValid(orderId)) {
+            res.status(400).json({ success: false, message: 'Order ID không hợp lệ' });
+            return;
+        }
+        if (!orderDetailId || !mongoose_1.default.Types.ObjectId.isValid(orderDetailId)) {
+            res.status(400).json({ success: false, message: 'Order Detail ID không hợp lệ' });
+            return;
+        }
+        // 2. Tìm order
+        const order = await order_model_js_1.default.findById(orderId);
+        if (!order) {
+            res.status(404).json({ success: false, message: 'Đơn hàng không tồn tại' });
+            return;
+        }
+        // 3. Tìm orderDetail
+        const orderDetail = await orderdetail_model_js_1.default
+            .findOne({ _id: orderDetailId, orderId })
+            .populate('serviceId')
+            .populate('productId');
+        if (!orderDetail) {
+            res.status(404).json({ success: false, message: 'Chi tiết đơn hàng không tồn tại' });
+            return;
+        }
+        // 4. Kiểm tra điều kiện hủy (chỉ cho dịch vụ)
+        if (!orderDetail.serviceId) {
+            res.status(400).json({ success: false, message: 'Hàm này chỉ dùng để hủy đặt lịch dịch vụ' });
+            return;
+        }
+        if (order.bookingStatus !== booking_enum_js_1.BookingStatus.CONFIRMED) {
+            res.status(400).json({ success: false, message: 'Chỉ có thể hủy ở trạng thái CONFIRMED' });
+            return;
+        }
+        const bookingDate = orderDetail.booking_date;
+        if (!bookingDate) {
+            res.status(400).json({ success: false, message: 'Không tìm thấy thời gian booking' });
+            return;
+        }
+        const currentTime = new Date();
+        const bookingDateObj = new Date(bookingDate);
+        const timeDifferenceInHours = (bookingDateObj.getTime() - currentTime.getTime()) / (1000 * 60 * 60);
+        const cancelDeadlineHours = 12;
+        if (timeDifferenceInHours < cancelDeadlineHours) {
+            res.status(400).json({
+                success: false,
+                message: `Không thể hủy booking trước ${cancelDeadlineHours} tiếng`,
+            });
+            return;
+        }
+        // 5. Cập nhật trạng thái
+        order.bookingStatus = booking_enum_js_1.BookingStatus.CANCELLED;
+        await order.save();
+        console.log('Order updated with status:', order.bookingStatus);
+        // 6. Gửi email thông báo hủy dịch vụ
+        let recipientEmail = null;
+        let customerName = 'Khách hàng';
+        if (order.userID) {
+            const user = await user_model_js_1.default.findById(order.userID);
+            recipientEmail = user?.email || null;
+            customerName = user?.fullname || 'Khách hàng';
+        }
+        else if (order.inforUserGuest?.email) {
+            recipientEmail = order.inforUserGuest.email;
+            customerName = order.inforUserGuest.fullName || 'Khách hàng';
+        }
+        if (recipientEmail) {
+            // Định dạng ngày giờ theo kiểu Việt Nam
+            const formatDateTime = (date) => {
+                return new Intl.DateTimeFormat('vi-VN', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    weekday: 'long',
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    timeZone: 'Asia/Ho_Chi_Minh',
+                }).format(date);
+            };
+            // Định dạng giá tiền
+            const formatPrice = (price) => {
+                return price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+            };
+            // Thông tin dịch vụ
+            const serviceName = orderDetail.serviceId?.service_name || 'Không xác định';
+            const servicePrice = orderDetail.serviceId?.service_price || 0; // Giả sử có trường service_price
+            const duration = orderDetail.serviceId?.duration || 60; // Giả sử có trường duration
+            const petName = orderDetail.petName || 'Không xác định';
+            const petType = orderDetail.petType || 'Không xác định';
+            const bookingTime = formatDateTime(bookingDateObj);
+            const orderIdString = order._id.toString();
+            // Nội dung email
+            const subject = 'Thông báo hủy lịch đặt dịch vụ';
+            const text = `Kính gửi ${customerName},\n\nLịch đặt dịch vụ của bạn đã được hủy thành công! Dưới đây là thông tin chi tiết về lịch hẹn đã hủy:\n\nDịch vụ: ${serviceName}\nThời gian: ${bookingTime}\nThú cưng: ${petName} (${petType})\nGiá dự tính: ${formatPrice(servicePrice)}\nThời gian dự kiến: ${duration} phút\nĐịa điểm: 123 Nguyen Van Cu, District 1, HCM City\nMã đặt lịch: ${orderIdString}\n\nNếu bạn cần thêm thông tin hoặc hỗ trợ, vui lòng liên hệ với chúng tôi qua hotline 19006336 hoặc email ngocthanhnt04@gmail.com.\n\nTrân trọng,\nPet Heaven`;
+            const html = `
+        <p>Kính gửi <strong>${customerName}</strong>,</p>
+        <p>Lịch đặt dịch vụ của bạn đã được hủy thành công! Dưới đây là thông tin chi tiết về lịch hẹn đã hủy:</p>
+        <ul>
+          <li><strong>Dịch vụ:</strong> ${serviceName}</li>
+          <li><strong>Thời gian:</strong> ${bookingTime}</li>
+          <li><strong>Thú cưng:</strong> ${petName} (${petType})</li>
+          <li><strong>Giá dự tính:</strong> ${formatPrice(servicePrice)}</li>
+          <li><strong>Thời gian dự kiến:</strong> ${duration} phút</li>
+          <li><strong>Địa điểm:</strong> 123 Nguyen Van Cu, District 1, HCM City</li>
+          <li><strong>Mã đặt lịch:</strong> ${orderIdString}</li>
+        </ul>
+        <p>Nếu bạn cần thêm thông tin hoặc hỗ trợ, vui lòng liên hệ với chúng tôi qua hotline <strong>19006336</strong> hoặc email <strong>ngocthanhnt04@gmail.com</strong>.</p>
+        <p>Trân trọng,<br><strong>Pet Heaven</strong></p>
+      `;
+            try {
+                await (0, sendEmail_js_1.default)(recipientEmail, subject, text, html);
+                console.log('Cancellation email sent to:', recipientEmail);
+            }
+            catch (emailError) {
+                console.error('Failed to send cancellation email:', emailError);
+            }
+        }
+        else {
+            console.warn('No recipient email found, skipping email notification');
+        }
+        // 7. Trả về phản hồi
+        res.status(200).json({
+            success: true,
+            message: 'Hủy đặt lịch dịch vụ thành công',
+            data: {
+                orderId: order._id,
+                orderDetailId: orderDetail._id,
+                bookingStatus: order.bookingStatus,
+                status: order.status,
+            },
+        });
+    }
+    catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.error('Error in cancelServiceBooking:', errorMessage);
+        res.status(500).json({
+            success: false,
+            message: 'Lỗi máy chủ khi hủy đặt lịch dịch vụ',
+            details: errorMessage,
+        });
+    }
+};
+exports.cancelServiceBooking = cancelServiceBooking;
 //# sourceMappingURL=order.controllers.js.map
