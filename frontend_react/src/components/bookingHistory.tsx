@@ -4,6 +4,7 @@ import orderApi from "../api/orderApi";
 import orderDetailApi from "../api/orderDetailApi";
 
 interface Service {
+  _id: string;
   service_name: string;
   service_price: number;
   duration: number;
@@ -11,29 +12,25 @@ interface Service {
   status: string;
   createdAt: string;
   updatedAt: string;
-  _id: string;
-}
-
-interface OrderDetail {
-  _id: string;
-  orderId: string;
-  serviceId?: Service;
-  quantity: number;
-  product_price: number;
-  total_price: number;
-  booking_date?: string;
-  petName?: string;
-  petType?: string;
 }
 
 interface Order {
   _id: string;
-  userID: { _id: string; fullname: string } | null;
-  bookingStatus?: string | null;
-  status?: string | null;
-  total_price: number;
+  userID: string;
+  fullname: string;
+  phone: string;
+  paymentOrderCode: string | null;
+  payment_typeID: string | null;
+  deliveryID: string | null;
+  couponID: string | null;
   order_date: string;
-  orderDetails?: OrderDetail[];
+  total_price: number;
+  shipping_address: string | null;
+  payment_status: string;
+  status: string | null;
+  bookingStatus: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface Booking {
@@ -68,39 +65,34 @@ const BookingHistory = () => {
       setLoading(true);
       try {
         const response = await orderDetailApi.getBookingsByUserId(userID);
-        console.log(response.data);
-        
+        const rawData = response.data;
 
-        if (!response.data.success || !response.data) {
+        if (!rawData || rawData.length === 0) {
           setBookings([]);
           setLoading(false);
           return;
         }
 
-        const userBookings = response.data
-          .filter((order: Order) => order.userID && order.userID._id === userID)
-          .flatMap((order: Order) => {
-            if (order.orderDetails && order.orderDetails.length > 0) {
-              return order.orderDetails
-                .filter((detail) => detail.serviceId) // Chỉ lấy các detail có serviceId
-                .map((detail) => ({
-                  _id: detail._id,
-                  orderId: order._id,
-                  userID: order.userID?._id,
-                  serviceId: detail.serviceId?._id,
-                  service: detail.serviceId ? [detail.serviceId] : [],
-                  quantity: detail.quantity,
-                  total_price: detail.total_price,
-                  booking_date: detail.booking_date || order.order_date,
-                  petName: detail.petName,
-                  petType: detail.petType,
-                  order: [order],
-                  status: order.bookingStatus?.toLowerCase() || order.status?.toLowerCase() || "pending",
-                }));
-            } else {
-              return [];
-            }
-          });
+        const userBookings = rawData
+          .filter((item: any) => item.order[0]?.userID === userID)
+          .map((item: any) => ({
+            _id: item._id,
+            orderId: item.orderId,
+            userID: item.order[0]?.userID,
+            serviceId: item.serviceId,
+            service: item.service || [],
+            quantity: item.quantity,
+            total_price: item.total_price,
+            booking_date: item.booking_date,
+            petName: item.petName,
+            petType: item.petType,
+            order: item.order || [],
+            status:
+              item.order[0]?.bookingStatus?.toLowerCase() ||
+              item.order[0]?.status?.toLowerCase() ||
+              "pending",
+          }));
+
         setBookings(userBookings);
       } catch (error) {
         console.error("Failed to fetch bookings:", error);
@@ -121,7 +113,8 @@ const BookingHistory = () => {
   const canCancel = (booking: Booking) => {
     const now = new Date();
     const serviceDateTime = new Date(booking.booking_date || "");
-    const hoursDiff = (serviceDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+    const hoursDiff =
+      (serviceDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
     return (
       hoursDiff > 12 &&
       booking.status !== "cancelled" &&
@@ -247,7 +240,9 @@ const BookingHistory = () => {
       render: (booking_date: string) => (
         <span className="text-xs">
           {booking_date
-            ? new Date(booking_date).toLocaleTimeString("vi-VN", { timeStyle: "short" })
+            ? new Date(booking_date).toLocaleTimeString("vi-VN", {
+                timeStyle: "short",
+              })
             : "Chưa xác định"}
         </span>
       ),
@@ -318,7 +313,10 @@ const BookingHistory = () => {
       <h2 className="text-xl font-bold text-gray-800 mb-2">Lịch đã đặt</h2>
       <div className="text-sm text-red-600 mb-4">
         <p>1. Có thể hủy lịch đã hẹn trước 12h</p>
-        <p>2. Nếu sau 15ph giờ hẹn mà quý khách không đến, và không có liên lạc thì lịch sẽ bị hủy</p>
+        <p>
+          2. Nếu sau 15ph giờ hẹn mà quý khách không đến, và không có liên lạc
+          thì lịch sẽ bị hủy
+        </p>
       </div>
       <Tabs
         activeKey={activeTab}
