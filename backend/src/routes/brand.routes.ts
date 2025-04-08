@@ -10,4 +10,5 @@ brandRouter.get('/brands/:id', getBrandById);
 brandRouter.post('/brands', verifyToken, requireAdmin, insertBrand);
 brandRouter.patch('/brands/:id', verifyToken, requireAdmin, updateBrand);
 brandRouter.delete('/brands/:id', verifyToken, requireAdmin, deleteBrand);
+
 export default brandRouter;

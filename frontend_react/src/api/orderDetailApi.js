@@ -23,7 +23,7 @@ const orderDetailApi = {
     return response.data;
   },
   getCancelledBookings: async () => {
-    const response = await api.get("/v1//cancelled-bookings");
+    const response = await api.get("/v1/cancelled-bookings");
     return response.data;
   },
 };

@@ -103,7 +103,8 @@ const getBookingsByUserId = async (req, res, next) => {
         const userOrders = await order_model_js_1.default.find({ userID: userId }).select('_id');
         console.log('User orders:', userOrders);
         if (!userOrders.length) {
-            return res.status(404).json({ success: false, message: 'No orders found for this user' });
+            res.status(404).json({ success: false, message: 'No orders found for this user' });
+            return;
         }
         // Lấy danh sách orderId
         const orderIds = userOrders.map((order) => order._id);
@@ -115,7 +116,8 @@ const getBookingsByUserId = async (req, res, next) => {
         ]);
         console.log('Raw bookings:', bookings);
         if (!bookings.length) {
-            return res.status(404).json({ success: false, message: 'No bookings found for this user' });
+            res.status(404).json({ success: false, message: 'No bookings found for this user' });
+            return;
         }
         res.status(200).json({ success: true, data: bookings });
     }
@@ -339,13 +341,15 @@ exports.changeBookingStatus = changeBookingStatus;
 const getCancelledBookings = async (req, res) => {
     try {
         // Lấy tất cả các order có bookingStatus là CANCELLED
-        const cancelledOrders = await order_model_js_1.default.find({
+        const cancelledOrders = await order_model_js_1.default
+            .find({
             bookingStatus: booking_enum_js_1.BookingStatus.CANCELLED
-        }).select('_id');
+        })
+            .select('_id');
         if (!cancelledOrders.length) {
             res.status(404).json({
                 success: false,
-                message: 'No cancelled bookings found'
+                message: `Không tìm thấy booking nào có trạng thái ${booking_enum_js_1.BookingStatus.CANCELLED}`
             });
             return;
         }
