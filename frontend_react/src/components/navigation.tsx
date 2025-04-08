@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Breadcrumb } from "antd";
 import { useLocation, Link, useParams } from "react-router-dom";
 import { Typography } from "antd";
-import productsApi from "../api/productsAPI"; // Import API
+import productsApi from "../api/productsApi"; // Import API
 
 const { Title } = Typography;
 
@@ -20,7 +20,7 @@ const adminPageNameMapping: { [key: string]: string } = {
   users: "Quản lý người dùng",
   settings: "Cài đặt hệ thống",
   posts: "Quản lý bài viết",
-  bookings:"Quản lí lịch hẹn"
+  bookings: "Quản lí lịch hẹn",
 };
 
 // Mapping cho các trang công khai
@@ -75,7 +75,11 @@ const Navigation: React.FC = () => {
   }, [id, isDetailPage]);
 
   // Không hiển thị breadcrumb ở trang Dashboard hoặc Trang chủ
-  if (location.pathname === "/admin" || location.pathname === "/admin/dashboard" || location.pathname === "/") {
+  if (
+    location.pathname === "/admin" ||
+    location.pathname === "/admin/dashboard" ||
+    location.pathname === "/"
+  ) {
     return null;
   }
 

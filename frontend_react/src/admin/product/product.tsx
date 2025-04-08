@@ -10,13 +10,9 @@ import {
   Tag,
   notification,
 } from "antd";
-import {
-  PlusOutlined,
-  EditOutlined,
-  SearchOutlined,
-} from "@ant-design/icons";
+import { PlusOutlined, EditOutlined, SearchOutlined } from "@ant-design/icons";
 import { motion } from "framer-motion";
-import productsApi from "../../api/productsAPI";
+import productsApi from "../../api/productsApi";
 import brandApi from "../../api/brandApi";
 import tagApi from "../../api/tagApi";
 import ProductModal from "../components/productModal";
@@ -74,7 +70,9 @@ const ProductList: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchText, setSearchText] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string | undefined>(undefined);
+  const [filterStatus, setFilterStatus] = useState<string | undefined>(
+    undefined
+  );
   const [filterBrand, setFilterBrand] = useState<string | undefined>(undefined);
   const [filterTag, setFilterTag] = useState<string | undefined>(undefined);
   const [currentPage, setCurrentPage] = useState(1);
@@ -100,7 +98,14 @@ const ProductList: React.FC = () => {
 
   useEffect(() => {
     filterProducts();
-  }, [searchText, filterStatus, filterBrand, filterTag, allProducts, currentPage]);
+  }, [
+    searchText,
+    filterStatus,
+    filterBrand,
+    filterTag,
+    allProducts,
+    currentPage,
+  ]);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -255,7 +260,8 @@ const ProductList: React.FC = () => {
       title: "STT",
       key: "index",
       width: 30,
-      render: (_: any, __: Product, index: number) => (currentPage - 1) * pageSize + index + 1,
+      render: (_: any, __: Product, index: number) =>
+        (currentPage - 1) * pageSize + index + 1,
     },
     { title: "Tên sản phẩm", dataIndex: "name", key: "name", width: 400 },
     {
@@ -263,7 +269,9 @@ const ProductList: React.FC = () => {
       dataIndex: "image",
       key: "image",
       width: 180,
-      render: (text: string) => <Image src={text} alt="Product" className="object-cover w-24 h-24" />,
+      render: (text: string) => (
+        <Image src={text} alt="Product" className="object-cover w-24 h-24" />
+      ),
     },
     {
       title: "Tình trạng",
@@ -320,14 +328,22 @@ const ProductList: React.FC = () => {
       width: 120,
       render: (_: any, record: Product) => (
         <Space>
-          <Button icon={<EditOutlined />} size="small" onClick={() => showModal(record)} />
+          <Button
+            icon={<EditOutlined />}
+            size="small"
+            onClick={() => showModal(record)}
+          />
         </Space>
       ),
     },
   ];
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       <Card
         title={
           <Input
@@ -341,7 +357,11 @@ const ProductList: React.FC = () => {
         bordered={false}
         className="shadow-sm"
         extra={
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => showModal()}
+          >
             Thêm sản phẩm
           </Button>
         }
