@@ -12,7 +12,7 @@ import {
 import { motion } from "framer-motion";
 import { Typography } from "antd";
 import userApi from "../../api/userApi";
-import productApi from "../../api/productsApi";
+import productsApi from "../../api/productsApi";
 import orderApi from "../../api/orderApi";
 import orderDetailApi from "../../api/orderDetailApi";
 import {
@@ -117,7 +117,7 @@ const Dashboard: React.FC = () => {
         }));
         setOrders(formattedOrders);
 
-        const outOfStockResponse = await productApi.getProductOutStock();
+        const outOfStockResponse = await productsApi.getProductOutStock();
         const outOfStockItems = outOfStockResponse.data.result || [];
         const formattedOutOfStockItems = outOfStockItems.map((product) => ({
           key: product._id,
@@ -134,7 +134,7 @@ const Dashboard: React.FC = () => {
         }));
         setOutOfStockProducts(formattedOutOfStockItems);
 
-        const hotProductsResponse = await productApi.getHotproducts();
+        const hotProductsResponse = await productsApi.getHotproducts();
         const hotProductsItems = hotProductsResponse.data.result || [];
         const formattedHotProducts = hotProductsItems.map((product) => ({
           key: product._id,
