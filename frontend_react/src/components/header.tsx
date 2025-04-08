@@ -29,7 +29,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useLocation } from "react-router-dom";
 import { SearchContext } from "./searchContext";
 import { addToCart, setUserId } from "../redux/slices/cartslice";
-import productsApi from "../api/productsAPI";
+import productsApi from "../api/productsApi";
 import { UserOutlined } from "@ant-design/icons";
 const { Title, Text } = Typography;
 

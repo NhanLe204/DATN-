@@ -15,7 +15,7 @@ import {
   Spin,
 } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
-import productsApi from "../../api/productsAPI";
+import productsApi from "../../api/productsApi";
 import categoryApi from "../../api/categoryApi";
 import brandApi from "../../api/brandApi";
 import tagApi from "../../api/tagApi";

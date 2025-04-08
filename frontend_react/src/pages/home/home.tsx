@@ -11,7 +11,7 @@ import CateProduct from "../../components/cateproduct";
 import "slick-carousel/slick/slick.css"; // Import CSS cho slick
 import "slick-carousel/slick/slick-theme.css"; // Import theme CSS
 import ENV_VARS from "../../../config";
-import productsApi from "../../api/productsAPI";
+import productsApi from "../../api/productsApi";
 import categoryApi from "../../api/categoryApi";
 
 export default function Home() {
@@ -74,11 +74,11 @@ export default function Home() {
 
       try {
         const categoryPromises = categories.map(async (category) => {
-          const productResponse = await productsApi.getProductByCategoryID(category._id)
+          const productResponse = await productsApi.getProductByCategoryID(
+            category._id
+          );
           const productData = await productResponse.data.result;
-          const limitedProducts = productData
-            ? productData.slice(0, 8)
-            : [];
+          const limitedProducts = productData ? productData.slice(0, 8) : [];
           return { [category.name]: limitedProducts };
         });
 

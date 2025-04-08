@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Breadcrumb, Button, Image } from "antd";
-import productsApi from "../../api/productsAPI";
+import productsApi from "../../api/productsApi";
 import { useDispatch } from "react-redux";
 import { addToCart } from "../../redux/slices/cartslice";
 import parse from "html-react-parser";
