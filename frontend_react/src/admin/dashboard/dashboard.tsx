@@ -24,8 +24,6 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import { data } from "react-router-dom";
-import productsApi from "../../api/productsApi";
 
 // Đăng ký các thành phần cần thiết của Chart.js
 ChartJS.register(
