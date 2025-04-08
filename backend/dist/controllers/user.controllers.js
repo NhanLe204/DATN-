@@ -12,10 +12,12 @@ const getAllUser = async (req, res) => {
     try {
         const result = await user_model_js_1.default.find().select('-password');
         res.status(200).json({ success: true, result });
+        return;
     }
     catch (error) {
         if (error instanceof Error) {
             console.error(`Error user up: ${error.message}`);
+            return;
         }
         else {
             console.error('Error user up:', error);

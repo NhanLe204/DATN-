@@ -14,9 +14,11 @@ export const getAllUser = async (req: Request, res: Response) => {
   try {
     const result = await userModel.find().select('-password');
     res.status(200).json({ success: true, result });
+    return;
   } catch (error) {
     if (error instanceof Error) {
       console.error(`Error user up: ${error.message}`);
+      return;
     } else {
       console.error('Error user up:', error);
     }

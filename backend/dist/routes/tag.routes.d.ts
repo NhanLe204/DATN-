@@ -1,2 +1,2 @@
-declare const tagRouter: any;
+declare const tagRouter: import("express-serve-static-core").Router;
 export default tagRouter;
