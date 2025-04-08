@@ -31,6 +31,7 @@ import { SearchContext } from "./searchContext";
 import { addToCart, setUserId } from "../redux/slices/cartslice";
 import productsApi from "../api/productsApi";
 import { UserOutlined } from "@ant-design/icons";
+import ENV_VARS from "../../config";
 const { Title, Text } = Typography;
 
 interface Product {
@@ -162,7 +163,7 @@ export default function Header() {
       }
     }
 
-    fetch(`http://localhost:5000/api/v1/users/${accountID}`, {
+    fetch(`${ENV_VARS.VITE_API_URL}/api/v1/users/${accountID}`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,

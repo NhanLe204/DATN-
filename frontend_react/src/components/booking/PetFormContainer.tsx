@@ -54,9 +54,7 @@ const PetFormContainer: React.FC<PetFormContainerProps> = ({
   const removePetForm = (indexToRemove: number) => {
     if (petForms.length > 1) {
       setPetForms(petForms.filter((_, index) => index !== indexToRemove));
-      setPetFormData(
-        petFormData.filter((_, index) => index !== indexToRemove)
-      );
+      setPetFormData(petFormData.filter((_, index) => index !== indexToRemove));
       setSelectedDates(
         selectedDates.filter((_, index) => index !== indexToRemove)
       );
@@ -70,7 +68,10 @@ const PetFormContainer: React.FC<PetFormContainerProps> = ({
           .map((_, index) =>
             index === indexToRemove
               ? { name: ["pets", index], value: undefined }
-              : { name: ["pets", index], value: form.getFieldValue(["pets", index]) }
+              : {
+                  name: ["pets", index],
+                  value: form.getFieldValue(["pets", index]),
+                }
           )
           .filter((field) => field.value !== undefined)
       );
@@ -79,7 +80,9 @@ const PetFormContainer: React.FC<PetFormContainerProps> = ({
 
   return (
     <div className="p-6 mb-6 border border-gray-200 rounded-md">
-      <h2 className="mb-4 text-lg font-semibold text-center">THÔNG TIN THÚ CƯNG</h2>
+      <h2 className="mb-4 text-lg font-semibold text-center">
+        THÔNG TIN THÚ CƯNG
+      </h2>
       {petForms.map((index) => (
         <PetInfoForm
           key={index}
@@ -99,7 +102,10 @@ const PetFormContainer: React.FC<PetFormContainerProps> = ({
         />
       ))}
       {petForms.length < 2 && (
-        <div className="text-[#22A6DF] cursor-pointer mb-4" onClick={addPetForm}>
+        <div
+          className="text-[#22A6DF] cursor-pointer mb-4"
+          onClick={addPetForm}
+        >
           + Thêm thú cưng
         </div>
       )}
