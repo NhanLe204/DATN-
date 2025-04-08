@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Card, Table, Tag, Button, Modal, message, Tabs } from "antd";
 import orderApi from "../api/orderApi";
+import orderDetailApi from "../api/orderDetailApi";
 
 interface Service {
   service_name: string;
@@ -13,16 +14,9 @@ interface Service {
   _id: string;
 }
 
-interface Product {
-  _id: string;
-  name: string;
-  price: string;
-}
-
 interface OrderDetail {
   _id: string;
   orderId: string;
-  productId?: Product;
   serviceId?: Service;
   quantity: number;
   product_price: number;
@@ -34,7 +28,7 @@ interface OrderDetail {
 
 interface Order {
   _id: string;
-  userID: { _id: string; fullname: string } | null; // Allow null
+  userID: { _id: string; fullname: string } | null;
   bookingStatus?: string | null;
   status?: string | null;
   total_price: number;
@@ -47,13 +41,10 @@ interface Booking {
   orderId: string;
   userID?: string;
   serviceId?: string;
-  productId?: string;
   quantity?: number;
-  product_price?: number;
   total_price: number;
   booking_date?: string;
   service?: Service[];
-  product?: Product;
   order?: Order[];
   petName?: string;
   petType?: string;
@@ -76,45 +67,38 @@ const BookingHistory = () => {
 
       setLoading(true);
       try {
-        const response = await orderApi.getAll();
+        const response = await orderDetailApi.getBookingsByUserId(userID);
+        console.log(response.data);
+        
 
-        if (!response.data.success || !response.data.result) {
+        if (!response.data.success || !response.data) {
           setBookings([]);
           setLoading(false);
           return;
         }
 
-        const userBookings = response.data.result
+        const userBookings = response.data
           .filter((order: Order) => order.userID && order.userID._id === userID)
           .flatMap((order: Order) => {
             if (order.orderDetails && order.orderDetails.length > 0) {
-              return order.orderDetails.map((detail) => ({
-                _id: detail._id,
-                orderId: order._id,
-                userID: order.userID?._id,
-                serviceId: detail.serviceId?._id,
-                productId: detail.productId?._id,
-                service: detail.serviceId ? [detail.serviceId] : [],
-                product: detail.productId,
-                quantity: detail.quantity,
-                product_price: detail.product_price,
-                total_price: detail.total_price,
-                booking_date: detail.booking_date || order.order_date,
-                petName: detail.petName,
-                petType: detail.petType,
-                order: [order],
-                status: order.bookingStatus?.toLowerCase() || order.status?.toLowerCase() || "pending",
-              }));
+              return order.orderDetails
+                .filter((detail) => detail.serviceId) // Chỉ lấy các detail có serviceId
+                .map((detail) => ({
+                  _id: detail._id,
+                  orderId: order._id,
+                  userID: order.userID?._id,
+                  serviceId: detail.serviceId?._id,
+                  service: detail.serviceId ? [detail.serviceId] : [],
+                  quantity: detail.quantity,
+                  total_price: detail.total_price,
+                  booking_date: detail.booking_date || order.order_date,
+                  petName: detail.petName,
+                  petType: detail.petType,
+                  order: [order],
+                  status: order.bookingStatus?.toLowerCase() || order.status?.toLowerCase() || "pending",
+                }));
             } else {
-              return [{
-                _id: order._id,
-                orderId: order._id,
-                userID: order.userID?._id,
-                total_price: order.total_price,
-                booking_date: order.order_date,
-                order: [order],
-                status: order.bookingStatus?.toLowerCase() || order.status?.toLowerCase() || "pending",
-              }];
+              return [];
             }
           });
         setBookings(userBookings);
@@ -162,10 +146,10 @@ const BookingHistory = () => {
       onOk: async () => {
         setLoading(true);
         try {
-          const orderDetailId = booking.serviceId || booking.productId ? booking._id : null;
+          const orderDetailId = booking.serviceId || booking._id;
           const response = await orderApi.cancelBooking(
             booking.orderId,
-            orderDetailId || booking.orderId
+            orderDetailId
           );
           if (response.success) {
             setBookings((prevBookings) =>
@@ -203,13 +187,13 @@ const BookingHistory = () => {
 
   const columns = [
     {
-      title: "Dịch vụ/Sản phẩm",
-      key: "serviceOrProduct",
+      title: "Dịch vụ",
+      key: "service",
       render: (_: any, record: Booking) => (
         <span className="font-medium text-xs">
           {record.service && record.service[0]?.service_name
             ? record.service[0].service_name
-            : record.product?.name || "Chưa xác định"}
+            : "Chưa xác định"}
         </span>
       ),
     },
