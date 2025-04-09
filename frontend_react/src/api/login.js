@@ -25,7 +25,7 @@ const loginApi = {
 
   refreshToken: async () => {
     try {
-      const response = await api.post("/v1/auth/refresh-token");
+      const response = await api.post("/v1/auth/refreshtoken");
       return {
         data: response.data, 
       };
