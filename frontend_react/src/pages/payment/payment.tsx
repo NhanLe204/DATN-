@@ -588,8 +588,8 @@ const Payment = () => {
         orderId: order._id,
         amount: totalAmount,
         description: `Thanh toán đơn hàng`,
-        returnUrl: `${ENV_VARS.VITE_API_URL}/success`,
-        cancelUrl: `${ENV_VARS.VITE_API_URL}/cancel`,
+        returnUrl: `${ENV_VARS.VITE_VNPAY_URL}/success`,
+        cancelUrl: `${ENV_VARS.VITE_VNPAY_URL}/cancel`,
       };
 
       console.warn("Creating payment with data:", paymentData);
