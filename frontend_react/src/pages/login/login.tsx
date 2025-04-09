@@ -25,6 +25,7 @@ import {
 import "antd/dist/reset.css";
 import { EyeInvisibleOutlined, EyeOutlined } from "@ant-design/icons";
 import loginApi from "../../api/login";
+import ENV_VARS from "../../../config";
 const { Title, Text } = Typography;
 
 interface User {
@@ -431,7 +432,7 @@ export default function Login() {
                 {loading ? "Đang đăng nhập..." : "Đăng nhập"}
               </Button>
               <span className="my-auto px-1 text-sm sm:text-base">Hoặc</span>
-              <GoogleOAuthProvider clientId="400713217692-u7ph0n1jr292e0adcb5fc2lahdc6iv6j.apps.googleusercontent.com">
+              <GoogleOAuthProvider clientId={ENV_VARS.VITE_GOOGLE_CLIENT_ID}>
                 <GoogleLogin
                   onSuccess={handleGoogleLogin}
                   size="medium"

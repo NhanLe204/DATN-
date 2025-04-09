@@ -11,6 +11,7 @@ import "antd/dist/reset.css";
 import { EyeInvisibleOutlined, EyeOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom"; // Thêm useNavigate
 import signupApi from "../../api/signupApi"; // Điều chỉnh đường dẫn
+import ENV_VARS from "../../../config";
 
 const { Title, Text } = Typography;
 
@@ -375,7 +376,7 @@ export default function SignUp() {
                   {loading ? "Đang xử lý..." : "Tạo tài khoản"}
                 </button>
                 <span className="my-auto px-1 text-sm sm:text-base">Hoặc</span>
-                <GoogleOAuthProvider clientId="400713217692-u7ph0n1jr292e0adcb5fc2lahdc6iv6j.apps.googleusercontent.com">
+                <GoogleOAuthProvider clientId={ENV_VARS.VITE_GOOGLE_CLIENT_ID}>
                   <GoogleLogin
                     onSuccess={handleGoogleLogin}
                     size="medium"
