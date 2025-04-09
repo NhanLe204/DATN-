@@ -22,6 +22,7 @@ import paymentTypeApi from "../../api/paymentTypeApi";
 import couponApi from "../../api/couponApi";
 import paymentApi from "../../api/paymentApi";
 import { clearProduct } from "../../redux/slices/cartslice";
+import ENV_VARS from "../../../config";
 const { Item } = Form;
 
 // Các interface giữ nguyên như cũ
@@ -587,8 +588,8 @@ const Payment = () => {
         orderId: order._id,
         amount: totalAmount,
         description: `Thanh toán đơn hàng`,
-        returnUrl: `http://localhost:3000/success`,
-        cancelUrl: `http://localhost:3000/cancel`,
+        returnUrl: `${ENV_VARS.VITE_API_URL}/success`,
+        cancelUrl: `${ENV_VARS.VITE_API_URL}/cancel`,
       };
 
       console.warn("Creating payment with data:", paymentData);
