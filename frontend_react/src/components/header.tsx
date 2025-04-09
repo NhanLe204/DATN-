@@ -163,7 +163,7 @@ export default function Header() {
       }
     }
 
-    fetch(`${ENV_VARS.VITE_API_URL}/api/v1/users/${accountID}`, {
+    fetch(`${ENV_VARS.VITE_API_URL}/v1/users/${accountID}`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
