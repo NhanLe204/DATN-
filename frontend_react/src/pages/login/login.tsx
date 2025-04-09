@@ -139,11 +139,13 @@ export default function Login() {
         throw new Error(data.message || "Đăng nhập thất bại");
       }
     } catch (error) {
-      const errorMessage = error.message || "Có lỗi xảy ra trong quá trình đăng nhập.";
+      const errorMessage =
+        error.message || "Có lỗi xảy ra trong quá trình đăng nhập.";
       if (errorMessage.includes("Vui lòng xác thực email bằng OTP")) {
         notification.warning({
           message: "Chưa xác thực tài khoản!",
-          description: "Vui lòng kiểm tra email để nhập OTP xác thực trước khi đăng nhập.",
+          description:
+            "Vui lòng kiểm tra email để nhập OTP xác thực trước khi đăng nhập.",
           placement: "topRight",
           duration: 3,
           onClose: () => {
@@ -220,7 +222,10 @@ export default function Login() {
 
     setIsSending(true);
     try {
-      const { data } = await loginApi.resetPassword({ resetToken, newPassword });
+      const { data } = await loginApi.resetPassword({
+        resetToken,
+        newPassword,
+      });
       if (data.success) {
         notification.success({
           message: "Mật khẩu đã được đặt lại thành công!",
@@ -248,11 +253,14 @@ export default function Login() {
 
   const handleGoogleLogin = (credentialResponse: GoogleCredentialResponse) => {
     const idToken = credentialResponse.credential;
-    loginApi.googleLogin(idToken)
+    loginApi
+      .googleLogin(idToken)
       .then((response) => {
         const data = response.data;
         if (!data.success) {
-          return Promise.reject(new Error(`Server error: ${data.message || "Unknown error"}`));
+          return Promise.reject(
+            new Error(`Server error: ${data.message || "Unknown error"}`)
+          );
         }
         setUser({
           id: data.user.id,
@@ -423,7 +431,7 @@ export default function Login() {
                 {loading ? "Đang đăng nhập..." : "Đăng nhập"}
               </Button>
               <span className="my-auto px-1 text-sm sm:text-base">Hoặc</span>
-              <GoogleOAuthProvider clientId="518751281700-f8vq0pf1792lcv7risc93qd5b6ccb70g.apps.googleusercontent.com">
+              <GoogleOAuthProvider clientId="400713217692-u7ph0n1jr292e0adcb5fc2lahdc6iv6j.apps.googleusercontent.com">
                 <GoogleLogin
                   onSuccess={handleGoogleLogin}
                   size="medium"

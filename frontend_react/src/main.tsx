@@ -12,7 +12,7 @@ if (rootElement) {
   createRoot(rootElement).render(
     <StrictMode>
       <Provider store={store}>
-        <GoogleOAuthProvider clientId="518751281700-f8vq0pf1792lcv7risc93qd5b6ccb70g.apps.googleusercontent.com">
+        <GoogleOAuthProvider clientId="400713217692-u7ph0n1jr292e0adcb5fc2lahdc6iv6j.apps.googleusercontent.com">
           <App />
         </GoogleOAuthProvider>
       </Provider>

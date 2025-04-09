@@ -130,7 +130,8 @@ export default function SignUp() {
 
       console.log("Response:", data); // Giữ nguyên console.log
 
-      if (!data.success) { // Kiểm tra success thay vì response.ok
+      if (!data.success) {
+        // Kiểm tra success thay vì response.ok
         throw new Error(data.message || "Đăng ký thất bại!");
       }
 
@@ -167,7 +168,8 @@ export default function SignUp() {
   const handleGoogleLogin = (credentialResponse: GoogleCredentialResponse) => {
     const idToken = credentialResponse.credential;
     console.log("Sending idToken to backend:", idToken); // Giữ nguyên console.log
-    signupApi.googleSignup(idToken) // Thay fetch bằng signupApi.googleSignup
+    signupApi
+      .googleSignup(idToken) // Thay fetch bằng signupApi.googleSignup
       .then((response) => {
         const data = response.data; // Lấy data từ response
         console.log("Response status:", response.status); // Không có res.status trực tiếp, giữ log này để tương thích với ý định gốc
@@ -373,7 +375,7 @@ export default function SignUp() {
                   {loading ? "Đang xử lý..." : "Tạo tài khoản"}
                 </button>
                 <span className="my-auto px-1 text-sm sm:text-base">Hoặc</span>
-                <GoogleOAuthProvider clientId="518751281700-f8vq0pf1792lcv7risc93qd5b6ccb70g.apps.googleusercontent.com">
+                <GoogleOAuthProvider clientId="400713217692-u7ph0n1jr292e0adcb5fc2lahdc6iv6j.apps.googleusercontent.com">
                   <GoogleLogin
                     onSuccess={handleGoogleLogin}
                     size="medium"
@@ -402,4 +404,4 @@ export default function SignUp() {
       </Row>
     </div>
   );
-};
+}
