@@ -76,15 +76,16 @@ const AdminLayout = () => {
   const adminMenuItems = [
     { key: "1", icon: <PieChartOutlined />, label: "Dashboard", path: "/admin/dashboard" },
     { key: "2", icon: <AppstoreOutlined />, label: "Quản lý danh mục", path: "/admin/categories" },
-    { key: "3", icon: <ShoppingOutlined />, label: "Quản lý sản phẩm", path: "/admin/products" },
-    { key: "4", icon: <StarOutlined />, label: "Quản lý thương hiệu", path: "/admin/brands" },
-    { key: "5", icon: <TagOutlined />, label: "Quản lý tags", path: "/admin/tags" },
-    { key: "6", icon: <IdcardOutlined />, label: "Quản lý nhân viên", path: "/admin/employees" },
-    { key: "7", icon: <FileTextOutlined />, label: "Quản lý đơn hàng", path: "/admin/orders" },
-    { key: "8", icon: <MdOutlineRoomService  />, label: "Quản lý lịch hẹn", path: "/admin/bookings" },
-    { key: "9", icon: <ToolOutlined />, label: "Quản lý dịch vụ", path: "/admin/services" },
-    { key: "10", icon: <UserOutlined />, label: "Quản lý người dùng", path: "/admin/users" },
-    { key: "11", icon: <SettingOutlined />, label: "Cài đặt hệ thống", path: "/admin/settings" },  
+    { key: "3", icon: <AppstoreOutlined />, label: "Quản lý danh mục bài viết", path: "/admin/blogcategories" },
+    { key: "4", icon: <ShoppingOutlined />, label: "Quản lý sản phẩm", path: "/admin/products" },
+    { key: "5", icon: <StarOutlined />, label: "Quản lý thương hiệu", path: "/admin/brands" },
+    { key: "6", icon: <TagOutlined />, label: "Quản lý tags", path: "/admin/tags" },
+    { key: "7", icon: <IdcardOutlined />, label: "Quản lý nhân viên", path: "/admin/employees" },
+    { key: "8", icon: <FileTextOutlined />, label: "Quản lý đơn hàng", path: "/admin/orders" },
+    { key: "9", icon: <MdOutlineRoomService  />, label: "Quản lý lịch hẹn", path: "/admin/bookings" },
+    { key: "10", icon: <ToolOutlined />, label: "Quản lý dịch vụ", path: "/admin/services" },
+    { key: "11", icon: <UserOutlined />, label: "Quản lý người dùng", path: "/admin/users" },
+    { key: "12", icon: <SettingOutlined />, label: "Cài đặt hệ thống", path: "/admin/settings" },
   ];
 
   // Danh sách menu cho employee (loại bỏ các menu nhạy cảm)

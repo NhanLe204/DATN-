@@ -11,6 +11,7 @@ const adminPageNameMapping: { [key: string]: string } = {
   admin: "Admin",
   dashboard: "Dashboard",
   categories: "Quản lý danh mục",
+  blogcategories: "Quản lý danh mục bài viết",
   products: "Quản lý sản phẩm",
   brands: "Quản lý thương hiệu",
   tags: "Quản lý tags",
