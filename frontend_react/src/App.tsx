@@ -36,6 +36,7 @@ import CancelPage from "./pages/orders/cancel";
 import SuccessPage from "./pages/orders/success";
 import BookingManager from "./admin/booking/booking";
 import SuccessBooking from "./pages/orders/booking/successBooking";
+import BlogCategoryList from "./admin/blog_category/blog_category";
 
 interface User {
   id: string;
@@ -165,6 +166,7 @@ function App() {
         { path: "dashboard", element: <Dashboard /> },
         { path: "employees", element: <EmployeeList /> },
         { path: "categories", element: <CategoryList /> },
+        { path: "blogcategories", element: <BlogCategoryList /> },
         { path: "products", element: <ProductList /> },
         { path: "brands", element: <BrandManager /> },
         { path: "tags", element: <TagManager /> },

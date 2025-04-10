@@ -23,6 +23,7 @@ import orderDetailRouter from './routes/orderDetail.routes.js';
 import contactRouter from './routes/contact.routes.js'; // Import contact router
 import ngrok from '@ngrok/ngrok'; // Thêm ngrok SDK
 import blogRouter from './routes/blog.routes.js';
+import blogCategoryRouter from './routes/blogCategory.routes.js';
 
 dotenv.config(); // Đọc file .env
 console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID);
@@ -61,6 +62,7 @@ app.use('/api/v1', deliveryRouter);
 app.use('/api/v1', paymentRouter);
 app.use('/api/v1', orderDetailRouter);
 app.use('/api/v1', blogRouter);
+app.use('/api/v1', blogCategoryRouter);
 
 app.use('/api/v1', contactRouter); // Thêm router contact vào đây
 
