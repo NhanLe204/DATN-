@@ -56,23 +56,40 @@ export default function Login() {
   // Check role & status
   useEffect(() => {
     const userData = localStorage.getItem("userData");
-    if (userData) {
+    const token = localStorage.getItem("accessToken");
+    if (userData && token) {
       const parsedUser = JSON.parse(userData) as User;
-      setUser(parsedUser);
-
-      if (parsedUser.status !== "active") {
-        notification.error({
-          message: "Truy cập bị từ chối!",
-          description: "Tài khoản của bạn không hoạt động.",
-          placement: "topRight",
-          duration: 2,
+      loginApi.authCheck(token) 
+        .then((response) => {
+          if (response.data.success) {
+            setUser(parsedUser);
+            if (parsedUser.status !== "active") {
+              notification.error({
+                message: "Truy cập bị từ chối!",
+                description: "Tài khoản của bạn không hoạt động.",
+                placement: "topRight",
+                duration: 2,
+              });
+              localStorage.clear();
+              setUser(null);
+              navigate("/login");
+            } else {
+              navigate("/");
+            }
+          } else {
+            localStorage.clear();
+            setUser(null);
+            navigate("/login");
+          }
+        })
+        .catch(() => {
+          localStorage.clear();
+          setUser(null);
+          navigate("/login");
         });
-        localStorage.clear();
-        setUser(null);
-      } else {
-        // Luôn chuyển hướng đến trang chính (/) bất kể vai trò
-        navigate("/");
-      }
+    } else {
+      localStorage.clear(); 
+      navigate("/login");
     }
   }, [navigate]);
 

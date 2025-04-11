@@ -27,6 +27,7 @@ const delivery_routes_js_1 = __importDefault(require("./routes/delivery.routes.j
 const orderDetail_routes_js_1 = __importDefault(require("./routes/orderDetail.routes.js"));
 const contact_routes_js_1 = __importDefault(require("./routes/contact.routes.js")); // Import contact router
 const blog_routes_js_1 = __importDefault(require("./routes/blog.routes.js"));
+const blogCategory_routes_js_1 = __importDefault(require("./routes/blogCategory.routes.js"));
 dotenv_1.default.config(); // Đọc file .env
 console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID);
 console.log('JWT_SECRET:', process.env.JWT_SECRET);
@@ -60,6 +61,7 @@ app.use('/api/v1', delivery_routes_js_1.default);
 app.use('/api/v1', payment_routes_js_1.default);
 app.use('/api/v1', orderDetail_routes_js_1.default);
 app.use('/api/v1', blog_routes_js_1.default);
+app.use('/api/v1', blogCategory_routes_js_1.default);
 app.use('/api/v1', contact_routes_js_1.default); // Thêm router contact vào đây
 app.use(errorHandler_js_1.errorHandler);
 // // Hàm khởi tạo ngrok tunnel

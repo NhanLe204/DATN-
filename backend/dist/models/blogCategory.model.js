@@ -33,33 +33,23 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-// src/models/Contact.ts
+const blogCategory_enum_1 = require("../enums/blogCategory.enum");
 const mongoose_1 = __importStar(require("mongoose"));
-const contactSchema = new mongoose_1.Schema({
+const blogCategorySchema = new mongoose_1.Schema({
     name: {
         type: String,
-        required: true,
-        trim: true
+        default: ''
     },
-    email: {
+    description: {
         type: String,
-        required: true,
-        trim: true
+        default: ''
     },
-    phone: {
+    status: {
         type: String,
-        required: true,
-        trim: true
-    },
-    message: {
-        type: String,
-        required: true,
-        trim: true
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
+        enum: blogCategory_enum_1.BlogCategoryStatus,
+        default: blogCategory_enum_1.BlogCategoryStatus.ACTIVE
     }
-}, { timestamps: true });
-exports.default = mongoose_1.default.model('Contact', contactSchema);
-//# sourceMappingURL=contact.model.js.map
+});
+const blogCategoryModel = mongoose_1.default.models.modelCategory || (0, mongoose_1.model)('blogCategory', blogCategorySchema);
+exports.default = blogCategoryModel;
+//# sourceMappingURL=blogCategory.model.js.map
