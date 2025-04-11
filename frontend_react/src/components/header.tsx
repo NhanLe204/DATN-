@@ -31,6 +31,7 @@ import { SearchContext } from "./searchContext";
 import { addToCart, setUserId } from "../redux/slices/cartslice";
 import productsApi from "../api/productsApi";
 import { UserOutlined } from "@ant-design/icons";
+import loginApi from "../api/login";
 import ENV_VARS from "../../config";
 const { Title, Text } = Typography;
 
@@ -150,6 +151,7 @@ export default function Header() {
 
     if (!token || !accountID) {
       setIsUserLoaded(false);
+      setUser(null);
       return;
     }
 
@@ -157,7 +159,8 @@ export default function Header() {
     if (storedUserData) {
       try {
         const parsedUser = JSON.parse(storedUserData);
-        setUser(JSON.parse(storedUserData));
+        console.log("User data in header.js:", parsedUser);
+        setUser(parsedUser);
       } catch (error) {
         console.error("Lỗi khi parse userData từ localStorage:", error);
       }
@@ -191,18 +194,24 @@ export default function Header() {
         setIsUserLoaded(false);
         if (err.message.includes("401")) {
           console.warn("Token có thể đã hết hạn, cần đăng nhập lại");
+          localStorage.clear();
+          setUser(null);
+          navigate("/login"); 
         }
       });
-  }, [dispatch]);
+  }, [dispatch, navigate]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("accountID");
-    localStorage.removeItem("userData");
-    setUser(null);
-    dispatch(setUserId(null));
-    setIsUserLoaded(false);
-    window.location.href = "/";
+  const handleLogout = async () => {
+    try {
+      await loginApi.logout(); 
+      localStorage.clear(); 
+      setUser(null);
+      dispatch(setUserId(null));
+      setIsUserLoaded(false);
+      navigate("/login"); 
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   };
 
   const userMenu = (

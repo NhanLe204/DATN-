@@ -33,6 +33,16 @@ const loginApi = {
       throw error.response?.data || { message: "Làm mới token thất bại" };
     }
   },
+  authCheck: async (token) => {
+    try {
+      const response = await api.get("/v1/auth/authCheck", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return { data: response.data };
+    } catch (error) {
+      throw error.response?.data || { message: "Xác thực thất bại" };
+    }
+  },
 
   forgotPassword: async (email) => {
     try {
