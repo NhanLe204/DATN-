@@ -1,11 +1,12 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Breadcrumb, Button, Image } from "antd";
+import { Breadcrumb, Button, Image, Avatar, Divider } from "antd";
 import productsApi from "../../api/productsApi";
 import { useDispatch } from "react-redux";
 import { addToCart } from "../../redux/slices/cartslice";
 import parse from "html-react-parser";
+import { LikeOutlined, MessageOutlined } from "@ant-design/icons";
 
 export default function DetailProduct() {
   const params = useParams();
@@ -247,72 +248,121 @@ export default function DetailProduct() {
 
         {/* Phần đánh giá và sản phẩm liên quan */}
         <div className="p-6 mx-auto">
-          {/* Review Section - giữ nguyên */}
-          <div className="p-6 mb-8 border rounded-lg">
-            <h2 className="mb-4 text-xl font-bold">Đánh giá sản phẩm</h2>
-            <div className="flex items-center gap-4 mb-6">
-              <div className="flex items-center">
-                <div className="flex text-yellow-400">{"★".repeat(5)}</div>
-                <span className="ml-2 text-sm text-gray-500">
-                  Dựa trên 2 đánh giá
-                </span>
+          {/* Review Section */}
+          <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+            <h2 className="text-2xl font-bold text-[#1890ff] mb-6">
+              Đánh giá từ khách hàng
+            </h2>
+
+            <div className="flex flex-wrap gap-8 mb-6">
+              <div className="flex items-center gap-6">
+                <div>
+                  <div className="text-3xl font-bold text-[#1890ff]">5.0</div>
+                  <div className="flex text-[#1890ff]">{"★".repeat(5)}</div>
+                  <div className="text-sm text-gray-500">2 đánh giá</div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  {[5, 4, 3, 2, 1].map((num) => (
+                    <div key={num} className="flex items-center gap-2">
+                      <span className="w-12 text-sm">{num} sao</span>
+                      <div className="w-40 h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-[#1890ff] rounded-full"
+                          style={{
+                            width: num === 5 ? "100%" : "0%",
+                          }}
+                        />
+                      </div>
+                      <span className="text-sm text-gray-500">
+                        {num === 5 ? "2" : "0"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="flex gap-2">
-                <button className="px-4 py-1 text-sm text-white bg-blue-500 rounded-full">
+
+              <div className="flex flex-wrap gap-2">
+                <Button type="primary" className="rounded-full">
                   Tất cả
-                </button>
-                <button className="px-4 py-1 text-sm border rounded-full">
-                  5 sao (2)
-                </button>
-                <button className="px-4 py-1 text-sm border rounded-full">
-                  4 sao (0)
-                </button>
-                <button className="px-4 py-1 text-sm border rounded-full">
-                  3 sao (0)
-                </button>
-                <button className="px-4 py-1 text-sm border rounded-full">
-                  2 sao (0)
-                </button>
-                <button className="px-4 py-1 text-sm border rounded-full">
-                  1 sao (0)
-                </button>
+                </Button>
+                <Button className="rounded-full">5 sao (2)</Button>
+                <Button className="rounded-full">4 sao (0)</Button>
+                <Button className="rounded-full">3 sao (0)</Button>
+                <Button className="rounded-full">2 sao (0)</Button>
+                <Button className="rounded-full">1 sao (0)</Button>
               </div>
             </div>
+
             <div className="space-y-6">
-              {reviews.map((review) => (
-                <div key={review.id} className="pb-6 border-b">
-                  <div className="flex items-center gap-4 mb-2">
-                    <div className="w-10 h-10 overflow-hidden bg-gray-200 rounded-full">
-                      <img
+              {reviews.map((review, index) => (
+                <div key={review.id}>
+                  <div className="flex gap-4">
+                    <div className="flex-shrink-0">
+                      <Avatar
+                        size={48}
                         src={`https://api.dicebear.com/6.x/initials/svg?seed=${review.username}`}
-                        alt="user avatar"
-                        className="object-cover w-full h-full"
+                        style={{ backgroundColor: "#1890ff" }}
                       />
                     </div>
-                    <div>
-                      <div className="font-medium">{review.username}</div>
-                      <div className="flex items-center">
-                        <div className="flex text-yellow-400">
-                          {"★".repeat(review.rating)}
+
+                    <div className="flex-grow">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h4 className="font-medium mb-1">
+                            {review.username}
+                          </h4>
+                          <div className="flex items-center gap-2">
+                            <div className="flex text-[#1890ff]">
+                              {"★".repeat(review.rating)}
+                            </div>
+                            <span className="text-sm text-gray-500">
+                              {review.date}
+                            </span>
+                          </div>
                         </div>
-                        <span className="ml-2 text-sm text-gray-500">
-                          {review.date}
-                        </span>
+                        <div>
+                          <span className="bg-[#E6F7FF] text-[#1890ff] text-xs px-3 py-1 rounded-full">
+                            Đã xác thực
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="bg-gray-50 p-3 rounded-lg mb-3">
+                        <div className="mb-2">
+                          <span className="text-gray-600">Mùi hương: </span>
+                          <span>{review.flavor}</span>
+                        </div>
+                      </div>
+
+                      <p className="text-gray-700 mb-3">{review.comment}</p>
+
+                      <div className="flex gap-4">
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<LikeOutlined />}
+                          className="text-[#1890ff]"
+                        >
+                          Hữu ích (12)
+                        </Button>
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<MessageOutlined />}
+                        >
+                          Trả lời
+                        </Button>
                       </div>
                     </div>
                   </div>
-                  <div className="ml-14">
-                    <div className="mb-2">
-                      <span className="text-gray-600">Mùi hương: </span>
-                      <span>{review.flavor}</span>
-                    </div>
-                    <p className="text-gray-700">{review.comment}</p>
-                  </div>
+                  {index < reviews.length - 1 && (
+                    <Divider style={{ margin: "24px 0" }} />
+                  )}
                 </div>
               ))}
             </div>
           </div>
-
           {/* Related Products Section */}
           <div>
             <h3 className="mb-4 text-xl font-bold">SẢN PHẨM LIÊN QUAN</h3>

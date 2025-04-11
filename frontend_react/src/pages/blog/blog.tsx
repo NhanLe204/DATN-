@@ -1,9 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { Input, Badge } from 'antd';
-import { SearchOutlined, BookOutlined, CompassOutlined, ThunderboltOutlined } from '@ant-design/icons';
-import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import BlogApi from '../../api/blogApi';
+import React, { useEffect, useState } from "react";
+import { Input, Badge } from "antd";
+import {
+  SearchOutlined,
+  BookOutlined,
+  CompassOutlined,
+  ThunderboltOutlined,
+} from "@ant-design/icons";
+import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
+import BlogApi from "../../api/blogApi";
 
 interface Article {
   id: number;
@@ -26,8 +31,8 @@ interface Blog {
 }
 
 export default function Blog() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeCategory, setActiveCategory] = useState('TẤT CẢ');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeCategory, setActiveCategory] = useState("TẤT CẢ");
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [visiblePosts, setVisiblePosts] = useState<number>(4);
   const [loading, setLoading] = useState<boolean>(true);
@@ -53,7 +58,7 @@ export default function Blog() {
 
     fetchBlogs();
   }, []);
-  
+
   const handleLoadMore = () => {
     setVisiblePosts((prev) => prev + 4);
   };
@@ -76,55 +81,31 @@ export default function Blog() {
 
   const categories = [
     {
-      name: 'TẤT CẢ',
+      name: "TẤT CẢ",
       icon: <BookOutlined />,
-      color: 'from-[#22A6DF] to-[#1890ff]'
+      color: "from-[#22A6DF] to-[#1890ff]",
     },
     {
-      name: 'Kỹ Năng Chăm Sóc Thú Cưng',
+      name: "Kỹ Năng Chăm Sóc Thú Cưng",
       icon: <CompassOutlined />,
-      color: 'from-[#22A6DF] to-[#1890ff]'
+      color: "from-[#22A6DF] to-[#1890ff]",
     },
     {
-      name: 'Kinh Nghiệm Lựa Chọn Dịch Vụ và Sản Phẩm',
+      name: "Kinh Nghiệm Lựa Chọn Dịch Vụ và Sản Phẩm",
       icon: <ThunderboltOutlined />,
-      color: 'from-[#22A6DF] to-[#1890ff]'
+      color: "from-[#22A6DF] to-[#1890ff]",
     },
     {
-      name: 'Trải Nghiệm Dịch Vụ Tại Petshop',
+      name: "Trải Nghiệm Dịch Vụ Tại Petshop",
       icon: <ThunderboltOutlined />,
-      color: 'from-[#22A6DF] to-[#1890ff]'
-    }
-  ];
-
-  const articles: Article[] = [
-    {
-      id: 1,
-      title: "THÁC CÔNG TRỜI - CUNG ĐƯỜNG TREKKING SIÊU DỄ CHO NGƯỜI MỚI BẮT ĐẦU",
-      description: "1. Thác công trời ở đâu2. Hành trình chinh phục Thác Công Trời3. Những vật dụng nên đem theo và những điều cần lưu ý1. Thác Công Trời ở đâu?Một thác nước tự nhiên trong Vườn Quốc Gia Bidoup - Núi bà thuộc địa phận...",
-      imageUrl: "https://picsum.photos/800/400",
-      category: "KỸ NĂNG - KINH NGHIỆM LEO NÚI, TREKKING",
-      readTime: "5 phút đọc",
-      date: "15 Th1 2024"
+      color: "from-[#22A6DF] to-[#1890ff]",
     },
-    {
-      id: 2,
-      title: "BA LÔ CỦA BẠN NÊN NẶNG BAO NHIÊU",
-      description: "Gói trọng lượng cho ba lô và đi bộ đường dài: Khi xác định trọng lượng gói của bạn, hãy làm theo các hướng dẫn này để có trải nghiệm đi bộ đường dài thoải mái và an toàn...",
-      imageUrl: "https://picsum.photos/800/401",
-      category: "TRẢI NGHIỆM, HƯỚNG DẪN CÁC CUNG ĐƯỜNG PHƯỢT",
-      readTime: "3 phút đọc",
-      date: "14 Th1 2024"
-    }
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-
-
       {/* Main Content */}
       <main className="mx-auto px-[154px] py-12">
-
         {/* Header */}
         <nav className=" relative overflow-hidden">
           <div className="absolute inset-0 opacity-50"></div>
@@ -136,7 +117,8 @@ export default function Blog() {
             >
               KINH NGHIỆM LỰA CHỌN ĐỒ DÃ NGOẠI &
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-blue-600">
-                {" "}KỸ NĂNG CẮM TRẠI
+                {" "}
+                KỸ NĂNG CẮM TRẠI
               </span>
               <br />
               <span className="text-2xl text-gray-700">DÀNH CHO CHÓ</span>
@@ -158,15 +140,20 @@ export default function Blog() {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     href="#"
-                    className={`block p-3 rounded-xl transition-all duration-200 ${activeCategory === category.name
-                      ? 'bg-gradient-to-r ' + category.color + ' text-white shadow-lg'
-                      : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
-                      }`}
+                    className={`block p-3 rounded-xl transition-all duration-200 ${
+                      activeCategory === category.name
+                        ? "bg-gradient-to-r " +
+                          category.color +
+                          " text-white shadow-lg"
+                        : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                    }`}
                     onClick={() => setActiveCategory(category.name)}
                   >
                     <div className="flex items-center gap-3">
                       {category.icon}
-                      <span className="text-sm font-medium">{category.name}</span>
+                      <span className="text-sm font-medium">
+                        {category.name}
+                      </span>
                     </div>
                   </motion.a>
                 ))}
@@ -199,59 +186,65 @@ export default function Blog() {
             {/* Articles */}
             <div className="space-y-8">
               {blogs.slice(0, visiblePosts).map((post, index) => (
-                  <motion.article
-                    key={post._id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row"
-                  >
-                    {/* Image Section - Left 50% */}
-                    <div className="w-full md:w-1/3 relative h-72 md:h-auto">
+                <motion.article
+                  key={post._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row"
+                >
+                  {/* Image Section - Left 50% */}
+                  <div className="w-full md:w-1/3 relative h-72 md:h-auto">
+                    <img
+                      src={post.image_url}
+                      alt={post.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 ">
                       <img
-                        src={post.image_url}
-                        alt={post.title}
-                        className="w-full h-full object-cover"
+                        src="https://picsum.photos/300/200"
+                        alt="Login form"
+                        className="h-full w-full bg-[#EAEAEA] object-cover"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent md:hidden"></div>
                     </div>
+                  </div>
 
-                    {/* Content Section - Right 50% */}
-                    <div className="w-full md:w-2/3 p-6 flex flex-col justify-between">
-                      <div>
-                        {/* <Badge
+                  {/* Content Section - Right 50% */}
+                  <div className="w-full md:w-2/3 p-6 flex flex-col justify-between">
+                    <div>
+                      {/* <Badge
                           className="mb-4"
                           color="#22A6DF"
                           text={post.category}
                         /> */}
-                        <h2 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2">
-                          {post.title}
-                        </h2>
-                        <p className="text-gray-600 text-sm line-clamp-3">
-                          {post.content}
-                        </p>
-                      </div>
+                      <h2 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2">
+                        {post.title}
+                      </h2>
+                      <p className="text-gray-600 text-sm line-clamp-3">
+                        {post.content}
+                      </p>
+                    </div>
 
-                      <div className="mt-4">
-                        <div className="flex items-center gap-3 text-sm text-gray-500 mb-4">
-                          <span>{post.createdAt}</span>
-                          <span>•</span>
-                          <span>{post.author}</span>
-                        </div>
-                        <div className="mt-4 text-right">
-                          <motion.a
-                            whileHover={{ x: 5 }}
-                            whileTap={{ x: -2 }}
-                            className="inline-flex items-center text-[#22A6DF] hover:text-[#1890ff] font-medium text-sm cursor-pointer"
-                            href="/blogDetail"
-                          >
-                            Đọc thêm
-                            <span className="ml-1">»</span>
-                          </motion.a>
-                        </div>
+                    <div className="mt-4">
+                      <div className="flex items-center gap-3 text-sm text-gray-500 mb-4">
+                        <span>{post.createdAt}</span>
+                        <span>•</span>
+                        <span>{post.author}</span>
+                      </div>
+                      <div className="mt-4 text-right">
+                        <motion.a
+                          whileHover={{ x: 5 }}
+                          whileTap={{ x: -2 }}
+                          className="inline-flex items-center text-[#22A6DF] hover:text-[#1890ff] font-medium text-sm cursor-pointer"
+                          href="/blogDetail"
+                        >
+                          Đọc thêm
+                          <span className="ml-1">»</span>
+                        </motion.a>
                       </div>
                     </div>
-                  </motion.article>
+                  </div>
+                </motion.article>
               ))}
             </div>
           </div>
@@ -259,4 +252,4 @@ export default function Blog() {
       </main>
     </div>
   );
-};
+}

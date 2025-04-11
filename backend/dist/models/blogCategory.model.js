@@ -22,47 +22,24 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const blogCategory_enum_1 = require("../enums/blogCategory.enum");
 const mongoose_1 = __importStar(require("mongoose"));
-const blog_enum_js_1 = require("../enums/blog.enum.js");
-const product_model_js_1 = __importDefault(require("../models/product.model.js"));
-const user_model_js_1 = __importDefault(require("../models/user.model.js"));
-const blogSchema = new mongoose_1.Schema({
-    product: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: product_model_js_1.default,
-        autoPopulate: true
-    },
-    userID: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: user_model_js_1.default,
-        autoPopulate: true
-    },
-    image_url: {
-        type: [String],
-        default: []
-    },
-    title: {
+const blogCategorySchema = new mongoose_1.Schema({
+    name: {
         type: String,
-        required: true
+        default: ''
     },
-    author: {
+    description: {
         type: String,
-        required: true
-    },
-    content: {
-        type: String,
-        required: true
+        default: ''
     },
     status: {
         type: String,
-        enum: blog_enum_js_1.BlogStatus,
-        default: blog_enum_js_1.BlogStatus.ACTIVE
+        enum: blogCategory_enum_1.BlogCategoryStatus,
+        default: blogCategory_enum_1.BlogCategoryStatus.ACTIVE
     }
-}, { timestamps: true });
-const blogModel = mongoose_1.default.models.Blog || (0, mongoose_1.model)('Blog', blogSchema);
-exports.default = blogModel;
-//# sourceMappingURL=blog.model.js.map
+});
+const blogCategoryModel = mongoose_1.default.models.modelCategory || (0, mongoose_1.model)('blogCategory', blogCategorySchema);
+exports.default = blogCategoryModel;
+//# sourceMappingURL=blogCategory.model.js.map

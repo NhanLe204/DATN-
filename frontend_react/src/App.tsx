@@ -70,7 +70,6 @@ const ProtectedRoute = ({
   const userData = localStorage.getItem("userData");
   const user: User | null = userData ? JSON.parse(userData) : null;
 
-
   // if (!user || user.status !== "active") {
   //   notification.error({
   //     message: "Truy cập bị từ chối",
@@ -288,7 +287,7 @@ function App() {
         {
           path: "/userprofile/*",
           element: (
-            <ProtectedRoute allowedRole="user">
+            <ProtectedRoute>
               <UserProfile />
             </ProtectedRoute>
           ),

@@ -11,7 +11,7 @@ const rootElement = document.getElementById("root");
 
 if (rootElement) {
   createRoot(rootElement).render(
-    // <StrictMode>
+    <StrictMode>
       <Provider store={store}>
         <GoogleOAuthProvider clientId={ENV_VARS.VITE_GOOGLE_CLIENT_ID}>
           <App />
