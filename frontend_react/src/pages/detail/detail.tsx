@@ -2,16 +2,31 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Breadcrumb, Button, Image, Avatar, Divider } from "antd";
+import { motion } from "framer-motion";
+import { Star, ThumbsUp, MessageCircle, Clock, Award } from "lucide-react";
 import productsApi from "../../api/productsApi";
 import { useDispatch } from "react-redux";
 import { addToCart } from "../../redux/slices/cartslice";
 import parse from "html-react-parser";
 import { LikeOutlined, MessageOutlined } from "@ant-design/icons";
+import ratingApi from "../../api/ratingApi";
 
 export default function DetailProduct() {
   const params = useParams();
   const [selectedImage, setSelectedImage] = useState("");
   const [quantity, setQuantity] = useState(1);
+  const [comments, setComments] = useState<
+    {
+      content: string;
+      id: number;
+      username: string;
+      score: number;
+      rating: number;
+      date: string;
+      flavor?: string;
+      comment: string;
+    }[]
+  >([]);
   const [productsDetail, setProductDetail] = useState<{
     _id?: string;
     id?: string;
@@ -36,28 +51,6 @@ export default function DetailProduct() {
   >([]); // State cho sản phẩm liên quan
   const dispatch = useDispatch();
 
-  const reviews = [
-    // Dữ liệu reviews giữ nguyên
-    {
-      id: 1,
-      username: "tinhvan2502",
-      rating: 5,
-      date: "12-01-2025 15:22",
-      flavor: "thơm, dễ chịu",
-      comment:
-        "Hạt thơm, ngửi rất dễ chịu, shop đã đóng các mặt hàng, sẽ tiếp tục ủng hộ",
-    },
-    {
-      id: 2,
-      username: "hanhan0610",
-      rating: 5,
-      date: "12-01-2025 15:22",
-      flavor: "thơm, dễ chịu",
-      comment:
-        "Hạt thơm, ngửi rất dễ chịu, shop đã đóng các mặt hàng, sẽ tiếp tục ủng hộ",
-    },
-  ];
-
   // Fetch product detail và related products
   useEffect(() => {
     const fetchData = async () => {
@@ -81,6 +74,12 @@ export default function DetailProduct() {
           params.id
         );
         setRelatedProducts(relatedResponse.data || []);
+        // lấy đánh giá từ client
+        const reviewsResponse = await ratingApi.getRatingsByProductId(
+          params.id
+        );
+        console.warn(reviewsResponse, "Detail ID Rating");
+        setComments(reviewsResponse.data || []);
       } catch (error) {
         console.error("Error fetching product data:", error);
       }
@@ -110,6 +109,14 @@ export default function DetailProduct() {
     };
     dispatch(addToCart({ item, quantity }));
     console.log(`Added to cart: ${item.name}, Quantity: ${quantity}`);
+  };
+  const formatDate = (dateString) => {
+    const options = {
+      year: "numeric" as const,
+      month: "long" as const,
+      day: "numeric" as const,
+    };
+    return new Date(dateString).toLocaleDateString("vi-VN", options);
   };
 
   const displayStatus =
@@ -247,155 +254,216 @@ export default function DetailProduct() {
         </div>
 
         {/* Phần đánh giá và sản phẩm liên quan */}
-        <div className="p-6 mx-auto">
-          {/* Review Section */}
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-            <h2 className="text-2xl font-bold text-[#1890ff] mb-6">
-              Đánh giá từ khách hàng
-            </h2>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-2xl shadow-lg p-8 mb-8"
+        >
+          <h2 className="text-2xl font-bold text-gray-800 mb-8 flex items-center gap-3">
+            <MessageCircle className="w-6 h-6 text-blue-600" />
+            Đánh giá từ khách hàng
+          </h2>
 
-            <div className="flex flex-wrap gap-8 mb-6">
-              <div className="flex items-center gap-6">
-                <div>
-                  <div className="text-3xl font-bold text-[#1890ff]">5.0</div>
-                  <div className="flex text-[#1890ff]">{"★".repeat(5)}</div>
-                  <div className="text-sm text-gray-500">2 đánh giá</div>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  {[5, 4, 3, 2, 1].map((num) => (
-                    <div key={num} className="flex items-center gap-2">
-                      <span className="w-12 text-sm">{num} sao</span>
-                      <div className="w-40 h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-[#1890ff] rounded-full"
-                          style={{
-                            width: num === 5 ? "100%" : "0%",
-                          }}
-                        />
-                      </div>
-                      <span className="text-sm text-gray-500">
-                        {num === 5 ? "2" : "0"}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+          {/* Rating Overview */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-10">
+            {/* Average Rating Card */}
+            <div className="bg-gradient-to-br from-blue-50 to-white p-6 rounded-xl shadow-sm">
+              <div className="text-4xl font-bold text-[#22A6DF] mb-2">
+                {comments.length > 0
+                  ? (
+                      comments.reduce((sum, review) => sum + review.score, 0) /
+                      comments.length
+                    ).toFixed(1)
+                  : "0.0"}
               </div>
-
-              <div className="flex flex-wrap gap-2">
-                <Button type="primary" className="rounded-full">
-                  Tất cả
-                </Button>
-                <Button className="rounded-full">5 sao (2)</Button>
-                <Button className="rounded-full">4 sao (0)</Button>
-                <Button className="rounded-full">3 sao (0)</Button>
-                <Button className="rounded-full">2 sao (0)</Button>
-                <Button className="rounded-full">1 sao (0)</Button>
+              <div className="flex text-yellow-400 mb-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={`w-5 h-5 ${
+                      star <=
+                      Math.round(
+                        comments.reduce(
+                          (sum, review) => sum + review.score,
+                          0
+                        ) / comments.length
+                      )
+                        ? "fill-yellow-400"
+                        : "fill-gray-200"
+                    }`}
+                  />
+                ))}
               </div>
+              <p className="text-gray-600">
+                Dựa trên {comments.length} đánh giá
+              </p>
             </div>
 
-            <div className="space-y-6">
-              {reviews.map((review, index) => (
-                <div key={review.id}>
-                  <div className="flex gap-4">
-                    <div className="flex-shrink-0">
-                      <Avatar
-                        size={48}
-                        src={`https://api.dicebear.com/6.x/initials/svg?seed=${review.username}`}
-                        style={{ backgroundColor: "#1890ff" }}
+            {/* Rating Bars */}
+            <div className="space-y-3">
+              {[5, 4, 3, 2, 1].map((num) => {
+                const count = comments.filter(
+                  (review) => review.score === num
+                ).length;
+                const percentage = comments.length
+                  ? (count / comments.length) * 100
+                  : 0;
+
+                return (
+                  <div key={num} className="flex items-center gap-3">
+                    <div className="flex items-center w-16">
+                      <span className="text-sm font-medium text-gray-700">
+                        {num}
+                      </span>
+                      <Star className="w-4 h-4 text-yellow-400 ml-1" />
+                    </div>
+                    <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${percentage}%` }}
+                        transition={{ duration: 1, ease: "easeOut" }}
+                        className="h-full bg-[#22A6DF] rounded-full"
                       />
                     </div>
+                    <span className="text-sm text-gray-500 w-12">{count}</span>
+                  </div>
+                );
+              })}
+            </div>
 
-                    <div className="flex-grow">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h4 className="font-medium mb-1">
-                            {review.username}
-                          </h4>
-                          <div className="flex items-center gap-2">
-                            <div className="flex text-[#1890ff]">
-                              {"★".repeat(review.rating)}
-                            </div>
-                            <span className="text-sm text-gray-500">
-                              {review.date}
-                            </span>
+            {/* Quick Stats */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 text-gray-700">
+                <Award className="w-5 h-5 text-green-500" />
+                <span>
+                  {comments.filter((r) => r.score === 5).length} đánh giá xuất
+                  sắc
+                </span>
+              </div>
+              <div className="flex items-center gap-3 text-gray-700">
+                <Clock className="w-5 h-5 text-blue-500" />
+                <span>
+                  Cập nhật gần đây nhất:{" "}
+                  {comments.length > 0
+                    ? formatDate(comments[0].createdAt)
+                    : "Chưa có đánh giá"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Comments List */}
+          <div className="space-y-6">
+            {comments.map((review, index) => (
+              <motion.div
+                key={review.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="bg-white rounded-xl p-6 border border-gray-100 hover:shadow-md transition-shadow"
+              >
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-lg font-semibold">
+                      <Avatar
+                        src={review.userId.avatar}
+                        alt={review.userId.fullname}
+                        size={48}
+                        className="rounded-full"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex-grow">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <h4 className="font-semibold text-gray-800 mb-1">
+                          {review.userId.fullname}
+                        </h4>
+                        <div className="flex items-center gap-3">
+                          <div className="flex">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star
+                                key={star}
+                                className={`w-4 h-4 ${
+                                  star <= review.score
+                                    ? "text-yellow-400 fill-yellow-400"
+                                    : "text-gray-200 fill-gray-200"
+                                }`}
+                              />
+                            ))}
                           </div>
-                        </div>
-                        <div>
-                          <span className="bg-[#E6F7FF] text-[#1890ff] text-xs px-3 py-1 rounded-full">
-                            Đã xác thực
+                          <span className="text-sm text-gray-500">
+                            {formatDate(review.createdAt)}
                           </span>
                         </div>
                       </div>
+                    </div>
 
-                      <div className="bg-gray-50 p-3 rounded-lg mb-3">
-                        <div className="mb-2">
-                          <span className="text-gray-600">Mùi hương: </span>
-                          <span>{review.flavor}</span>
+                    {review.flavor && (
+                      <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-blue-600 font-medium">
+                            Mùi hương:
+                          </span>
+                          <span className="text-gray-700">{review.flavor}</span>
                         </div>
                       </div>
+                    )}
 
-                      <p className="text-gray-700 mb-3">{review.comment}</p>
+                    <p className="text-gray-700 leading-relaxed mb-4">
+                      {review.content}
+                    </p>
 
-                      <div className="flex gap-4">
-                        <Button
-                          type="text"
-                          size="small"
-                          icon={<LikeOutlined />}
-                          className="text-[#1890ff]"
-                        >
-                          Hữu ích (12)
-                        </Button>
-                        <Button
-                          type="text"
-                          size="small"
-                          icon={<MessageOutlined />}
-                        >
-                          Trả lời
-                        </Button>
-                      </div>
-                    </div>
+                    <button className="flex items-center gap-2 text-gray-500 hover:text-blue-600 transition-colors">
+                      <ThumbsUp className="w-4 h-4" />
+                      <span className="text-sm">Hữu ích (0)</span>
+                    </button>
                   </div>
-                  {index < reviews.length - 1 && (
-                    <Divider style={{ margin: "24px 0" }} />
-                  )}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {comments.length === 0 && (
+            <div className="text-center py-10">
+              <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">
+                Chưa có đánh giá nào cho sản phẩm này
+              </p>
+            </div>
+          )}
+        </motion.div>
+        {/* Related Products Section */}
+        <div>
+          <h3 className="mb-4 text-xl font-bold">SẢN PHẨM LIÊN QUAN</h3>
+          {relatedProducts.length > 0 ? (
+            <div className="grid grid-cols-4 gap-4">
+              {relatedProducts.map((product) => (
+                <div
+                  key={product._id || product.id}
+                  className="p-4 border rounded-lg"
+                >
+                  <div className="mb-2 aspect-square">
+                    <img
+                      src={product.image_url?.[0] || "/placeholder-image.jpg"}
+                      alt={product.name}
+                      className="object-contain w-full h-full"
+                    />
+                  </div>
+                  <h4 className="mb-2 text-sm line-clamp-2">{product.name}</h4>
+                  <p className="font-medium text-blue-500">
+                    {new Intl.NumberFormat("vi-VN", {
+                      style: "currency",
+                      currency: "VND",
+                    }).format(Number(product.price))}
+                  </p>
                 </div>
               ))}
             </div>
-          </div>
-          {/* Related Products Section */}
-          <div>
-            <h3 className="mb-4 text-xl font-bold">SẢN PHẨM LIÊN QUAN</h3>
-            {relatedProducts.length > 0 ? (
-              <div className="grid grid-cols-4 gap-4">
-                {relatedProducts.map((product) => (
-                  <div
-                    key={product._id || product.id}
-                    className="p-4 border rounded-lg"
-                  >
-                    <div className="mb-2 aspect-square">
-                      <img
-                        src={product.image_url?.[0] || "/placeholder-image.jpg"}
-                        alt={product.name}
-                        className="object-contain w-full h-full"
-                      />
-                    </div>
-                    <h4 className="mb-2 text-sm line-clamp-2">
-                      {product.name}
-                    </h4>
-                    <p className="font-medium text-blue-500">
-                      {new Intl.NumberFormat("vi-VN", {
-                        style: "currency",
-                        currency: "VND",
-                      }).format(Number(product.price))}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p>Không có sản phẩm liên quan.</p>
-            )}
-          </div>
+          ) : (
+            <p>Không có sản phẩm liên quan.</p>
+          )}
         </div>
       </div>
     </div>

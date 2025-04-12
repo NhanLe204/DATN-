@@ -22,7 +22,7 @@ const sendBookingEmail = async ({
   customerName,
   orderDetails,
   orderId,
-  isCancellation = false,
+  isCancellation = false
 }: BookingEmailData): Promise<void> => {
   console.log('Input data:', { recipientEmail, customerName, orderDetails, orderId, isCancellation });
 
@@ -71,7 +71,7 @@ const sendBookingEmail = async ({
       service_name: serviceName,
       service_price: servicePrice,
       duration: duration,
-      customerName: finalCustomerName,
+      customerName: finalCustomerName
     };
   });
 
@@ -86,7 +86,7 @@ const sendBookingEmail = async ({
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-      timeZone: 'Asia/Ho_Chi_Minh',
+      timeZone: 'Asia/Ho_Chi_Minh'
     }).format(date);
   };
 

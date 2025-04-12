@@ -1,15 +1,18 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { Table, Tag, Button, Empty, Modal, message, Tabs } from "antd";
-import { FaShoppingBag, FaEye } from "react-icons/fa";
+import { FaShoppingBag, FaEye, FaStar } from "react-icons/fa";
 import { MdCancel } from "react-icons/md";
 import { useNavigate, useParams } from "react-router-dom";
 import userApi from "../api/userApi";
 import orderDetailApi from "../api/orderDetailApi";
 import orderApi from "../api/orderApi";
 
-import { useDispatch } from 'react-redux';
+import { useDispatch } from "react-redux";
 import { addToCart } from "../redux/slices/cartslice";
+
+import ratingApi from "../api/ratingApi";
+import { set } from "mongoose";
 
 interface User {
   _id: string;
@@ -29,6 +32,8 @@ interface User {
 }
 
 interface OrderItem {
+  productId: any;
+  orderDetailId: any;
   id: string;
   name: string;
   quantity: number;
@@ -36,8 +41,15 @@ interface OrderItem {
   image_url: string[];
 }
 
+interface Rating {
+  rating: number;
+  comment: string;
+  productId: string;
+}
+
 interface Order {
   id: string;
+  orderDetailId: string;
   orderNumber: string;
   date: string;
   status: string;
@@ -47,6 +59,7 @@ interface Order {
   shippingAddress: string;
   deliveryFee: number;
   discountValue: number;
+  payment_status: string;
   couponCode: string;
 }
 
@@ -54,7 +67,7 @@ export default function OrderDetail() {
   const params = useParams();
   const [user, setUser] = useState<User | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab, setActiveTab] = useState("ALL");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
@@ -62,6 +75,15 @@ export default function OrderDetail() {
   const [fetchLoading, setFetchLoading] = useState(true);
   const [isCancelModalVisible, setIsCancelModalVisible] = useState(false);
   const [orderToCancel, setOrderToCancel] = useState<Order | null>(null);
+  const [isReviewModalVisible, setIsReviewModalVisible] = useState(false);
+  // Rating
+  const [selectedProductForReview, setSelectedProductForReview] =
+    useState<OrderItem | null>(null);
+  const [orderDetailId, setOrderDetailId] = useState<string | null>(null);
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState("");
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [ratedProducts, setRatedProducts] = useState<string[]>([]);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -69,7 +91,10 @@ export default function OrderDetail() {
   useEffect(() => {
     const fetchData = async () => {
       const token = localStorage.getItem("accessToken");
-      const accountID = localStorage.getItem("accountID")?.replace(/"/g, "").trim();
+      const accountID = localStorage
+        .getItem("accountID")
+        ?.replace(/"/g, "")
+        .trim();
 
       if (!token || !accountID) {
         setUser(null);
@@ -90,6 +115,11 @@ export default function OrderDetail() {
         } else {
           setOrders(orderResponse.data.data || []);
         }
+        const getIDProduct = orderResponse.data.data.flatMap((order: Order) =>
+          order.items.map((item: OrderItem) => item.productId)
+        );
+        setRatedProducts(getIDProduct);
+        console.log("Rated Products:", getIDProduct);
       } catch (error) {
         console.error("Failed to fetch data:", error);
         setUser(null);
@@ -103,7 +133,7 @@ export default function OrderDetail() {
   }, []);
 
   const handleReorder = (order: Order) => {
-    const cartItems = order.items.map(item => ({
+    const cartItems = order.items.map((item) => ({
       item: {
         id: item.id,
         name: item.name,
@@ -112,17 +142,16 @@ export default function OrderDetail() {
       },
       quantity: item.quantity,
     }));
-  
-    cartItems.forEach(cartItem => {
+
+    cartItems.forEach((cartItem) => {
       dispatch(addToCart(cartItem));
     });
-  
+
     navigate("/checkout", {
       state: {
         reorderItems: cartItems,
         shippingAddress: order.shippingAddress,
         paymentMethodId: order.paymentMethod,
-        
       },
     });
   };
@@ -139,7 +168,59 @@ export default function OrderDetail() {
       setLoading(false);
     }
   };
+  // Rating
+  const handleShowReviewModal = (order: Order, productId: string) => {
+    const product = order.items.find((item) => item.id === productId);
+    const test = order.items[0].orderDetailId;
+    console.log("test", test);
 
+    if (product) {
+      setOrderDetailId(test);
+      setSelectedProductForReview(product);
+      setIsReviewModalVisible(true);
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!selectedProductForReview) {
+      message.error("Không tìm thấy sản phẩm để đánh giá.");
+      return;
+    }
+
+    // Gom dữ liệu đánh giá
+    const reviewData = {
+      productId: selectedProductForReview.id,
+      score: rating,
+      userId: user?._id,
+      content: comment.trim() || "",
+      orderDetailId: orderDetailId,
+    };
+    const response = await ratingApi.createRating(reviewData);
+    console.log(response, "SS");
+    // Kiểm tra dữ liệu
+    if (!reviewData.score || reviewData.score < 1 || reviewData.score > 5) {
+      message.error("Vui lòng chọn số sao hợp lệ.");
+      return;
+    }
+    if (reviewData.content.length > 200) {
+      message.error("Nhận xét không được vượt quá 200 ký tự.");
+      return;
+    }
+
+    setReviewLoading(true);
+    try {
+      message.success("Đánh giá của bạn đã được gửi thành công!");
+      setIsReviewModalVisible(false);
+      setRating(5); // Reset rating về mặc định
+      setComment(""); // Reset comment
+      setSelectedProductForReview(null); // Reset sản phẩm đã chọn
+    } catch (error) {
+      message.error("Có lỗi xảy ra khi gửi đánh giá.");
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+  // Rating
   const handleViewDetails = (order: Order) => {
     setSelectedOrder(order);
     setIsDetailModalVisible(true);
@@ -150,7 +231,10 @@ export default function OrderDetail() {
 
     setLoading(true);
     try {
-      const response = await orderApi.updateOrderStatus(orderToCancel.id, "CANCELLED");
+      const response = await orderApi.updateOrderStatus(
+        orderToCancel.id,
+        "CANCELLED"
+      );
       if (response.success) {
         const updatedOrders = orders.map((o) =>
           o.id === orderToCancel.id ? { ...o, status: "cancelled" } : o
@@ -174,21 +258,21 @@ export default function OrderDetail() {
   };
 
   const statusColors = {
-    pending: "blue",
-    processing: "green",
-    shipping: "orange",
-    shipped: "orange",
-    delivered: "green",
-    cancelled: "red",
+    PENDING: "blue",
+    PROCESSING: "green",
+    SHIPPING: "orange",
+    SHIPPED: "orange",
+    DELIVERED: "green",
+    CANCELLED: "red",
   };
 
   const statusText = {
-    pending: "Chưa xác nhận",
-    processing: "Đã xác nhận",
-    shipping: "Đang vận chuyển",
-    shipped: "Đã vận chuyển",
-    delivered: "Hoàn thành",
-    cancelled: "Đã hủy",
+    PENDING: "Chưa xác nhận",
+    PROCESSING: "Đã xác nhận",
+    SHIPPING: "Đang vận chuyển",
+    SHIPPED: "Đã vận chuyển",
+    DELIVERED: "Hoàn thành",
+    CANCELLED: "Đã hủy",
   };
 
   const columns = [
@@ -196,7 +280,9 @@ export default function OrderDetail() {
       title: "Mã đơn hàng",
       dataIndex: "orderNumber",
       key: "orderNumber",
-      render: (text: string) => <span className="font-medium text-gray-800">{text}</span>,
+      render: (text: string) => (
+        <span className="font-medium text-gray-800">{text}</span>
+      ),
     },
     {
       title: "Sản phẩm",
@@ -240,7 +326,9 @@ export default function OrderDetail() {
       dataIndex: "date",
       key: "date",
       render: (date: string) => (
-        <span className="text-gray-600">{new Date(date).toLocaleDateString("vi-VN")}</span>
+        <span className="text-gray-600">
+          {new Date(date).toLocaleDateString("vi-VN")}
+        </span>
       ),
     },
     {
@@ -248,7 +336,9 @@ export default function OrderDetail() {
       dataIndex: "total",
       key: "total",
       render: (total: number) => (
-        <span className="text-blue-500 font-medium">{total.toLocaleString()}đ</span>
+        <span className="text-blue-500 font-medium">
+          {total.toLocaleString()}đ
+        </span>
       ),
     },
     {
@@ -256,7 +346,10 @@ export default function OrderDetail() {
       dataIndex: "status",
       key: "status",
       render: (status: keyof typeof statusText) => (
-        <Tag color={statusColors[status]} className="flex items-center w-fit px-3 py-1">
+        <Tag
+          color={statusColors[status]}
+          className="flex items-center w-fit px-3 py-1"
+        >
           {statusText[status]}
         </Tag>
       ),
@@ -274,7 +367,7 @@ export default function OrderDetail() {
           >
             Xem chi tiết
           </Button>
-          {record.status == "delivered" && (
+          {record.status == "DELIVERED" && (
             <Button
               type="primary"
               onClick={() => handleReorder(record)}
@@ -291,8 +384,33 @@ export default function OrderDetail() {
               className="flex items-center"
               icon={<MdCancel className="mr-2" />}
             >
-              Hủy
+              Huỷ
             </Button>
+          )}
+          {record.status === "DELIVERED" && (
+            <>
+              {!ratedProducts.includes(record.items[0].productId) ? (
+                <Button
+                  type="primary"
+                  onClick={() =>
+                    setIsDetailModalVisible(false) ||
+                    handleShowReviewModal(record, record.items[0].id)
+                  }
+                  className="bg-purple-500 hover:bg-purple-600 flex items-center"
+                  icon={<FaStar className="mr-2" />}
+                >
+                  Đánh giá {record.items[0].productId}
+                </Button>
+              ) : (
+                <Button
+                  disabled
+                  className="flex items-center"
+                  icon={<FaStar className="mr-2" />}
+                >
+                  Đã đánh giá
+                </Button>
+              )}
+            </>
           )}
         </div>
       ),
@@ -316,7 +434,9 @@ export default function OrderDetail() {
       title: "Tên sản phẩm",
       dataIndex: "name",
       key: "name",
-      render: (text: string) => <span className="font-medium text-gray-800">{text}</span>,
+      render: (text: string) => (
+        <span className="font-medium text-gray-800">{text}</span>
+      ),
     },
     {
       title: "Số lượng",
@@ -333,17 +453,17 @@ export default function OrderDetail() {
   ];
 
   const items = [
-    { label: "Tất cả", key: "all" },
-    { label: "Chưa xác nhận", key: "pending" },
-    { label: "Đã xác nhận", key: "processing" },
-    { label: "Đang vận chuyển", key: "shipping" },
-    { label: "Đã vận chuyển", key: "shipped" },
-    { label: "Hoàn thành", key: "delivered" },
-    { label: "Đã hủy", key: "cancelled" },
+    { label: "Tất cả", key: "ALL" },
+    { label: "Chưa xác nhận", key: "PENDING" },
+    { label: "Đã xác nhận", key: "PROCESSING" },
+    { label: "Đang vận chuyển", key: "SHIPPING" },
+    { label: "Đã vận chuyển", key: "SHIPPED" },
+    { label: "Hoàn thành", key: "DELIVERED" },
+    { label: "Đã hủy", key: "CANCELLED" },
   ];
 
   const filteredOrders = Array.isArray(orders)
-    ? activeTab === "all"
+    ? activeTab === items[0].key
       ? orders
       : orders.filter((order) => order.status === activeTab)
     : [];
@@ -362,7 +482,9 @@ export default function OrderDetail() {
   return (
     <div className="w-full p-4">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Đơn mua sản phẩm</h2>
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">
+          Đơn mua sản phẩm
+        </h2>
         <p className="text-gray-600">Quản lý các đơn hàng sản phẩm của bạn</p>
       </div>
 
@@ -386,7 +508,10 @@ export default function OrderDetail() {
         className="border rounded-lg shadow-sm"
         locale={{
           emptyText: (
-            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Không có đơn hàng sản phẩm nào" />
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description="Không có đơn hàng sản phẩm nào"
+            />
           ),
         }}
       />
@@ -445,40 +570,52 @@ export default function OrderDetail() {
                   <strong>Mã đơn hàng:</strong> {selectedOrder.orderNumber}
                 </p>
                 <p>
-                  <strong>Phương thức thanh toán:</strong> {selectedOrder.paymentMethod}
+                  <strong>Phương thức thanh toán:</strong>{" "}
+                  {selectedOrder.paymentMethod}
                 </p>
                 <p>
-                  <strong>Tổng tiền sản phẩm:</strong> {subTotal(selectedOrder.items).toLocaleString()}đ
+                  <strong>Tổng tiền sản phẩm:</strong>{" "}
+                  {subTotal(selectedOrder.items).toLocaleString()}đ
                 </p>
                 <p>
-                  <strong>Phí vận chuyển:</strong> {selectedOrder.deliveryFee === 0
+                  <strong>Phí vận chuyển:</strong>{" "}
+                  {selectedOrder.deliveryFee === 0
                     ? "Miễn phí"
                     : `${selectedOrder.deliveryFee.toLocaleString()}đ`}
                 </p>
                 {selectedOrder.discountValue > 0 && (
                   <p>
-                    <strong>Voucher ({selectedOrder.couponCode}: giảm {selectedOrder.discountValue}%):</strong> -{calculateDiscount(selectedOrder).toLocaleString()}đ
+                    <strong>
+                      Voucher ({selectedOrder.couponCode}: giảm{" "}
+                      {selectedOrder.discountValue}%):
+                    </strong>{" "}
+                    -{calculateDiscount(selectedOrder).toLocaleString()}đ
                   </p>
                 )}
               </div>
               <div>
                 <p>
-                  <strong>Địa chỉ giao hàng:</strong> {selectedOrder.shippingAddress}
+                  <strong>Địa chỉ giao hàng:</strong>{" "}
+                  {selectedOrder.shippingAddress}
                 </p>
                 <p>
                   <strong>Ngày đặt:</strong>{" "}
                   {new Date(selectedOrder.date).toLocaleDateString("vi-VN")}
                 </p>
                 <p>
-                  <strong>Trạng thái:</strong> {statusText[selectedOrder.status]}
+                  <strong>Trạng thái:</strong>{" "}
+                  {statusText[selectedOrder.status]}
                 </p>
                 <p>
-                  <strong>Tổng tiền:</strong> {selectedOrder.total.toLocaleString()}đ
+                  <strong>Tổng tiền:</strong>{" "}
+                  {selectedOrder.total.toLocaleString()}đ
                 </p>
               </div>
             </div>
             <div className="mt-4">
-              <h3 className="font-medium text-lg mb-2">Sản phẩm trong đơn hàng:</h3>
+              <h3 className="font-medium text-lg mb-2">
+                Sản phẩm trong đơn hàng:
+              </h3>
               <div style={{ maxHeight: "400px", overflowY: "auto" }}>
                 <Table
                   columns={itemColumns}
@@ -488,6 +625,77 @@ export default function OrderDetail() {
                   className="border rounded-lg"
                 />
               </div>
+            </div>
+          </div>
+        )}
+      </Modal>
+      <Modal
+        title="Đánh giá sản phẩm"
+        open={isReviewModalVisible}
+        onCancel={() => setIsReviewModalVisible(false)}
+        footer={null}
+        width={600}
+      >
+        {selectedProductForReview && (
+          <div className="p-4">
+            <div className="flex items-center space-x-4 mb-6">
+              <img
+                src={selectedProductForReview.image_url[0]}
+                alt={selectedProductForReview.name}
+                className="w-24 h-24 object-cover rounded-lg border border-gray-200"
+              />
+              <div>
+                <h3 className="font-medium text-lg">
+                  {selectedProductForReview.name}
+                </h3>
+                <p className="text-gray-500">
+                  Giá: {selectedProductForReview.price.toLocaleString()}đ
+                </p>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <p className="font-medium mb-2">Đánh giá của bạn</p>
+              <div className="flex space-x-2">
+                {Array.from({ length: 5 }, (_, index) => index + 1).map(
+                  (star) => (
+                    <button
+                      key={star}
+                      onClick={() => setRating(star)}
+                      className={`text-2xl focus:outline-none transition-colors ${
+                        star <= rating ? "text-yellow-400" : "text-gray-300"
+                      }`}
+                    >
+                      ★
+                    </button>
+                  )
+                )}
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <p className="font-medium mb-2">Nhận xét của bạn</p>
+              <textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                rows={4}
+                placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm..."
+              />
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <Button onClick={() => setIsReviewModalVisible(false)}>
+                Hủy
+              </Button>
+              <Button
+                type="primary"
+                onClick={handleSubmitReview}
+                loading={reviewLoading}
+                className="bg-purple-500 hover:bg-purple-600"
+              >
+                Gửi đánh giá
+              </Button>
             </div>
           </div>
         )}

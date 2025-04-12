@@ -7,6 +7,7 @@ const orderDetailApi = {
     );
     return response.data;
   },
+  
   getAllBookings: async () => {
     const response = await api.get("/v1/ordersDetail/allBookings");
     return response.data;
