@@ -11,7 +11,7 @@ import productRouter from './routes/product.routes.js';
 import userRouter from './routes/user.routes.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 import brandRouter from './routes/brand.routes.js';
-import rateRouter from './routes/rate.routes.js';
+import rateRouter from './routes/rating.routes.js';
 import couponRouter from './routes/coupon.routes.js';
 import orderRouter from './routes/order.routes.js';
 import tagRouter from './routes/tag.routes.js';

@@ -8,7 +8,7 @@ const service_model_js_1 = __importDefault(require("../models/service.model.js")
 const user_model_js_1 = __importDefault(require("../models/user.model.js"));
 const order_model_js_1 = __importDefault(require("../models/order.model.js"));
 const config_js_1 = __importDefault(require("../config/config.js"));
-const sendBookingEmail = async ({ recipientEmail, customerName, orderDetails, orderId, isCancellation = false, }) => {
+const sendBookingEmail = async ({ recipientEmail, customerName, orderDetails, orderId, isCancellation = false }) => {
     console.log('Input data:', { recipientEmail, customerName, orderDetails, orderId, isCancellation });
     let finalOrderId = orderId;
     let finalCustomerName = customerName || 'Khách hàng';
@@ -55,7 +55,7 @@ const sendBookingEmail = async ({ recipientEmail, customerName, orderDetails, or
             service_name: serviceName,
             service_price: servicePrice,
             duration: duration,
-            customerName: finalCustomerName,
+            customerName: finalCustomerName
         };
     });
     const enrichedOrderDetails = await Promise.all(servicePromises);
@@ -69,7 +69,7 @@ const sendBookingEmail = async ({ recipientEmail, customerName, orderDetails, or
             year: 'numeric',
             hour: '2-digit',
             minute: '2-digit',
-            timeZone: 'Asia/Ho_Chi_Minh',
+            timeZone: 'Asia/Ho_Chi_Minh'
         }).format(date);
     };
     const formatPrice = (price) => {

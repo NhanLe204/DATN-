@@ -22,34 +22,41 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-// src/models/Contact.ts
 const mongoose_1 = __importStar(require("mongoose"));
-const contactSchema = new mongoose_1.Schema({
-    name: {
-        type: String,
-        required: true,
-        trim: true
+const orderdetail_model_js_1 = __importDefault(require("./orderdetail.model.js"));
+const user_model_js_1 = __importDefault(require("./user.model.js"));
+const product_model_js_1 = __importDefault(require("./product.model.js"));
+const rateSchema = new mongoose_1.Schema({
+    orderDetailId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: orderdetail_model_js_1.default,
+        required: true
     },
-    email: {
-        type: String,
+    score: {
+        type: Number,
         required: true,
-        trim: true
+        min: 1,
+        max: 5
     },
-    phone: {
+    userId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: user_model_js_1.default,
+        required: true
+    },
+    productId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: product_model_js_1.default,
+        required: true
+    },
+    content: {
         type: String,
-        required: true,
-        trim: true
-    },
-    message: {
-        type: String,
-        required: true,
-        trim: true
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
+        required: true
     }
 }, { timestamps: true });
-exports.default = mongoose_1.default.model('Contact', contactSchema);
-//# sourceMappingURL=contact.model.js.map
+const rateModel = mongoose_1.default.models.rate || (0, mongoose_1.model)('rate', rateSchema);
+exports.default = rateModel;
+//# sourceMappingURL=rating.model.js.map

@@ -2,7 +2,6 @@ import { Router, Request, Response } from 'express';
 import { protectRoute, requireAdmin } from '../middlewares/protectRoute.js';
 import { verifyToken } from '../middlewares/verifyToken.js';
 import { getAllTags, getTagById, insertTag, deleteTag, updateTag } from '../controllers/tag.controllers.js';
-import { deleteRating } from '../controllers/rate.controllers.js';
 
 const tagRouter = Router();
 // http://localhost:5000/api/v1/tags

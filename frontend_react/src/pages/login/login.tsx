@@ -59,7 +59,8 @@ export default function Login() {
     const token = localStorage.getItem("accessToken");
     if (userData && token) {
       const parsedUser = JSON.parse(userData) as User;
-      loginApi.authCheck(token) 
+      loginApi
+        .authCheck(token)
         .then((response) => {
           if (response.data.success) {
             setUser(parsedUser);
@@ -88,11 +89,11 @@ export default function Login() {
           navigate("/login");
         });
     } else {
-      localStorage.clear(); 
+      localStorage.clear();
       navigate("/login");
     }
   }, [navigate]);
-
+  
   const handleLogin = async () => {
     if (!email.trim() && !password.trim()) {
       notification.error({

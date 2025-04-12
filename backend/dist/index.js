@@ -16,7 +16,7 @@ const product_routes_js_1 = __importDefault(require("./routes/product.routes.js"
 const user_routes_js_1 = __importDefault(require("./routes/user.routes.js"));
 const errorHandler_js_1 = require("./middlewares/errorHandler.js");
 const brand_routes_js_1 = __importDefault(require("./routes/brand.routes.js"));
-const rate_routes_js_1 = __importDefault(require("./routes/rate.routes.js"));
+const rating_routes_js_1 = __importDefault(require("./routes/rating.routes.js"));
 const coupon_routes_js_1 = __importDefault(require("./routes/coupon.routes.js"));
 const order_routes_js_1 = __importDefault(require("./routes/order.routes.js"));
 const tag_routes_js_1 = __importDefault(require("./routes/tag.routes.js"));
@@ -51,7 +51,7 @@ app.use('/api/v1', category_routes_js_1.default);
 app.use('/api/v1', product_routes_js_1.default);
 app.use('/api/v1', user_routes_js_1.default);
 app.use('/api/v1', brand_routes_js_1.default);
-app.use('/api/v1', rate_routes_js_1.default);
+app.use('/api/v1', rating_routes_js_1.default);
 app.use('/api/v1', coupon_routes_js_1.default);
 app.use('/api/v1', order_routes_js_1.default);
 app.use('/api/v1', tag_routes_js_1.default);

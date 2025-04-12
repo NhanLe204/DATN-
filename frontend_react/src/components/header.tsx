@@ -194,21 +194,18 @@ export default function Header() {
         setIsUserLoaded(false);
         if (err.message.includes("401")) {
           console.warn("Token có thể đã hết hạn, cần đăng nhập lại");
-          localStorage.clear();
-          setUser(null);
-          navigate("/login"); 
         }
       });
   }, [dispatch, navigate]);
 
   const handleLogout = async () => {
     try {
-      await loginApi.logout(); 
-      localStorage.clear(); 
+      await loginApi.logout();
+      localStorage.clear();
       setUser(null);
       dispatch(setUserId(null));
       setIsUserLoaded(false);
-      navigate("/login"); 
+      navigate("/login");
     } catch (error) {
       console.error("Logout failed:", error);
     }

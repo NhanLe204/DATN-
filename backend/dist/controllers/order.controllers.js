@@ -25,7 +25,7 @@ const createOrderAfterPayment = async (req, res) => {
     session.startTransaction();
     let transactionCommitted = false;
     try {
-        const { userID = null, payment_typeID, deliveryID = null, couponID = null, orderdate, total_price, shipping_address = null, orderDetails, paymentOrderCode = null, infoUserGuest = null, } = req.body;
+        const { userID = null, payment_typeID, deliveryID = null, couponID = null, orderdate, total_price, shipping_address = null, orderDetails, paymentOrderCode = null, infoUserGuest = null } = req.body;
         console.log('req.body.orderDetails:', JSON.stringify(orderDetails, null, 2));
         // 1. Validate input data
         if (!total_price || !orderDetails || !Array.isArray(orderDetails)) {
@@ -39,7 +39,7 @@ const createOrderAfterPayment = async (req, res) => {
             product_price: detail.product_price || detail.productPrice,
             booking_date: detail.booking_date || detail.bookingDate,
             petName: detail.petName,
-            petType: detail.petType,
+            petType: detail.petType
         }));
         const isBooking = normalizedOrderDetails.every((detail) => detail.serviceId && !detail.productId);
         const isOrder = normalizedOrderDetails.some((detail) => detail.productId);
@@ -77,9 +77,7 @@ const createOrderAfterPayment = async (req, res) => {
                 await product_model_js_1.default.findByIdAndUpdate(productId, { $inc: { stock: -quantity } }, { session });
             }
             if (serviceId) {
-                const service = await service_model_js_1.default
-                    .findOne({ _id: serviceId, status: service_enum_js_1.ServiceStatus.ACTIVE })
-                    .session(session);
+                const service = await service_model_js_1.default.findOne({ _id: serviceId, status: service_enum_js_1.ServiceStatus.ACTIVE }).session(session);
                 if (!service)
                     throw new Error(`Service not found or not active: ${serviceId}`);
                 if (!petName || !petType) {
@@ -100,7 +98,7 @@ const createOrderAfterPayment = async (req, res) => {
                 total_price: detailTotalPrice,
                 booking_date: standardizedBookingDate,
                 petName: serviceId ? petName : null,
-                petType: serviceId ? petType : null,
+                petType: serviceId ? petType : null
             };
         });
         const validatedOrderDetails = await Promise.all(orderDetailsPromises);
@@ -142,7 +140,7 @@ const createOrderAfterPayment = async (req, res) => {
             status: isOrder ? order_enum_js_1.OrderStatus.PENDING : null,
             bookingStatus: isBooking ? booking_enum_js_1.BookingStatus.CONFIRMED : null,
             payment_status: order_enum_js_1.PaymentStatus.PENDING,
-            inforUserGuest: infoUserGuest || null,
+            inforUserGuest: infoUserGuest || null
         });
         const savedOrder = await order.save({ session });
         // 8. Create and save order details
@@ -156,7 +154,7 @@ const createOrderAfterPayment = async (req, res) => {
                 total_price: detail.total_price,
                 booking_date: detail.booking_date,
                 petName: detail.petName,
-                petType: detail.petType,
+                petType: detail.petType
             });
         });
         await Promise.all(orderDetailDocs.map((detail) => detail.save({ session })));
@@ -172,7 +170,8 @@ const createOrderAfterPayment = async (req, res) => {
         else if (infoUserGuest && infoUserGuest.email) {
             recipientEmail = infoUserGuest.email;
         }
-        if (recipientEmail && isBooking) { // Chỉ gửi email nếu là booking
+        if (recipientEmail && isBooking) {
+            // Chỉ gửi email nếu là booking
             try {
                 await (0, sendBookingEmail_js_1.default)({
                     recipientEmail,
@@ -180,9 +179,9 @@ const createOrderAfterPayment = async (req, res) => {
                         serviceId: detail.serviceId,
                         booking_date: detail.booking_date,
                         petName: detail.petName,
-                        petType: detail.petType,
+                        petType: detail.petType
                     })),
-                    orderId: savedOrder._id.toString(),
+                    orderId: savedOrder._id.toString()
                 });
                 console.log('Booking email sent to:', recipientEmail);
             }
@@ -202,8 +201,8 @@ const createOrderAfterPayment = async (req, res) => {
             message: 'Order and order details created successfully',
             data: {
                 order: savedOrder,
-                orderDetails: orderDetailDocs,
-            },
+                orderDetails: orderDetailDocs
+            }
         });
     }
     catch (error) {
@@ -215,7 +214,7 @@ const createOrderAfterPayment = async (req, res) => {
         res.status(400).json({
             success: false,
             message: errorMessage,
-            error: error instanceof Error ? error.stack : 'Unknown error stack',
+            error: error instanceof Error ? error.stack : 'Unknown error stack'
         });
     }
     finally {
@@ -290,7 +289,7 @@ const getAllOrders = async (req, res) => {
                 .lean();
             return {
                 ...order,
-                orderDetails: details, // Thêm orderDetails vào response
+                orderDetails: details // Thêm orderDetails vào response
             };
         }));
         res.status(200).json({ success: true, result: ordersWithDetails });
@@ -503,7 +502,7 @@ const cancelServiceBooking = async (req, res) => {
         if (timeDifferenceInHours < cancelDeadlineHours) {
             res.status(400).json({
                 success: false,
-                message: `Không thể hủy booking trước ${cancelDeadlineHours} tiếng`,
+                message: `Không thể hủy booking trước ${cancelDeadlineHours} tiếng`
             });
             return;
         }
@@ -533,7 +532,7 @@ const cancelServiceBooking = async (req, res) => {
                     day: '2-digit',
                     month: '2-digit',
                     year: 'numeric',
-                    timeZone: 'Asia/Ho_Chi_Minh',
+                    timeZone: 'Asia/Ho_Chi_Minh'
                 }).format(date);
             };
             // Định dạng giá tiền
@@ -585,8 +584,8 @@ const cancelServiceBooking = async (req, res) => {
                 orderId: order._id,
                 orderDetailId: orderDetail._id,
                 bookingStatus: order.bookingStatus,
-                status: order.status,
-            },
+                status: order.status
+            }
         });
     }
     catch (error) {
@@ -595,7 +594,7 @@ const cancelServiceBooking = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Lỗi máy chủ khi hủy đặt lịch dịch vụ',
-            details: errorMessage,
+            details: errorMessage
         });
     }
 };

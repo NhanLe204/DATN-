@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import mongoose from 'mongoose';
-import rateModel from '../models/rate.model.js';
+import rateModel from '../models/rating.model.js';
 import { Request, Response } from 'express';
 import orderModel from '../models/order.model.js';
 import userModel from '../models/user.model.js';
@@ -35,7 +35,7 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       shipping_address = null,
       orderDetails,
       paymentOrderCode = null,
-      infoUserGuest = null,
+      infoUserGuest = null
     } = req.body;
 
     console.log('req.body.orderDetails:', JSON.stringify(orderDetails, null, 2));
@@ -53,7 +53,7 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       product_price: detail.product_price || detail.productPrice,
       booking_date: detail.booking_date || detail.bookingDate,
       petName: detail.petName,
-      petType: detail.petType,
+      petType: detail.petType
     }));
 
     const isBooking = normalizedOrderDetails.every((detail: any) => detail.serviceId && !detail.productId);
@@ -97,9 +97,7 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       }
 
       if (serviceId) {
-        const service = await serviceModel
-          .findOne({ _id: serviceId, status: ServiceStatus.ACTIVE })
-          .session(session);
+        const service = await serviceModel.findOne({ _id: serviceId, status: ServiceStatus.ACTIVE }).session(session);
         if (!service) throw new Error(`Service not found or not active: ${serviceId}`);
         if (!petName || !petType) {
           throw new Error('petName and petType are required for service booking');
@@ -122,7 +120,7 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
         total_price: detailTotalPrice,
         booking_date: standardizedBookingDate,
         petName: serviceId ? petName : null,
-        petType: serviceId ? petType : null,
+        petType: serviceId ? petType : null
       };
     });
 
@@ -170,7 +168,7 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       status: isOrder ? OrderStatus.PENDING : null,
       bookingStatus: isBooking ? BookingStatus.CONFIRMED : null,
       payment_status: PaymentStatus.PENDING,
-      inforUserGuest: infoUserGuest || null,
+      inforUserGuest: infoUserGuest || null
     });
 
     const savedOrder = await order.save({ session });
@@ -186,7 +184,7 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
         total_price: detail.total_price,
         booking_date: detail.booking_date,
         petName: detail.petName,
-        petType: detail.petType,
+        petType: detail.petType
       });
     });
 
@@ -205,7 +203,8 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       recipientEmail = infoUserGuest.email;
     }
 
-    if (recipientEmail && isBooking) { // Chỉ gửi email nếu là booking
+    if (recipientEmail && isBooking) {
+      // Chỉ gửi email nếu là booking
       try {
         await sendBookingEmail({
           recipientEmail,
@@ -213,9 +212,9 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
             serviceId: detail.serviceId,
             booking_date: detail.booking_date,
             petName: detail.petName,
-            petType: detail.petType,
+            petType: detail.petType
           })),
-          orderId: savedOrder._id.toString(),
+          orderId: savedOrder._id.toString()
         });
         console.log('Booking email sent to:', recipientEmail);
       } catch (emailError) {
@@ -233,8 +232,8 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       message: 'Order and order details created successfully',
       data: {
         order: savedOrder,
-        orderDetails: orderDetailDocs,
-      },
+        orderDetails: orderDetailDocs
+      }
     });
   } catch (error) {
     if (!transactionCommitted) {
@@ -246,7 +245,7 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
     res.status(400).json({
       success: false,
       message: errorMessage,
-      error: error instanceof Error ? error.stack : 'Unknown error stack',
+      error: error instanceof Error ? error.stack : 'Unknown error stack'
     });
   } finally {
     session.endSession();
@@ -328,7 +327,7 @@ export const getAllOrders = async (req: Request, res: Response): Promise<void> =
           .lean();
         return {
           ...order,
-          orderDetails: details, // Thêm orderDetails vào response
+          orderDetails: details // Thêm orderDetails vào response
         };
       })
     );
@@ -505,7 +504,6 @@ export const updatePaymentStatus = async (req: Request, res: Response): Promise<
   }
 };
 
-
 export const cancelServiceBooking = async (req: Request, res: Response): Promise<void> => {
   try {
     const { orderId, orderDetailId } = req.body;
@@ -558,7 +556,7 @@ export const cancelServiceBooking = async (req: Request, res: Response): Promise
     if (timeDifferenceInHours < cancelDeadlineHours) {
       res.status(400).json({
         success: false,
-        message: `Không thể hủy booking trước ${cancelDeadlineHours} tiếng`,
+        message: `Không thể hủy booking trước ${cancelDeadlineHours} tiếng`
       });
       return;
     }
@@ -590,7 +588,7 @@ export const cancelServiceBooking = async (req: Request, res: Response): Promise
           day: '2-digit',
           month: '2-digit',
           year: 'numeric',
-          timeZone: 'Asia/Ho_Chi_Minh',
+          timeZone: 'Asia/Ho_Chi_Minh'
         }).format(date);
       };
 
@@ -645,8 +643,8 @@ export const cancelServiceBooking = async (req: Request, res: Response): Promise
         orderId: order._id,
         orderDetailId: orderDetail._id,
         bookingStatus: order.bookingStatus,
-        status: order.status,
-      },
+        status: order.status
+      }
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -654,7 +652,7 @@ export const cancelServiceBooking = async (req: Request, res: Response): Promise
     res.status(500).json({
       success: false,
       message: 'Lỗi máy chủ khi hủy đặt lịch dịch vụ',
-      details: errorMessage,
+      details: errorMessage
     });
   }
 };

@@ -222,9 +222,11 @@ const getOrderByUserId = async (req, res) => {
                 id: order._id.toString(),
                 orderNumber: order.transaction || `${order._id}`,
                 date: order.order_date || order.createdAt,
-                status: order.status.toLowerCase(),
+                status: order.status.toUpperCase(),
+                payment_status: order.payment_status,
                 total: order.total_price || 0,
                 items: relatedDetails.map((detail) => ({
+                    orderDetailId: detail._id.toString(),
                     id: detail.productId?._id.toString(),
                     name: detail.productId?.name,
                     quantity: detail.quantity,

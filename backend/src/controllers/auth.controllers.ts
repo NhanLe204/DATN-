@@ -416,7 +416,9 @@ export const googleLogin: RequestHandler = async (req: Request, res: Response): 
     if (!process.env.JWT_SECRET) {
       throw new Error('JWT_SECRET is not defined');
     }
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    // const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const accessToken = await generateAccessToken(user._id, res);
+    const refreshToken = await generateRefreshToken(user._id, res);
     const userData = {
       id: user._id.toString(),
       email: user.email,
@@ -425,7 +427,13 @@ export const googleLogin: RequestHandler = async (req: Request, res: Response): 
       role: user.role || 'user',
       status: user.status || 'active'
     };
-    res.json({ success: true, accessToken: token, user: userData });
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: ENV_VARS.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+    res.json({ success: true, accessToken, user: userData });
   } catch (error) {
     console.error('Google Sign-In error:', error);
     res.status(401).json({ success: false, message: 'Invalid Google token or server error' });
