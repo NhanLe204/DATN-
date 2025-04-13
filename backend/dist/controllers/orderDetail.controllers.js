@@ -226,6 +226,7 @@ const getOrderByUserId = async (req, res) => {
                 payment_status: order.payment_status,
                 total: order.total_price || 0,
                 items: relatedDetails.map((detail) => ({
+                    productId: detail.productId?._id.toString(),
                     orderDetailId: detail._id.toString(),
                     id: detail.productId?._id.toString(),
                     name: detail.productId?.name,

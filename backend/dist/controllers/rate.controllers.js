@@ -35,12 +35,12 @@ const createRating = async (req, res) => {
 exports.createRating = createRating;
 const getRatingByProductId = async (req, res) => {
     try {
-        const { productId } = req.params;
-        if (!productId) {
+        const { id } = req.params;
+        if (!id) {
             res.status(400).json({ success: false, message: 'Thiếu thông tin trong yêu cầu' });
             return;
         }
-        const ratings = await rating_model_js_1.default.find({ productId }).populate('userId', 'orderDetailId');
+        const ratings = await rating_model_js_1.default.find({ productId: id }).populate({ path: 'userId', select: '-password' });
         res.status(200).json({
             success: true,
             message: 'Lấy danh sách đánh giá thành công',
