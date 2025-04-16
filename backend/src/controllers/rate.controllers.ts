@@ -55,20 +55,51 @@ export const createRating = async (req: CustomRequest, res: Response): Promise<v
 
 export const getRatingByProductId = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
-    if (!id) {
-      res.status(400).json({ success: false, message: 'Thiếu thông tin trong yêu cầu' });
+    const { id: productId } = req.params; // Lấy productId từ URL params
+
+    // Kiểm tra tính hợp lệ của productId
+    if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
+      res.status(400).json({ success: false, message: 'Invalid productId' });
       return;
     }
-    const ratings = await rateModel.find({ productId: id }).populate({ path: 'userId', select: '-password' });
-    res.status(200).json({
-      success: true,
-      message: 'Lấy danh sách đánh giá thành công',
-      data: ratings
-    });
+
+    // Parse productId thành ObjectId
+    const productObjectId = new mongoose.Types.ObjectId(productId);
+
+    // Tìm tất cả các orderDetail có productId này
+    const orderDetails = await orderDetailModel.find({ productId: productObjectId }).select('_id');
+
+    if (!orderDetails || orderDetails.length === 0) {
+      res.status(404).json({ success: false, message: 'No order details found for this product' });
+      return;
+    }
+
+    // Lấy danh sách _id của orderDetail
+    const orderDetailIds = orderDetails.map((detail) => detail._id);
+
+    // Tìm tất cả các đánh giá có _id trùng với orderDetailIds
+    const ratings = await rateModel.find({ _id: { $in: orderDetailIds } }).populate('userId', 'fullname avatar');
+
+    if (!ratings || ratings.length === 0) {
+      res.status(404).json({ success: false, message: 'No ratings found for this product' });
+      return;
+    }
+
+    // Chuẩn bị dữ liệu trả về
+    const ratingData = ratings.map((rating) => ({
+      userId: rating.userId._id,
+      userName: rating.userId.fullname,
+      userAvatar: rating.userId.avatar,
+      content: rating.content,
+      score: rating.score,
+      likes: rating.likes,
+      createdAt: rating.createdAt
+    }));
+
+    res.json({ success: true, data: ratingData });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    res.status(500).json({ error: 'Failed to get rating', details: errorMessage });
+    console.error('Error fetching product ratings:', error);
+    res.status(500).json({ success: false, message: `Server error: ${error.message}` });
   }
 };
 

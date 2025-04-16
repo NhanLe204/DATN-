@@ -25,6 +25,10 @@ const rateSchema: Schema<IRating> = new Schema<IRating>(
     content: {
       type: String,
       required: true
+    },
+    likes: {
+      type: Number,
+      default: 0
     }
   },
   { timestamps: true, _id: false }
