@@ -386,6 +386,7 @@ export const googleLogin: RequestHandler = async (req: Request, res: Response): 
     const { sub: googleId, email, name, picture: avatar } = payload;
 
     let user = (await userModel.findOne({ googleId })) || (await userModel.findOne({ email }));
+    const refreshToken = await generateRefreshToken(user._id, res);
 
     if (user) {
       if (user.status === 'inactive') {
@@ -404,6 +405,7 @@ export const googleLogin: RequestHandler = async (req: Request, res: Response): 
     } else {
       user = new userModel({
         googleId,
+        refreshToken,
         email,
         fullname: name,
         avatar,
@@ -418,7 +420,6 @@ export const googleLogin: RequestHandler = async (req: Request, res: Response): 
     }
     // const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
     const accessToken = await generateAccessToken(user._id, res);
-    const refreshToken = await generateRefreshToken(user._id, res);
     const userData = {
       id: user._id.toString(),
       email: user.email,
