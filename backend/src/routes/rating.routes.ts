@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { protectRoute, requireAdmin } from '../middlewares/protectRoute.js';
 import { verifyToken } from '../middlewares/verifyToken.js';
-import { createRating, getRatingByProductId } from '../controllers/rate.controllers.js';
+import { createRating, getRatingByProductId, getRatingByUserId } from '../controllers/rate.controllers.js';
 import { checkRoleStatus } from '../controllers/auth.controllers.js';
 
 const rateRouter = Router();
@@ -9,6 +9,7 @@ const rateRouter = Router();
 
 rateRouter.post('/ratings', verifyToken, createRating);
 rateRouter.get('/ratings/:id', getRatingByProductId);
+rateRouter.get('/ratings/user/:id', verifyToken, getRatingByUserId);
 // rateRouter.get('/ratings/:id', getRatingID);
 // rateRouter.post('/ratings', createRating);
 // rateRouter.patch('/ratings/:id', updateRating);
