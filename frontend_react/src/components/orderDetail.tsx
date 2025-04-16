@@ -167,10 +167,7 @@ export default function OrderDetail() {
       productId: string;
     }[]
   >([]);
-  // Thay đổi kiểu dữ liệu của ratedProducts
-  const [ratedProducts, setRatedProducts] = useState<
-    { orderDetailId: string; productId: string }[]
-  >([]);
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -205,6 +202,7 @@ export default function OrderDetail() {
         if (ratingsResponse.data.success) {
           const ratedItems = ratingsResponse.data.data.map((rating: any) => ({
             orderDetailId: rating._id,
+            productId: rating.productId,
           }));
           setRatings(ratedItems);
         }
@@ -259,11 +257,8 @@ export default function OrderDetail() {
   // Rating
   const handleShowReviewModal = (order: Order, productId: string) => {
     const product = order.items.find((item) => item.id === productId);
-    const test = order.items[0].orderDetailId;
-    console.log("test", test);
-
     if (product) {
-      setOrderDetailId(test);
+      setOrderDetailId(product.orderDetailId);
       setSelectedProductForReview(product);
       setIsReviewModalVisible(true);
     }
@@ -274,9 +269,15 @@ export default function OrderDetail() {
         rating.orderDetailId === orderDetailId && rating.productId === productId
     );
   };
+
   const handleSubmitReview = async () => {
-    if (!selectedProductForReview) {
-      message.error("Không tìm thấy sản phẩm để đánh giá.");
+    if (!selectedProductForReview || !orderDetailId) {
+      message.error("Không tìm thấy sản phẩm hoặc đơn hàng để đánh giá.");
+      return;
+    }
+
+    if (!comment.trim()) {
+      message.error("Vui lòng nhập nhận xét để gửi đánh giá.");
       return;
     }
 
@@ -287,17 +288,19 @@ export default function OrderDetail() {
         productId: selectedProductForReview.id,
         score: rating,
         userId: user?._id,
-        content: comment.trim() || "",
+        content: comment.trim(),
         orderDetailId: orderDetailId,
       };
 
       const response = await ratingApi.createRating(reviewData);
-      if (response.data.success) {
-        // Thêm đánh giá mới vào state ratings
+      console.log("Rating response:", response); // Để debug
+
+      // Kiểm tra phản hồi API dựa trên cấu trúc thực tế
+      if (response.data?.success || response.success || response.status === "success") {
         setRatings((prev) => [
           ...prev,
           {
-            orderDetailId: orderDetailId!,
+            orderDetailId: orderDetailId,
             productId: selectedProductForReview.id,
           },
         ]);
@@ -307,14 +310,36 @@ export default function OrderDetail() {
         setRating(5);
         setComment("");
         setSelectedProductForReview(null);
+        setOrderDetailId(null);
+      } else {
+        // Hiển thị thông báo lỗi từ API nếu có
+        message.error(
+          response.data?.message ||
+          response.message ||
+          "Không thể gửi đánh giá. Vui lòng thử lại."
+        );
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error submitting review:", error);
-      message.error("Có lỗi xảy ra khi gửi đánh giá.");
+      // Xử lý các trường hợp lỗi khác nhau
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Lỗi hệ thống, vui lòng thử lại.";
+      message.error(errorMessage);
     } finally {
       setReviewLoading(false);
     }
   };
+
+  const confirmSubmitReview = () => {
+    Modal.confirm({
+      title: "Xác nhận gửi đánh giá",
+      content: "Bạn có chắc chắn muốn gửi đánh giá này?",
+      onOk: handleSubmitReview,
+    });
+  };
+
   // Rating
   const handleViewDetails = (order: Order) => {
     setSelectedOrder(order);
@@ -484,20 +509,15 @@ export default function OrderDetail() {
                     <Button
                       key={item.id}
                       type={hasRated ? "default" : "primary"}
-                      onClick={() =>
-                        !hasRated && handleShowReviewModal(record, item.id)
-                      }
+                      onClick={() => !hasRated && handleShowReviewModal(record, item.id)}
                       disabled={hasRated}
-                      className={`flex items-center w-full ${
-                        hasRated
-                          ? "bg-gray-100 text-gray-400"
+                      className={`flex items-center w-full ${hasRated
+                          ? "bg-gray-100 text-gray-400 opacity-50 cursor-not-allowed"
                           : "bg-purple-500 hover:bg-purple-600 text-white"
-                      }`}
+                        }`}
                       icon={
                         <FaStar
-                          className={`mr-2 ${
-                            hasRated ? "text-gray-400" : "text-yellow-400"
-                          }`}
+                          className={`mr-2 ${hasRated ? "text-gray-400" : "text-yellow-400"}`}
                         />
                       }
                     >
@@ -769,9 +789,8 @@ export default function OrderDetail() {
                     <button
                       key={star}
                       onClick={() => setRating(star)}
-                      className={`text-2xl focus:outline-none transition-colors ${
-                        star <= rating ? "text-yellow-400" : "text-gray-300"
-                      }`}
+                      className={`text-2xl focus:outline-none transition-colors ${star <= rating ? "text-yellow-400" : "text-gray-300"
+                        }`}
                     >
                       ★
                     </button>
@@ -797,7 +816,7 @@ export default function OrderDetail() {
               </Button>
               <Button
                 type="primary"
-                onClick={handleSubmitReview}
+                onClick={confirmSubmitReview}
                 loading={reviewLoading}
                 className="bg-purple-500 hover:bg-purple-600"
               >
