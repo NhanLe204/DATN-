@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, ReactNode } from "react";
 import { useParams } from "react-router-dom";
 import { Breadcrumb, Button, Image, Avatar, Divider } from "antd";
 import { motion } from "framer-motion";
@@ -17,6 +17,9 @@ export default function DetailProduct() {
   const [quantity, setQuantity] = useState(1);
   const [comments, setComments] = useState<
     {
+      createdAt: any;
+      userName: string | undefined;
+      userAvatar: ReactNode;
       content: string;
       id: number;
       username: string;
@@ -366,8 +369,8 @@ export default function DetailProduct() {
                   <div className="flex-shrink-0">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-lg font-semibold">
                       <Avatar
-                        src={review.userId.avatar}
-                        alt={review.userId.fullname}
+                        src={review.userAvatar || "hehe"}
+                        alt={review.userName}
                         size={48}
                         className="rounded-full"
                       />
@@ -378,7 +381,7 @@ export default function DetailProduct() {
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <h4 className="font-semibold text-gray-800 mb-1">
-                          {review.userId.fullname}
+                          {review.userName}
                         </h4>
                         <div className="flex items-center gap-3">
                           <div className="flex">
@@ -417,7 +420,7 @@ export default function DetailProduct() {
 
                     <button className="flex items-center gap-2 text-gray-500 hover:text-blue-600 transition-colors">
                       <ThumbsUp className="w-4 h-4" />
-                      <span className="text-sm">Hữu ích (0)</span>
+                      <span className="text-sm">(0)</span>
                     </button>
                   </div>
                 </div>

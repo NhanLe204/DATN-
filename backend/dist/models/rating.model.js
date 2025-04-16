@@ -49,6 +49,10 @@ const rateSchema = new mongoose_1.Schema({
     content: {
         type: String,
         required: true
+    },
+    likes: {
+        type: Number,
+        default: 0
     }
 }, { timestamps: true, _id: false });
 const rateModel = mongoose_1.default.models.rate || (0, mongoose_1.model)('rate', rateSchema);

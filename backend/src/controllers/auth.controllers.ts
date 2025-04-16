@@ -447,7 +447,6 @@ export const googleLogin: RequestHandler = async (req: Request, res: Response): 
       sameSite: 'strict',
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
-
     // Trả về phản hồi
     res.json({ success: true, accessToken, user: userData });
   } catch (error) {
