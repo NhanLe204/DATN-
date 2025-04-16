@@ -358,6 +358,7 @@ const googleLogin = async (req, res) => {
         const payload = ticket.getPayload();
         const { sub: googleId, email, name, picture: avatar } = payload;
         let user = (await user_model_js_1.default.findOne({ googleId })) || (await user_model_js_1.default.findOne({ email }));
+        const refreshToken = await (0, jwt_js_1.generateRefreshToken)(user._id, res);
         if (user) {
             if (user.status === 'inactive') {
                 res.status(401).json({ success: false, message: 'Tài khoản của bạn đã bị khóa!' });
@@ -375,6 +376,7 @@ const googleLogin = async (req, res) => {
         else {
             user = new user_model_js_1.default({
                 googleId,
+                refreshToken,
                 email,
                 fullname: name,
                 avatar,
@@ -388,7 +390,6 @@ const googleLogin = async (req, res) => {
         }
         // const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
         const accessToken = await (0, jwt_js_1.generateAccessToken)(user._id, res);
-        const refreshToken = await (0, jwt_js_1.generateRefreshToken)(user._id, res);
         const userData = {
             id: user._id.toString(),
             email: user.email,
