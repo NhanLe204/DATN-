@@ -7,6 +7,7 @@ const rateRouter = (0, express_1.Router)();
 // http://localhost:5000/api/v1/ratings
 rateRouter.post('/ratings', verifyToken_js_1.verifyToken, rate_controllers_js_1.createRating);
 rateRouter.get('/ratings/:id', rate_controllers_js_1.getRatingByProductId);
+rateRouter.get('/ratings/user/:id', verifyToken_js_1.verifyToken, rate_controllers_js_1.getRatingByUserId);
 // rateRouter.get('/ratings/:id', getRatingID);
 // rateRouter.post('/ratings', createRating);
 // rateRouter.patch('/ratings/:id', updateRating);

@@ -6,7 +6,7 @@ import product from './product.model.js';
 
 const rateSchema: Schema<IRating> = new Schema<IRating>(
   {
-    orderDetailId: {
+    _id: {
       type: Schema.Types.ObjectId,
       ref: orderdetail,
       required: true
@@ -22,17 +22,12 @@ const rateSchema: Schema<IRating> = new Schema<IRating>(
       ref: user,
       required: true
     },
-    productId: {
-      type: Schema.Types.ObjectId,
-      ref: product,
-      required: true
-    },
     content: {
       type: String,
       required: true
     }
   },
-  { timestamps: true }
+  { timestamps: true, _id: false }
 );
 
 const rateModel = mongoose.models.rate || model('rate', rateSchema);

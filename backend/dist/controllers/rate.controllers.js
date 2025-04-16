@@ -3,18 +3,29 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getRatingByProductId = exports.createRating = void 0;
+exports.getRatingByUserId = exports.getRatingByProductId = exports.createRating = void 0;
 const rating_model_js_1 = __importDefault(require("../models/rating.model.js"));
+const orderdetail_model_js_1 = __importDefault(require("../models/orderdetail.model.js"));
 const createRating = async (req, res) => {
     try {
-        const { productId, orderDetailId, content, userId, score } = req.body;
-        console.log(productId, orderDetailId, content, userId, score);
-        if (!productId || !content || !score || !userId || !orderDetailId) {
+        const { orderDetailId, content, score } = req.body;
+        // Lấy userId từ middleware xác thực
+        const userId = req.user?._id;
+        // Kiểm tra đầu vào
+        if (!content || !score || !userId || !orderDetailId) {
             res.status(400).json({ success: false, message: 'Thiếu thông tin trong yêu cầu' });
             return;
         }
+        // Kiểm tra tính hợp lệ của productI
+        // Kiểm tra tính hợp lệ của orderDetailId
+        const orderDetailExists = await orderdetail_model_js_1.default.findById(orderDetailId);
+        if (!orderDetailExists) {
+            res.status(404).json({ success: false, message: 'Chi tiết đơn hàng không tồn tại' });
+            return;
+        }
+        // Tạo đánh giá mới
         const newRate = new rating_model_js_1.default({
-            productId,
+            _id: orderDetailId,
             userId,
             orderDetailId,
             content,
@@ -53,4 +64,27 @@ const getRatingByProductId = async (req, res) => {
     }
 };
 exports.getRatingByProductId = getRatingByProductId;
+const getRatingByUserId = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!id) {
+            res.status(400).json({ success: false, message: 'Thiếu thông tin trong yêu cầu' });
+            return;
+        }
+        const ratings = await rating_model_js_1.default
+            .find({ userId: id })
+            .populate({ path: 'userId', select: '-password' })
+            .populate({ path: '_id' });
+        res.status(200).json({
+            success: true,
+            message: 'Lấy danh sách đánh giá thành công',
+            data: ratings
+        });
+    }
+    catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        res.status(500).json({ error: 'Failed to get rating', details: errorMessage });
+    }
+};
+exports.getRatingByUserId = getRatingByUserId;
 //# sourceMappingURL=rate.controllers.js.map

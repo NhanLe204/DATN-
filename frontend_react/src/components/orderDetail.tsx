@@ -12,7 +12,6 @@ import { useDispatch } from "react-redux";
 import { addToCart } from "../redux/slices/cartslice";
 
 import ratingApi from "../api/ratingApi";
-import { set } from "mongoose";
 
 interface User {
   _id: string;
@@ -63,6 +62,85 @@ interface Order {
   couponCode: string;
 }
 
+interface ProductRating {
+  _id: {
+    _id: string;
+    productId: string;
+    quantity: number;
+    product_price: number;
+    total_price: number;
+  };
+  score: number;
+  userId: {
+    _id: string;
+    fullname: string;
+    avatar: string;
+  };
+  content: string;
+  createdAt: string;
+}
+
+const ProductRatings = ({ productId }: { productId: string }) => {
+  const [ratings, setRatings] = useState<ProductRating[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRatings = async () => {
+      try {
+        const response = await ratingApi.getRatingsByProductId(productId);
+        setRatings(response.data.data);
+      } catch (error) {
+        console.error("Error fetching ratings:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRatings();
+  }, [productId]);
+
+  if (loading) {
+    return <p>Đang tải đánh giá...</p>;
+  }
+
+  if (ratings.length === 0) {
+    return <p>Chưa có đánh giá nào cho sản phẩm này.</p>;
+  }
+
+  return (
+    <div>
+      <h3 className="text-lg font-bold mb-4">Đánh giá sản phẩm</h3>
+      {ratings.map((rating) => (
+        <div
+          key={rating._id._id}
+          className="p-4 mb-4 border rounded-lg shadow-sm bg-white"
+        >
+          <div className="flex items-center mb-2">
+            <img
+              src={rating.userId.avatar || "/default-avatar.png"}
+              alt={rating.userId.fullname}
+              className="w-10 h-10 rounded-full object-cover mr-3"
+            />
+            <div>
+              <p className="font-medium">{rating.userId.fullname}</p>
+              <p className="text-sm text-gray-500">
+                {new Date(rating.createdAt).toLocaleDateString("vi-VN")}
+              </p>
+            </div>
+          </div>
+          <div className="mb-2">
+            <p className="text-yellow-500">
+              {"★".repeat(rating.score)}
+              {"☆".repeat(5 - rating.score)}
+            </p>
+          </div>
+          <p className="text-gray-700">{rating.content}</p>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 export default function OrderDetail() {
   const params = useParams();
   const [user, setUser] = useState<User | null>(null);
@@ -83,8 +161,16 @@ export default function OrderDetail() {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
   const [reviewLoading, setReviewLoading] = useState(false);
-  const [ratedProducts, setRatedProducts] = useState<string[]>([]);
-
+  const [ratings, setRatings] = useState<
+    {
+      orderDetailId: string;
+      productId: string;
+    }[]
+  >([]);
+  // Thay đổi kiểu dữ liệu của ratedProducts
+  const [ratedProducts, setRatedProducts] = useState<
+    { orderDetailId: string; productId: string }[]
+  >([]);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -107,19 +193,21 @@ export default function OrderDetail() {
         setUser(userResponse.data.data);
 
         const orderResponse = await orderDetailApi.getOrderByUserId(accountID);
-        console.log("Order Response:", orderResponse);
-
         if (!orderResponse.data.success) {
           console.warn("API Error:", orderResponse.data.message);
           setOrders([]);
         } else {
           setOrders(orderResponse.data.data || []);
         }
-        const getIDProduct = orderResponse.data.data.flatMap((order: Order) =>
-          order.items.map((item: OrderItem) => item.productId)
-        );
-        setRatedProducts(getIDProduct);
-        console.log("Rated Products:", getIDProduct);
+
+        // Fetch ratings
+        const ratingsResponse = await ratingApi.getRatingsByUserId(accountID);
+        if (ratingsResponse.data.success) {
+          const ratedItems = ratingsResponse.data.data.map((rating: any) => ({
+            orderDetailId: rating._id,
+          }));
+          setRatings(ratedItems);
+        }
       } catch (error) {
         console.error("Failed to fetch data:", error);
         setUser(null);
@@ -180,41 +268,48 @@ export default function OrderDetail() {
       setIsReviewModalVisible(true);
     }
   };
-
+  const isProductRated = (orderDetailId: string, productId: string) => {
+    return ratings.some(
+      (rating) =>
+        rating.orderDetailId === orderDetailId && rating.productId === productId
+    );
+  };
   const handleSubmitReview = async () => {
     if (!selectedProductForReview) {
       message.error("Không tìm thấy sản phẩm để đánh giá.");
       return;
     }
 
-    // Gom dữ liệu đánh giá
-    const reviewData = {
-      productId: selectedProductForReview.id,
-      score: rating,
-      userId: user?._id,
-      content: comment.trim() || "",
-      orderDetailId: orderDetailId,
-    };
-    const response = await ratingApi.createRating(reviewData);
-    console.log(response, "SS");
-    // Kiểm tra dữ liệu
-    if (!reviewData.score || reviewData.score < 1 || reviewData.score > 5) {
-      message.error("Vui lòng chọn số sao hợp lệ.");
-      return;
-    }
-    if (reviewData.content.length > 200) {
-      message.error("Nhận xét không được vượt quá 200 ký tự.");
-      return;
-    }
-
     setReviewLoading(true);
+
     try {
-      message.success("Đánh giá của bạn đã được gửi thành công!");
-      setIsReviewModalVisible(false);
-      setRating(5); // Reset rating về mặc định
-      setComment(""); // Reset comment
-      setSelectedProductForReview(null); // Reset sản phẩm đã chọn
+      const reviewData = {
+        productId: selectedProductForReview.id,
+        score: rating,
+        userId: user?._id,
+        content: comment.trim() || "",
+        orderDetailId: orderDetailId,
+      };
+
+      const response = await ratingApi.createRating(reviewData);
+      if (response.data.success) {
+        // Thêm đánh giá mới vào state ratings
+        setRatings((prev) => [
+          ...prev,
+          {
+            orderDetailId: orderDetailId!,
+            productId: selectedProductForReview.id,
+          },
+        ]);
+
+        message.success("Đánh giá sản phẩm thành công!");
+        setIsReviewModalVisible(false);
+        setRating(5);
+        setComment("");
+        setSelectedProductForReview(null);
+      }
     } catch (error) {
+      console.error("Error submitting review:", error);
       message.error("Có lỗi xảy ra khi gửi đánh giá.");
     } finally {
       setReviewLoading(false);
@@ -367,17 +462,54 @@ export default function OrderDetail() {
           >
             Xem chi tiết
           </Button>
-          {record.status == "DELIVERED" && (
-            <Button
-              type="primary"
-              onClick={() => handleReorder(record)}
-              className="bg-blue-500 hover:bg-blue-600 flex items-center"
-              icon={<FaShoppingBag className="mr-2" />}
-            >
-              Mua lại
-            </Button>
+
+          {record.status === "DELIVERED" && (
+            <>
+              <Button
+                type="primary"
+                onClick={() => handleReorder(record)}
+                className="bg-blue-500 hover:bg-blue-600 flex items-center"
+                icon={<FaShoppingBag className="mr-2" />}
+              >
+                Mua lại
+              </Button>
+
+              <div className="space-y-2">
+                {record.items.map((item) => {
+                  const hasRated = isProductRated(
+                    item.orderDetailId,
+                    item.productId
+                  );
+                  return (
+                    <Button
+                      key={item.id}
+                      type={hasRated ? "default" : "primary"}
+                      onClick={() =>
+                        !hasRated && handleShowReviewModal(record, item.id)
+                      }
+                      disabled={hasRated}
+                      className={`flex items-center w-full ${
+                        hasRated
+                          ? "bg-gray-100 text-gray-400"
+                          : "bg-purple-500 hover:bg-purple-600 text-white"
+                      }`}
+                      icon={
+                        <FaStar
+                          className={`mr-2 ${
+                            hasRated ? "text-gray-400" : "text-yellow-400"
+                          }`}
+                        />
+                      }
+                    >
+                      {hasRated ? `Đã đánh giá` : `Đánh giá`}
+                    </Button>
+                  );
+                })}
+              </div>
+            </>
           )}
-          {record.status == "pending" && (
+
+          {record.status === "PENDING" && (
             <Button
               danger
               onClick={() => showCancelConfirm(record)}
@@ -386,31 +518,6 @@ export default function OrderDetail() {
             >
               Huỷ
             </Button>
-          )}
-          {record.status === "DELIVERED" && (
-            <>
-              {!ratedProducts.includes(record.items[0].productId) ? (
-                <Button
-                  type="primary"
-                  onClick={() =>
-                    setIsDetailModalVisible(false) ||
-                    handleShowReviewModal(record, record.items[0].id)
-                  }
-                  className="bg-purple-500 hover:bg-purple-600 flex items-center"
-                  icon={<FaStar className="mr-2" />}
-                >
-                  Đánh giá {record.items[0].productId}
-                </Button>
-              ) : (
-                <Button
-                  disabled
-                  className="flex items-center"
-                  icon={<FaStar className="mr-2" />}
-                >
-                  Đã đánh giá
-                </Button>
-              )}
-            </>
           )}
         </div>
       ),

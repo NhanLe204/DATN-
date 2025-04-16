@@ -23,6 +23,15 @@ const ratingApi = {
       throw error;
     }
   },
+  getRatingsByUserId: async (userId) => {
+    try {
+      const response = await api.get(`/v1/ratings/user/${userId}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching ratings:", error.response?.data || error);
+      throw error;
+    }
+  },
 };
 
 export default ratingApi;
