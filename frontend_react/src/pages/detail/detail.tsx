@@ -369,7 +369,7 @@ export default function DetailProduct() {
                   <div className="flex-shrink-0">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-lg font-semibold">
                       <Avatar
-                        src={review.userAvatar}
+                        src={review.userAvatar || "hehe"}
                         alt={review.userName}
                         size={48}
                         className="rounded-full"
