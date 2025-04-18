@@ -23,12 +23,20 @@ const BlogApi = {
   },
 
   createBlog: async (data) => {
-    const response = await api.post("/v1/blogs", data);
+    const response = await api.post("/v1/blogs", data, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
     return response.data;
   },
 
   updateBlog: async (id, data) => {
-    const response = await api.patch(`/v1/blogs/${id}`, data);
+    const response = await api.patch(`/v1/blogs/${id}`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
     return response.data;
   },
 

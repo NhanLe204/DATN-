@@ -15,7 +15,7 @@ cloudinary.config({
 
 // Hàm lấy tên thư mục từ route
 const getFolderFromRoute = (req: Request): string => {
-  const folderActive = ['products', 'categories', 'users', 'orders', 'reviews'];
+  const folderActive = ['products', 'categories', 'users', 'orders', 'reviews', 'blogs'];
 
   // Lấy route và làm sạch nó
   const route = req.originalUrl
