@@ -16,7 +16,7 @@ cloudinary_1.v2.config({
 });
 // Hàm lấy tên thư mục từ route
 const getFolderFromRoute = (req) => {
-    const folderActive = ['products', 'categories', 'users', 'orders', 'reviews'];
+    const folderActive = ['products', 'categories', 'users', 'orders', 'reviews', 'blogs'];
     // Lấy route và làm sạch nó
     const route = req.originalUrl
         .replace('/api/v1/', '') // Loại bỏ phần /api/v1/

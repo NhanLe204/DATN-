@@ -79,12 +79,10 @@ export default function ListCard({ pros }) {
 
               <Link to={`/detail/${product._id}`}>
                 <img
-                  src={`${
-                    imageStates[index]?.currentImage || product.image_url[0]
-                  }`}
-                  className={`bg-[#EAEAEA] w-full h-[180px] object-cover transition-opacity duration-300 ${
-                    imageStates[index]?.fade || "opacity-100"
-                  }`}
+                  src={`${imageStates[index]?.currentImage || product.image_url[0]
+                    }`}
+                  className={`bg-[#EAEAEA] w-full h-[180px] object-cover transition-opacity duration-300 ${imageStates[index]?.fade || "opacity-100"
+                    }`}
                   alt={product.name}
                   onMouseEnter={() => handleMouseEnter(index)}
                   onMouseLeave={() => handleMouseLeave(index)}
@@ -92,7 +90,7 @@ export default function ListCard({ pros }) {
               </Link>
             </div>
 
-            <div className="flex-1 p-3 flex flex-col">
+            <div className="flex-1 p-2 flex flex-col">
               <div className="h-9 mb-1">
                 <p className="text-left leading-tight text-[#686868] transition-colors duration-300 group-hover:text-[#333] line-clamp-2 text-sm">
                   {product.name}
@@ -118,10 +116,12 @@ export default function ListCard({ pros }) {
               <div className="relative overflow-hidden mt-2">
                 <Link to={`/detail/${product._id}`}>
                   <Button
-                    className="w-full uppercase text-[#22A6DF] border border-[#22A6DF] hover:!text-white relative z-10 overflow-hidden before:absolute before:top-0 before:left-[-100%] before:w-full before:h-full before:bg-[#22A6DF] before:transition-all before:duration-300 hover:before:left-0 text-sm"
-                    size="small"
+                    className="w-full uppercase text-[#22A6DF] border border-[#22A6DF] hover:!text-white relative z-10 *:
+                     overflow-hidden before:absolute before:top-0 before:left-[-100%] before:w-full before:h-full before:bg-[#22A6DF] 
+                     before:transition-all before:duration-300 hover:before:left-0 text-base"
+                    size="middle"
                   >
-                    <div className="flex items-center justify-center gap-1 relative z-10">
+                    <div className="flex items-center justify-center gap-1 relative z-10 ">
                       <BsHandbag size={14} />
                       <span>Chọn mua</span>
                     </div>

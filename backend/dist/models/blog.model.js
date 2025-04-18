@@ -28,22 +28,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
 const blog_enum_js_1 = require("../enums/blog.enum.js");
-const product_model_js_1 = __importDefault(require("../models/product.model.js"));
-const user_model_js_1 = __importDefault(require("../models/user.model.js"));
+const blogCategory_model_js_1 = __importDefault(require("../models/blogCategory.model.js"));
 const blogSchema = new mongoose_1.Schema({
-    product: {
+    blog_category_id: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: product_model_js_1.default,
-        autoPopulate: true
-    },
-    userID: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: user_model_js_1.default,
+        ref: blogCategory_model_js_1.default,
         autoPopulate: true
     },
     image_url: {
-        type: [String],
-        default: []
+        type: String,
+        required: false
     },
     title: {
         type: String,

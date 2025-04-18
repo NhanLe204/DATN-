@@ -13,6 +13,7 @@ const adminPageNameMapping: { [key: string]: string } = {
   categories: "Quản lý danh mục",
   blogcategories: "Quản lý danh mục bài viết",
   products: "Quản lý sản phẩm",
+  blogs: "Quản lý bài viết",
   brands: "Quản lý thương hiệu",
   tags: "Quản lý tags",
   employees: "Quản lý nhân viên",
