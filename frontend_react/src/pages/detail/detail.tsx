@@ -1,6 +1,5 @@
-"use client";
 import React, { useState, useEffect, ReactNode } from "react";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { Breadcrumb, Button, Image, Avatar, Divider } from "antd";
 import { motion } from "framer-motion";
 import { Star, ThumbsUp, MessageCircle, Clock, Award } from "lucide-react";
@@ -13,6 +12,7 @@ import ratingApi from "../../api/ratingApi";
 
 export default function DetailProduct() {
   const params = useParams();
+  const location = useLocation();
   const [selectedImage, setSelectedImage] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [comments, setComments] = useState<
@@ -51,14 +51,34 @@ export default function DetailProduct() {
       price?: string;
       image_url?: string[];
     }[]
-  >([]); // State cho sản phẩm liên quan
+  >([]);
   const dispatch = useDispatch();
+
+  // Cuộn đến phần đánh giá khi có hash #reviews
+  useEffect(() => {
+    if (location.hash !== "#reviews" || !productsDetail) return;
+
+    const scrollToReviews = () => {
+      const reviewsSection = document.getElementById("reviews");
+      console.log("Reviews section:", reviewsSection);
+      if (reviewsSection) {
+        reviewsSection.scrollIntoView({ behavior: "smooth" });
+      } else {
+        console.warn("Reviews section not found, retrying...");
+        // Thử lại sau 500ms nếu chưa tìm thấy
+        setTimeout(scrollToReviews, 500);
+      }
+    };
+
+    // Chờ 500ms để đảm bảo render hoàn thành
+    const timeoutId = setTimeout(scrollToReviews, 500);
+    return () => clearTimeout(timeoutId); // Dọn dẹp timeout
+  }, [location.hash, productsDetail]); // Thêm productsDetail vào dependencies
 
   // Fetch product detail và related products
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Lấy chi tiết sản phẩm
         const productDetailResponse = await productsApi.getProductByID(
           params.id
         );
@@ -72,12 +92,11 @@ export default function DetailProduct() {
           image_url: productDetailData.image_url || [],
         });
 
-        // Lấy sản phẩm liên quan
         const relatedResponse = await productsApi.getProductRelatedList(
           params.id
         );
         setRelatedProducts(relatedResponse.data || []);
-        // lấy đánh giá từ client
+
         const reviewsResponse = await ratingApi.getRatingsByProductId(
           params.id
         );
@@ -94,7 +113,6 @@ export default function DetailProduct() {
   if (!product)
     return <div>Không tìm thấy sản phẩm. Vui lòng kiểm tra lại.</div>;
 
-  // Các hàm xử lý sự kiện giữ nguyên
   const handleImageClick = (image) => setSelectedImage(image);
   const handleChange = (event) => {
     const value = event.target.value;
@@ -261,6 +279,7 @@ export default function DetailProduct() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-2xl shadow-lg p-8 mb-8"
+          id="reviews"
         >
           <h2 className="text-2xl font-bold text-gray-800 mb-8 flex items-center gap-3">
             <MessageCircle className="w-6 h-6 text-blue-600" />
@@ -437,6 +456,7 @@ export default function DetailProduct() {
             </div>
           )}
         </motion.div>
+
         {/* Related Products Section */}
         <div>
           <h3 className="mb-4 text-xl font-bold">SẢN PHẨM LIÊN QUAN</h3>

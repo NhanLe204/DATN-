@@ -11,7 +11,7 @@ const generateAccessToken = async (userId, res) => {
         throw new Error('JWT_SECRET is not defined');
     }
     const token = jsonwebtoken_1.default.sign({ userId }, config_js_1.default.JWT_SECRET, {
-        expiresIn: '15s'
+        expiresIn: '1d'
     });
     return token;
 };
