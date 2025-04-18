@@ -7,27 +7,24 @@ import productsApi from "../../api/productsApi";
 import { useDispatch } from "react-redux";
 import { addToCart } from "../../redux/slices/cartslice";
 import parse from "html-react-parser";
-import { LikeOutlined, MessageOutlined } from "@ant-design/icons";
 import ratingApi from "../../api/ratingApi";
 
 export default function DetailProduct() {
   const params = useParams();
   const location = useLocation();
   const [selectedImage, setSelectedImage] = useState("");
+  const [likes, setLikes] = useState<{ [key: number]: boolean }>({});
+  const [likeCounts, setLikeCounts] = useState<{ [key: number]: number }>({});
   const [quantity, setQuantity] = useState(1);
   const [comments, setComments] = useState<
     {
-      createdAt: any;
-      userName: string | undefined;
-      userAvatar: ReactNode;
-      content: string;
       id: number;
-      username: string;
+      userName: string;
+      userAvatar: string;
+      content: string;
       score: number;
-      rating: number;
-      date: string;
-      flavor?: string;
-      comment: string;
+      createdAt: string;
+      likes: number;
     }[]
   >([]);
   const [productsDetail, setProductDetail] = useState<{
@@ -100,14 +97,45 @@ export default function DetailProduct() {
         const reviewsResponse = await ratingApi.getRatingsByProductId(
           params.id
         );
-        console.warn(reviewsResponse, "Detail ID Rating");
-        setComments(reviewsResponse.data || []);
+        const fetchedComments = reviewsResponse.data || [];
+        setComments(fetchedComments);
+
+        // Initialize likes and likeCounts
+        const initialLikes = {};
+        const initialCounts = {};
+        fetchedComments.forEach((comment: any) => {
+          initialLikes[comment.id] = false;
+          initialCounts[comment.id] = comment.likes || 0;
+        });
+        setLikes(initialLikes);
+        setLikeCounts(initialCounts);
       } catch (error) {
         console.error("Error fetching product data:", error);
       }
     };
     fetchData();
   }, [params.id]);
+
+  const handleLike = async (commentId: number) => {
+    try {
+      // Toggle like state
+      setLikes((prev) => ({
+        ...prev,
+        [commentId]: !prev[commentId],
+      }));
+
+      // Update like count
+      setLikeCounts((prev) => ({
+        ...prev,
+        [commentId]: prev[commentId] + (likes[commentId] ? -1 : 1),
+      }));
+
+      // Call API to update likes in the backend
+      await ratingApi.likeRating(commentId);
+    } catch (error) {
+      console.error("Error updating like:", error);
+    }
+  };
 
   const product = productsDetail;
   if (!product)
@@ -379,68 +407,96 @@ export default function DetailProduct() {
             {comments.map((review, index) => (
               <motion.div
                 key={review.id}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="bg-white rounded-xl p-6 border border-gray-100 hover:shadow-md transition-shadow"
+                transition={{
+                  delay: index * 0.1,
+                  duration: 0.5,
+                  ease: "easeOut",
+                }}
+                whileHover={{ scale: 1.02 }}
+                className="bg-white rounded-xl p-6 border border-gray-100 hover:shadow-lg transition-shadow"
               >
                 <div className="flex gap-4">
                   <div className="flex-shrink-0">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-lg font-semibold">
-                      <Avatar
-                        src={review.userAvatar || "hehe"}
-                        alt={review.userName}
-                        size={48}
-                        className="rounded-full"
-                      />
-                    </div>
+                    <Avatar
+                      src={review.userAvatar || "/default-avatar.png"}
+                      alt={review.userName}
+                      size={48}
+                      className="rounded-full"
+                    />
                   </div>
-
                   <div className="flex-grow">
                     <div className="flex justify-between items-start mb-3">
-                      <div>
+                      <motion.div
+                        initial={{ x: -20, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ duration: 0.5, ease: "easeOut" }}
+                      >
                         <h4 className="font-semibold text-gray-800 mb-1">
                           {review.userName}
                         </h4>
                         <div className="flex items-center gap-3">
                           <div className="flex">
                             {[1, 2, 3, 4, 5].map((star) => (
-                              <Star
+                              <motion.div
                                 key={star}
-                                className={`w-4 h-4 ${
-                                  star <= review.score
-                                    ? "text-yellow-400 fill-yellow-400"
-                                    : "text-gray-200 fill-gray-200"
-                                }`}
-                              />
+                                whileHover={{ scale: 1.2 }}
+                                transition={{ duration: 0.2 }}
+                              >
+                                <Star
+                                  className={`w-4 h-4 ${
+                                    star <= review.score
+                                      ? "text-yellow-400 fill-yellow-400"
+                                      : "text-gray-200 fill-gray-200"
+                                  }`}
+                                />
+                              </motion.div>
                             ))}
                           </div>
                           <span className="text-sm text-gray-500">
-                            {formatDate(review.createdAt)}
+                            {new Date(review.createdAt).toLocaleDateString(
+                              "vi-VN"
+                            )}
                           </span>
                         </div>
-                      </div>
+                      </motion.div>
                     </div>
-
-                    {review.flavor && (
-                      <div className="bg-blue-50 p-4 rounded-lg mb-4">
-                        <div className="flex items-center gap-2">
-                          <span className="text-blue-600 font-medium">
-                            Mùi hương:
-                          </span>
-                          <span className="text-gray-700">{review.flavor}</span>
-                        </div>
-                      </div>
-                    )}
-
-                    <p className="text-gray-700 leading-relaxed mb-4">
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.2, duration: 0.5 }}
+                      className="text-gray-700 leading-relaxed mb-4"
+                    >
                       {review.content}
-                    </p>
-
-                    <button className="flex items-center gap-2 text-gray-500 hover:text-blue-600 transition-colors">
-                      <ThumbsUp className="w-4 h-4" />
-                      <span className="text-sm">(0)</span>
-                    </button>
+                    </motion.p>
+                    <div className="flex items-center gap-4 mt-4">
+                      <motion.button
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => handleLike(review.id)}
+                        className={`flex items-center gap-2 px-3 py-1 rounded-full transition-all ${
+                          likes[review.id]
+                            ? "bg-blue-100 text-blue-600"
+                            : "text-gray-500 hover:text-blue-600"
+                        }`}
+                      >
+                        <ThumbsUp
+                          className={`w-4 h-4 ${
+                            likes[review.id] ? "fill-blue-600" : ""
+                          }`}
+                        />
+                        <motion.span
+                          initial={{ scale: 1 }}
+                          animate={{
+                            scale: likes[review.id] ? [1, 1.3, 1] : 1,
+                          }}
+                          transition={{ duration: 0.3 }}
+                          className="text-sm"
+                        >
+                          {likeCounts[review.id] || 0} Thích
+                        </motion.span>
+                      </motion.button>
+                    </div>
                   </div>
                 </div>
               </motion.div>

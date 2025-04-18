@@ -37,6 +37,7 @@ import SuccessPage from "./pages/orders/success";
 import BookingManager from "./admin/booking/booking";
 import SuccessBooking from "./pages/orders/booking/successBooking";
 import BlogCategoryList from "./admin/blog_category/blog_category";
+import ChatbotController from "./components/ChatbotController";
 
 interface User {
   id: string;
@@ -178,7 +179,12 @@ function App() {
     },
     {
       path: "",
-      element: <PageLayout />,
+      element: (
+        <>
+          <ChatbotController />
+          <PageLayout />
+        </>
+      ),
       children: [
         {
           path: "/",
