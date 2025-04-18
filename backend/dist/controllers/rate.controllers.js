@@ -19,9 +19,14 @@ const createRating = async (req, res) => {
         }
         // Kiểm tra tính hợp lệ của productI
         // Kiểm tra tính hợp lệ của orderDetailId
-        const orderDetailExists = await orderdetail_model_js_1.default.findById(orderDetailId);
-        if (!orderDetailExists) {
+        const orderDetail = await orderdetail_model_js_1.default.findById(orderDetailId);
+        if (!orderDetail) {
             res.status(404).json({ success: false, message: 'Chi tiết đơn hàng không tồn tại' });
+            return;
+        }
+        // Kiểm tra xem orderDetail đã được đánh giá chưa
+        if (orderDetail.isRated) {
+            res.status(400).json({ success: false, message: 'Sản phẩm này đã được đánh giá' });
             return;
         }
         // Tạo đánh giá mới
@@ -33,6 +38,8 @@ const createRating = async (req, res) => {
             score
         });
         const savedRate = await newRate.save();
+        // Cập nhật isRated trong orderDetail
+        await orderdetail_model_js_1.default.updateOne({ _id: orderDetailId }, { $set: { isRated: true } });
         res.status(201).json({
             success: true,
             message: 'Tạo đánh giá thành công',

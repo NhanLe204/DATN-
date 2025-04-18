@@ -39,9 +39,9 @@ export const getOrderDetailsByOrderId = async (req: Request, res: Response): Pro
 // Tạo order detail mới
 export const createOrderDetail = async (req: Request, res: Response) => {
   try {
-    const { orderId, productId, serviceId, quantity, product_price, total_price, booking_date } = req.body;
+    const { orderId, productId, serviceId, quantity, product_price, total_price, booking_date, isRated } = req.body;
 
-    if (!orderId || (!productId && !serviceId) || !quantity || !product_price) {
+    if (!orderId || (!productId && !serviceId) || !quantity || !product_price || !isRated) {
       return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
 
@@ -53,7 +53,8 @@ export const createOrderDetail = async (req: Request, res: Response) => {
       product_price,
       total_price,
       booking_date: serviceId ? booking_date : null,
-      booking_time: serviceId ? booking_date : null
+      booking_time: serviceId ? booking_date : null,
+      isRated
     });
 
     const savedOrderDetail = await orderDetail.save();
@@ -254,7 +255,8 @@ export const getOrderByUserId = async (req: Request, res: Response): Promise<voi
             name: detail.productId?.name,
             quantity: detail.quantity,
             price: detail.product_price,
-            image_url: detail.productId?.image_url || []
+            image_url: detail.productId?.image_url || [],
+            isRated: detail.isRated || false
           })),
           paymentMethod: order.payment_typeID?.payment_type_name,
           shippingAddress: order.shipping_address,

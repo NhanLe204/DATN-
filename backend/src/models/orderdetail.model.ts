@@ -17,7 +17,8 @@ const orderDetailSchema = new Schema(
       type: String,
       required: false,
       default: ''
-    }
+    },
+    isRated: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
