@@ -173,27 +173,30 @@ export default function DetailProduct() {
 
   return (
     <div className="text-black">
-      <div className="mx-auto w-full px-[154px] py-10">
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {/* Phần hình ảnh */}
-          <div className="sticky top-0 h-fit">
-            <div className="flex items-start gap-6">
-              <div className="flex flex-col gap-4">
+      <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 xl:px-[154px] py-6 lg:py-10">
+        {/* Main Product Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Image Section */}
+          <div className="lg:sticky lg:top-0 h-fit">
+            <div className="flex flex-col-reverse lg:flex-row items-center lg:items-start gap-4 lg:gap-6">
+              {/* Thumbnail Images */}
+              <div className="flex lg:flex-col gap-4 overflow-x-auto lg:overflow-x-visible w-full lg:w-auto">
                 {product.image_url.map((image, index) => (
                   <img
                     key={index}
                     src={image}
                     alt={`Detail ${index + 1}`}
-                    className={`w-20 h-20 cursor-pointer rounded-lg border object-cover transition-all duration-300 ${
-                      selectedImage === image
+                    className={`w-16 h-16 lg:w-20 lg:h-20 flex-shrink-0 cursor-pointer rounded-lg border object-cover transition-all duration-300 ${selectedImage === image
                         ? "border-[#28A745]"
                         : "border-[#EAEAEA] hover:border-[#28A745]"
-                    }`}
+                      }`}
                     onClick={() => handleImageClick(image)}
                   />
                 ))}
               </div>
-              <div className="relative w-[602px] h-[602px] overflow-hidden">
+
+              {/* Main Image */}
+              <div className="relative w-full lg:w-[602px] aspect-square">
                 <Image
                   src={selectedImage || product.image_url[0]}
                   alt="Main product"
@@ -202,11 +205,9 @@ export default function DetailProduct() {
                     mask: "Xem ảnh lớn",
                     maskClassName: "custom-preview-mask",
                   }}
-                  width="100%"
-                  height="100%"
                 />
                 {(product.discount ?? 0) > 0 && (
-                  <div className="absolute top-4 left-4 bg-[#FF0000] text-white text-lg font-medium px-3 py-1 rounded-sm">
+                  <div className="absolute top-4 left-4 bg-[#FF0000] text-white text-sm lg:text-lg font-medium px-2 lg:px-3 py-1 rounded-sm">
                     -{product.discount}%
                   </div>
                 )}
@@ -214,86 +215,86 @@ export default function DetailProduct() {
             </div>
           </div>
 
-          {/* Phần thông tin sản phẩm */}
-          <div className="flex flex-col">
-            <h1 className="mb-2 text-3xl font-bold text-gray-800">
+          {/* Product Info Section */}
+          <div className="flex flex-col space-y-4">
+            <h1 className="text-2xl lg:text-3xl font-bold text-gray-800">
               {product.name}
             </h1>
-            <div className="flex items-center mb-4">
+
+            <div className="flex items-center">
               <span className="text-yellow-400">★★★★★</span>
-              <span className="ml-2 text-sm text-gray-600">(123 đánh giá)</span>
+              <span className="ml-2 text-xs lg:text-sm text-gray-600">
+                (123 đánh giá)
+              </span>
             </div>
-            <div className="mb-4 text-sm text-gray-600">
-              <p>
-                <span className="font-semibold">Thương hiệu:</span>{" "}
-                {product.brand}
-              </p>
-              <p>
-                <span className="font-semibold">Thẻ:</span> {product.tag}
-              </p>
-              <p>
-                <span className="font-semibold">Tình trạng:</span>{" "}
-                {displayStatus}
-              </p>
+
+            {/* Product Details */}
+            <div className="text-xs lg:text-sm text-gray-600 space-y-1">
+              <p><span className="font-semibold">Thương hiệu:</span> {product.brand}</p>
+              <p><span className="font-semibold">Thẻ:</span> {product.tag}</p>
+              <p><span className="font-semibold">Tình trạng:</span> {displayStatus}</p>
             </div>
-            <div className="mb-6 mt-2 text-2xl font-bold text-[#FF0000]">
-              {new Intl.NumberFormat("vi-VN", {
-                style: "currency",
-                currency: "VND",
-              }).format(
-                Number(product.price) * (1 - (product.discount || 0) / 100)
-              )}
+
+            {/* Price Section */}
+            <div className="flex items-center flex-wrap gap-2">
+              <span className="text-xl lg:text-2xl font-bold text-[#FF0000]">
+                {new Intl.NumberFormat("vi-VN", {
+                  style: "currency",
+                  currency: "VND",
+                }).format(Number(product.price) * (1 - (product.discount || 0) / 100))}
+              </span>
               {(product.discount ?? 0) > 0 && (
                 <>
-                  <span className="ml-2 text-sm text-[#686868] line-through">
+                  <span className="text-xs lg:text-sm text-[#686868] line-through">
                     {new Intl.NumberFormat("vi-VN", {
                       style: "currency",
                       currency: "VND",
                     }).format(Number(product.price))}
                   </span>
-                  <span className="ml-2 rounded border border-[#FF0000] px-2 py-1 font-medium text-[#FF0000]">
+                  <span className="text-xs lg:text-sm rounded border border-[#FF0000] px-2 py-1 font-medium text-[#FF0000]">
                     -{product.discount}%
                   </span>
                 </>
               )}
             </div>
-            <div className="flex gap-4 mt-4 mb-6">
-              <span className="font-semibold">Số lượng:</span>
+
+            {/* Quantity Selector */}
+            <div className="flex items-center gap-4">
+              <span className="font-semibold text-sm lg:text-base">Số lượng:</span>
               <div className="flex items-center border rounded-lg">
-                <Button onClick={handleDecrement} className="px-4 py-2">
-                  -
-                </Button>
+                <Button onClick={handleDecrement} className="px-3 lg:px-4 py-2">-</Button>
                 <input
                   min={1}
                   value={quantity}
                   onChange={handleChange}
-                  className="w-4 text-center border-none md:w-12"
+                  className="w-8 lg:w-12 text-center border-none"
                 />
-                <Button onClick={handleIncrement} className="px-4 py-2">
-                  +
-                </Button>
+                <Button onClick={handleIncrement} className="px-3 lg:px-4 py-2">+</Button>
               </div>
             </div>
-            <div className="flex flex-col gap-4 md:flex-row">
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3">
               <Button
-                className="rounded-lg bg-[#22A6DF] px-6 py-5 text-white"
+                className="w-full sm:w-auto rounded-lg bg-[#22A6DF] px-4 lg:px-6 py-3 lg:py-5 text-white text-sm lg:text-base"
                 onClick={handleAddToCart}
               >
                 Thêm vào giỏ hàng
               </Button>
-              <Button className="rounded-lg bg-[#FF0000] px-6 py-5 text-white">
+              <Button className="w-full sm:w-auto rounded-lg bg-[#FF0000] px-4 lg:px-6 py-3 lg:py-5 text-white text-sm lg:text-base">
                 MUA NGAY
               </Button>
             </div>
-            <div className="mt-8">
-              <h2 className="text-xl font-bold text-gray-800">
+
+            {/* Product Description */}
+            <div className="mt-6">
+              <h2 className="text-lg lg:text-xl font-bold text-gray-800 mb-3">
                 Thông tin sản phẩm
               </h2>
-              <p className="mt-2 text-sm text-gray-600">
+              <div className="text-sm lg:text-base text-gray-600">
                 {parse(product.description || "")}
-              </p>
-
-              <ul className="pl-6 mt-2 text-sm text-gray-600 list-disc">
+              </div>
+              <ul className="pl-6 mt-3 text-sm lg:text-base text-gray-600 list-disc">
                 {product.details?.map((detail, index) => (
                   <li key={index}>{detail}</li>
                 ))}
@@ -302,7 +303,6 @@ export default function DetailProduct() {
           </div>
         </div>
 
-        {/* Phần đánh giá và sản phẩm liên quan */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -321,26 +321,25 @@ export default function DetailProduct() {
               <div className="text-4xl font-bold text-[#22A6DF] mb-2">
                 {comments.length > 0
                   ? (
-                      comments.reduce((sum, review) => sum + review.score, 0) /
-                      comments.length
-                    ).toFixed(1)
+                    comments.reduce((sum, review) => sum + review.score, 0) /
+                    comments.length
+                  ).toFixed(1)
                   : "0.0"}
               </div>
               <div className="flex text-yellow-400 mb-2">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star
                     key={star}
-                    className={`w-5 h-5 ${
-                      star <=
-                      Math.round(
-                        comments.reduce(
-                          (sum, review) => sum + review.score,
-                          0
-                        ) / comments.length
-                      )
+                    className={`w-5 h-5 ${star <=
+                        Math.round(
+                          comments.reduce(
+                            (sum, review) => sum + review.score,
+                            0
+                          ) / comments.length
+                        )
                         ? "fill-yellow-400"
                         : "fill-gray-200"
-                    }`}
+                      }`}
                   />
                 ))}
               </div>
@@ -445,11 +444,10 @@ export default function DetailProduct() {
                                 transition={{ duration: 0.2 }}
                               >
                                 <Star
-                                  className={`w-4 h-4 ${
-                                    star <= review.score
+                                  className={`w-4 h-4 ${star <= review.score
                                       ? "text-yellow-400 fill-yellow-400"
                                       : "text-gray-200 fill-gray-200"
-                                  }`}
+                                    }`}
                                 />
                               </motion.div>
                             ))}
@@ -474,16 +472,14 @@ export default function DetailProduct() {
                       <motion.button
                         whileTap={{ scale: 0.9 }}
                         onClick={() => handleLike(review.id)}
-                        className={`flex items-center gap-2 px-3 py-1 rounded-full transition-all ${
-                          likes[review.id]
+                        className={`flex items-center gap-2 px-3 py-1 rounded-full transition-all ${likes[review.id]
                             ? "bg-blue-100 text-blue-600"
                             : "text-gray-500 hover:text-blue-600"
-                        }`}
+                          }`}
                       >
                         <ThumbsUp
-                          className={`w-4 h-4 ${
-                            likes[review.id] ? "fill-blue-600" : ""
-                          }`}
+                          className={`w-4 h-4 ${likes[review.id] ? "fill-blue-600" : ""
+                            }`}
                         />
                         <motion.span
                           initial={{ scale: 1 }}
@@ -513,15 +509,15 @@ export default function DetailProduct() {
           )}
         </motion.div>
 
-        {/* Related Products Section */}
-        <div>
-          <h3 className="mb-4 text-xl font-bold">SẢN PHẨM LIÊN QUAN</h3>
+        {/* Related Products */}
+        <div className="mt-8">
+          <h3 className="text-lg lg:text-xl font-bold mb-4">SẢN PHẨM LIÊN QUAN</h3>
           {relatedProducts.length > 0 ? (
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4">
               {relatedProducts.map((product) => (
                 <div
                   key={product._id || product.id}
-                  className="p-4 border rounded-lg"
+                  className="p-3 lg:p-4 border rounded-lg hover:shadow-md transition-shadow"
                 >
                   <div className="mb-2 aspect-square">
                     <img
@@ -530,8 +526,10 @@ export default function DetailProduct() {
                       className="object-contain w-full h-full"
                     />
                   </div>
-                  <h4 className="mb-2 text-sm line-clamp-2">{product.name}</h4>
-                  <p className="font-medium text-blue-500">
+                  <h4 className="text-xs lg:text-sm mb-2 line-clamp-2">
+                    {product.name}
+                  </h4>
+                  <p className="font-medium text-blue-500 text-sm lg:text-base">
                     {new Intl.NumberFormat("vi-VN", {
                       style: "currency",
                       currency: "VND",
@@ -541,7 +539,7 @@ export default function DetailProduct() {
               ))}
             </div>
           ) : (
-            <p>Không có sản phẩm liên quan.</p>
+            <p className="text-gray-500 text-center">Không có sản phẩm liên quan.</p>
           )}
         </div>
       </div>
