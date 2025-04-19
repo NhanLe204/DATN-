@@ -33,6 +33,7 @@ import productsApi from "../api/productsApi";
 import { UserOutlined } from "@ant-design/icons";
 import loginApi from "../api/login";
 import ENV_VARS from "../../config";
+import clearLocalStorageExceptCarts from "../config/clearLocalStorage";
 const { Title, Text } = Typography;
 
 interface Product {
@@ -201,7 +202,7 @@ export default function Header() {
   const handleLogout = async () => {
     try {
       await loginApi.logout();
-      localStorage.clear();
+      clearLocalStorageExceptCarts();
       setUser(null);
       dispatch(setUserId(null));
       setIsUserLoaded(false);

@@ -184,8 +184,8 @@ function App() {
       path: "",
       element: (
         <>
-          <ChatbotController />
           <PageLayout />
+          <ChatbotController />
         </>
       ),
       children: [
