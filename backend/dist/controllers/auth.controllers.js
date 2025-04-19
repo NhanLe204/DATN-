@@ -418,7 +418,8 @@ const googleLogin = async (req, res) => {
     }
     catch (error) {
         console.error('Google Sign-In error:', error);
-        res.status(401).json({ success: false, message: `Invalid Google token or server error: ${error.message}` });
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        res.status(401).json({ success: false, message: `Invalid Google token or server error: ${errorMessage}` });
     }
 };
 exports.googleLogin = googleLogin;
