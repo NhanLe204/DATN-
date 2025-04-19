@@ -738,6 +738,138 @@ const Payment = () => {
             </motion.div>
           )}
 
+          {/* Modal Change Address */}
+
+          {isModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                transition={{ duration: 0.2 }}
+                className="w-full max-w-2xl rounded-3xl p-8 bg-white/95 text-gray-800 shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-sm border border-gray-100"
+              >
+                {/* Header */}
+                <div className="flex justify-between items-center mb-8">
+                  <h3 className="text-2xl font-bold text-[#22a6df]">
+                    Chọn địa chỉ giao hàng
+                  </h3>
+                  <button
+                    onClick={() => setIsModalOpen(false)}
+                    className="p-2 rounded-full hover:bg-gray-100 transition-colors group"
+                  >
+                    <X
+                      size={24}
+                      className="text-gray-400 group-hover:text-[#22a6df] transition-colors"
+                    />
+                  </button>
+                </div>
+
+                {/* Address List */}
+                <div className="max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-[#22a6df] scrollbar-track-gray-100">
+                  {addresses.length > 0 ? (
+                    addresses.map((address: Address, index) => (
+                      <motion.div
+                        key={address._id || `${address.name}-${address.phone}`}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="p-5 mb-4 border border-gray-100 hover:border-[#22a6df]/30 rounded-2xl transition-all duration-300 hover:shadow-lg hover:shadow-[#22a6df]/10 bg-white"
+                      >
+                        <div className="flex items-start gap-4">
+                          <div className="relative">
+                            <input
+                              type="radio"
+                              name="address"
+                              checked={checkedAddressId === address._id}
+                              onChange={() =>
+                                setCheckedAddressId(address._id || null)
+                              }
+                              className="h-5 w-5 cursor-pointer accent-[#22a6df] focus:ring-[#22a6df]"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3 flex-wrap">
+                                <p className="font-semibold text-lg text-gray-800">
+                                  {address.name}
+                                </p>
+                                <p className="text-gray-500">
+                                  | {address.phone}
+                                </p>
+                                {address.isDefault && (
+                                  <span className="inline-block px-3 py-1 text-xs font-semibold text-[#22a6df] bg-[#22a6df]/10 rounded-full">
+                                    Mặc định
+                                  </span>
+                                )}
+                              </div>
+                              <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => {
+                                  setEditAddressIndex(index);
+                                  setIsEditModalVisible(true);
+                                  addressForm.setFieldsValue({
+                                    name: address.name,
+                                    phone: address.phone,
+                                    address: address.address.split(",")[0],
+                                    province: provinces.find((p) =>
+                                      address.address.includes(p.name)
+                                    )?.code,
+                                    district: districts.find((d) =>
+                                      address.address.includes(d.name)
+                                    )?.code,
+                                    ward: wards.find((w) =>
+                                      address.address.includes(w.name)
+                                    )?.code,
+                                  });
+                                }}
+                                className="px-4 py-1.5 text-[#22a6df] font-medium hover:bg-[#22a6df]/10 rounded-full transition-colors text-sm"
+                              >
+                                Sửa
+                              </motion.button>
+                            </div>
+                            <p className="text-gray-600 mt-2">
+                              {address.address}
+                            </p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))
+                  ) : (
+                    <div className="text-center py-10 bg-gray-50 rounded-2xl">
+                      <p className="text-gray-500">
+                        Chưa có địa chỉ nào. Hãy thêm địa chỉ mới!
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer */}
+                <div className="flex justify-end gap-4 mt-8 pt-6 border-t border-gray-100">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      setIsModalOpen(false);
+                      setIsModalVisible(true);
+                    }}
+                    className="rounded-xl bg-white px-6 py-2.5 font-medium text-[#22a6df] text-sm border-2 border-[#22a6df] hover:bg-[#22a6df]/5 transition-colors"
+                  >
+                    Thêm địa chỉ
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleConfirmAddress}
+                    className="rounded-xl bg-[#22a6df] px-6 py-2.5 font-medium text-white text-sm hover:bg-[#1e95c8] transition-colors shadow-lg shadow-[#22a6df]/30"
+                  >
+                    Xác nhận
+                  </motion.button>
+                </div>
+              </motion.div>
+            </div>
+          )}
           {/* Main Content */}
           <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
             {/* Left Column */}
@@ -1073,7 +1205,7 @@ const Payment = () => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleCheckout}
-                  className="mt-6 w-full rounded-xl bg-[#22a6df] py-3 text-sm sm:text-base font-medium text-white transition-colors hover:bg-blue-600"
+                  className="mt-6 w-full rounded-xl bg-[#22a6df] py-3 text-sm sm:text-base font-medium text-white transition-colors hover:bg-[#1280b7]"
                 >
                   Hoàn tất đơn hàng
                 </motion.button>
