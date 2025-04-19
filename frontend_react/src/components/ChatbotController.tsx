@@ -3,8 +3,6 @@ import { useLocation } from "react-router-dom";
 
 const ChatbotController = () => {
   const location = useLocation();
-  console.log("Đường dẫn:", location.pathname);
-
   const allowedRoutes = [
     "/",
     "/product",
@@ -16,74 +14,62 @@ const ChatbotController = () => {
   ];
 
   useEffect(() => {
-    let intervalId: NodeJS.Timeout;
-
-    const checkChatbot = () => {
-      // Nhắm đến widget hoặc iframe của chatbot
-      const chatbotElement = document.querySelector(
-        ".preny-widget, .preny-open, .preny-button, .preny-chatbot, #preny-chatbot-container, .chatbot-container, iframe[src*='preny'], [id*='preny'], [class*='preny']"
-      ) as HTMLElement;
-
-      // Debug: Log phần tử tìm thấy
-      console.log("Phần tử chatbot:", chatbotElement);
-
-      // Nếu không tìm thấy, log thông tin DOM
-      if (!chatbotElement) {
-        console.log("Không tìm thấy chatbot, kiểm tra DOM...");
-        const scriptElement = document.querySelector(
-          "[data-preny-bot-id='6801f7b8074da4b350da2204']"
-        );
-        if (scriptElement) {
-          console.log("Script Preny:", scriptElement);
-          console.log("Phần tử cha:", scriptElement.parentElement);
-          console.log("Phần tử tiếp theo:", scriptElement.nextElementSibling);
-          // Tìm tất cả phần tử tiềm năng
-          const potentialWidgets = document.querySelectorAll(
-            "div, button, iframe, [id*='preny'], [class*='preny']"
-          );
-          potentialWidgets.forEach((el) => {
-            if (
-              el.id?.includes("preny") ||
-              el.className?.includes("preny") ||
-              el.getAttribute("src")?.includes("preny")
-            ) {
-              console.log("Phần tử tiềm năng:", el);
-            }
-          });
+    const isRouteAllowed = () => {
+      return allowedRoutes.some((route) => {
+        if (route.includes(":")) {
+          const pattern = route.replace(/:id/, "[^/]+");
+          const regex = new RegExp(`^${pattern}$`);
+          return regex.test(location.pathname);
         }
+        return route === location.pathname;
+      });
+    };
+
+    const updateChatbotVisibility = () => {
+      const isAllowed = isRouteAllowed();
+      console.log("Route allowed:", isAllowed, "Path:", location.pathname);
+
+      // Tìm phần tử Preny trong DOM
+      const prenyWidget = document.querySelector("div.preny-open");
+      if (!prenyWidget) {
+        console.log("Preny widget not found");
+        return;
       }
 
-      if (chatbotElement) {
-        // Kiểm tra route có được phép không
-        const isAllowed = allowedRoutes.some((route) => {
-          if (route.includes(":")) {
-            // Xử lý route động như /detail/:id
-            const regex = new RegExp(`^${route.replace(/:id/, "[^/]+")}$`);
-            return location.pathname.match(regex);
-          }
-          return route === location.pathname;
-        });
+      // Truy cập shadow DOM
+      const shadowRoot = prenyWidget.closest(
+        'div[style*="z-index: 10000"]'
+      )?.shadowRoot;
+      if (shadowRoot) {
+        const openButton = shadowRoot.querySelector("#preny-open");
+        if (openButton) {
+          (openButton as HTMLElement).style.display = isAllowed
+            ? "block"
+            : "none";
+        }
 
-        // Hiển thị/ẩn chatbot
-        chatbotElement.style.display = isAllowed ? "block" : "none";
-        console.log("Được phép:", isAllowed, "Đường dẫn:", location.pathname);
-
-        // Dừng interval khi tìm thấy phần tử
-        clearInterval(intervalId);
+        const chatContainer = shadowRoot.querySelector("#preny-chat-container");
+        if (chatContainer) {
+          (chatContainer as HTMLElement).style.display = isAllowed
+            ? "block"
+            : "none";
+        }
       }
     };
 
-    // Chạy ngay lập tức
-    checkChatbot();
+    // Dùng MutationObserver để phát hiện khi Preny widget được thêm vào DOM
+    const observer = new MutationObserver(() => {
+      updateChatbotVisibility();
+    });
 
-    // Thử lại mỗi 500ms, tối đa 20 giây (tăng thời gian)
-    intervalId = setInterval(checkChatbot, 500);
-    const timeoutId = setTimeout(() => clearInterval(intervalId), 20000);
+    observer.observe(document.body, { childList: true, subtree: true });
 
-    // Dọn dẹp
+    // Cập nhật ngay lập tức
+    updateChatbotVisibility();
+
+    // Cleanup
     return () => {
-      clearInterval(intervalId);
-      clearTimeout(timeoutId);
+      observer.disconnect();
     };
   }, [location.pathname]);
 

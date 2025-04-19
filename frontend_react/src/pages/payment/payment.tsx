@@ -13,6 +13,12 @@ import {
   MapPin,
   DollarSign,
   X,
+  AlertCircle,
+  User,
+  Check,
+  ShoppingBag,
+  Plus,
+  Edit3,
 } from "lucide-react";
 import { Form, Input, message, Modal, Select } from "antd";
 import orderApi from "../../api/orderApi";
@@ -670,78 +676,103 @@ const Payment = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-gray-100 text-gray-800">
-        <div className="container mx-auto px-[154px] py-8">
-          <nav className="mb-6 rounded-xl p-4 bg-white shadow-[inset_-2px_-2px_5px_rgba(255,255,255,0.7),inset_2px_2px_5px_rgba(0,0,0,0.05)]">
-            <div className="flex items-center gap-2">
-              <span className="text-gray-600 hover:text-gray-900">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-gray-800">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-[154px] py-6 sm:py-10">
+          {/* Breadcrumb */}
+          <motion.nav
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 sm:mb-8 rounded-2xl p-4 sm:p-5 bg-white shadow-lg hover:shadow-xl transition-shadow duration-300"
+          >
+            <div className="flex items-center gap-2 text-sm sm:text-base">
+              <span className="text-gray-600 hover:text-[#22a6df] transition-colors duration-200 cursor-pointer">
                 Trang chủ
               </span>
               <ChevronRight size={16} className="text-gray-400" />
-              <span className="text-gray-900">Thông tin giao hàng</span>
+              <span className="text-[#22a6df] font-medium">
+                Thông tin giao hàng
+              </span>
             </div>
-          </nav>
+          </motion.nav>
 
+          {/* Reorder Notice */}
           {isReorder && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className={`mb-6 rounded-xl p-4 bg-green-50`}
+              className="mb-6 sm:mb-8 rounded-2xl p-4 sm:p-5 bg-green-50 border border-green-200 shadow-sm"
             >
-              <span className="text-green-500">
-                Đây là đơn hàng được tái tạo từ đơn cũ. Vui lòng kiểm tra thông
-                tin trước khi đặt lại!
-              </span>
+              <div className="flex items-center gap-3">
+                <div className="rounded-full p-2 bg-green-100">
+                  <AlertCircle size={20} className="text-green-500" />
+                </div>
+                <span className="text-sm sm:text-base text-green-600">
+                  Đây là đơn hàng được tái tạo từ đơn cũ. Vui lòng kiểm tra
+                  thông tin trước khi đặt lại!
+                </span>
+              </div>
             </motion.div>
           )}
 
+          {/* Login Notice */}
           {!isLoggedIn && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-8 rounded-xl p-4 bg-blue-50"
+              className="mb-6 sm:mb-8 rounded-2xl p-4 sm:p-5 bg-blue-50 border border-blue-200 shadow-sm"
             >
-              <span>
-                Bạn đã có tài khoản?{" "}
-                <span
-                  className="ml-1 cursor-pointer font-bold text-blue-500 hover:text-blue-600"
-                  onClick={() => navigate("/login")}
-                >
-                  Đăng nhập
+              <div className="flex items-center gap-3">
+                <div className="rounded-full p-2 bg-blue-100">
+                  <User size={20} className="text-[#22a6df]" />
+                </div>
+                <span className="text-sm sm:text-base">
+                  Bạn đã có tài khoản?{" "}
+                  <span
+                    className="ml-1 cursor-pointer font-semibold text-[#22a6df] hover:text-blue-600 transition-colors duration-200"
+                    onClick={() => navigate("/login")}
+                  >
+                    Đăng nhập
+                  </span>
                 </span>
-              </span>
+              </div>
             </motion.div>
           )}
 
-          <div className="flex flex-col gap-8 lg:flex-row">
+          {/* Main Content */}
+          <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
+            {/* Left Column */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="w-full lg:w-3/5"
+              className="w-full lg:w-3/5 space-y-8"
             >
-              <div className="mb-8 rounded-xl p-6 bg-white">
-                <h2 className="mb-6 text-xl font-semibold flex items-center">
-                  <MapPin className="mr-2" size={20} /> Thông tin giao hàng
+              {/* Shipping Information */}
+              <div className="rounded-2xl p-6 sm:p-8 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.05)] backdrop-blur-sm border border-gray-100">
+                <h2 className="mb-6 sm:mb-8 text-xl sm:text-2xl font-semibold flex items-center gap-3 text-gray-800">
+                  <div className="p-2 rounded-xl bg-[#22a6df]/10">
+                    <MapPin className="text-[#22a6df]" size={24} />
+                  </div>
+                  Thông tin giao hàng
                 </h2>
 
                 {isLoggedIn && selectedAddress ? (
-                  <div className="mb-4">
-                    <div className="flex justify-between items-start border-b pb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium text-lg">
+                  <div className="relative">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-100 pb-6">
+                      <div className="flex-1 mb-4 sm:mb-0">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <p className="font-semibold text-lg text-gray-800">
                             {selectedAddress.name}
                           </p>
                           <p className="text-gray-600">
                             | {selectedAddress.phone}
                           </p>
                           {selectedAddress.isDefault && (
-                            <span className="inline-block px-2 py-1 text-xs font-semibold text-orange-600 bg-orange-100 rounded">
+                            <span className="inline-block px-3 py-1 text-xs font-medium text-[#22a6df] bg-[#22a6df]/10 rounded-full">
                               Mặc định
                             </span>
                           )}
                         </div>
-                        <p className="text-gray-600 mt-1">
+                        <p className="text-gray-600 mt-2">
                           {selectedAddress.address}
                         </p>
                       </div>
@@ -749,15 +780,17 @@ const Payment = () => {
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => setIsModalOpen(true)}
-                        className="text-blue-500 font-medium hover:text-blue-600"
+                        className="text-[#22a6df] font-medium hover:text-[#1a85b3] transition-colors flex items-center gap-2"
                       >
+                        <Edit3 size={16} />
                         Thay đổi
                       </motion.button>
                     </div>
                   </div>
                 ) : (
-                  <div className="mb-4">
-                    <p className="text-gray-500">
+                  <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                    <MapPin size={32} className="mx-auto text-gray-400 mb-3" />
+                    <p className="text-gray-500 mb-4">
                       {isLoggedIn
                         ? "Chưa có địa chỉ nào. Vui lòng thêm địa chỉ."
                         : "Vui lòng đăng nhập để xem địa chỉ."}
@@ -767,8 +800,9 @@ const Payment = () => {
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => setIsModalVisible(true)}
-                        className="mt-2 text-blue-500 font-medium hover:text-blue-600"
+                        className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#22a6df] text-white rounded-xl hover:bg-[#1a85b3] transition-colors font-medium shadow-lg shadow-[#22a6df]/20"
                       >
+                        <Plus size={18} />
                         Thêm địa chỉ
                       </motion.button>
                     )}
@@ -776,142 +810,18 @@ const Payment = () => {
                 )}
               </div>
 
-              {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="w-full max-w-2xl rounded-2xl p-8 bg-white text-gray-800 shadow-lg"
-                  >
-                    {/* Header của modal */}
-                    <div className="flex justify-between items-center mb-6">
-                      <h3 className="text-2xl font-semibold text-gray-900">
-                        Chọn địa chỉ giao hàng
-                      </h3>
-                      <button
-                        onClick={() => setIsModalOpen(false)}
-                        className="text-gray-500 hover:text-gray-700 transition-colors"
-                      >
-                        <X size={24} />
-                      </button>
-                    </div>
-
-                    {/* Danh sách địa chỉ */}
-                    <div className="max-h-[500px] overflow-y-auto pr-2">
-                      {addresses.length > 0 ? (
-                        addresses.map((address: Address, index) => (
-                          <motion.div
-                            key={
-                              address._id || `${address.name}-${address.phone}`
-                            }
-                            className="p-4 mb-3 border-b border-gray-200 hover:bg-gray-50 rounded-lg transition-colors"
-                          >
-                            <div className="flex items-start gap-3">
-                              {/* Radio button để chọn địa chỉ */}
-                              <input
-                                type="radio"
-                                name="address"
-                                checked={checkedAddressId === address._id}
-                                onChange={() =>
-                                  setCheckedAddressId(address._id || null)
-                                }
-                                className="h-5 w-5 text-blue-600 mt-1 cursor-pointer"
-                              />
-                              {/* Thông tin địa chỉ */}
-                              <div className="flex-1">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-3">
-                                    <p className="font-semibold text-lg text-gray-800">
-                                      {address.name}
-                                    </p>
-                                    <p className="text-gray-600 text-sm">
-                                      | {address.phone}
-                                    </p>
-                                    {address.isDefault && (
-                                      <span className="inline-block px-2 py-1 text-xs font-semibold text-orange-600 bg-orange-100 rounded-full">
-                                        Mặc định
-                                      </span>
-                                    )}
-                                  </div>
-                                  {/* Nút Sửa */}
-                                  <motion.button
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    onClick={() => {
-                                      setEditAddressIndex(index); // Lưu index của địa chỉ cần sửa
-                                      setIsEditModalVisible(true); // Mở modal chỉnh sửa
-                                      // Điền dữ liệu vào form chỉnh sửa
-                                      addressForm.setFieldsValue({
-                                        name: address.name,
-                                        phone: address.phone,
-                                        address: address.address.split(",")[0], // Lấy phần địa chỉ nhà
-                                        province: provinces.find((p) =>
-                                          address.address.includes(p.name)
-                                        )?.code,
-                                        district: districts.find((d) =>
-                                          address.address.includes(d.name)
-                                        )?.code,
-                                        ward: wards.find((w) =>
-                                          address.address.includes(w.name)
-                                        )?.code,
-                                      });
-                                    }}
-                                    className="text-blue-500 font-medium hover:text-blue-600 text-sm"
-                                  >
-                                    Sửa
-                                  </motion.button>
-                                </div>
-                                <p className="text-gray-600 mt-1">
-                                  {address.address}
-                                </p>
-                              </div>
-                            </div>
-                          </motion.div>
-                        ))
-                      ) : (
-                        <p className="text-center text-gray-500 py-6">
-                          Chưa có địa chỉ nào. Hãy thêm địa chỉ mới!
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Footer của modal */}
-                    <div className="flex justify-end gap-3 mt-6">
-                      {/* Nút Thêm địa chỉ */}
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => {
-                          setIsModalOpen(false); // Đóng modal chọn địa chỉ
-                          setIsModalVisible(true); // Mở modal thêm địa chỉ
-                        }}
-                        className="rounded-xl bg-green-500 px-4 py-2 font-medium text-white text-sm hover:bg-green-600 transition-colors"
-                      >
-                        Thêm địa chỉ
-                      </motion.button>
-                      {/* Nút Xác nhận */}
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={handleConfirmAddress}
-                        className="rounded-xl bg-blue-500 px-4 py-2 font-medium text-white text-sm hover:bg-blue-600 transition-colors"
-                      >
-                        Xác nhận
-                      </motion.button>
-                    </div>
-                  </motion.div>
-                </div>
-              )}
-
               {/* Shipping Method */}
-              <div className="mb-8 rounded-xl p-6 bg-white">
-                <h2 className="mb-6 text-xl font-semibold flex items-center">
-                  <Truck className="mr-2" size={20} /> Phương thức vận chuyển
+              <div className="rounded-2xl p-6 sm:p-8 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.05)] backdrop-blur-sm border border-gray-100">
+                <h2 className="mb-6 sm:mb-8 text-xl sm:text-2xl font-semibold flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-[#22a6df]/10">
+                    <Truck className="text-[#22a6df]" size={24} />
+                  </div>
+                  Phương thức vận chuyển
                 </h2>
+
                 {shippingMethods.length > 0 ? (
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {shippingMethods.map((method) => {
-                      // Vô hiệu hóa nếu là phương thức miễn phí và subtotal < 200.000
                       const isDisabled =
                         method.delivery_fee === 0 && subtotal < 200000;
                       return (
@@ -921,38 +831,39 @@ const Payment = () => {
                           onClick={() =>
                             !isDisabled && setSelectedShippingMethod(method)
                           }
-                          className={`flex items-center justify-between rounded-xl p-4 ${
+                          className={`flex flex-col sm:flex-row sm:justify-between items-start sm:items-center rounded-xl p-4 sm:p-5 transition-all duration-200 ${
                             selectedShippingMethod?._id === method._id
-                              ? "border-blue-500 bg-blue-50"
+                              ? "border-2 border-[#22a6df] bg-[#22a6df]/5"
                               : isDisabled
-                              ? "bg-gray-200 opacity-50 cursor-not-allowed"
-                              : "bg-gray-50"
-                          } ${
-                            isDisabled ? "cursor-not-allowed" : "cursor-pointer"
+                              ? "bg-gray-100 opacity-60 cursor-not-allowed"
+                              : "bg-gray-50 hover:bg-gray-100 border border-gray-200"
                           }`}
                         >
-                          <div className="flex items-center">
-                            <div className="mr-3 rounded-full p-2 bg-white">
-                              <Truck size={18} className="text-blue-500" />
+                          <div className="flex items-center mb-3 sm:mb-0">
+                            <div className="mr-4 rounded-full p-2.5 bg-white shadow-sm">
+                              <Truck size={20} className="text-[#22a6df]" />
                             </div>
                             <div>
-                              <div className="font-medium">
+                              <div className="font-medium text-gray-800">
                                 {method.delivery_name}
                               </div>
-                              <div className="text-sm text-gray-500">
+                              <div className="text-sm text-gray-500 mt-0.5">
                                 {method.description}
                               </div>
                             </div>
                           </div>
-                          <div className="flex items-center">
-                            <span className="font-semibold">
+                          <div className="flex items-center gap-3 ml-10 sm:ml-0">
+                            <span className="font-semibold text-[#22a6df]">
                               {formatPrice(method.delivery_fee)}
                             </span>
                             {selectedShippingMethod?._id === method._id && (
-                              <CheckCircle
-                                size={18}
-                                className="ml-2 text-green-500"
-                              />
+                              <motion.div
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                className="w-6 h-6 rounded-full bg-[#22a6df] flex items-center justify-center"
+                              >
+                                <Check size={14} className="text-white" />
+                              </motion.div>
                             )}
                           </div>
                         </motion.div>
@@ -960,9 +871,9 @@ const Payment = () => {
                     })}
                   </div>
                 ) : (
-                  <div className="flex h-40 flex-col items-center justify-center rounded-xl bg-gray-50">
-                    <Package size={32} className="text-gray-400" />
-                    <p className="mt-3 text-center text-sm text-gray-500">
+                  <div className="flex h-40 flex-col items-center justify-center rounded-xl bg-gray-50 border border-dashed border-gray-200">
+                    <Package size={32} className="text-gray-400 mb-3" />
+                    <p className="text-sm text-gray-500">
                       Không có phương thức vận chuyển khả dụng.
                     </p>
                   </div>
@@ -970,52 +881,58 @@ const Payment = () => {
               </div>
 
               {/* Payment Method */}
-              <div className="mb-8 rounded-xl p-6 bg-white">
-                <h2 className="mb-6 text-xl font-semibold flex items-center">
-                  <CreditCard className="mr-2" size={20} /> Phương thức thanh
-                  toán
+              <div className="rounded-2xl p-6 sm:p-8 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.05)] backdrop-blur-sm border border-gray-100">
+                <h2 className="mb-6 sm:mb-8 text-xl sm:text-2xl font-semibold flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-[#22a6df]/10">
+                    <CreditCard className="text-[#22a6df]" size={24} />
+                  </div>
+                  Phương thức thanh toán
                 </h2>
+
                 {paymentMethods.length > 0 ? (
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {paymentMethods.map((method) => (
                       <motion.div
                         whileHover={{ scale: 1.01 }}
                         key={method._id}
                         onClick={() => setSelectedPayment(method._id)}
-                        className={`flex cursor-pointer items-center rounded-xl p-4 ${
+                        className={`flex flex-row sm:flex-row items-center sm:items-center sm:justify-between cursor-pointer rounded-xl p-4 sm:p-5 transition-all duration-200 ${
                           selectedPayment === method._id
-                            ? "border-blue-500 bg-blue-50"
-                            : "bg-gray-50"
+                            ? "border-2 border-[#22a6df] bg-[#22a6df]/5"
+                            : "bg-gray-50 hover:bg-gray-100 border border-gray-200"
                         }`}
                       >
-                        <div className="mr-3">
-                          <div className="rounded-full p-2 bg-white">
+                        <div className="flex items-center mb-3 sm:mb-0">
+                          <div className="mr-4 rounded-full p-2.5 bg-white shadow-sm">
                             {getPaymentIcon(method.payment_type_name)}
                           </div>
-                        </div>
-                        <div className="flex-grow">
-                          <div className="font-medium">
-                            {method.payment_type_name}
-                          </div>
-                          {method.description && (
-                            <div className="text-sm text-gray-500">
-                              {method.description}
+                          <div>
+                            <div className="font-medium text-gray-800">
+                              {method.payment_type_name}
                             </div>
-                          )}
+                            {method.description && (
+                              <div className="text-sm text-gray-500 mt-0.5">
+                                {method.description}
+                              </div>
+                            )}
+                          </div>
                         </div>
                         {selectedPayment === method._id && (
-                          <CheckCircle
-                            size={18}
-                            className="ml-2 text-green-500"
-                          />
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className="w-6 h-6 rounded-full bg-[#22a6df] flex items-center justify-center ml-10 sm:ml-0"
+                          >
+                            <Check size={14} className="text-white" />
+                          </motion.div>
                         )}
                       </motion.div>
                     ))}
                   </div>
                 ) : (
-                  <div className="flex h-40 flex-col items-center justify-center rounded-xl bg-gray-50">
-                    <CreditCard size={32} className="text-gray-400" />
-                    <p className="mt-3 text-center text-sm text-gray-500">
+                  <div className="flex h-40 flex-col items-center justify-center rounded-xl bg-gray-50 border border-dashed border-gray-200">
+                    <CreditCard size={32} className="text-gray-400 mb-3" />
+                    <p className="text-sm text-gray-500">
                       Không có phương thức thanh toán khả dụng.
                     </p>
                   </div>
@@ -1023,22 +940,29 @@ const Payment = () => {
               </div>
             </motion.div>
 
-            {/* Order Summary */}
+            {/* Right Column */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               className="w-full lg:w-2/5"
             >
-              <div className="sticky top-8 rounded-xl p-6 bg-white">
-                <h2 className="mb-6 text-xl font-semibold">Đơn hàng của bạn</h2>
+              <div className="sticky top-8 rounded-2xl p-6 sm:p-8 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.05)] backdrop-blur-sm border border-gray-100">
+                <h2 className="mb-6 text-xl sm:text-2xl font-semibold flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-[#22a6df]/10">
+                    <ShoppingBag className="text-[#22a6df]" size={24} />
+                  </div>
+                  Đơn hàng của bạn
+                </h2>
                 <div className="mb-6 border-b pb-6">
                   {cartItems.length === 0 ? (
-                    <p className="text-center text-gray-500">Giỏ hàng trống</p>
+                    <p className="text-center text-sm sm:text-base text-gray-500">
+                      Giỏ hàng trống
+                    </p>
                   ) : (
                     <>
                       {cartItems.map((item) => (
-                        <div key={item.id} className="flex gap-4 mb-4">
-                          <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl">
+                        <div key={item.id} className="flex gap-3 sm:gap-4 mb-4">
+                          <div className="relative h-20 w-20 sm:h-24 sm:w-24 flex-shrink-0 overflow-hidden rounded-xl">
                             <img
                               src={item.image}
                               alt={item.name}
@@ -1046,9 +970,13 @@ const Payment = () => {
                             />
                           </div>
                           <div>
-                            <h3 className="font-medium">{item.name}</h3>
-                            Số lượng: {item.quantity}
-                            <p className="mt-2 font-semibold text-blue-500">
+                            <h3 className="font-medium text-sm sm:text-base">
+                              {item.name}
+                            </h3>
+                            <p className="text-sm sm:text-base">
+                              Số lượng: {item.quantity}
+                            </p>
+                            <p className="mt-2 font-semibold text-blue-500 text-sm sm:text-base">
                               {formatPrice(item.price * item.quantity)}
                             </p>
                           </div>
@@ -1065,7 +993,7 @@ const Payment = () => {
                               "Đã xóa đơn hàng cũ. Bạn có thể chọn sản phẩm mới!"
                             );
                           }}
-                          className="mt-4 w-full rounded-xl bg-red-500 py-2 font-medium text-white hover:bg-red-600"
+                          className="mt-4 w-full rounded-xl bg-red-500 py-2 text-sm sm:text-base font-medium text-white hover:bg-red-600"
                         >
                           Xóa và chọn lại
                         </motion.button>
@@ -1074,32 +1002,34 @@ const Payment = () => {
                   )}
                 </div>
                 <div className="mb-6">
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <input
                       type="text"
                       placeholder="Nhập mã giảm giá"
                       value={couponCode}
                       onChange={(e) => setCouponCode(e.target.value)}
-                      className="flex-grow rounded-xl border p-3 border-gray-300 bg-gray-50 text-gray-800"
+                      className="flex-grow rounded-xl border p-2 sm:p-3 text-sm sm:text-base border-gray-300 bg-gray-50 text-gray-800"
                     />
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={applyCoupon}
-                      className="rounded-xl bg-blue-500 px-4 py-2 font-medium text-white"
+                      className="rounded-xl bg-[#22a6df] px-4 py-2 text-sm sm:text-base font-medium text-white"
                     >
                       Áp dụng
                     </motion.button>
                   </div>
                   {appliedCoupon && (
-                    <p className="mt-2 text-green-500">
+                    <p className="mt-2 text-xs sm:text-sm text-green-500">
                       Đã áp dụng mã {appliedCoupon.coupon_code}: Giảm{" "}
                       {formatPrice(discount)}
                     </p>
                   )}
                 </div>
+
+                {/* Order Summary Details */}
                 <div className="mb-6 space-y-3 border-b pb-6">
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-sm sm:text-base">
                     <span className="text-gray-600">Tạm tính</span>
                     <span className="font-medium">
                       {formatPrice(
@@ -1110,7 +1040,7 @@ const Payment = () => {
                       )}
                     </span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-sm sm:text-base">
                     <span className="text-gray-600">Phí vận chuyển</span>
                     <span>
                       {selectedShippingMethod ? (
@@ -1120,7 +1050,7 @@ const Payment = () => {
                       )}
                     </span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-sm sm:text-base">
                     <span className="text-gray-600">Giảm giá</span>
                     <span className="text-green-500">
                       {discount > 0
@@ -1129,17 +1059,21 @@ const Payment = () => {
                     </span>
                   </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-lg font-semibold">Tổng cộng</span>
-                  <span className="text-lg font-bold text-blue-500">
+
+                {/* Total */}
+                <div className="flex justify-between text-base sm:text-lg">
+                  <span className="font-semibold">Tổng cộng</span>
+                  <span className="font-bold text-[#22a6df]">
                     {formatPrice(calculateTotal)}
                   </span>
                 </div>
+
+                {/* Checkout Button */}
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleCheckout}
-                  className="mt-6 w-full rounded-xl bg-blue-500 py-3 font-medium text-white transition-colors hover:bg-blue-600"
+                  className="mt-6 w-full rounded-xl bg-[#22a6df] py-3 text-sm sm:text-base font-medium text-white transition-colors hover:bg-blue-600"
                 >
                   Hoàn tất đơn hàng
                 </motion.button>
