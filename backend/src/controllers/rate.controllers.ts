@@ -108,7 +108,8 @@ export const getRatingByProductId = async (req: Request, res: Response): Promise
     res.json({ success: true, data: ratingData });
   } catch (error) {
     console.error('Error fetching product ratings:', error);
-    res.status(500).json({ success: false, message: `Server error: ${error.message}` });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    res.status(500).json({ success: false, message: `Server error: ${errorMessage}` });
   }
 };
 
