@@ -18,7 +18,6 @@ if (rootElement) {
           <App />
         </GoogleOAuthProvider>
       </Provider>
-      //{" "}
     </StrictMode>
   );
 } else {
