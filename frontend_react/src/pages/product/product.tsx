@@ -255,7 +255,7 @@ export default function Products() {
           </Col>
 
           <Col
-            className="px-4 py-4 bg-white flex-grow rounded-lg shadow-md"
+            className="px-2 lg:px-4 py-4 bg-white flex-grow rounded-lg shadow-md"
             xs={24}
             sm={24}
             md={24}
@@ -293,7 +293,7 @@ export default function Products() {
               </div>
             ) : currentPageData.length > 0 ? (
               <div
-                className="gap-3"
+                className="gap-0 xs:gap-3"
                 style={{
                   height: "auto",
                   minHeight: currentPageData.length > 0 ? "auto" : "60vh",
@@ -316,17 +316,40 @@ export default function Products() {
       </div>
 
       {sortedData.length > 0 && (
-        <div className="mt-6 flex justify-center">
-          <Pagination
-            current={currentPage}
-            total={sortedData.length}
-            pageSize={itemsPerPage}
-            onChange={(page) => setCurrentPage(page)}
-            showSizeChanger={false}
-            className="ant-pagination-custom"
-            size="small"
-          />
-        </div>
+      <div className="mt-6 flex justify-center">
+      <Pagination
+        current={currentPage}
+        total={sortedData.length}
+        pageSize={itemsPerPage}
+        onChange={(page) => setCurrentPage(page)}
+        showSizeChanger={false}
+        className="flex items-center gap-2 mt-4"
+        size="small"
+        itemRender={(page, type, originalElement) => {
+          if (type === "page") {
+            return (
+              <div
+                className={`w-9 h-9 flex items-center justify-center rounded-full border border-blue-500 text-blue-500 font-medium transition-all duration-300 hover:bg-blue-500 hover:text-white hover:scale-105 ${
+                  page === currentPage ? "bg-blue-500 text-white font-bold border-blue-600" : ""
+                }`}
+              >
+                {page}
+              </div>
+            );
+          }
+          if (type === "prev" || type === "next") {
+            return (
+              <div
+                className={`w-9 h-9 flex items-center justify-center rounded-full border border-blue-500 text-blue-500 transition-all duration-300 hover:bg-blue-500 hover:text-white hover:scale-105 disabled:text-gray-400 disabled:border-gray-400 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-400`}
+              >
+                {originalElement}
+              </div>
+            );
+          }
+          return originalElement;
+        }}
+      />
+    </div>
       )}
 
       <Drawer

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Button, Card, Col, Row } from "antd";
-import { BsHandbag } from "react-icons/bs";
+import { Button, Card, Badge } from "antd";
+import { BsHandbag, BsHeart, BsStarFill } from "react-icons/bs";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 
 export default function ListCard({ pros }) {
   const [imageStates, setImageStates] = useState({});
@@ -18,120 +19,129 @@ export default function ListCard({ pros }) {
     );
   }, [pros.data]);
 
-  const handleMouseEnter = (index) => {
-    const product = pros.data[index];
-    if (product.image_url.length > 1) {
-      setImageStates((prev) => ({
-        ...prev,
-        [index]: {
-          ...prev[index],
-          fade: "opacity-0",
-        },
-      }));
-      setTimeout(() => {
-        setImageStates((prev) => ({
-          ...prev,
-          [index]: {
-            currentImage: product.image_url[1],
-            fade: "opacity-100",
-          },
-        }));
-      }, 200);
-    }
-  };
-
-  const handleMouseLeave = (index) => {
-    const product = pros.data[index];
-    setImageStates((prev) => ({
-      ...prev,
-      [index]: {
-        ...prev[index],
-        fade: "opacity-0",
-      },
-    }));
-    setTimeout(() => {
-      setImageStates((prev) => ({
-        ...prev,
-        [index]: {
-          currentImage: product.image_url[0],
-          fade: "opacity-100",
-        },
-      }));
-    }, 200);
-  };
-
   return (
-    <Row className="p-4" gutter={[16, 16]}>
-      {pros.data.map((product, index) => (
-        <Col xs={24} sm={12} md={12} lg={6} key={product.id || index}>
-          <Card
-            className="group relative flex cursor-pointer flex-col justify-between bg-white transition-all border-0 hover:shadow-lg"
-            hoverable
-            bodyStyle={{ padding: 0 }}
-            style={{ width: 220, height: 340 }} // Tăng kích thước card
+    <div className="container md:px-4">
+      <div className="mt-4 grid grid-cols-2 gap-4 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4">
+        {pros.data.map((product, index) => (
+          <motion.div
+            key={product._id || index}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            whileHover={{ y: -10 }}
+            transition={{ duration: 0.3 }}
+            className="h-full"
           >
-            <div className="relative mb-1 flex items-center justify-center">
-              {product.discount > 0 && (
-                <div className="absolute top-1 left-1 bg-red-600 text-white px-1 py-0.5 z-10 font-bold text-[11px]">
-                  -{product.discount}%
+            <Card
+              className="group relative h-full overflow-hidden rounded-xl border border-gray-100 bg-white p-3 shadow-sm transition-all duration-300 hover:shadow-xl"
+              bodyStyle={{ padding: 0 }}
+            >
+              {/* Wishlist Button */}
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                className="absolute top-2 left-2 z-10 rounded-full bg-white p-2 shadow-md transition-all hover:bg-gray-50"
+              >
+                <BsHeart className="text-gray-600 hover:text-red-500" />
+              </motion.button>
+
+              {/* Image Container */}
+              <Link to={`/detail/${product._id}`}>
+                <div className="relative mb-4 overflow-hidden rounded-lg pt-[100%]">
+                  <motion.div
+                    className="absolute inset-0 overflow-hidden"
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ duration: 0.4 }}
+                  >
+                    <img
+                      src={`${imageStates[index]?.currentImage || product.image_url[0]}`}
+                      alt={product.name}
+                      className="h-full w-full object-contain transition-all duration-500"
+                    />
+                    {product.image_url[1] && (
+                      <img
+                        src={`${product.image_url[1]}`}
+                        alt={product.name}
+                        className="absolute inset-0 h-full w-full object-contain opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                      />
+                    )}
+                  </motion.div>
                 </div>
+              </Link>
+
+              {/* Discount Badge */}
+              {product.discount > 0 && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute top-2 right-2"
+                >
+                  <Badge.Ribbon
+                    text={`-${product.discount}%`}
+                    color="red"
+                    className="font-semibold"
+                  />
+                </motion.div>
               )}
 
-              <Link to={`/detail/${product._id}`}>
-                <img
-                  src={`${imageStates[index]?.currentImage || product.image_url[0]
-                    }`}
-                  className={`bg-[#EAEAEA] w-full h-[180px] object-cover transition-opacity duration-300 ${imageStates[index]?.fade || "opacity-100"
-                    }`}
-                  alt={product.name}
-                  onMouseEnter={() => handleMouseEnter(index)}
-                  onMouseLeave={() => handleMouseLeave(index)}
-                />
-              </Link>
-            </div>
+              {/* Product Info */}
+              <div className="space-y-3 px-2 text-center">
+                {/* Rating */}
+                <div className="flex items-center justify-center gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <BsStarFill key={i} className="text-yellow-400 text-sm" />
+                  ))}
+                </div>
 
-            <div className="flex-1 p-2 flex flex-col">
-              <div className="h-9 mb-1">
-                <p className="text-left leading-tight text-[#686868] transition-colors duration-300 group-hover:text-[#333] line-clamp-2 text-sm">
-                  {product.name}
-                </p>
-              </div>
+                {/* Name */}
+                <Link to={`/detail/${product._id}`}>
+                  <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-medium text-gray-800 transition-colors duration-300 group-hover:text-[#22A6DF]">
+                    {product.name}
+                  </h3>
+                </Link>
 
-              <p className="text-base font-semibold text-[#22A6DF] transition-colors duration-300 group-hover:text-[#1890ff]">
-                {new Intl.NumberFormat("vi-VN", {
-                  style: "currency",
-                  currency: "VND",
-                }).format(Number(product.price * (1 - product.discount / 100)))}
-
-                {product.discount > 0 && (
-                  <span className="ml-1 text-gray-500 line-through text-[11px]">
+                {/* Price */}
+                <div className="flex flex-row items-center justify-center gap-1 sm:flex-row sm:gap-2">
+                  <motion.p
+                    className="text-lg font-bold text-[#22A6DF]"
+                    whileHover={{ scale: 1.05 }}
+                  >
                     {new Intl.NumberFormat("vi-VN", {
                       style: "currency",
                       currency: "VND",
-                    }).format(Number(product.price))}
-                  </span>
-                )}
-              </p>
+                    }).format(Number(product.price * (1 - product.discount / 100)))}
+                  </motion.p>
 
-              <div className="relative overflow-hidden mt-2">
-                <Link to={`/detail/${product._id}`}>
-                  <Button
-                    className="w-full uppercase text-[#22A6DF] border border-[#22A6DF] hover:!text-white relative z-10 *:
-                     overflow-hidden before:absolute before:top-0 before:left-[-100%] before:w-full before:h-full before:bg-[#22A6DF] 
-                     before:transition-all before:duration-300 hover:before:left-0 text-base"
-                    size="middle"
-                  >
-                    <div className="flex items-center justify-center gap-1 relative z-10 ">
-                      <BsHandbag size={14} />
-                      <span>Chọn mua</span>
-                    </div>
-                  </Button>
-                </Link>
+                  {product.discount > 0 && (
+                    <p className="text-xs text-gray-500 line-through">
+                      {new Intl.NumberFormat("vi-VN", {
+                        style: "currency",
+                        currency: "VND",
+                      }).format(Number(product.price))}
+                    </p>
+                  )}
+                </div>
+
+                {/* Buy Button */}
+                <motion.div
+                  className="relative overflow-hidden rounded-lg mt-auto"
+                  whileHover={{ scale: 1.02 }}
+                >
+                  <Link to={`/detail/${product._id}`}>
+                    <Button
+                      className="w-full bg-transparent hover:bg-[#22A6DF] border-[#22A6DF] text-[#22A6DF] hover:text-white transition-all duration-300 uppercase font-medium"
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <BsHandbag className="text-lg" />
+                        <span>Mua ngay</span>
+                      </div>
+                    </Button>
+                  </Link>
+                </motion.div>
               </div>
-            </div>
-          </Card>
-        </Col>
-      ))}
-    </Row>
+            </Card>
+          </motion.div>
+        ))}
+      </div>
+    </div>
   );
 }

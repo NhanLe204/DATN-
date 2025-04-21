@@ -602,6 +602,7 @@ export default function Header() {
         placement="left"
         onClose={onClose}
         open={open}
+        width={300}
       >
         <Menu
           mode="vertical"

@@ -66,6 +66,14 @@ export default function ArticleDetail() {
     return div.textContent?.slice(0, 160) || 'Đọc bài viết thú vị này!';
   };
 
+  // Đảm bảo image_url là URL tuyệt đối
+  const getAbsoluteImageUrl = (imageUrl: string) => {
+    if (!imageUrl) return 'https://via.placeholder.com/1200x630.png?text=Pet+Heaven+Article';
+    if (imageUrl.startsWith('http')) return imageUrl;
+    // Giả sử domain của bạn là https://fe-pet-heaven.vercel.app
+    return `https://fe-pet-heaven.vercel.app${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
+  };
+
   return (
     <>
       {/* Thêm meta tags cho SEO và chia sẻ */}
@@ -74,9 +82,12 @@ export default function ArticleDetail() {
         <meta name="description" content={getDescription(blogDetail.content)} />
         <meta property="og:title" content={blogDetail.title} />
         <meta property="og:description" content={getDescription(blogDetail.content)} />
-        <meta property="og:image" content={blogDetail.image_url} />
+        <meta property="og:image" content={getAbsoluteImageUrl(blogDetail.image_url)} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
         <meta property="og:url" content={window.location.href} />
         <meta property="og:type" content="article" />
+        <meta property="og:site_name" content="Pet Heaven" />
       </Helmet>
 
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -163,7 +174,7 @@ export default function ArticleDetail() {
                     </div>
                   </div>
                   <img
-                    src={blogDetail.image_url}
+                    src={getAbsoluteImageUrl(blogDetail.image_url)}
                     alt={blogDetail.title}
                     className="w-full h-72 rounded-lg mb-4 object-cover"
                   />

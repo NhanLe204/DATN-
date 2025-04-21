@@ -1,7 +1,7 @@
 import React from "react";
-import { Button, Card } from "antd";
+import { Badge, Button, Card } from "antd";
 import { Link } from "react-router-dom";
-import { BsHandbag } from "react-icons/bs";
+import { BsHandbag, BsHeart, BsStarFill } from "react-icons/bs";
 import { motion } from "framer-motion";
 
 interface APIProduct {
@@ -14,86 +14,128 @@ interface APIProduct {
 
 export default function CateProduct({ data }: { data: APIProduct[] }) {
   return (
-    <div className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 md:mt-6 lg:grid-cols-4">
-      {data.map((product) => (
-        <motion.div
-          key={product._id.toString()}
-          whileHover={{ y: -20 }}
-          transition={{ duration: 0.2 }}
-        >
-          <Card
-            className="group relative h-full overflow-hidden rounded-xl border-none bg-white p-4 shadow-sm transition-all duration-300 hover:shadow-lg"
-            bodyStyle={{ padding: 0 }}
+    <div className="container md:px-4">
+      <div className="mt-4 grid grid-cols-2 gap-4 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4">
+        {data.map((product) => (
+          <motion.div
+            key={product._id.toString()}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            whileHover={{ y: -10 }}
+            transition={{ duration: 0.3 }}
+            className="h-full"
           >
-            {/* Image Container */}
-            <Link to={`/detail/${product._id}`}>
-              <div className="relative mb-4 overflow-hidden rounded-lg pt-[100%]">
-                <div className="absolute inset-0 overflow-hidden">
-                  <img
-                    src={`${product.image_url[0]}`}
-                    alt={product.name}
-                    className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
-                  />
+            <Card
+              className="group relative h-full overflow-hidden rounded-xl border border-gray-100 bg-white p-3 shadow-sm transition-all duration-300 hover:shadow-xl"
+              bodyStyle={{ padding: 0 }}
+            >
+              {/* Wishlist Button */}
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                className="absolute top-2 left-2 z-10 rounded-full bg-white p-2 shadow-md transition-all hover:bg-gray-50"
+              >
+                <BsHeart className="text-gray-600 hover:text-red-500" />
+              </motion.button>
 
-                  {product.image_url[1] && (
+              {/* Image Container */}
+              <Link to={`/detail/${product._id}`}>
+                <div className="relative mb-4 overflow-hidden rounded-lg pt-[100%]">
+                  <motion.div 
+                    className="absolute inset-0 overflow-hidden"
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ duration: 0.4 }}
+                  >
                     <img
-                      src={`${product.image_url[1]}`}
+                      src={`${product.image_url[0]}`}
                       alt={product.name}
-                      className="absolute inset-0 h-full w-full object-contain transition-opacity duration-300 opacity-0 group-hover:opacity-100"
+                      className="h-full w-full object-contain transition-all duration-500"
                     />
-                  )}
+                    {product.image_url[1] && (
+                      <img
+                        src={`${product.image_url[1]}`}
+                        alt={product.name}
+                        className="absolute inset-0 h-full w-full object-contain opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                      />
+                    )}
+                  </motion.div>
                 </div>
-              </div>
-            </Link>
+              </Link>
 
-            {product.discount > 0 && (
-              <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-full">
-                Giảm {product.discount}%
-              </div>
-            )}
+              {/* Discount Badge */}
+              {product.discount > 0 && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute top-2 right-2"
+                >
+                  <Badge.Ribbon 
+                    text={`-${product.discount}%`}
+                    color="red"
+                    className="font-semibold"
+                  />
+                </motion.div>
+              )}
 
-            {/* Product Info */}
-            <div className="space-y-2 px-2 text-center">
-              {/* Name */}
-              <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-medium text-gray-800 transition-colors group-hover:text-[#22A6DF]">
-                {product.name}
-              </h3>
+              {/* Product Info */}
+              <div className="space-y-3 px-2 text-center">
+                {/* Rating */}
+                <div className="flex items-center justify-center gap-1">
+                  {[...Array(5)].map((_, index) => (
+                    <BsStarFill key={index} className="text-yellow-400 text-sm" />
+                  ))}
+                </div>
 
-              {/* Price */}
-              <div className="flex items-center justify-center gap-2">
-                <p className="text-lg font-bold text-[#22A6DF]">
-                  {new Intl.NumberFormat("vi-VN", {
-                    style: "currency",
-                    currency: "VND",
-                  }).format(
-                    Number(product.price * (1 - product.discount / 100))
-                  )}
-                </p>
+                {/* Name */}
+                <Link to={`/detail/${product._id}`}>
+                  <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-medium text-gray-800 transition-colors duration-300 group-hover:text-[#22A6DF]">
+                    {product.name}
+                  </h3>
+                </Link>
 
-                {product.discount > 0 && (
-                  <p className="text-sm text-gray-500 line-through">
+                {/* Price */}
+                <div className="flex flex-row items-center justify-center gap-1 sm:flex-row sm:gap-2">
+                  <motion.p 
+                    className="text-lg font-bold text-[#22A6DF]"
+                    whileHover={{ scale: 1.05 }}
+                  >
                     {new Intl.NumberFormat("vi-VN", {
                       style: "currency",
                       currency: "VND",
-                    }).format(Number(product.price))}
-                  </p>
-                )}
-              </div>
+                    }).format(Number(product.price * (1 - product.discount / 100)))}
+                  </motion.p>
 
-              <div className="relative overflow-hidden">
-                <Link to={`/detail/${product._id}`}>
-                  <Button className="w-full uppercase text-[#22A6DF] border border-[#22A6DF] hover:!text-white relative z-10 overflow-hidden before:absolute before:top-0 before:left-[-100%] before:w-full before:h-full before:bg-[#22A6DF] before:transition-all before:duration-300 hover:before:left-0">
-                    <div className="flex items-center justify-center gap-2 relative z-10">
-                      <BsHandbag />
-                      <span>Mua ngay</span>
-                    </div>
-                  </Button>
-                </Link>
+                  {product.discount > 0 && (
+                    <p className="text-xs text-gray-500 line-through">
+                      {new Intl.NumberFormat("vi-VN", {
+                        style: "currency",
+                        currency: "VND",
+                      }).format(Number(product.price))}
+                    </p>
+                  )}
+                </div>
+
+                {/* Buy Button */}
+                <motion.div 
+                  className="relative overflow-hidden rounded-lg mt-auto"
+                  whileHover={{ scale: 1.02 }}
+                >
+                  <Link to={`/detail/${product._id}`}>
+                    <Button 
+                      className="w-full bg-transparent hover:bg-[#22A6DF] border-[#22A6DF] text-[#22A6DF] hover:text-white transition-all duration-300 uppercase font-medium"
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <BsHandbag className="text-lg" />
+                        <span>Mua ngay</span>
+                      </div>
+                    </Button>
+                  </Link>
+                </motion.div>
               </div>
-            </div>
-          </Card>
-        </motion.div>
-      ))}
+            </Card>
+          </motion.div>
+        ))}
+      </div>
     </div>
   );
 }
