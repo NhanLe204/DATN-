@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 const ObjectId = mongoose.Types.ObjectId;
