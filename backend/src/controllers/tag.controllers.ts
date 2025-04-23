@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import { CategoryStatus } from '../enums/category.enum.js';
 import mongoose from 'mongoose';
 import tagModel from '../models/tag.model.js';
 

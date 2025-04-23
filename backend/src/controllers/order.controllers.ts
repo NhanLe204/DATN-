@@ -1,15 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import mongoose from 'mongoose';
-import rateModel from '../models/rating.model.js';
 import { Request, Response } from 'express';
 import orderModel from '../models/order.model.js';
 import userModel from '../models/user.model.js';
-import PaymentType from '../models/paymentType.model.js';
 import deliveryModel from '../models/delivery.model.js';
 import couponModel from '../models/coupon.model.js';
 import { CouponStatus } from '../enums/coupon.enum.js';
 import orderDetailModel from '../models/orderdetail.model.js';
-import ServiceModel from '../models/service.model.js';
 import productModel from '../models/product.model.js';
 import { OrderStatus, PaymentStatus } from '../enums/order.enum.js';
 import { ProductStatus } from '../enums/product.enum.js';

@@ -1,12 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import mongoose from 'mongoose';
 import rateModel from '../models/rating.model.js';
-import productModel from '../models/product.model.js';
 import orderDetailModel from '../models/orderdetail.model.js';
 import { Request, Response } from 'express';
 import { IUser } from '../interfaces/user.interface.js';
-import { get } from 'http';
-import { log } from 'console';
 export interface CustomRequest extends Request {
   user?: IUser;
 }
