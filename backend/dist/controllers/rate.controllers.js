@@ -3,7 +3,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getRatingByUserId = exports.getRatingByProductId = exports.createRating = void 0;
+exports.likeRating = exports.getRatingByUserId = exports.getRatingByProductId = exports.createRating = void 0;
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const mongoose_1 = __importDefault(require("mongoose"));
 const rating_model_js_1 = __importDefault(require("../models/rating.model.js"));
 const orderdetail_model_js_1 = __importDefault(require("../models/orderdetail.model.js"));
@@ -63,7 +64,7 @@ const getRatingByProductId = async (req, res) => {
         // Parse productId thành ObjectId
         const productObjectId = new mongoose_1.default.Types.ObjectId(productId);
         // Tìm tất cả các orderDetail có productId này
-        const orderDetails = await orderdetail_model_js_1.default.find({ productId: productObjectId }).select('_id');
+        const orderDetails = await orderdetail_model_js_1.default.find({ productId: productObjectId });
         if (!orderDetails || orderDetails.length === 0) {
             res.status(404).json({ success: false, message: 'No order details found for this product' });
             return;
@@ -78,12 +79,14 @@ const getRatingByProductId = async (req, res) => {
         }
         // Chuẩn bị dữ liệu trả về
         const ratingData = ratings.map((rating) => ({
+            _id: rating._id,
             userId: rating.userId._id,
             userName: rating.userId.fullname,
             userAvatar: rating.userId.avatar,
             content: rating.content,
             score: rating.score,
             likes: rating.likes,
+            likedBy: rating.likedBy || [],
             createdAt: rating.createdAt
         }));
         res.json({ success: true, data: ratingData });
@@ -118,4 +121,59 @@ const getRatingByUserId = async (req, res) => {
     }
 };
 exports.getRatingByUserId = getRatingByUserId;
+const likeRating = async (req, res) => {
+    try {
+        const { id: ratingId } = req.params; // Lấy ratingId từ URL params
+        const userId = req.user?._id; // Lấy userId từ middleware xác thực
+        // Kiểm tra đầu vào
+        if (!ratingId || !userId) {
+            res.status(400).json({ success: false, message: 'Thiếu thông tin trong yêu cầu' });
+            return;
+        }
+        // Kiểm tra tính hợp lệ của ratingId
+        if (!mongoose_1.default.Types.ObjectId.isValid(ratingId)) {
+            res.status(400).json({ success: false, message: 'Invalid ratingId' });
+            return;
+        }
+        // Tìm đánh giá theo ratingId
+        const rating = await rating_model_js_1.default.findById(ratingId);
+        if (!rating) {
+            res.status(404).json({ success: false, message: 'Đánh giá không tồn tại' });
+            return;
+        }
+        const userIdString = userId.toString(); // Chuyển userId thành string để so sánh
+        // Kiểm tra xem người dùng đã like chưa dựa trên mảng likedBy
+        const hasLiked = rating.likedBy?.includes(userIdString) || false;
+        if (hasLiked) {
+            // Nếu user đã like: giảm likes, xóa userId khỏi likedBy
+            rating.likes = (rating.likes || 0) - 1;
+            rating.likedBy = rating.likedBy.filter((id) => id !== userIdString);
+        }
+        else {
+            // Nếu user chưa like: tăng likes, thêm userId vào likedBy
+            rating.likes = (rating.likes || 0) + 1;
+            rating.likedBy = rating.likedBy ? [...rating.likedBy, userIdString] : [userIdString];
+        }
+        // Cập nhật thời gian
+        rating.updatedAt = new Date();
+        // Lưu thay đổi
+        const updatedRating = await rating.save();
+        // Trả về phản hồi
+        res.status(200).json({
+            success: true,
+            message: hasLiked ? 'Bỏ thích đánh giá thành công' : 'Thích đánh giá thành công',
+            data: {
+                ratingId: updatedRating._id,
+                likes: updatedRating.likes,
+                isLiked: !hasLiked, // Động: nếu đã like thì giờ là false, nếu chưa like thì giờ là true
+                updatedAt: updatedRating.updatedAt
+            }
+        });
+    }
+    catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        res.status(500).json({ success: false, message: 'Lỗi server', details: errorMessage });
+    }
+};
+exports.likeRating = likeRating;
 //# sourceMappingURL=rate.controllers.js.map

@@ -32,6 +32,15 @@ const ratingApi = {
       throw error;
     }
   },
+  likeRating: async (ratingId) => {
+    try {
+      const response = await api.patch(`/v1/ratings/likes/${ratingId}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching ratings:", error.response?.data || error);
+      throw error;
+    }
+  },
 };
 
 export default ratingApi;
