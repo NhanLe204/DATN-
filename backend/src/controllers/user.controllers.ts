@@ -4,7 +4,6 @@ import userModel from '../models/user.model.js';
 import mongoose from 'mongoose';
 import bcryptjs from 'bcryptjs';
 import { IAddress, IUser } from '../interfaces/user.interface.js';
-import { UserStatus } from '../enums/user.enum.js';
 
 interface AuthenticatedRequest extends Request {
   user?: IUser;

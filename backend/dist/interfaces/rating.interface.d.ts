@@ -7,6 +7,7 @@ export interface IRating {
     productId: ObjectId;
     content: string;
     likes: number;
+    likedBy: [string];
     created_at: Date;
     updated_at: Date;
 }

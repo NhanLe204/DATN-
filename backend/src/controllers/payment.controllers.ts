@@ -3,8 +3,6 @@ import crypto from 'crypto';
 import qs from 'qs';
 import moment from 'moment';
 import dotenv from 'dotenv';
-import orderModel from '../models/order.model';
-import mongoose from 'mongoose';
 
 dotenv.config();
 

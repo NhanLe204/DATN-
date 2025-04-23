@@ -1,8 +1,5 @@
 import { Request, Response } from 'express';
 import { CategoryStatus } from '../enums/category.enum.js';
-import mongoose from 'mongoose';
-import brandModel from '../models/brand.model.js';
-import { IService } from '../interfaces/service.interface.js';
 import serviceModel from '../models/service.model.js';
 import { ServiceStatus } from '../enums/service.enum.js';
 

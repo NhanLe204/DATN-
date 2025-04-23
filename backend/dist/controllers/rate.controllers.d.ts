@@ -6,3 +6,4 @@ export interface CustomRequest extends Request {
 export declare const createRating: (req: CustomRequest, res: Response) => Promise<void>;
 export declare const getRatingByProductId: (req: Request, res: Response) => Promise<void>;
 export declare const getRatingByUserId: (req: Request, res: Response) => Promise<void>;
+export declare const likeRating: (req: CustomRequest, res: Response) => Promise<void>;

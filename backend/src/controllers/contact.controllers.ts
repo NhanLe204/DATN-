@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import Contact from '../models/contact.model.js';
 import * as nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 
