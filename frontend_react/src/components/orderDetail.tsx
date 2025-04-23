@@ -325,11 +325,10 @@ export default function OrderDetail() {
 
   const columns = [
     {
-      title: "Mã đơn hàng",
-      dataIndex: "orderNumber",
-      key: "orderNumber",
-      render: (text: string) => (
-        <span className="font-medium text-gray-800">{text}</span>
+      title: "STT",
+      key: "index",
+      render: (_: any, __: any, index: number) => (
+        <span className="font-medium text-gray-800">{index + 1}</span>
       ),
     },
     {
