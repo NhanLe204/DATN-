@@ -194,7 +194,7 @@ export default function DetailProduct() {
     speed: 1000,
     slidesToShow: 4,
     slidesToScroll: 1,
-    autoplay: false, // Tự động chạy
+    autoplay: true, // Tự động chạy
     autoplaySpeed: 2000, // Tốc độ tự động chạy
     responsive: [
       {
