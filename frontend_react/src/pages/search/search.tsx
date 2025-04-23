@@ -68,13 +68,16 @@ export default function Search() {
       .replace(/Đ/g, "D");
   };
   // Lấy keyword từ URL khi component mount
+  // Trong Search
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const query = searchParams.get("q") || "";
-    if (query && !keyword) {
-      setKeyword(decodeURIComponent(query)); // Khôi phục keyword từ URL
+    if (query && query !== keyword) {
+      setKeyword(decodeURIComponent(query));
+    } else if (!query && keyword) {
+      setKeyword("");
     }
-  }, [location.search, keyword, setKeyword]);
+  }, [location.search, setKeyword]);
 
   // Fetch dữ liệu sản phẩm và danh mục
   useEffect(() => {
@@ -191,8 +194,8 @@ export default function Search() {
       typeof item.brand_id === "string"
         ? item.brand_id
         : item.brand_id && typeof item.brand_id === "object"
-        ? (item.brand_id as { _id: string })._id
-        : null;
+          ? (item.brand_id as { _id: string })._id
+          : null;
     const matchBrand =
       selectedBrands.length === 0 ||
       (brandId && selectedBrands.includes(brandId));
@@ -201,8 +204,8 @@ export default function Search() {
       typeof item.category_id === "string"
         ? item.category_id
         : item.category_id && typeof item.category_id === "object"
-        ? (item.category_id as { _id: string })._id
-        : null;
+          ? (item.category_id as { _id: string })._id
+          : null;
     const matchCategory =
       selectedCategory === "all" ||
       (categoryId && categoryId === selectedCategory);
