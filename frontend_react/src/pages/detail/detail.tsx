@@ -1,4 +1,4 @@
-import React, { useState, useEffect, ReactNode } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { Breadcrumb, Button, Image, Avatar, Divider } from "antd";
 import { motion } from "framer-motion";
@@ -8,14 +8,17 @@ import { useDispatch } from "react-redux";
 import { addToCart } from "../../redux/slices/cartslice";
 import parse from "html-react-parser";
 import ratingApi from "../../api/ratingApi";
+import Slider, { Settings } from "react-slick";
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 export default function DetailProduct() {
   const params = useParams();
   const location = useLocation();
   const [selectedImage, setSelectedImage] = useState("");
   const [likes, setLikes] = useState<{ [key: number]: boolean }>({});
-  const [likeCounts, setLikeCounts] = useState<{ [key: number]: number }>({});
   const [quantity, setQuantity] = useState(1);
+  const sliderRef = useRef<any>(null);
+
   const [comments, setComments] = useState<
     {
       id: number;
@@ -55,22 +58,11 @@ export default function DetailProduct() {
   useEffect(() => {
     if (location.hash !== "#reviews" || !productsDetail) return;
 
-    const scrollToReviews = () => {
-      const reviewsSection = document.getElementById("reviews");
-      console.log("Reviews section:", reviewsSection);
-      if (reviewsSection) {
-        reviewsSection.scrollIntoView({ behavior: "smooth" });
-      } else {
-        console.warn("Reviews section not found, retrying...");
-        // Thử lại sau 500ms nếu chưa tìm thấy
-        setTimeout(scrollToReviews, 500);
-      }
-    };
-
-    // Chờ 500ms để đảm bảo render hoàn thành
-    const timeoutId = setTimeout(scrollToReviews, 500);
-    return () => clearTimeout(timeoutId); // Dọn dẹp timeout
-  }, [location.hash, productsDetail]); // Thêm productsDetail vào dependencies
+    const reviewsSection = document.getElementById("reviews");
+    if (reviewsSection) {
+      reviewsSection.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [location.hash, productsDetail]);
 
   // Fetch product detail và related products
   useEffect(() => {
@@ -97,18 +89,32 @@ export default function DetailProduct() {
         const reviewsResponse = await ratingApi.getRatingsByProductId(
           params.id
         );
+        console.log("Fetched comments (raw):", reviewsResponse.data);
         const fetchedComments = reviewsResponse.data || [];
-        setComments(fetchedComments);
 
-        // Initialize likes and likeCounts
+        const formattedComments = fetchedComments.map((comment) => ({
+          id: comment._id,
+          userName: comment.userName || "Người dùng ẩn danh",
+          userAvatar: comment.userAvatar || "/default-avatar.png",
+          content: comment.content,
+          score: comment.score,
+          createdAt: comment.createdAt,
+          likes: comment.likes || 0,
+          likedBy: comment.likedBy || [],
+        }));
+        setComments(formattedComments);
+        console.log("Fetched comments:", formattedComments);
+
+
+        // Initialize likes
+        const userId = localStorage.getItem("accountID") || "";
+        console.log("User ID:", userId);
+
         const initialLikes = {};
-        const initialCounts = {};
         fetchedComments.forEach((comment: any) => {
-          initialLikes[comment.id] = false;
-          initialCounts[comment.id] = comment.likes || 0;
+          initialLikes[comment._id] = comment.likedBy?.includes(userId) || false; // Giả sử userId có sẵn từ context/auth
         });
         setLikes(initialLikes);
-        setLikeCounts(initialCounts);
       } catch (error) {
         console.error("Error fetching product data:", error);
       }
@@ -116,22 +122,26 @@ export default function DetailProduct() {
     fetchData();
   }, [params.id]);
 
-  const handleLike = async (commentId: number) => {
+  const handleLike = async (ratingId: number) => {
     try {
-      // Toggle like state
+      const response = await ratingApi.likeRating(ratingId);
+      const { data } = response;
+      const { likes: newLikes, isLiked } = data;
+
+      // Cập nhật state likes
       setLikes((prev) => ({
         ...prev,
-        [commentId]: !prev[commentId],
+        [ratingId]: isLiked,
       }));
 
-      // Update like count
-      setLikeCounts((prev) => ({
-        ...prev,
-        [commentId]: prev[commentId] + (likes[commentId] ? -1 : 1),
-      }));
-
-      // Call API to update likes in the backend
-      await ratingApi.likeRating(commentId);
+      // Cập nhật số lượt likes trong comments
+      setComments((prev) =>
+        prev.map((comment) =>
+          comment.id === ratingId
+            ? { ...comment, likes: newLikes }
+            : comment
+        )
+      );
     } catch (error) {
       console.error("Error updating like:", error);
     }
@@ -171,6 +181,46 @@ export default function DetailProduct() {
   const displayStatus =
     product.status === "available" ? "Còn hàng" : product.status;
 
+  const averageScore = comments.length > 0
+    ? Math.round(comments.reduce((sum, review) => sum + review.score, 0) / comments.length)
+    : 0;
+
+  const totalReviews = comments.length;
+
+  const sliderSettings: Settings = {
+    dots: true, // Bật chấm điều hướng
+    arrows: false,
+    infinite: true, // Lướt vô hạn
+    speed: 1000,
+    slidesToShow: 4,
+    slidesToScroll: 1,
+    autoplay: false, // Tự động chạy
+    autoplaySpeed: 2000, // Tốc độ tự động chạy
+    responsive: [
+      {
+        breakpoint: 1024, // lg
+        settings: {
+          slidesToShow: 2,
+          slidesToScroll: 1,
+        },
+      },
+      {
+        breakpoint: 768, // md
+        settings: {
+          slidesToShow: 1,
+          slidesToScroll: 1,
+        },
+      },
+      {
+        breakpoint: 640, // sm
+        settings: {
+          slidesToShow: 1,
+          slidesToScroll: 1,
+        },
+      },
+    ],
+  };
+
   return (
     <div className="text-black">
       <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 xl:px-[154px] py-6 lg:py-10">
@@ -187,8 +237,8 @@ export default function DetailProduct() {
                     src={image}
                     alt={`Detail ${index + 1}`}
                     className={`w-16 h-16 lg:w-20 lg:h-20 flex-shrink-0 cursor-pointer rounded-lg border object-cover transition-all duration-300 ${selectedImage === image
-                        ? "border-[#28A745]"
-                        : "border-[#EAEAEA] hover:border-[#28A745]"
+                      ? "border-[#28A745]"
+                      : "border-[#EAEAEA] hover:border-[#28A745]"
                       }`}
                     onClick={() => handleImageClick(image)}
                   />
@@ -222,17 +272,35 @@ export default function DetailProduct() {
             </h1>
 
             <div className="flex items-center">
-              <span className="text-yellow-400">★★★★★</span>
+              <div className="flex">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={`w-4 h-4 ${star <= averageScore
+                      ? "text-yellow-400 fill-yellow-400"
+                      : "text-gray-200 fill-gray-200"
+                      }`}
+                  />
+                ))}
+              </div>
               <span className="ml-2 text-xs lg:text-sm text-gray-600">
-                (123 đánh giá)
+                ({totalReviews} đánh giá)
               </span>
             </div>
 
             {/* Product Details */}
             <div className="text-xs lg:text-sm text-gray-600 space-y-1">
-              <p><span className="font-semibold">Thương hiệu:</span> {product.brand}</p>
-              <p><span className="font-semibold">Thẻ:</span> {product.tag}</p>
-              <p><span className="font-semibold">Tình trạng:</span> {displayStatus}</p>
+              <p>
+                <span className="font-semibold">Thương hiệu:</span>{" "}
+                {product.brand}
+              </p>
+              <p>
+                <span className="font-semibold">Thẻ:</span> {product.tag}
+              </p>
+              <p>
+                <span className="font-semibold">Tình trạng:</span>{" "}
+                {displayStatus}
+              </p>
             </div>
 
             {/* Price Section */}
@@ -241,7 +309,9 @@ export default function DetailProduct() {
                 {new Intl.NumberFormat("vi-VN", {
                   style: "currency",
                   currency: "VND",
-                }).format(Number(product.price) * (1 - (product.discount || 0) / 100))}
+                }).format(
+                  Number(product.price) * (1 - (product.discount || 0) / 100)
+                )}
               </span>
               {(product.discount ?? 0) > 0 && (
                 <>
@@ -260,16 +330,28 @@ export default function DetailProduct() {
 
             {/* Quantity Selector */}
             <div className="flex items-center gap-4">
-              <span className="font-semibold text-sm lg:text-base">Số lượng:</span>
+              <span className="font-semibold text-sm lg:text-base">
+                Số lượng:
+              </span>
               <div className="flex items-center border rounded-lg">
-                <Button onClick={handleDecrement} className="px-3 lg:px-4 py-2">-</Button>
+                <Button
+                  onClick={handleDecrement}
+                  className="px-3 lg:px-4 py-2"
+                >
+                  -
+                </Button>
                 <input
                   min={1}
                   value={quantity}
                   onChange={handleChange}
                   className="w-8 lg:w-12 text-center border-none"
                 />
-                <Button onClick={handleIncrement} className="px-3 lg:px-4 py-2">+</Button>
+                <Button
+                  onClick={handleIncrement}
+                  className="px-3 lg:px-4 py-2"
+                >
+                  +
+                </Button>
               </div>
             </div>
 
@@ -319,32 +401,19 @@ export default function DetailProduct() {
             {/* Average Rating Card */}
             <div className="bg-gradient-to-br from-blue-50 to-white p-6 rounded-xl shadow-sm">
               <div className="text-4xl font-bold text-[#22A6DF] mb-2">
-                {comments.length > 0
-                  ? (
-                    comments.reduce((sum, review) => sum + review.score, 0) /
-                    comments.length
-                  ).toFixed(1)
-                  : "0.0"}
+                {comments.length > 0 ? (comments.reduce((sum, review) => sum + review.score, 0) / comments.length).toFixed(1) : "0.0"}
               </div>
               <div className="flex text-yellow-400 mb-2">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star
                     key={star}
-                    className={`w-5 h-5 ${star <=
-                        Math.round(
-                          comments.reduce(
-                            (sum, review) => sum + review.score,
-                            0
-                          ) / comments.length
-                        )
-                        ? "fill-yellow-400"
-                        : "fill-gray-200"
+                    className={`w-5 h-5 ${star <= averageScore ? "fill-yellow-400" : "fill-gray-200"
                       }`}
                   />
                 ))}
               </div>
               <p className="text-gray-600">
-                Dựa trên {comments.length} đánh giá
+                Dựa trên {totalReviews} đánh giá
               </p>
             </div>
 
@@ -445,8 +514,8 @@ export default function DetailProduct() {
                               >
                                 <Star
                                   className={`w-4 h-4 ${star <= review.score
-                                      ? "text-yellow-400 fill-yellow-400"
-                                      : "text-gray-200 fill-gray-200"
+                                    ? "text-yellow-400 fill-yellow-400"
+                                    : "text-gray-200 fill-gray-200"
                                     }`}
                                 />
                               </motion.div>
@@ -473,8 +542,8 @@ export default function DetailProduct() {
                         whileTap={{ scale: 0.9 }}
                         onClick={() => handleLike(review.id)}
                         className={`flex items-center gap-2 px-3 py-1 rounded-full transition-all ${likes[review.id]
-                            ? "bg-blue-100 text-blue-600"
-                            : "text-gray-500 hover:text-blue-600"
+                          ? "bg-blue-100 text-blue-600"
+                          : "text-gray-500 hover:text-blue-600"
                           }`}
                       >
                         <ThumbsUp
@@ -489,7 +558,7 @@ export default function DetailProduct() {
                           transition={{ duration: 0.3 }}
                           className="text-sm"
                         >
-                          {likeCounts[review.id] || 0} Thích
+                          {review.likes} Thích
                         </motion.span>
                       </motion.button>
                     </div>
@@ -511,33 +580,32 @@ export default function DetailProduct() {
 
         {/* Related Products */}
         <div className="mt-8">
-          <h3 className="text-lg lg:text-xl font-bold mb-4">SẢN PHẨM LIÊN QUAN</h3>
+          <h3 className="text-lg lg:text-xl font-bold mb-4">
+            SẢN PHẨM LIÊN QUAN
+          </h3>
           {relatedProducts.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4">
+            <Slider ref={sliderRef} {...sliderSettings}>
               {relatedProducts.map((product) => (
-                <div
-                  key={product._id || product.id}
-                  className="p-3 lg:p-4 border rounded-lg hover:shadow-md transition-shadow"
-                >
-                  <div className="mb-2 aspect-square">
-                    <img
-                      src={product.image_url?.[0] || "/placeholder-image.jpg"}
-                      alt={product.name}
-                      className="object-contain w-full h-full"
-                    />
+                <div key={product._id || product.id} className="px-2 flex">
+                  <div className="flex-1 p-3 lg:p-4 border rounded-lg hover:shadow-md transition-shadow bg-white">
+                    <div className="mb-2 aspect-square">
+                      <img
+                        src={product.image_url?.[0] || "/placeholder-image.jpg"}
+                        alt={product.name}
+                        className="object-contain w-full h-full"
+                      />
+                    </div>
+                    <h4 className="flex flex-1 text-xs lg:text-sm mb-2 line-clamp-2">{product.name}</h4>
+                    <p className="font-medium text-blue-500 text-sm lg:text-base mt-auto">
+                      {new Intl.NumberFormat("vi-VN", {
+                        style: "currency",
+                        currency: "VND",
+                      }).format(Number(product.price))}
+                    </p>
                   </div>
-                  <h4 className="text-xs lg:text-sm mb-2 line-clamp-2">
-                    {product.name}
-                  </h4>
-                  <p className="font-medium text-blue-500 text-sm lg:text-base">
-                    {new Intl.NumberFormat("vi-VN", {
-                      style: "currency",
-                      currency: "VND",
-                    }).format(Number(product.price))}
-                  </p>
                 </div>
               ))}
-            </div>
+            </Slider>
           ) : (
             <p className="text-gray-500 text-center">Không có sản phẩm liên quan.</p>
           )}

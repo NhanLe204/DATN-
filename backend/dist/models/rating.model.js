@@ -53,6 +53,10 @@ const rateSchema = new mongoose_1.Schema({
     likes: {
         type: Number,
         default: 0
+    },
+    likedBy: {
+        type: [String],
+        default: []
     }
 }, { timestamps: true, _id: false });
 const rateModel = mongoose_1.default.models.rate || (0, mongoose_1.model)('rate', rateSchema);
