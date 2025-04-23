@@ -18,4 +18,5 @@ export interface IProduct extends Document {
   status: ProductStatus;
   discount: number;
   quantity_sold: number;
+  quantity: number;
 }
