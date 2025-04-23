@@ -24,7 +24,7 @@ interface Order {
   deliveryID: string | null;
   couponID: string | null;
   order_date: string;
-  total_price: number;
+  realPrice: number;
   shipping_address: string | null;
   payment_status: string;
   status: string | null;
@@ -167,6 +167,7 @@ const BookingHistory = () => {
   const statusColors = {
     pending: "blue",
     confirmed: "green",
+    on_progress: "purple",
     completed: "green",
     cancelled: "red",
   };
@@ -174,6 +175,7 @@ const BookingHistory = () => {
   const statusText = {
     pending: "Chưa xác nhận",
     confirmed: "Đã xác nhận",
+    on_progress: "Đang thực hiện",
     completed: "Đã hoàn thành",
     cancelled: "Đã hủy",
   };
@@ -214,9 +216,9 @@ const BookingHistory = () => {
         <span className="text-xs">
           {booking_date
             ? new Date(booking_date).toLocaleString("vi-VN", {
-                dateStyle: "short",
-                timeStyle: "short",
-              })
+              dateStyle: "short",
+              timeStyle: "short",
+            })
             : "Chưa xác định"}
         </span>
       ),
@@ -241,8 +243,8 @@ const BookingHistory = () => {
         <span className="text-xs">
           {booking_date
             ? new Date(booking_date).toLocaleTimeString("vi-VN", {
-                timeStyle: "short",
-              })
+              timeStyle: "short",
+            })
             : "Chưa xác định"}
         </span>
       ),
@@ -258,15 +260,16 @@ const BookingHistory = () => {
       ),
     },
     {
-      title: "Giá",
-      dataIndex: "total_price",
-      key: "total_price",
-      render: (total_price: number) => (
+      title: "Giá thực tế",
+      dataIndex: "realPrice",
+      key: "realPrice",
+      render: (realPrice: number | null | undefined) => (
         <span className="text-blue-500 font-medium text-xs">
-          {total_price.toLocaleString()}đ
+          {realPrice ? `${realPrice.toLocaleString()}đ` : "Chưa tính"}
         </span>
       ),
-    },
+    }
+    ,
     {
       title: "Thời gian dự tính",
       dataIndex: "service",
@@ -299,6 +302,7 @@ const BookingHistory = () => {
   const tabItems = [
     { label: "Tất cả", key: "all" },
     { label: "Đã xác nhận", key: "confirmed" },
+    { label: "Đang thực hiện", key: "on_progress" },
     { label: "Đã hoàn thành", key: "completed" },
     { label: "Đã hủy", key: "cancelled" },
   ];

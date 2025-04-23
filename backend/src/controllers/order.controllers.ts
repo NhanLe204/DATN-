@@ -40,7 +40,7 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
 
     console.log('req.body.orderDetails:', JSON.stringify(orderDetails, null, 2));
 
-    // 1. Validate input data
+    // 1. 
     if (!total_price || !orderDetails || !Array.isArray(orderDetails)) {
       throw new Error('Missing required fields');
     }
@@ -67,7 +67,7 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       throw new Error('Delivery ID is required for product orders');
     }
 
-    // 4. Validate delivery
+    // 
     let deliveryFee = 0;
     if (isOrder && deliveryID) {
       const delivery = await deliveryModel.findById(deliveryID).session(session);
@@ -75,7 +75,7 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       deliveryFee = delivery?.delivery_fee || 0;
     }
 
-    // 6. Calculate total_price
+    // 6. 
     let calculatedTotalPrice = 0;
     const orderDetailsPromises = normalizedOrderDetails.map(async (detail: any) => {
       const { productId, serviceId, quantity, product_price, booking_date, petName, petType } = detail;

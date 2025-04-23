@@ -107,7 +107,6 @@ export const getBookingsByUserId = async (
 
     // Bước 1: Kiểm tra xem user có order nào không
     const userOrders = await orderModel.find({ userID: userId }).select('_id');
-    console.log('User orders:', userOrders);
 
     if (!userOrders.length) {
       res.status(404).json({ success: false, message: 'No orders found for this user' });
@@ -165,11 +164,17 @@ export const getAllBookings = async (req: Request, res: Response, next: NextFunc
           orderId: '$order._id',
           user: {
             name: {
-              $ifNull: ['$user.fullname', '$order.fullname'] // Kiểm tra user.fullname, nếu null thì lấy fullName từ order
+              $ifNull: ['$user.fullname', '$order.infoUserGuest.fullName']
             },
-            email: '$user.email',
+            email: {
+              $ifNull: ['$user.email', '$order.infoUserGuest.email']
+            },
             phone: {
-              $ifNull: ['$user.phone_number', '$order.phone'] // Kiểm tra user.phone, nếu null thì lấy phone từ order
+              $cond: {
+                if: { $or: [{ $eq: ['$user.phone_number', ''] }, { $eq: ['$user.phone_number', null] }] },
+                then: { $ifNull: ['$order.phone', '$order.infoUserGuest.phone', ''] },
+                else: '$user.phone_number'
+              }
             }
           },
           service: {
@@ -177,12 +182,14 @@ export const getAllBookings = async (req: Request, res: Response, next: NextFunc
             price: '$service.service_price',
             duration: '$service.duration'
           },
-          booking_date: 1, // Từ orderDetail
-          order_date: '$order.order_date', // Từ orderModel
+          booking_date: 1,
+          order_date: '$order.order_date',
           status: '$order.status',
           bookingStatus: '$order.bookingStatus',
-          petName: 1, // Thêm petName từ orderDetail
-          petType: 1 // Thêm petType từ orderDetail
+          petName: 1,
+          petType: 1,
+          petWeight: 1,
+          realPrice: 1
         }
       }
     ]);
@@ -294,7 +301,7 @@ export const changeBookingStatus = async (req: Request, res: Response): Promise<
       return;
     }
 
-    // Check if order exists and has booking (service)
+    // Check if order exists
     const order = await orderModel.findById(orderId);
     if (!order) {
       res.status(404).json({
@@ -318,8 +325,34 @@ export const changeBookingStatus = async (req: Request, res: Response): Promise<
       return;
     }
 
-    // Update booking status
-    const updatedOrder = await orderModel.findByIdAndUpdate(orderId, { bookingStatus: bookingStatus }, { new: true });
+    // Update only bookingStatus and status (if needed)
+    const updateFields: { bookingStatus: string; status?: string } = { bookingStatus };
+
+    // Optionally, update order status based on booking status
+    switch (bookingStatus) {
+      case BookingStatus.PENDING:
+        updateFields.status = 'pending';
+        break;
+      case BookingStatus.CONFIRMED:
+        updateFields.status = 'confirmed';
+        break;
+      case BookingStatus.IN_PROGRESS:
+        updateFields.status = 'processing';
+        break;
+      case BookingStatus.COMPLETED:
+        updateFields.status = 'completed';
+        break;
+      case BookingStatus.CANCELLED:
+        updateFields.status = 'cancelled';
+        break;
+    }
+
+    // Update order with specific fields
+    const updatedOrder = await orderModel.findByIdAndUpdate(
+      orderId,
+      { $set: updateFields },
+      { new: true }
+    );
 
     if (!updatedOrder) {
       res.status(500).json({
@@ -329,38 +362,13 @@ export const changeBookingStatus = async (req: Request, res: Response): Promise<
       return;
     }
 
-    // Optionally, you might want to update related order status based on booking status
-    let newOrderStatus = updatedOrder.status;
-    switch (bookingStatus) {
-      case BookingStatus.PENDING:
-        newOrderStatus = 'pending';
-        break;
-      case BookingStatus.CONFIRMED:
-        newOrderStatus = 'confirmed';
-        break;
-      case BookingStatus.IN_PROGRESS:
-        newOrderStatus = 'processing';
-        break;
-      case BookingStatus.COMPLETED:
-        newOrderStatus = 'completed';
-        break;
-      case BookingStatus.CANCELLED:
-        newOrderStatus = 'cancelled';
-        break;
-    }
-
-    // Update order status if needed
-    if (newOrderStatus !== updatedOrder.status) {
-      await orderModel.findByIdAndUpdate(orderId, { status: newOrderStatus }, { new: true });
-    }
-
     res.status(200).json({
       success: true,
       message: 'Booking status updated successfully',
       data: {
         orderId: updatedOrder._id,
         bookingStatus: updatedOrder.bookingStatus,
-        orderStatus: newOrderStatus
+        orderStatus: updatedOrder.status
       }
     });
   } catch (error) {
@@ -467,6 +475,230 @@ export const getCancelledBookings = async (req: Request, res: Response): Promise
     res.status(500).json({
       success: false,
       message: 'Error retrieving cancelled bookings',
+      error
+    });
+  }
+};
+
+
+// Bảng giá
+const bathData = [
+  { weight: "< 5kg", price: 150000 },
+  { weight: "5 - 10kg", price: 200000 },
+  { weight: "10 - 20kg", price: 250000 },
+  { weight: "20 - 40kg", price: 300000 },
+  { weight: "> 40kg", price: 350000 },
+];
+
+const comboBathData = [
+  { weight: "< 5kg", price: 320000 },
+  { weight: "5 - 10kg", price: 520000 },
+  { weight: "10 - 20kg", price: 620000 },
+  { weight: "20 - 40kg", price: 720000 },
+  { weight: "> 40kg", price: 820000 },
+];
+
+const serviceBathData = [
+  { weight: "< 5kg", price: 150000 },
+  { weight: "5 - 10kg", price: 180000 },
+  { weight: "10 - 20kg", price: 210000 },
+  { weight: "20 - 40kg", price: 240000 },
+  { weight: "> 40kg", price: 270000 },
+];
+
+// Hàm calculatePrice
+const calculatePrice = (
+  serviceName: string,
+  petWeight: number,
+  petType: string
+): number => {
+  const getWeightRange = (weight: number): string => {
+    if (weight < 5) return "< 5kg";
+    if (weight >= 5 && weight <= 10) return "5 - 10kg";
+    if (weight > 10 && weight <= 20) return "10 - 20kg";
+    if (weight > 20 && weight <= 40) return "20 - 40kg";
+    return "> 40kg";
+  };
+
+  const weightRange = getWeightRange(petWeight);
+  const normalizedServiceName = serviceName.toLowerCase();
+
+  if (
+    normalizedServiceName.includes("tắm") &&
+    !normalizedServiceName.includes("combo")
+  ) {
+    const priceEntry = bathData.find((item) => item.weight === weightRange);
+    return priceEntry ? priceEntry.price : 0;
+  } else if (normalizedServiceName.includes("combo")) {
+    const priceEntry = comboBathData.find((item) => item.weight === weightRange);
+    return priceEntry ? priceEntry.price : 0;
+  } else if (
+    normalizedServiceName.includes("cắt") ||
+    normalizedServiceName.includes("tỉa") ||
+    normalizedServiceName.includes("cạo")
+  ) {
+    const priceEntry = serviceBathData.find((item) => item.weight === weightRange);
+    return priceEntry ? priceEntry.price : 0;
+  }
+
+  return 0;
+};
+
+// API updateRealPrice
+export const updateRealPrice = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { orderId, petWeight, petType, serviceName } = req.body;
+    // Kiểm tra dữ liệu đầu vào
+    if (!orderId || petWeight == null || !petType || !serviceName) {
+      res.status(400).json({
+        success: false,
+        message: `Yêu cầu đầy đủ các trường: orderId=${orderId}, petWeight=${petWeight}, petType=${petType}, serviceName=${serviceName}`,
+      });
+      return;
+    }
+
+    // Kiểm tra petWeight hợp lệ
+    if (typeof petWeight !== 'number' || petWeight < 0 || petWeight > 100) {
+      res.status(400).json({
+        success: false,
+        message: `Cân nặng phải là số từ 0 đến 100 kg, nhận được: ${petWeight}`,
+      });
+      return;
+    }
+
+    // Tính giá thực tế
+    const realPrice = calculatePrice(serviceName, petWeight, petType);
+
+    // Kiểm tra realPrice hợp lệ
+    if (realPrice === 0) {
+      res.status(400).json({
+        success: false,
+        message: `Không thể tính giá cho dịch vụ "${serviceName}" với cân nặng ${petWeight} kg`,
+      });
+      return;
+    }
+
+    // Cập nhật orderDetail với realPrice
+    const updatedOrderDetail = await orderDetailModel.findOneAndUpdate(
+      { orderId, serviceId: { $ne: null } },
+      { $set: { realPrice } },
+      { new: true }
+    );
+
+    if (!updatedOrderDetail) {
+      res.status(404).json({
+        success: false,
+        message: `Không tìm thấy chi tiết đơn hàng với orderId=${orderId} và serviceId không null`,
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Cập nhật giá thực tế thành công",
+      data: {
+        orderId,
+        realPrice,
+      },
+    });
+  } catch (error) {
+    console.error("Lỗi khi cập nhật giá thực tế:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi khi cập nhật giá thực tế",
+    });
+  }
+};
+
+
+// update
+export const updateBooking = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { orderId, serviceId, petName, petType, bookingDate, bookingTime, bookingStatus, username } = req.body;
+
+    // Validate input
+    if (!orderId || !serviceId || !petName || !petType || !bookingDate || !bookingTime || !bookingStatus) {
+      res.status(400).json({
+        success: false,
+        message: 'Yêu cầu đầy đủ các trường: orderId, serviceId, petName, petType, bookingDate, bookingTime, bookingStatus'
+      });
+      return;
+    }
+
+    // Kiểm tra order tồn tại
+    const order = await orderModel.findById(orderId);
+    if (!order) {
+      res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy đơn hàng'
+      });
+      return;
+    }
+
+    // Kiểm tra orderDetail tồn tại
+    const orderDetail = await orderDetailModel.findOne({ orderId, serviceId: { $ne: null } });
+    if (!orderDetail) {
+      res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy chi tiết đơn hàng với dịch vụ'
+      });
+      return;
+    }
+
+    // Cập nhật orderDetail
+    const updatedOrderDetail = await orderDetailModel.findOneAndUpdate(
+      { orderId, serviceId: { $ne: null } },
+      {
+        $set: {
+          serviceId,
+          petName,
+          petType,
+          booking_date: new Date(bookingDate),
+          booking_time: bookingTime,
+        }
+      },
+      { new: true }
+    );
+
+    // Cập nhật bookingStatus và username trong order
+    const updatedOrder = await orderModel.findByIdAndUpdate(
+      orderId,
+      {
+        $set: {
+          bookingStatus,
+          'infoUserGuest.fullName': username, // Nếu cần cập nhật username cho khách
+        }
+      },
+      { new: true }
+    );
+
+    if (!updatedOrderDetail || !updatedOrder) {
+      res.status(500).json({
+        success: false,
+        message: 'Không thể cập nhật thông tin booking'
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Cập nhật thông tin booking thành công',
+      data: {
+        orderId,
+        serviceId,
+        petName,
+        petType,
+        bookingDate: updatedOrderDetail.booking_date,
+        bookingTime: updatedOrderDetail.booking_time,
+        bookingStatus: updatedOrder.bookingStatus,
+        username
+      }
+    });
+  } catch (error) {
+    console.error('Lỗi khi cập nhật booking:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi cập nhật booking',
       error
     });
   }

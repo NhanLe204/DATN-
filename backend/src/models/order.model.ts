@@ -18,7 +18,7 @@ const orderSchema: Schema<IOrder> = new Schema<IOrder>(
     deliveryID: { type: Schema.Types.ObjectId, ref: delivery, default: null },
     couponID: { type: Schema.Types.ObjectId, ref: coupon, default: null },
     order_date: { type: Date, default: Date.now },
-    total_price: { type: Number, required: true },
+    total_price: { type: Number, required: false },
     shipping_address: { type: String, required: false },
     payment_status: {
       type: String,

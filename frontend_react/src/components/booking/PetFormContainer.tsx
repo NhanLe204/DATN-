@@ -101,7 +101,7 @@ const PetFormContainer: React.FC<PetFormContainerProps> = ({
           onViewPriceClick={onViewPriceClick}
         />
       ))}
-      {petForms.length < 2 && (
+      {petForms.length < 5 && (
         <div
           className="text-[#22A6DF] cursor-pointer mb-4"
           onClick={addPetForm}

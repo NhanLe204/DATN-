@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Form, Button, message } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
@@ -15,6 +15,7 @@ import {
   setGuestUserInfo,
   resetForm,
 } from "../../redux/slices/spaBookingSlice";
+import debounce from "lodash/debounce";
 
 interface Service {
   _id: string;
@@ -60,6 +61,7 @@ const SpaBookingForm: React.FC = () => {
   }>({});
   const [userData, setUserData] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
+  const isInitialMount = useRef(true);
 
   const availableTimeSlots = [
     "8h",
@@ -73,20 +75,42 @@ const SpaBookingForm: React.FC = () => {
     "17h",
   ];
 
-  useEffect(() => {
-    form.setFieldsValue(spaBooking.formData);
-    const restoredDates = spaBooking.selectedDates.map((date) =>
-      date ? moment(date) : null
-    );
-    setSelectedDates(restoredDates);
-    restoredDates.forEach((date, index) => {
-      if (date) fetchAvailableSlots(date, index);
-    });
+  const debouncedSetGuestUserInfo = debounce((guestInfo) => {
+    dispatch(setGuestUserInfo(guestInfo));
+  }, 500);
 
-    if (!userId && Object.keys(spaBooking.guestUserInfo).length > 0) {
-      form.setFieldsValue(spaBooking.guestUserInfo);
+  const handleValuesChange = (changedValues: any, allValues: any) => {
+    const guestInfo = {
+      fullName: allValues.fullName,
+      phone: allValues.phone,
+      email: allValues.email,
+      note: allValues.note,
+    };
+    console.log("SpaBookingForm - GuestInfo to dispatch:", guestInfo);
+    debouncedSetGuestUserInfo(guestInfo);
+    dispatch(setFormData(allValues));
+  };
+
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      if (Object.keys(spaBooking.formData).length > 0) {
+        form.setFieldsValue(spaBooking.formData);
+      }
+      const restoredDates = spaBooking.selectedDates.map((date) =>
+        date ? moment(date) : null
+      );
+      dispatch(setSelectedDates(restoredDates));
+      restoredDates.forEach((date, index) => {
+        if (date) fetchAvailableSlots(date, index);
+      });
+      return;
     }
-  }, [form, spaBooking.formData, spaBooking.selectedDates, spaBooking.guestUserInfo, userId]);
+
+    if (Object.keys(spaBooking.formData).length > 0) {
+      form.setFieldsValue(spaBooking.formData);
+    }
+  }, [form, spaBooking.formData, spaBooking.selectedDates, dispatch]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -97,15 +121,21 @@ const SpaBookingForm: React.FC = () => {
 
   useEffect(() => {
     const fetchUserDataFromLocalStorage = () => {
-      const userDataFromStorage = localStorage.getItem("userData");
-      if (userDataFromStorage && userId) {
-        const parsedUserData = JSON.parse(userDataFromStorage);
-        setUserData({
-          _id: parsedUserData._id,
-          fullname: parsedUserData.fullname,
-          phone_number: parsedUserData.phone_number,
-          email: parsedUserData.email,
-        });
+      if (userId) {
+        const userDataFromStorage = localStorage.getItem("userData");
+        if (userDataFromStorage) {
+          const parsedUserData = JSON.parse(userDataFromStorage);
+          setUserData({
+            _id: parsedUserData._id,
+            fullname: parsedUserData.fullname || "",
+            phone_number: parsedUserData.phone_number || "", // 
+            email: parsedUserData.email || "",
+          });
+        } else {
+          setUserData(null);
+        }
+      } else {
+        setUserData(null);
       }
     };
     fetchUserDataFromLocalStorage();
@@ -153,8 +183,6 @@ const SpaBookingForm: React.FC = () => {
   };
 
   const onFinish = async (values: any) => {
-    console.log("Form values on submit:", values);
-
     // Validate customer info
     if (!values.fullName) {
       message.error("Vui lòng nhập họ và tên!");
@@ -169,27 +197,23 @@ const SpaBookingForm: React.FC = () => {
       return;
     }
 
-    const totalPrice = spaBooking.petFormData.reduce(
-      (sum, pet) => sum + (pet.estimatedPrice || 0),
-      0
-    );
+   
 
-    if (totalPrice <= 0) {
-      message.error("Vui lòng chọn ít nhất một dịch vụ để đặt lịch!");
-      return;
-    }
+ 
 
     const slotUsage: { [key: string]: number } = {};
     for (let index = 0; index < spaBooking.petForms.length; index++) {
-      const selectedDate = moment(spaBooking.selectedDates[index]);
-      const selectedTime = values.pets[index]?.time;
+      const selectedDate = spaBooking.selectedDates[index]
+        ? moment(spaBooking.selectedDates[index])
+        : null;
+      const selectedTime = values.pets?.[index]?.time;
 
       if (!selectedDate || !selectedTime) {
         message.error(`Vui lòng chọn ngày và giờ hẹn cho pet ${index + 1}!`);
         return;
       }
 
-      const selectedServiceId = values.pets[index].service;
+      const selectedServiceId = values.pets?.[index]?.service;
       const selectedService = services.find((s) => s._id === selectedServiceId);
       const duration = selectedService?.duration
         ? parseInt(selectedService.duration)
@@ -219,15 +243,15 @@ const SpaBookingForm: React.FC = () => {
     setLoading(true);
 
     try {
-      if (!userId) {
-        const guestInfo = {
-          fullName: values.fullName,
-          phone: values.phone,
-          email: values.email,
-          note: values.note || "",
-        };
-        dispatch(setGuestUserInfo(guestInfo));
-      }
+      // Lưu thông tin từ form vào Redux
+      const guestInfo = {
+        fullName: values.fullName,
+        phone: values.phone,
+        email: values.email,
+        note: values.note || "",
+      };
+      console.log("SpaBookingForm - GuestInfo before dispatch:", guestInfo);
+      dispatch(setGuestUserInfo(guestInfo));
 
       const orderDetails = spaBooking.petForms.map((index) => {
         const selectedDate = moment(spaBooking.selectedDates[index]);
@@ -255,14 +279,14 @@ const SpaBookingForm: React.FC = () => {
       });
 
       const orderData = {
-        userID: userId,
+        userID: userId || null,
         payment_typeID: null,
         deliveryID: null,
         couponID: null,
         orderdate: moment().tz("Asia/Ho_Chi_Minh").format("YYYY-MM-DD HH:mm:ss"),
-        total_price: totalPrice,
         shipping_address: null,
         orderDetails,
+        phone: values.phone,
         infoUserGuest: {
           fullName: values.fullName,
           phone: values.phone,
@@ -271,21 +295,17 @@ const SpaBookingForm: React.FC = () => {
         note: values.note || "",
       };
 
-      console.log("Order data being sent:", orderData);
+      console.log("SpaBookingForm - Order data before sending:", orderData);
 
       const response = await orderApi.create(orderData);
-      console.log("test", response);
+      console.log("SpaBookingForm - Order response:", response);
 
       message.success("Đặt lịch thành công!");
       form.resetFields();
       dispatch(resetForm());
-      if (userId) {
-        navigate("/userprofile/bookings");
-      } else {
-        navigate("/success-booking");
-      }
+      navigate(userId ? "/userprofile/bookings" : "/success-booking");
     } catch (error) {
-      console.error("API Error Details:", error.response?.data);
+      console.error("SpaBookingForm - API Error Details:", error);
       const errorMessage =
         error.response?.data?.message || "Có lỗi xảy ra khi đặt lịch!";
       message.error(errorMessage);
@@ -296,11 +316,13 @@ const SpaBookingForm: React.FC = () => {
 
   const handleServiceChange = (value: string, index: number) => {
     const selectedService = services.find((service) => service._id === value);
+    console.log("Selected Service:", selectedService);
     const updatedPetFormData = [...spaBooking.petFormData];
     updatedPetFormData[index] = {
       estimatedPrice: selectedService?.service_price || 0,
       estimatedDuration: selectedService?.duration,
     };
+    console.log("Updated PetFormData:", updatedPetFormData);
     dispatch(setPetFormData(updatedPetFormData));
     form.setFieldsValue({
       pets: {
@@ -411,14 +433,21 @@ const SpaBookingForm: React.FC = () => {
         Thông tin cần biết về dịch vụ chăm sóc thú cưng tại Pet Heaven
       </p>
       <div className="max-w-2xl p-6 mx-auto bg-white rounded-lg shadow-md">
-        <Form form={form} layout="vertical" onFinish={onFinish}>
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={onFinish}
+          onValuesChange={handleValuesChange}
+        >
           <CustomerInfoForm
             form={form}
             initialData={{
-              fullName: userData?.fullname || "",
-              phone: userData?.phone_number || "",
-              email: userData?.email || "",
-              note: "",
+              fullName: userData?.fullname || spaBooking.guestUserInfo.fullName || "",
+              phone: userData?.phone_number && /^(0|\+84)[3|5|7|8|9][0-9]{8}$/.test(userData.phone_number)
+                ? userData.phone_number
+                : spaBooking.guestUserInfo.phone || "", // Chỉ dùng phone_number nếu hợp lệ
+              email: userData?.email || spaBooking.guestUserInfo.email || "",
+              note: spaBooking.guestUserInfo.note || "",
             }}
           />
           <PetFormContainer

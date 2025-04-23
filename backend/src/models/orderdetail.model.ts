@@ -9,8 +9,8 @@ const orderDetailSchema = new Schema(
     productId: { type: Schema.Types.ObjectId, ref: product, required: false, default: '' },
     serviceId: { type: Schema.Types.ObjectId, ref: service, required: false, default: '' },
     quantity: { type: Number, required: true },
-    product_price: { type: Number, required: true },
-    total_price: { type: Number, required: true },
+    product_price: { type: Number, required: false },
+    total_price: { type: Number, required: false },
     booking_date: { type: String, required: false, default: '' },
     petName: { type: String, required: false, default: '' },
     petType: {
@@ -19,6 +19,8 @@ const orderDetailSchema = new Schema(
       default: ''
     },
     isRated: { type: Boolean, default: false },
+    petWeight: { type: Number, require: false, default: '' },
+    realPrice: { type: Number, require: false, default: '' },
   },
   { timestamps: true }
 );
