@@ -1,6 +1,4 @@
 import { Request, Response } from 'express';
-import { CategoryStatus } from '../enums/category.enum.js';
-import mongoose from 'mongoose';
 import couponModel from '../models/coupon.model.js';
 import { ICoupon } from '../interfaces/coupon.interface.js';
 import { CouponStatus } from '../enums/coupon.enum.js';
