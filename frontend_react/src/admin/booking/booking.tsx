@@ -1,37 +1,41 @@
-import React, { useState, useEffect } from "react";
-import {
-  Card,
-  Button,
-  Table,
-  Modal,
-  Form,
-  Input,
-  Select,
-  Space,
-  notification,
-} from "antd";
-import { SearchOutlined, EditOutlined, EyeOutlined } from "@ant-design/icons";
-import { motion } from "framer-motion";
-import orderDetailApi from "../../api/orderDetailApi";
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Card, Form, notification, Button } from 'antd';
+import { motion } from 'framer-motion';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+import { debounce } from 'lodash';
+import orderDetailApi from '../../api/orderDetailApi';
+import serviceApi from '../../api/serviceApi';
+import orderApi from '../../api/orderApi';
+import SearchBar from '../components/booking/SearchBar';
+import BookingTable from '../components/booking/BookingTable';
+import EditBookingModal from '../components/booking/EditBookingModal';
+import StartServiceModal from '../components/booking/StartServiceModal';
+import AddBookingModal from '../components/booking/AddBookingModal';
+import { FaPlus } from "react-icons/fa";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 export enum BookingStatus {
-  PENDING = "ĐANG CHỜ",
-  CONFIRMED = "ĐÃ XÁC NHẬN",
-  IN_PROGRESS = "ĐANG THỰC HIỆN",
-  COMPLETED = "HOÀN THÀNH",
-  CANCELLED = "ĐÃ HỦY",
+  PENDING = 'ĐANG CHỜ',
+  CONFIRMED = 'ĐÃ XÁC NHẬN',
+  IN_PROGRESS = 'ĐANG THỰC HIỆN',
+  COMPLETED = 'HOÀN THÀNH',
+  CANCELLED = 'ĐÃ HỦY',
 }
 
-const { Option } = Select;
-
 interface Booking {
+  email: string;
   key: string;
   id: string;
   orderId: string;
-  username: string;
-  phone: string; // Thêm field phone
+  fullname: string;
+  phone: string;
   orderDate: string;
   serviceName: string;
+  serviceId?: string;
   bookingDate: string;
   bookingTime: string;
   estimatedPrice: number;
@@ -40,106 +44,228 @@ interface Booking {
   petName?: string;
   petType?: string;
   petWeight?: number;
-  userId?: string; // Thêm userId để lấy phone từ bảng user
+  userId?: string;
+  realPrice?: number;
+}
+
+interface Service {
+  id: string;
+  name: string;
+  price: number;
+  duration: number;
 }
 
 const removeAccents = (str: string) => {
   return str
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/đ/g, "d")
-    .replace(/Đ/g, "D");
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D');
 };
 
 const BookingManager: React.FC = () => {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isStartModalVisible, setIsStartModalVisible] = useState(false);
-  const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
+  const [isAddModalVisible, setIsAddModalVisible] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
-  const [searchText, setSearchText] = useState("");
+  const [services, setServices] = useState<Service[]>([]);
+  const [petTypes, setPetTypes] = useState<string[]>(['Chó', 'Mèo', 'Khác']);
+  const [searchText, setSearchText] = useState('');
   const [form] = Form.useForm();
   const [startForm] = Form.useForm();
+  const [addForm] = Form.useForm();
+  const [slotAvailability, setSlotAvailability] = useState<{
+    [key: string]: number;
+  }>({});
+  const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs | null>(null);
+
+  const availableTimeSlots = [
+    '8h',
+    '9h',
+    '10h',
+    '11h',
+    '13h',
+    '14h',
+    '15h',
+    '16h',
+    '17h',
+  ];
+
+  const fetchAvailableSlotsRef = useRef(
+    debounce(async (date: dayjs.Dayjs | null) => {
+      if (!date || !date.isValid()) {
+        setSlotAvailability({});
+        return;
+      }
+      try {
+        const dateStr = date.format('YYYY-MM-DD');
+        const response = await orderApi.getAvailableSlots(dateStr);
+        setSlotAvailability(response.data);
+      } catch (error) {
+        console.error('Error fetching slots:', error);
+        notification.error({
+          message: 'Lỗi',
+          description: 'Không thể tải danh sách khung giờ, vui lòng thử lại!',
+        });
+        setSlotAvailability({});
+      }
+    }, 500)
+  );
+
+  const fetchServices = async () => {
+    try {
+      const response = await serviceApi.getAllService();
+      const fetchedServices = Array.isArray(response.data.result)
+        ? response.data.result
+            .filter(
+              (service: any) =>
+                service._id != null && service.service_name != null
+            )
+            .map((service: any) => ({
+              id: service._id,
+              name: service.service_name,
+              price: service.service_price,
+              duration: service.duration,
+            }))
+        : [];
+      setServices(fetchedServices);
+    } catch (error) {
+      console.error('Error fetching services:', error);
+      notification.error({
+        message: 'Lỗi',
+        description: 'Không thể tải danh sách dịch vụ!',
+      });
+      setServices([]);
+    }
+  };
 
   const fetchBookings = async () => {
     try {
-      const response = await orderDetailApi.getAllBookings();
+      const response = await orderDetailApi.getAllBookings();      
       const bookingData = response.data.map((booking: any) => {
-        // Ánh xạ petType từ tiếng Anh sang tiếng Việt
-        const petTypeMap: { [key: string]: string } = {
-          dog: "Chó",
-          cat: "Mèo",
+        const petTypes: { [key: string]: string } = {
+          dog: 'Chó',
+          cat: 'Mèo',
         };
         const petType =
-          petTypeMap[booking.petType?.toLowerCase()] ||
-          booking.petType ||
-          "N/A";
-
+          petTypes[booking.petType?.toLowerCase()] || booking.petType || 'Khác';
+        const matchedService = services.find(
+          (service) => service.name === booking.service?.name
+        );
+  
+        let bookingMoment: dayjs.Dayjs | null = null;
+        if (booking.booking_date) {
+          const cleanedBookingDate = booking.booking_date.replace(/\(.*\)/, '').trim();
+          bookingMoment = dayjs(cleanedBookingDate, 'ddd MMM DD YYYY HH:mm:ss [GMT]Z', true);
+          if (!bookingMoment.isValid()) {
+            bookingMoment = dayjs(cleanedBookingDate);
+          }
+          if (!bookingMoment.isValid()) {
+            console.warn('Invalid booking_date:', booking.booking_date);
+            bookingMoment = null;
+          } else {
+            bookingMoment = bookingMoment.tz('Asia/Ho_Chi_Minh');
+          }
+        }
+        const bookingTime = bookingMoment ? bookingMoment.format('H[h]') : 'N/A';
+        const bookingDate = bookingMoment ? bookingMoment.format('DD/MM/YYYY') : 'N/A';
+  
+        let orderDateMoment: dayjs.Dayjs | null = null;
+        if (booking.order_date) {
+          orderDateMoment = dayjs(booking.order_date);
+          if (!orderDateMoment.isValid()) {
+            orderDateMoment = dayjs(booking.order_date, 'ddd MMM DD YYYY HH:mm:ss [GMT]Z (z)', true);
+            if (!orderDateMoment.isValid()) {
+              console.warn('Invalid order_date:', booking.order_date);
+              orderDateMoment = null;
+            }
+          }
+          if (orderDateMoment) {
+            orderDateMoment = orderDateMoment.tz('Asia/Ho_Chi_Minh');
+          }
+        }
+        const orderDateFormatted = orderDateMoment
+          ? orderDateMoment.format('DD/MM/YYYY HH:mm:ss')
+          : 'N/A';
+  
         return {
-          key: booking.orderId,
-          id: booking.orderId,
-          orderId: booking.orderId,
-          username: booking.user?.name || "Unknown User",
-          phone: booking.user?.phone || "Unknown Phone",
-          orderDate: booking.order_date
-            ? new Date(booking.order_date).toLocaleString()
-            : "N/A",
-          serviceName: booking.service?.name || "Unknown Service",
-          bookingDate: booking.booking_date
-            ? new Date(booking.booking_date).toLocaleDateString()
-            : "N/A",
-          bookingTime: booking.booking_date
-            ? new Date(booking.booking_date).toLocaleTimeString()
-            : "N/A",
+          key: booking.orderId || 'N/A',
+          id: booking.orderId || 'N/A',
+          orderId: booking.orderId || 'N/A',
+          fullname: booking.fullname || booking.user?.name || 'Unknown User',
+          phone: booking.user?.phone || booking.phone || 'Unknown Phone',
+          email: booking.user?.email || booking.email || '',
+          orderDate: orderDateFormatted,
+          serviceId: matchedService
+            ? matchedService.id
+            : booking.service?._id || 'N/A',
+          serviceName: booking.service?.name || 'Unknown Service',
+          bookingDate: bookingDate,
+          bookingTime: bookingTime,
           estimatedPrice: booking.service?.price || 0,
           duration: booking.service?.duration || 0,
-          bookingStatus:
-            booking.bookingStatus === "PENDING"
+          bookingStatus: booking.bookingStatus
+            ? booking.bookingStatus === 'PENDING'
               ? BookingStatus.PENDING
-              : booking.bookingStatus === "CONFIRMED"
+              : booking.bookingStatus === 'CONFIRMED'
               ? BookingStatus.CONFIRMED
-              : booking.bookingStatus === "IN_PROGRESS"
+              : booking.bookingStatus === 'IN_PROGRESS'
               ? BookingStatus.IN_PROGRESS
-              : booking.bookingStatus === "COMPLETED"
+              : booking.bookingStatus === 'COMPLETED'
               ? BookingStatus.COMPLETED
-              : BookingStatus.CANCELLED,
-          petName: booking.petName || "N/A",
-          petType: petType, // Sử dụng giá trị đã ánh xạ
+              : BookingStatus.CANCELLED
+            : BookingStatus.PENDING,
+          petName: booking.petName || 'N/A',
+          petType: petType,
           petWeight: booking.petWeight || 0,
+          realPrice: booking.realPrice || undefined,
         };
       });
-
       setBookings(bookingData);
       setFilteredBookings(bookingData);
     } catch (error) {
-      console.error("Error fetching bookings:", error);
+      console.error('Error fetching bookings:', error);
+      notification.error({
+        message: 'Lỗi',
+        description: 'Không thể tải danh sách lịch hẹn!',
+      });
     }
   };
 
   useEffect(() => {
-    fetchBookings();
+    const loadData = async () => {
+      await fetchServices();
+    };
+    loadData();
   }, []);
+
+  useEffect(() => {
+    if (services.length > 0) {
+      fetchBookings();
+    }
+  }, [services]);
 
   const handleSearch = (value: string) => {
     setSearchText(value);
     const normalizedSearchText = removeAccents(value.toLowerCase());
-
     const filtered = bookings.filter((booking) => {
       const normalizedServiceName = removeAccents(
         booking.serviceName.toLowerCase()
       );
-      const normalizedUsername = removeAccents(booking.username.toLowerCase());
+      const normalizedFullname = removeAccents(booking.fullname.toLowerCase()); // Sửa từ normalizedUsername
       const normalizedPetName = removeAccents(
-        booking.petName?.toLowerCase() || ""
+        booking.petName?.toLowerCase() || ''
       );
       const normalizedPetType = removeAccents(
-        booking.petType?.toLowerCase() || ""
+        booking.petType?.toLowerCase() || ''
       );
       return (
         normalizedServiceName.includes(normalizedSearchText) ||
         booking.orderId.toLowerCase().includes(normalizedSearchText) ||
-        normalizedUsername.includes(normalizedSearchText) ||
+        normalizedFullname.includes(normalizedSearchText) || // Sửa từ normalizedUsername
         removeAccents(booking.bookingStatus.toLowerCase()).includes(
           normalizedSearchText
         ) ||
@@ -147,16 +273,225 @@ const BookingManager: React.FC = () => {
         normalizedPetType.includes(normalizedSearchText)
       );
     });
-
     setFilteredBookings(filtered);
   };
-  const handleViewDetail = (record: Booking) => {
+
+  const handleEdit = (record: Booking) => {
     setSelectedBooking(record);
-    setIsDetailModalVisible(true);
+    setIsEditMode(false);
+  
+    let parsedBookingDate: dayjs.Dayjs | null = null;
+    if (record.bookingDate && record.bookingDate !== 'N/A') {
+      parsedBookingDate = dayjs(record.bookingDate, 'DD/MM/YYYY', true).tz('Asia/Ho_Chi_Minh');
+      if (!parsedBookingDate.isValid()) {
+        console.warn('Invalid bookingDate in handleEdit:', record.bookingDate);
+        parsedBookingDate = null;
+      }
+    }
+  
+    let parsedOrderDate: dayjs.Dayjs | null = null;
+    if (record.orderDate && record.orderDate !== 'N/A') {
+      parsedOrderDate = dayjs(record.orderDate, 'DD/MM/YYYY HH:mm:ss', true).tz('Asia/Ho_Chi_Minh');
+      if (!parsedOrderDate.isValid()) {
+        console.warn('Invalid orderDate:', record.orderDate);
+        parsedOrderDate = null;
+      }
+    }
+  
+    form.setFieldsValue({
+      orderId: record.orderId || 'N/A',
+      fullname: record.fullname || 'Unknown User', // Sửa từ username
+      email: record.email || '',
+      phone: record.phone || 'Unknown Phone',
+      orderDate: parsedOrderDate,
+      petName: record.petName || 'N/A',
+      petType: record.petType || 'Khác',
+      serviceId: record.serviceId || 'N/A',
+      bookingDate: parsedBookingDate,
+      bookingTime: record.bookingTime && record.bookingTime !== 'N/A' ? record.bookingTime : undefined,
+      estimatedPrice: record.estimatedPrice
+        ? record.estimatedPrice.toLocaleString('vi-VN') + ' VND'
+        : '0 VND',
+      duration: record.duration || 0,
+      bookingStatus: record.bookingStatus || BookingStatus.PENDING,
+      realPrice: record.realPrice
+        ? record.realPrice.toLocaleString('vi-VN') + ' VND'
+        : 'Chưa tính',
+    });
+  
+    setSelectedDate(parsedBookingDate);
+    if (parsedBookingDate && parsedBookingDate.isValid()) {
+      fetchAvailableSlotsRef.current(parsedBookingDate);
+    } else {
+      setSlotAvailability({});
+    }
+  
+    setIsEditModalVisible(true);
   };
+
+  const handleAdd = () => {
+    addForm.resetFields();
+    setSelectedDate(null);
+    setSlotAvailability({});
+    setIsAddModalVisible(true);
+  };
+
+  const handleAddModalOk = () => {
+    addForm.validateFields().then(async (values) => {
+      try {
+        // Chuẩn bị dữ liệu gửi lên API
+        const bookingDateTime = dayjs(
+          `${values.bookingDate.format('YYYY-MM-DD')} ${values.bookingTime.replace('h', ':00')}`,
+          'YYYY-MM-DD H:mm'
+        ).tz('Asia/Ho_Chi_Minh');
+  
+        const newBookingData = {
+          payment_typeID: null,
+          orderdate: dayjs().tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss'),
+          infoUserGuest: {
+            fullName: values.fullname, // Sửa từ username
+            phone: values.phone,
+            email: values.email || null,
+          },
+          orderDetails: [
+            {
+              serviceId: values.serviceId,
+              quantity: 1,
+              booking_date: bookingDateTime.format('YYYY-MM-DD HH:mm:ss'),
+              petName: values.petName,
+              petType: values.petType,
+            },
+          ],
+        };
+  
+        // Gọi API tạo lịch hẹn mới
+        const response = await orderApi.create(newBookingData);
+  
+        // Cập nhật danh sách bookings
+        const newBooking: Booking = {
+          key: response.data.order._id,
+          id: response.data.order._id,
+          orderId: response.data.order._id,
+          fullname: values.fullname, // Sửa từ username
+          phone: values.phone,
+          orderDate: dayjs().tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY HH:mm:ss'),
+          serviceId: values.serviceId,
+          serviceName: services.find((s) => s.id === values.serviceId)?.name || 'Unknown Service',
+          bookingDate: values.bookingDate.format('DD/MM/YYYY'),
+          bookingTime: values.bookingTime,
+          estimatedPrice: services.find((s) => s.id === values.serviceId)?.price || 0,
+          duration: services.find((s) => s.id === values.serviceId)?.duration || 0,
+          bookingStatus: BookingStatus.CONFIRMED,
+          petName: values.petName,
+          petType: values.petType,
+          petWeight: 0,
+        };
+  
+        const updatedBookings = [...bookings, newBooking];
+        setBookings(updatedBookings);
+        setFilteredBookings(updatedBookings);
+        setIsAddModalVisible(false);
+        notification.success({
+          message: 'Thành công',
+          description: 'Thêm lịch hẹn mới thành công!',
+        });
+      } catch (error) {
+        console.error('Error adding booking:', error);
+        notification.error({
+          message: 'Lỗi',
+          description: error.response?.data?.message || 'Không thể thêm lịch hẹn mới!',
+        });
+      }
+    }).catch((error) => {
+      console.error('Form validation failed:', error);
+      notification.error({
+        message: 'Lỗi',
+        description: 'Vui lòng kiểm tra lại các trường thông tin!',
+      });
+    });
+  };
+
+  const handleAddModalCancel = () => {
+    setIsAddModalVisible(false);
+    setSelectedDate(null);
+    setSlotAvailability({});
+    addForm.resetFields();
+  };
+
+  const handleEditModalOk = () => {
+    if (!isEditMode) {
+      notification.info({
+        message: 'Thông báo',
+        description: 'Vui lòng nhấn "Chỉnh sửa" để thay đổi thông tin!',
+      });
+      handleModalCancel();
+      return;
+    }
+    form.validateFields().then(async (values) => {
+      if (selectedBooking) {
+        try {
+          console.log('Form values:', values);
+          const updateData: any = { orderId: String(selectedBooking.orderId) };
+  
+          if (values.serviceId && values.serviceId !== selectedBooking.serviceId) {
+            updateData.service民政Id = values.serviceId;
+          }
+          if (values.petName && values.petName !== selectedBooking.petName) {
+            updateData.petName = values.petName;
+          }
+          if (values.petType && values.petType !== selectedBooking.petType) {
+            updateData.petType = values.petType;
+          }
+          if (values.fullname && values.fullname !== selectedBooking.fullname) { // Sửa từ username
+            updateData.fullname = values.fullname; // Sửa từ username
+            console.log('Updating fullname:', values.fullname);
+          }
+          if (values.bookingDate && values.bookingTime) {
+            const newBookingDateTime = dayjs(
+              `${values.bookingDate.format('YYYY-MM-DD')} ${values.bookingTime.replace('h', ':00')}`,
+              'YYYY-MM-DD H:mm'
+            ).tz('Asia/Ho_Chi_Minh');
+            updateData.bookingDate = newBookingDateTime.format('YYYY-MM-DD HH:mm:ss');
+          }
+          if (values.bookingStatus && values.bookingStatus !== selectedBooking.bookingStatus) {
+            updateData.bookingStatus = values.bookingStatus;
+          }
+  
+          console.log('Sending updateData:', updateData);
+          const response = await orderDetailApi.updateBooking(updateData);
+          console.log('API response:', response);
+  
+          // Làm mới danh sách bookings bằng cách gọi lại API
+          await fetchBookings();
+  
+          setIsEditModalVisible(false);
+          notification.success({
+            message: 'Thành công',
+            description: 'Cập nhật thông tin đặt lịch thành công!',
+          });
+        } catch (error) {
+          console.error('Error updating booking:', error);
+          const errorMessage = error.response?.data?.message || 'Không thể cập nhật thông tin đặt lịch!';
+          notification.error({
+            message: 'Lỗi',
+            description: errorMessage,
+          });
+        }
+      }
+    }).catch((error) => {
+      console.error('Form validation failed:', error);
+      notification.error({
+        message: 'Lỗi',
+        description: 'Vui lòng kiểm tra lại các trường thông tin!',
+      });
+    });
+  };
+
   const handleStart = (record: Booking) => {
     setSelectedBooking(record);
-    startForm.setFieldsValue({ petWeight: record.petWeight || 0 });
+    startForm.setFieldsValue({
+      petWeight: record.petWeight || 0,
+    });
     setIsStartModalVisible(true);
   };
 
@@ -164,35 +499,65 @@ const BookingManager: React.FC = () => {
     startForm.validateFields().then(async (values) => {
       if (selectedBooking) {
         try {
-          await orderDetailApi.changeBookingStatus(
+          const petWeight = Number(values.petWeight);
+          if (isNaN(petWeight)) {
+            throw new Error('Cân nặng không hợp lệ');
+          }
+
+          const requestData = {
+            orderId: selectedBooking.orderId,
+            petWeight,
+            petType: selectedBooking.petType || 'Chó',
+            serviceName: selectedBooking.serviceName,
+          };
+
+          const realPriceResponse = await orderDetailApi.realPrice(
             selectedBooking.orderId,
-            "IN_PROGRESS" // Gửi giá trị gốc cho API
+            petWeight,
+            selectedBooking.petType || 'Chó',
+            selectedBooking.serviceName
           );
+
+          if (!realPriceResponse.success || !realPriceResponse.data.realPrice) {
+            throw new Error(
+              realPriceResponse.message || 'Không thể tính giá thực tế'
+            );
+          }
+
+          const statusRequestData = {
+            orderId: selectedBooking.orderId,
+            bookingStatus: 'IN_PROGRESS',
+          };
+
+          await orderDetailApi.changeBookingStatus(statusRequestData);
+
           const updatedBookings = bookings.map((b) =>
             b.orderId === selectedBooking.orderId
               ? {
                   ...b,
                   bookingStatus: BookingStatus.IN_PROGRESS,
-                  petWeight: values.petWeight,
-                  estimatedPrice: calculatePrice(
-                    b.serviceName,
-                    values.petWeight
-                  ),
+                  petWeight: petWeight,
+                  realPrice: realPriceResponse.data.realPrice,
                 }
               : b
           );
-
           setBookings(updatedBookings);
           setFilteredBookings(updatedBookings);
           setIsStartModalVisible(false);
           notification.success({
-            message: "Thành công",
-            description: "Đã bắt đầu dịch vụ!",
+            message: 'Thành công',
+            description: `Đã bắt đầu dịch vụ! Giá thực tế: ${realPriceResponse.data.realPrice.toLocaleString(
+              'vi-VN'
+            )} VND`,
           });
         } catch (error) {
+          console.error('Error starting service:', error);
           notification.error({
-            message: "Lỗi",
-            description: "Không thể cập nhật trạng thái!",
+            message: 'Lỗi',
+            description:
+              error.response?.data?.message ||
+              error.message ||
+              'Không thể bắt đầu dịch vụ hoặc tính giá thực tế!',
           });
         }
       }
@@ -201,10 +566,13 @@ const BookingManager: React.FC = () => {
 
   const handleComplete = async (orderId: string) => {
     try {
-      await orderDetailApi.changeBookingStatus(
-        orderId,
-        "COMPLETED" // Gửi giá trị gốc cho API
-      );
+      // Gửi yêu cầu cập nhật trạng thái
+      const response = await orderDetailApi.changeBookingStatus({
+        orderId: orderId,
+        bookingStatus: 'COMPLETED',
+      });
+  
+      // Cập nhật danh sách bookings ngay lập tức
       const updatedBookings = bookings.map((b) =>
         b.orderId === orderId
           ? { ...b, bookingStatus: BookingStatus.COMPLETED }
@@ -212,226 +580,82 @@ const BookingManager: React.FC = () => {
       );
       setBookings(updatedBookings);
       setFilteredBookings(updatedBookings);
+  
       notification.success({
-        message: "Thành công",
-        description: "Đã cập nhật trạng thái thành Hoàn thành!",
+        message: 'Thành công',
+        description: 'Đã cập nhật trạng thái thành Hoàn thành!',
       });
     } catch (error) {
+      console.error('Error completing booking:', error);
+  
+      // Kiểm tra lại trạng thái sau khi gặp lỗi
+      try {
+        await fetchBookings(); // Làm mới danh sách bookings từ server
+        const updatedBooking = bookings.find((b) => b.orderId === orderId);
+        if (updatedBooking?.bookingStatus === BookingStatus.COMPLETED) {
+          notification.success({
+            message: 'Thành công',
+            description: 'Trạng thái đã được cập nhật thành Hoàn thành!',
+          });
+          return;
+        }
+      } catch (refreshError) {
+        console.error('Error refreshing bookings:', refreshError);
+      }
+  
+      // Hiển thị thông báo lỗi nếu trạng thái không được cập nhật
       notification.error({
-        message: "Lỗi",
-        description: "Không thể cập nhật trạng thái!",
+        message: 'Lỗi',
+        description:
+          error.response?.data?.message || 'Không thể cập nhật trạng thái!',
       });
     }
-  };
-
-  const handleEdit = (record: Booking) => {
-    setSelectedBooking(record);
-    form.setFieldsValue({ bookingStatus: record.bookingStatus });
-    setIsEditModalVisible(true);
-  };
-
-  const handleEditModalOk = () => {
-    form.validateFields().then(async (values) => {
-      if (selectedBooking) {
-        try {
-          const statusToSend =
-            values.bookingStatus === BookingStatus.PENDING
-              ? "PENDING"
-              : values.bookingStatus === BookingStatus.CONFIRMED
-              ? "CONFIRMED"
-              : values.bookingStatus === BookingStatus.IN_PROGRESS
-              ? "IN_PROGRESS"
-              : values.bookingStatus === BookingStatus.COMPLETED
-              ? "COMPLETED"
-              : "CANCELLED";
-
-          await orderDetailApi.changeBookingStatus(
-            selectedBooking.orderId,
-            statusToSend
-          );
-          const updatedBookings = bookings.map((b) =>
-            b.orderId === selectedBooking.orderId
-              ? { ...b, bookingStatus: values.bookingStatus }
-              : b
-          );
-
-          setBookings(updatedBookings);
-          setFilteredBookings(updatedBookings);
-
-          setIsEditModalVisible(false);
-          notification.success({
-            message: "Thành công",
-            description: "Trạng thái đặt lịch đã được cập nhật!",
-            placement: "topRight",
-            duration: 2,
-          });
-        } catch (error) {
-          console.error("Error updating booking status:", error);
-          Modal.error({
-            title: "Lỗi",
-            content: "Không thể cập nhật trạng thái đặt lịch!",
-          });
-        }
-      }
-    });
   };
 
   const handleModalCancel = () => {
     setIsEditModalVisible(false);
     setIsStartModalVisible(false);
+    setIsEditMode(false);
+    setSelectedDate(null);
+    setSlotAvailability({});
     form.resetFields();
     startForm.resetFields();
   };
 
-  const calculatePrice = (serviceName: string, petWeight: number) => {
-    const basePrice = 50000;
-    const weightFactor = 10000;
-    return basePrice + petWeight * weightFactor;
-  };
+  const handleDateChange = useCallback((date: dayjs.Dayjs | null) => {
+    setSelectedDate(date);
+    fetchAvailableSlotsRef.current(date);
+  }, []);
 
-  const columns = [
-    {
-      title: "Order ID",
-      dataIndex: "orderId",
-      key: "orderId",
-      width: 50,
-      align: "left" as const,
-      render: (text: string) => (
-        <div
-          style={{
-            width: "50px",
-            wordBreak: "break-all",
-            overflowWrap: "break-word",
-            whiteSpace: "normal",
-            lineHeight: "1.2",
-          }}
-          title={text}
-        >
-          {text}
-        </div>
-      ),
+  const handleTimeChange = useCallback(
+    (time: string) => {
+      form.setFieldsValue({ bookingTime: time });
+      addForm.setFieldsValue({ bookingTime: time });
     },
-    {
-      title: "Người đặt",
-      dataIndex: "username",
-      key: "username",
-      width: 150,
-      align: "left" as const,
-      render: (text: string) => <span>{text}</span>,
+    [form, addForm]
+  );
+
+  const handleServiceChange = useCallback(
+    (value: string) => {
+      const selectedService = services.find((service) => service.id === value);
+      form.setFieldsValue({
+        estimatedPrice: selectedService?.price
+          ? selectedService.price.toLocaleString('vi-VN') + ' VND'
+          : '0 VND',
+        duration: selectedService?.duration || 0,
+      });
+      addForm.setFieldsValue({
+        estimatedPrice: selectedService?.price
+          ? selectedService.price.toLocaleString('vi-VN') + ' VND'
+          : '0 VND',
+        duration: selectedService?.duration || 0,
+      });
+      if (selectedDate) {
+        fetchAvailableSlotsRef.current(selectedDate);
+      }
     },
-    {
-      title: "Số điện thoại",
-      dataIndex: "phone",
-      key: "phone",
-      width: 150,
-      align: "left" as const,
-      render: (phone: string) => <span>{phone}</span>,
-    },
-    {
-      title: "Đặt lúc",
-      dataIndex: "orderDate",
-      key: "orderDate",
-      width: 180,
-      align: "left" as const,
-    },
-    {
-      title: "Dịch vụ",
-      dataIndex: "serviceName",
-      key: "serviceName",
-      width: 200,
-      align: "left" as const,
-    },
-    {
-      title: "Ngày đặt",
-      dataIndex: "bookingDate",
-      key: "bookingDate",
-      width: 120,
-      align: "left" as const,
-    },
-    {
-      title: "Giờ đặt",
-      dataIndex: "bookingTime",
-      key: "bookingTime",
-      width: 100,
-      align: "left" as const,
-    },
-    {
-      title: "Giá dự tính",
-      dataIndex: "estimatedPrice",
-      key: "estimatedPrice",
-      width: 120,
-      align: "left" as const,
-      render: (price: number) => `${price.toLocaleString()} VND`,
-    },
-    {
-      title: "Thời gian (phút)",
-      dataIndex: "duration",
-      key: "duration",
-      width: 120,
-      align: "left" as const,
-    },
-    {
-      title: "Trạng thái",
-      dataIndex: "bookingStatus",
-      key: "bookingStatus",
-      width: 120,
-      render: (bookingStatus: string) => (
-        <span
-          style={{
-            color:
-              bookingStatus === BookingStatus.PENDING
-                ? "#fa8c16"
-                : bookingStatus === BookingStatus.CONFIRMED
-                ? "#52c41a"
-                : bookingStatus === BookingStatus.IN_PROGRESS
-                ? "#722ed1"
-                : bookingStatus === BookingStatus.COMPLETED
-                ? "#1890ff"
-                : "#ff4d4f",
-          }}
-        >
-          {bookingStatus}
-        </span>
-      ),
-      align: "left" as const,
-    },
-    {
-      title: "Chức năng",
-      key: "action",
-      width: 280,
-      render: (_: any, record: Booking) => (
-        <Space>
-          <Button
-            icon={<EyeOutlined />}
-            onClick={() => handleViewDetail(record)}
-            size="small"
-          />
-          <Button
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-            size="small"
-          />
-          <Button
-            type="primary"
-            disabled={record.bookingStatus !== BookingStatus.CONFIRMED}
-            onClick={() => handleStart(record)}
-            size="small"
-          >
-            Bắt đầu
-          </Button>
-          <Button
-            type="primary"
-            disabled={record.bookingStatus !== BookingStatus.IN_PROGRESS}
-            onClick={() => handleComplete(record.orderId)}
-            size="small"
-          >
-            Hoàn thành
-          </Button>
-        </Space>
-      ),
-      align: "left" as const,
-    },
-  ];
+    [services, selectedDate, form, addForm]
+  );
 
   return (
     <motion.div
@@ -441,169 +665,69 @@ const BookingManager: React.FC = () => {
     >
       <Card
         title={
-          <div className="flex items-center gap-4">
-            <Input
-              placeholder="Tìm kiếm..."
-              prefix={<SearchOutlined />}
-              value={searchText}
-              onChange={(e) => handleSearch(e.target.value)}
-              style={{ width: 200 }}
-            />
+          <div className="flex justify-between items-center gap-4">
+            <SearchBar searchText={searchText} onSearch={handleSearch} />
+            <Button type="primary" onClick={handleAdd}>
+              <FaPlus />Thêm
+            </Button>
           </div>
         }
         bordered={false}
         className="shadow-sm"
       >
-        <Table
-          columns={columns}
-          dataSource={filteredBookings}
-          pagination={{ pageSize: 10 }}
-          className="overflow-x-auto"
-          rowKey="key"
+        <BookingTable
+          bookings={filteredBookings}
+          onEdit={handleEdit}
+          onStart={handleStart}
+          onComplete={handleComplete}
         />
       </Card>
-      {/* Modal xem chi tiết */}
-      <Modal
-        title="Chi tiết đơn hàng"
-        open={isDetailModalVisible}
-        onCancel={() => setIsDetailModalVisible(false)}
-        footer={null}
-        width={800}
-      >
-        {selectedBooking && (
-          <div className="p-4">
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <p>
-                  <strong>Mã đơn hàng:</strong> {selectedBooking.orderId}
-                </p>
-                <p>
-                  <strong>Người đặt:</strong> {selectedBooking.username}
-                </p>
-                <p>
-                  <strong>Số điện thoại:</strong> {selectedBooking.phone}
-                </p>
-                <p>
-                  <strong>Giá dự tính:</strong>{" "}
-                  {selectedBooking.estimatedPrice.toLocaleString()}đ
-                </p>
-              </div>
-              <div>
-                <p>
-                  <strong>Ngày đặt:</strong>{" "}
-                  {new Date(selectedBooking.orderDate).toLocaleDateString(
-                    "vi-VN"
-                  )}
-                </p>
-                <p>
-                  <strong>Ngày thực hiện:</strong> {selectedBooking.bookingDate}
-                </p>
-                <p>
-                  <strong>Giờ thực hiện:</strong> {selectedBooking.bookingTime}
-                </p>
-                <p>
-                  <strong>Trạng thái:</strong> {selectedBooking.bookingStatus}
-                </p>
-              </div>
-            </div>
-            <div className="mt-4">
-              <h3 className="font-medium text-lg mb-2">Chi tiết dịch vụ:</h3>
-              <div style={{ maxHeight: "400px", overflowY: "auto" }}>
-                <Table
-                  columns={columns}
-                  dataSource={[selectedBooking]} // Vì mỗi booking chỉ có 1 dịch vụ
-                  rowKey="orderId"
-                  pagination={false}
-                  className="border rounded-lg"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-      </Modal>
 
-      <Modal
-        title="Cập nhật trạng thái đặt lịch"
-        open={isEditModalVisible}
+      <EditBookingModal
+        visible={isEditModalVisible}
+        isEditMode={isEditMode}
+        booking={selectedBooking}
+        services={services}
+        petTypes={petTypes}
+        form={form}
+        selectedDate={selectedDate}
+        slotAvailability={slotAvailability}
+        availableTimeSlots={availableTimeSlots}
+        currentDateTime={dayjs().tz('Asia/Ho_Chi_Minh')}
         onOk={handleEditModalOk}
         onCancel={handleModalCancel}
-        okText="Lưu & Đóng"
-        cancelText="Hủy bỏ"
-      >
-        {selectedBooking && (
-          <Form form={form} layout="vertical">
-            <Form.Item label="Order ID">
-              <Input value={selectedBooking.orderId} disabled />
-            </Form.Item>
-            <Form.Item label="Người đặt">
-              <Input value={selectedBooking.username} disabled />
-            </Form.Item>
-            <Form.Item label="Dịch vụ">
-              <Input value={selectedBooking.serviceName} disabled />
-            </Form.Item>
-            <Form.Item label="Tên thú cưng">
-              <Input value={selectedBooking.petName} disabled />
-            </Form.Item>
-            <Form.Item label="Loại thú cưng">
-              <Input value={selectedBooking.petType} disabled />
-            </Form.Item>
-            <Form.Item
-              label="Trạng thái"
-              name="bookingStatus"
-              rules={[{ required: true, message: "Vui lòng chọn trạng thái!" }]}
-            >
-              <Select>
-                <Option value={BookingStatus.PENDING}>ĐANG CHỜ</Option>
-                <Option value={BookingStatus.CONFIRMED}>ĐÃ XÁC NHẬN</Option>
-                <Option value={BookingStatus.IN_PROGRESS}>
-                  ĐANG THỰC HIỆN
-                </Option>
-                <Option value={BookingStatus.COMPLETED}>HOÀN THÀNH</Option>
-                <Option value={BookingStatus.CANCELLED}>ĐÃ HỦY</Option>
-              </Select>
-            </Form.Item>
-          </Form>
-        )}
-      </Modal>
+        onEditModeToggle={() => setIsEditMode(true)}
+        onDateChange={handleDateChange}
+        onTimeChange={handleTimeChange}
+        onServiceChange={handleServiceChange}
+      />
 
-      <Modal
-        title="Bắt đầu dịch vụ - Cân thú cưng"
-        open={isStartModalVisible}
+      <StartServiceModal
+        visible={isStartModalVisible}
+        booking={selectedBooking}
+        form={startForm}
         onOk={handleStartModalOk}
         onCancel={handleModalCancel}
-        okText="Bắt đầu"
-        cancelText="Hủy bỏ"
-      >
-        {selectedBooking && (
-          <Form form={startForm} layout="vertical">
-            <Form.Item label="Order ID">
-              <Input value={selectedBooking.orderId} disabled />
-            </Form.Item>
-            <Form.Item label="Tên thú cưng">
-              <Input value={selectedBooking.petName} disabled />
-            </Form.Item>
-            <Form.Item label="Dịch vụ">
-              <Input value={selectedBooking.serviceName} disabled />
-            </Form.Item>
-            <Form.Item
-              label="Cân nặng (kg)"
-              name="petWeight"
-              rules={[
-                { required: true, message: "Vui lòng nhập cân nặng thú cưng!" },
-                {
-                  type: "number",
-                  min: 0,
-                  message: "Cân nặng phải lớn hơn hoặc bằng 0!",
-                },
-              ]}
-            >
-              <Input type="number" step="0.1" />
-            </Form.Item>
-          </Form>
-        )}
-      </Modal>
+      />
+
+      <AddBookingModal
+        visible={isAddModalVisible}
+        services={services}
+        petTypes={petTypes}
+        form={addForm}
+        selectedDate={selectedDate}
+        slotAvailability={slotAvailability}
+        availableTimeSlots={availableTimeSlots}
+        currentDateTime={dayjs().tz('Asia/Ho_Chi_Minh')}
+        onOk={handleAddModalOk}
+        onCancel={handleAddModalCancel}
+        onDateChange={handleDateChange}
+        onTimeChange={handleTimeChange}
+        onServiceChange={handleServiceChange}
+      />
     </motion.div>
   );
 };
 
 export default BookingManager;
+export { Booking, Service };
