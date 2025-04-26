@@ -37,12 +37,13 @@ const Cart: React.FC = () => {
   }, [dispatch, userId]);
 
   const breadcrumbItems = [
-  
+
   ];
 
   // Hàm xử lý tăng số lượng
-  const handleIncrement = (id: string) => {
-    if (!userId || userId === 'guest') {
+  // Hàm xử lý tăng số lượng
+  const handleIncrement = (id: string, stockQuantity: number) => {
+    if (!userId || userId === "guest") {
       Modal.warning({
         title: "Yêu cầu đăng nhập",
         content: "Vui lòng đăng nhập để thực hiện thao tác này!",
@@ -50,12 +51,24 @@ const Cart: React.FC = () => {
       });
       return;
     }
+
+    const item = cartItems.find((item) => item.id === id);
+    console.log("Item in handleIncrement:", item);
+    console.log("Current quantity:", item?.quantity, "Stock quantity:", stockQuantity);
+    if (item && item.quantity >= stockQuantity) {
+      Modal.warning({
+        title: "Số lượng vượt quá tồn kho",
+        content: `Số lượng tối đa có thể chọn là ${stockQuantity}!`,
+      });
+      return;
+    }
+
     dispatch(increaseQuantity({ id }));
   };
 
   // Hàm xử lý giảm số lượng
   const handleDecrement = (id: string) => {
-    if (!userId || userId === 'guest') {
+    if (!userId || userId === "guest") {
       Modal.warning({
         title: "Yêu cầu đăng nhập",
         content: "Vui lòng đăng nhập để thực hiện thao tác này!",
@@ -63,6 +76,12 @@ const Cart: React.FC = () => {
       });
       return;
     }
+
+    const item = cartItems.find((item) => item.id === id);
+    if (item && item.quantity <= 1) {
+      return; // Không giảm nếu số lượng đã là 1
+    }
+
     dispatch(decreaseQuantity({ id }));
   };
 
@@ -216,7 +235,7 @@ const Cart: React.FC = () => {
                             {(item.price * item.quantity).toLocaleString()}đ
                           </Text>
                           <div className="flex items-center gap-2">
-                            <Button onClick={() => handleDecrement(item.id)}>
+                            <Button onClick={() => handleDecrement(item.id)} disabled={item.quantity <= 1}>
                               -
                             </Button>
                             <input
@@ -226,7 +245,9 @@ const Cart: React.FC = () => {
                               value={item.quantity}
                               readOnly
                             />
-                            <Button onClick={() => handleIncrement(item.id)}>
+                            <Button
+                              onClick={() => handleIncrement(item.id, item.stockQuantity)}
+                            >
                               +
                             </Button>
                           </div>

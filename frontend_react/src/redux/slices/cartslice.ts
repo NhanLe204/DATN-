@@ -62,15 +62,17 @@ const cartSlice = createSlice({
       }
     },
     addToCart: (state, action) => {
-      const userId = state.userId || 'guest';
+      const userId = state.userId || "guest";
       const { item, quantity } = action.payload;
-      const existingItem = state.items.find(
-        (cartItem) => cartItem.id === item.id
-      );
+      const existingItem = state.items.find((cartItem) => cartItem.id === item.id);
       if (existingItem) {
         existingItem.quantity += quantity;
       } else {
-        state.items.push({ ...item, quantity });
+        state.items.push({
+          ...item,
+          quantity: Number(quantity),
+          stockQuantity: Number(item.stockQuantity),
+        });
       }
       saveCartsToLocal(userId, state.items);
     },

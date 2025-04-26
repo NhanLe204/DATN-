@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useParams } from "react-router-dom";
-import { Breadcrumb, Button, Image, Avatar, Divider } from "antd";
+import { Breadcrumb, Button, Image, Avatar, Divider, message } from "antd";
 import { motion } from "framer-motion";
 import { Star, ThumbsUp, MessageCircle, Clock, Award } from "lucide-react";
 import productsApi from "../../api/productsApi";
@@ -40,6 +40,7 @@ export default function DetailProduct() {
     price?: string;
     image_url: string[];
     discount?: number;
+    quantity?: number;
     description?: string;
     details?: string[];
   } | null>(null);
@@ -154,20 +155,47 @@ export default function DetailProduct() {
   const handleImageClick = (image) => setSelectedImage(image);
   const handleChange = (event) => {
     const value = event.target.value;
-    if (/^\d+$/.test(value)) setQuantity(Math.max(1, Number(value)));
+    if (/^\d+$/.test(value)) {
+      const newQuantity = Number(value);
+      const maxQuantity = productsDetail?.quantity || 1;
+
+      if (newQuantity > maxQuantity) {
+        message.error(`Số lượng vượt quá tồn kho!`);
+        setQuantity(maxQuantity);
+      } else {
+        setQuantity(Math.max(1, newQuantity));
+      }
+    }
   };
-  const handleIncrement = () => setQuantity((prev) => prev + 1);
-  const handleDecrement = () =>
+
+  const handleIncrement = () => {
+    const maxQuantity = productsDetail?.quantity || 1;
+    if (quantity + 1 > maxQuantity) {
+      message.error(`Số lượng vượt quá tồn kho!`);
+    } else {
+      setQuantity((prev) => prev + 1);
+    }
+  };
+
+  const handleDecrement = () => {
     setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
+  };
   const handleAddToCart = () => {
+    const maxQuantity = productsDetail?.quantity || 1;
+    if (quantity > maxQuantity) {
+      message.error(`Số lượng vượt quá tồn kho! Tối đa: ${maxQuantity}`);
+      return;
+    }
     const item = {
       id: product._id || product.id,
       name: product.name,
       price: Number(product.price),
       image: product.image_url[0],
+      stockQuantity: productsDetail?.quantity || 0, // Đảm bảo lưu stockQuantity
     };
+    console.log("Adding to cart:", item); // Kiểm tra dữ liệu trước khi dispatch
     dispatch(addToCart({ item, quantity }));
-    console.log(`Added to cart: ${item.name}, Quantity: ${quantity}`);
+    message.success("Đã thêm vào giỏ hàng!");
   };
   const formatDate = (dateString) => {
     const options = {
@@ -194,7 +222,7 @@ export default function DetailProduct() {
     speed: 1000,
     slidesToShow: 4,
     slidesToScroll: 1,
-    autoplay: false, // Tự động chạy
+    autoplay: true, // Tự động chạy
     autoplaySpeed: 2000, // Tốc độ tự động chạy
     responsive: [
       {
@@ -349,10 +377,14 @@ export default function DetailProduct() {
                 <Button
                   onClick={handleIncrement}
                   className="px-3 lg:px-4 py-2"
+                  disabled={quantity >= (productsDetail?.quantity || 1)} // Vô hiệu hóa nút tăng nếu đạt tối đa
                 >
                   +
                 </Button>
               </div>
+              <span className="text-sm text-gray-500">
+                (Số lượng hàng còn: {productsDetail?.quantity || 0})
+              </span>
             </div>
 
             {/* Action Buttons */}

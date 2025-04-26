@@ -12,6 +12,9 @@ import { useDispatch } from "react-redux";
 import { addToCart } from "../redux/slices/cartslice";
 
 import ratingApi from "../api/ratingApi";
+import { number } from "prop-types";
+import paymentApi from "../api/paymentApi";
+import ENV_VARS from "../../config";
 
 interface User {
   _id: string;
@@ -252,8 +255,8 @@ export default function OrderDetail() {
       console.error("Error submitting review:", error);
       message.error(
         error.response?.data?.message ||
-          error.message ||
-          "Lỗi hệ thống, vui lòng thử lại."
+        error.message ||
+        "Lỗi hệ thống, vui lòng thử lại."
       );
     } finally {
       setReviewLoading(false);
@@ -321,6 +324,36 @@ export default function OrderDetail() {
     SHIPPED: "Đã vận chuyển",
     DELIVERED: "Hoàn thành",
     CANCELLED: "Đã hủy",
+  };
+
+  const handlePayment = async (id: string, total: number) => {
+    try {
+      const paymentData = {
+        orderId: id,
+        amount: total,
+        description: `Thanh toán đơn hàng ${id}`,
+        returnUrl: `${ENV_VARS.VITE_VNPAY_URL}/success`,
+        cancelUrl: `${ENV_VARS.VITE_VNPAY_URL}/cancel`,
+      };
+  
+      const response = await paymentApi.create(paymentData);
+      const checkoutUrl = response.url;
+  
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl;
+      } else {
+        message.error("Không thể tạo liên kết thanh toán.");
+      }
+    } catch (error) {
+      console.error("Error creating payment link:", error);
+      message.error("Có lỗi xảy ra khi tạo liên kết thanh toán.");
+    }
+  };
+
+  const paymentStatusText = {
+    PENDING: "Chưa thanh toán",
+    PAID: "Đã thanh toán",
+    CASH_ON_DELIVERY: "Thanh toán khi nhận hàng",
   };
 
   const columns = [
@@ -399,6 +432,32 @@ export default function OrderDetail() {
         >
           {statusText[status]}
         </Tag>
+      ),
+    },
+    {
+      title: "Thanh toán",
+      dataIndex: "status",
+      key: "status",
+      render: (status: keyof typeof statusText, record: Order) => (
+        <div className="flex flex-col space-y-1">
+          <Tag
+            onClick={() =>
+              record.payment_status === "PENDING" && handlePayment(record.id, record.total)
+            }
+            color={
+              record.payment_status === "PAID"
+                ? "green"
+                : record.payment_status === "CASH_ON_DELIVERY"
+                ? "orange"
+                : "blue"
+            }
+            className={`flex items-center w-fit px-3 py-1 ${
+              record.payment_status === "PENDING" ? "cursor-pointer" : "cursor-not-allowed"
+            }`}
+          >
+            {paymentStatusText[record.payment_status as keyof typeof paymentStatusText]}
+          </Tag>
+        </div>
       ),
     },
     {
@@ -699,9 +758,8 @@ export default function OrderDetail() {
                     <button
                       key={star}
                       onClick={() => setRating(star)}
-                      className={`text-2xl focus:outline-none transition-colors ${
-                        star <= rating ? "text-yellow-400" : "text-gray-300"
-                      }`}
+                      className={`text-2xl focus:outline-none transition-colors ${star <= rating ? "text-yellow-400" : "text-gray-300"
+                        }`}
                     >
                       ★
                     </button>

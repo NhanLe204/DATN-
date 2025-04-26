@@ -55,6 +55,11 @@ const productSchema: Schema<IProduct> = new Schema<IProduct>(
       type: Number,
       min: 0,
       default: 0
+    },
+    quantity: {
+      type: Number,
+      min: 0,
+      default: 0
     }
   },
   { timestamps: true }

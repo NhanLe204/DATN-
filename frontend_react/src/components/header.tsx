@@ -34,6 +34,7 @@ import { UserOutlined } from "@ant-design/icons";
 import loginApi from "../api/login";
 import ENV_VARS from "../../config";
 import clearLocalStorageExceptCarts from "../config/clearLocalStorage";
+
 const { Title, Text } = Typography;
 
 interface Product {
@@ -64,6 +65,7 @@ export default function Header() {
   const { keyword, setKeyword } = useContext(SearchContext);
   const [user, setUser] = useState<User | null>(null);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [searchResults, setSearchResults] = useState<Product[]>([]);
   const navigate = useNavigate();
 
   const showDrawer = () => setOpen(true);
@@ -80,20 +82,34 @@ export default function Header() {
 
   useEffect(() => {
     const storedHistory = localStorage.getItem("searchHistory");
+    console.log("Loaded searchHistory from localStorage on mount:", storedHistory);
     if (storedHistory) {
-      setSearchHistory(JSON.parse(storedHistory));
+      try {
+        const parsedHistory = JSON.parse(storedHistory);
+        if (Array.isArray(parsedHistory)) {
+          setSearchHistory(parsedHistory);
+        } else {
+          console.error("Invalid searchHistory format in localStorage");
+          setSearchHistory([]);
+        }
+      } catch (error) {
+        console.error("Error parsing searchHistory from localStorage:", error);
+        setSearchHistory([]);
+      }
     }
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem("searchHistory", JSON.stringify(searchHistory));
-  }, [searchHistory]);
+  const saveSearchHistory = (history: string[]) => {
+    console.log("Saving searchHistory to localStorage:", history);
+    localStorage.setItem("searchHistory", JSON.stringify(history));
+  };
 
   const handleSearch = (value: string) => {
     const trimmedValue = value.trim();
     if (trimmedValue && !searchHistory.includes(trimmedValue)) {
       const newHistory = [trimmedValue, ...searchHistory].slice(0, 5);
       setSearchHistory(newHistory);
+      saveSearchHistory(newHistory);
     }
   };
 
@@ -101,14 +117,24 @@ export default function Header() {
     const trimmedValue = value.trim();
     if (trimmedValue) {
       handleSearch(trimmedValue);
+      setKeyword(trimmedValue);
       navigate(`/search?q=${encodeURIComponent(trimmedValue)}`);
       setSearchDesktopOpen(false);
       setSearchMobileOpen(false);
     }
   };
 
+  const handleSearchChange = (value: string) => {
+    setKeyword(value);
+    if (value.trim()) {
+      fetchSearchResults(value);
+    } else {
+      setSearchResults([]);
+    }
+  };
+
   const clearSearchHistory = () => {
-    console.log("Clear history");
+    console.log("Clearing searchHistory");
     setSearchHistory([]);
     localStorage.removeItem("searchHistory");
   };
@@ -120,8 +146,6 @@ export default function Header() {
       .replace(/đ/g, "d")
       .replace(/Đ/g, "D");
   };
-
-  const [searchResults, setSearchResults] = useState<Product[]>([]);
 
   const fetchSearchResults = async (searchTerm: string) => {
     try {
@@ -195,6 +219,10 @@ export default function Header() {
         setIsUserLoaded(false);
         if (err.message.includes("401")) {
           console.warn("Token có thể đã hết hạn, cần đăng nhập lại");
+          clearLocalStorageExceptCarts();
+          setUser(null);
+          dispatch(setUserId(null));
+          navigate("/login");
         }
       });
   }, [dispatch, navigate]);
@@ -265,7 +293,7 @@ export default function Header() {
                 <button
                   key={index}
                   className="rounded-full bg-gray-100 px-4 py-2 hover:bg-gray-200"
-                  onClick={() => handleSearch(item)}
+                  onClick={() => handleSearchSubmit(item)} // Sửa để gọi handleSearchSubmit
                 >
                   {item}
                 </button>
@@ -284,8 +312,8 @@ export default function Header() {
                   key={product._id}
                   className="rounded bg-gray-50 p-4 shadow-md cursor-pointer hover:bg-gray-100"
                   onClick={() => {
-                    console.log("Navigating to:", `/detail/${product._id}`); // Thêm log để kiểm tra
-                    navigate(`/detail/${product._id}`); // Đúng route
+                    console.log("Navigating to:", `/detail/${product._id}`);
+                    navigate(`/detail/${product._id}`);
                     setSearchDesktopOpen(false);
                   }}
                 >
@@ -321,15 +349,7 @@ export default function Header() {
         size="large"
         className="mb-4"
         onSearch={handleSearchSubmit}
-        onChange={(e) => {
-          const value = e.target.value;
-          setKeyword(value);
-          if (value.trim()) {
-            fetchSearchResults(value);
-          } else {
-            setSearchResults([]);
-          }
-        }}
+        onChange={(e) => handleSearchChange(e.target.value)}
       />
       <div className="mb-4">
         <div className="flex justify-between items-center mb-2">
@@ -349,7 +369,7 @@ export default function Header() {
               <button
                 key={index}
                 className="rounded-full bg-gray-100 px-4 py-2 hover:bg-gray-200"
-                onClick={() => handleSearch(item)}
+                onClick={() => handleSearchSubmit(item)} // Sửa để gọi handleSearchSubmit
               >
                 {item}
               </button>
@@ -368,8 +388,8 @@ export default function Header() {
                 key={product._id}
                 className="rounded bg-gray-50 p-4 cursor-pointer hover:bg-gray-100"
                 onClick={() => {
-                  console.log("Navigating to:", `/detail/${product._id}`); // Thêm log để kiểm tra
-                  navigate(`/detail/${product._id}`); // Đúng route
+                  console.log("Navigating to:", `/detail/${product._id}`);
+                  navigate(`/detail/${product._id}`);
                   setSearchMobileOpen(false);
                 }}
               >
@@ -473,15 +493,7 @@ export default function Header() {
               className="custom-search hidden w-1/3 rounded-full md:flex"
               onSearch={handleSearchSubmit}
               value={keyword}
-              onChange={(e) => {
-                const value = e.target.value;
-                setKeyword(value);
-                if (value.trim()) {
-                  fetchSearchResults(value);
-                } else {
-                  setSearchResults([]);
-                }
-              }}
+              onChange={(e) => handleSearchChange(e.target.value)}
             />
           </Dropdown>
 
