@@ -80,6 +80,14 @@ const SpaBookingForm: React.FC = () => {
   }, 500);
 
   const handleValuesChange = (changedValues: any, allValues: any) => {
+    const serializedValues = {
+      ...allValues,
+      pets: allValues.pets?.map((pet: any) => ({
+        ...pet,
+        date: pet.date ? moment(pet.date).toISOString() : null,
+      })),
+    };
+
     const guestInfo = {
       fullName: allValues.fullName,
       phone: allValues.phone,
@@ -88,29 +96,32 @@ const SpaBookingForm: React.FC = () => {
     };
     console.log("SpaBookingForm - GuestInfo to dispatch:", guestInfo);
     debouncedSetGuestUserInfo(guestInfo);
-    dispatch(setFormData(allValues));
+    dispatch(setFormData(serializedValues));
   };
 
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
       if (Object.keys(spaBooking.formData).length > 0) {
-        form.setFieldsValue(spaBooking.formData);
+        const deserializedFormData = {
+          ...spaBooking.formData,
+          pets: spaBooking.formData.pets?.map((pet: any) => ({
+            ...pet,
+            date: pet.date ? moment(pet.date) : null,
+          })),
+        };
+        form.setFieldsValue(deserializedFormData);
       }
       const restoredDates = spaBooking.selectedDates.map((date) =>
         date ? moment(date) : null
       );
-      dispatch(setSelectedDates(restoredDates));
+      dispatch(setSelectedDates(restoredDates.map((date) => (date ? date.toISOString() : null))));
       restoredDates.forEach((date, index) => {
         if (date) fetchAvailableSlots(date, index);
       });
-      return;
     }
-
-    if (Object.keys(spaBooking.formData).length > 0) {
-      form.setFieldsValue(spaBooking.formData);
-    }
-  }, [form, spaBooking.formData, spaBooking.selectedDates, dispatch]);
+    // Loại bỏ phần cập nhật form khi spaBooking.formData thay đổi
+  }, [form, dispatch]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -128,7 +139,7 @@ const SpaBookingForm: React.FC = () => {
           setUserData({
             _id: parsedUserData._id,
             fullname: parsedUserData.fullname || "",
-            phone_number: parsedUserData.phone_number || "", // 
+            phone_number: parsedUserData.phone_number || "",
             email: parsedUserData.email || "",
           });
         } else {
@@ -183,7 +194,7 @@ const SpaBookingForm: React.FC = () => {
   };
 
   const onFinish = async (values: any) => {
-    // Validate customer info
+    // Kiểm tra validation
     if (!values.fullName) {
       message.error("Vui lòng nhập họ và tên!");
       return;
@@ -196,23 +207,20 @@ const SpaBookingForm: React.FC = () => {
       message.error("Vui lòng nhập email!");
       return;
     }
-
-   
-
- 
-
+  
+    // Kiểm tra slot availability (giữ nguyên logic hiện tại)
     const slotUsage: { [key: string]: number } = {};
     for (let index = 0; index < spaBooking.petForms.length; index++) {
       const selectedDate = spaBooking.selectedDates[index]
         ? moment(spaBooking.selectedDates[index])
         : null;
       const selectedTime = values.pets?.[index]?.time;
-
+  
       if (!selectedDate || !selectedTime) {
         message.error(`Vui lòng chọn ngày và giờ hẹn cho pet ${index + 1}!`);
         return;
       }
-
+  
       const selectedServiceId = values.pets?.[index]?.service;
       const selectedService = services.find((s) => s._id === selectedServiceId);
       const duration = selectedService?.duration
@@ -221,13 +229,13 @@ const SpaBookingForm: React.FC = () => {
       const slotsNeeded = Math.ceil(duration / 60);
       const hour = parseInt(selectedTime.replace("h", ""), 10);
       const dateStr = selectedDate.format("YYYY-MM-DD");
-
+  
       for (let i = 0; i < slotsNeeded; i++) {
         const checkHour = hour + i;
         const checkTime = `${checkHour}h`;
         const slotKey = `${dateStr}-${checkTime}`;
         slotUsage[slotKey] = (slotUsage[slotKey] || 0) + 1;
-
+  
         const slotsAvailable = slotAvailability[index]?.[checkTime] || 0;
         if (slotUsage[slotKey] > slotsAvailable) {
           message.error(
@@ -239,20 +247,19 @@ const SpaBookingForm: React.FC = () => {
         }
       }
     }
-
+  
     setLoading(true);
-
+  
     try {
-      // Lưu thông tin từ form vào Redux
+      // Lưu guestInfo từ form, ngay cả khi đã đăng nhập
       const guestInfo = {
         fullName: values.fullName,
         phone: values.phone,
         email: values.email,
         note: values.note || "",
       };
-      console.log("SpaBookingForm - GuestInfo before dispatch:", guestInfo);
       dispatch(setGuestUserInfo(guestInfo));
-
+  
       const orderDetails = spaBooking.petForms.map((index) => {
         const selectedDate = moment(spaBooking.selectedDates[index]);
         const selectedTime = values.pets[index].time;
@@ -263,10 +270,11 @@ const SpaBookingForm: React.FC = () => {
           second: 0,
           millisecond: 0,
         });
-        const serviceTimeString = serviceTime.format(
-          "YYYY-MM-DDTHH:00:00.000+07:00"
-        );
-
+        const serviceTimeString = serviceTime
+          .tz("Asia/Ho_Chi_Minh")
+          .utc()
+          .format("YYYY-MM-DDTHH:00:00.000Z");
+  
         return {
           productID: null,
           serviceID: values.pets[index].service,
@@ -277,7 +285,7 @@ const SpaBookingForm: React.FC = () => {
           petType: values.pets[index].petType || "",
         };
       });
-
+  
       const orderData = {
         userID: userId || null,
         payment_typeID: null,
@@ -287,19 +295,27 @@ const SpaBookingForm: React.FC = () => {
         shipping_address: null,
         orderDetails,
         phone: values.phone,
-        infoUserGuest: {
-          fullName: values.fullName,
-          phone: values.phone,
-          email: values.email,
-        },
+        infoUserGuest: guestInfo,
         note: values.note || "",
+        // Thêm trường fullname để backend lưu trực tiếp vào order
+        fullname: values.fullName,
       };
-
+  
       console.log("SpaBookingForm - Order data before sending:", orderData);
-
+  
       const response = await orderApi.create(orderData);
       console.log("SpaBookingForm - Order response:", response);
-
+  
+      // Cập nhật userData trong localStorage nếu đã đăng nhập
+      if (userId) {
+        const updatedUserData = {
+          ...userData,
+          fullname: values.fullName,
+        };
+        localStorage.setItem("userData", JSON.stringify(updatedUserData));
+        setUserData(updatedUserData);
+      }
+  
       message.success("Đặt lịch thành công!");
       form.resetFields();
       dispatch(resetForm());
@@ -337,7 +353,15 @@ const SpaBookingForm: React.FC = () => {
       ? moment(spaBooking.selectedDates[index])
       : null;
     if (selectedDate) fetchAvailableSlots(selectedDate, index);
-    dispatch(setFormData(form.getFieldsValue()));
+    const formValues = form.getFieldsValue();
+    const serializedValues = {
+      ...formValues,
+      pets: formValues.pets?.map((pet: any) => ({
+        ...pet,
+        date: pet.date ? moment(pet.date).toISOString() : null,
+      })),
+    };
+    dispatch(setFormData(serializedValues));
   };
 
   const handleDateChange = (date: moment.Moment | null, index: number) => {
@@ -362,8 +386,16 @@ const SpaBookingForm: React.FC = () => {
       fetchAvailableSlots(null, index);
     }
     dispatch(setSelectedDates(updatedDates));
+    const formValues = form.getFieldsValue();
+    const serializedValues = {
+      ...formValues,
+      pets: formValues.pets?.map((pet: any) => ({
+        ...pet,
+        date: pet.date ? moment(pet.date).toISOString() : null,
+      })),
+    };
     form.setFieldsValue({ pets: { [index]: { time: undefined } } });
-    dispatch(setFormData(form.getFieldsValue()));
+    dispatch(setFormData(serializedValues));
   };
 
   const handleTimeChange = (time: string, index: number) => {
@@ -374,7 +406,15 @@ const SpaBookingForm: React.FC = () => {
         },
       },
     });
-    dispatch(setFormData(form.getFieldsValue()));
+    const formValues = form.getFieldsValue();
+    const serializedValues = {
+      ...formValues,
+      pets: formValues.pets?.map((pet: any) => ({
+        ...pet,
+        date: pet.date ? moment(pet.date).toISOString() : null,
+      })),
+    };
+    dispatch(setFormData(serializedValues));
   };
 
   const getAvailableTimeSlots = (index: number) => {
@@ -443,9 +483,11 @@ const SpaBookingForm: React.FC = () => {
             form={form}
             initialData={{
               fullName: userData?.fullname || spaBooking.guestUserInfo.fullName || "",
-              phone: userData?.phone_number && /^(0|\+84)[3|5|7|8|9][0-9]{8}$/.test(userData.phone_number)
-                ? userData.phone_number
-                : spaBooking.guestUserInfo.phone || "", // Chỉ dùng phone_number nếu hợp lệ
+              phone:
+                userData?.phone_number &&
+                /^(0|\+84)[3|5|7|8|9][0-9]{8}$/.test(userData.phone_number)
+                  ? userData.phone_number
+                  : spaBooking.guestUserInfo.phone || "",
               email: userData?.email || spaBooking.guestUserInfo.email || "",
               note: spaBooking.guestUserInfo.note || "",
             }}

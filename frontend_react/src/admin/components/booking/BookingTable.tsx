@@ -35,8 +35,8 @@ const BookingTable: React.FC<BookingTableProps> = ({ bookings, onEdit, onStart, 
     },
     {
       title: 'Người đặt',
-      dataIndex: 'username',
-      key: 'username',
+      dataIndex: 'fullname',
+      key: 'fullname',
       width: 150,
       align: 'left' as const,
       render: (text: string) => <span>{text}</span>,
@@ -136,6 +136,7 @@ const BookingTable: React.FC<BookingTableProps> = ({ bookings, onEdit, onStart, 
             icon={<EditOutlined />}
             onClick={() => onEdit(record)}
             size="small"
+            disabled={record.bookingStatus === BookingStatus.COMPLETED}
           />
           <Button
             type="primary"

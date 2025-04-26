@@ -36,8 +36,11 @@ const orderDetailApi = {
       throw error;
     }
   },
-  getCancelledBookings: async () => {
-    const response = await api.get("/v1/cancelled-bookings");
+  cancelBooking: async (orderId, orderDetailId) => {
+    const response = await api.post('/v1/orders/cancel-booking', {
+      orderId,
+      orderDetailId,
+    });
     return response.data;
   },
   realPrice: async (orderId, petWeight, petType, serviceName) => {
@@ -54,24 +57,15 @@ const orderDetailApi = {
       throw error; 
     }
   },
-  updateBooking: async(orderId, serviceId, petName, petType, bookingDate, bookingTime, bookingStatus, username)=>{
+  updateBooking: async (data) => {
     try {
-      const response = await api.patch("/v1/updateBooking", {
-        orderId,
-        serviceId,
-        petName,
-        petType,
-        bookingDate,
-        bookingTime,
-        bookingStatus,
-        username
-      });
+      const response = await api.patch('/v1/updateBooking', data);
       return response.data;
     } catch (error) {
-      console.error("Lỗi khi gọi API chỉnh sửa booking:", error);
-      throw error; 
+      console.error('Lỗi khi gọi API chỉnh sửa booking:', error);
+      throw error;
     }
-  }
+  },
 };
 
 export default orderDetailApi;

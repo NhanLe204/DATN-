@@ -8,7 +8,7 @@ import {
   getBookingsByUserId,
   getOrderByUserId,
   changeBookingStatus,
-  getCancelledBookings,
+  cancelBooking,
   updateRealPrice,
   updateBooking
 } from '../controllers/orderDetail.controllers.js';
@@ -16,7 +16,7 @@ import {
 const orderDetailRouter = Router();
 
 orderDetailRouter.get('/ordersDetail', verifyToken, getOrderDetails);
-orderDetailRouter.get('/cancelled-bookings', getCancelledBookings);
+orderDetailRouter.get('/cancelled-bookings', cancelBooking);
 orderDetailRouter.get('/ordersDetail/bookings', verifyToken, getBookingsByUserId);
 orderDetailRouter.get('/ordersDetail/allBookings', verifyToken, getAllBookings);
 orderDetailRouter.get('/ordersDetail/:id', verifyToken, getOrderDetailsByOrderId);
