@@ -617,6 +617,7 @@ const Payment = () => {
       const response = await paymentApi.create({
         ...paymentData,
       });
+      console.log(response, "Tahnh nef ");
       const checkoutUrl = response.url;
       window.location.href = checkoutUrl;
     } catch (error) {
