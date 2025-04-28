@@ -7,6 +7,7 @@ import { Provider } from "react-redux";
 import { store } from "./redux/store";
 import ENV_VARS from "../config";
 
+
 const rootElement = document.getElementById("root");
 
 if (rootElement) {
@@ -17,7 +18,7 @@ if (rootElement) {
           <App />
         </GoogleOAuthProvider>
       </Provider>
-  //  </StrictMode>
+    </StrictMode>
   );
 } else {
   console.error("Root element not found");

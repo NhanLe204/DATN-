@@ -42,8 +42,8 @@ exports.getOrderDetailsByOrderId = getOrderDetailsByOrderId;
 // Tạo order detail mới
 const createOrderDetail = async (req, res) => {
     try {
-        const { orderId, productId, serviceId, quantity, product_price, total_price, booking_date } = req.body;
-        if (!orderId || (!productId && !serviceId) || !quantity || !product_price) {
+        const { orderId, productId, serviceId, quantity, product_price, total_price, booking_date, isRated } = req.body;
+        if (!orderId || (!productId && !serviceId) || !quantity || !product_price || !isRated) {
             return res.status(400).json({ success: false, message: 'Missing required fields' });
         }
         const orderDetail = new orderdetail_model_js_1.default({
@@ -54,7 +54,8 @@ const createOrderDetail = async (req, res) => {
             product_price,
             total_price,
             booking_date: serviceId ? booking_date : null,
-            booking_time: serviceId ? booking_date : null
+            booking_time: serviceId ? booking_date : null,
+            isRated
         });
         const savedOrderDetail = await orderDetail.save();
         res.status(201).json({ success: true, message: 'Order detail created successfully', data: savedOrderDetail });
@@ -232,7 +233,8 @@ const getOrderByUserId = async (req, res) => {
                     name: detail.productId?.name,
                     quantity: detail.quantity,
                     price: detail.product_price,
-                    image_url: detail.productId?.image_url || []
+                    image_url: detail.productId?.image_url || [],
+                    isRated: detail.isRated || false
                 })),
                 paymentMethod: order.payment_typeID?.payment_type_name,
                 shippingAddress: order.shipping_address,

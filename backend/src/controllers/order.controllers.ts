@@ -1,15 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import mongoose from 'mongoose';
-import rateModel from '../models/rating.model.js';
 import { Request, Response } from 'express';
 import orderModel from '../models/order.model.js';
 import userModel from '../models/user.model.js';
-import PaymentType from '../models/paymentType.model.js';
 import deliveryModel from '../models/delivery.model.js';
 import couponModel from '../models/coupon.model.js';
 import { CouponStatus } from '../enums/coupon.enum.js';
 import orderDetailModel from '../models/orderdetail.model.js';
-import ServiceModel from '../models/service.model.js';
 import productModel from '../models/product.model.js';
 import { OrderStatus, PaymentStatus } from '../enums/order.enum.js';
 import { ProductStatus } from '../enums/product.enum.js';
@@ -18,6 +15,7 @@ import serviceModel from '../models/service.model.js';
 import { BookingStatus } from '../enums/booking.enum.js';
 import sendBookingEmail from '../utils/sendBookingEmail.js';
 import sendEmail from '../utils/sendEmail.js';
+import moment from 'moment-timezone';
 
 export const createOrderAfterPayment = async (req: Request, res: Response): Promise<void> => {
   const session = await mongoose.startSession();
@@ -38,19 +36,17 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       infoUserGuest = null
     } = req.body;
 
-    console.log('req.body.orderDetails:', JSON.stringify(orderDetails, null, 2));
-
-    // 1. Validate input data
-    if (!total_price || !orderDetails || !Array.isArray(orderDetails)) {
-      throw new Error('Missing required fields');
+    // Kiểm tra orderDetails
+    if (!orderDetails || !Array.isArray(orderDetails)) {
+      throw new Error('Thiếu các trường bắt buộc');
     }
 
-    // Ánh xạ key để đồng nhất
+    // Chuẩn hóa orderDetails
     const normalizedOrderDetails = orderDetails.map((detail: any) => ({
       productId: detail.productId || detail.productID || null,
       serviceId: detail.serviceId || detail.serviceID || null,
       quantity: detail.quantity,
-      product_price: detail.product_price || detail.productPrice,
+      product_price: detail.product_price || detail.productPrice || null,
       booking_date: detail.booking_date || detail.bookingDate,
       petName: detail.petName,
       petType: detail.petType
@@ -59,65 +55,75 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
     const isBooking = normalizedOrderDetails.every((detail: any) => detail.serviceId && !detail.productId);
     const isOrder = normalizedOrderDetails.some((detail: any) => detail.productId);
 
-    console.log('normalizedOrderDetails:', JSON.stringify(normalizedOrderDetails, null, 2));
-    console.log('isBooking:', isBooking);
-    console.log('isOrder:', isOrder);
-
+    // Kiểm tra deliveryID và total_price cho đơn hàng
     if (isOrder && !deliveryID) {
-      throw new Error('Delivery ID is required for product orders');
+      throw new Error('Yêu cầu Delivery ID cho đơn hàng sản phẩm');
+    }
+    if (isOrder && !total_price) {
+      throw new Error('Yêu cầu tổng giá cho đơn hàng sản phẩm');
     }
 
-    // 4. Validate delivery
+    // Tính phí giao hàng
     let deliveryFee = 0;
     if (isOrder && deliveryID) {
       const delivery = await deliveryModel.findById(deliveryID).session(session);
-      if (!delivery) throw new Error('Delivery method not found');
+      if (!delivery) throw new Error('Không tìm thấy phương thức giao hàng');
       deliveryFee = delivery?.delivery_fee || 0;
     }
 
-    // 6. Calculate total_price
+    // Xử lý orderDetails
     let calculatedTotalPrice = 0;
     const orderDetailsPromises = normalizedOrderDetails.map(async (detail: any) => {
       const { productId, serviceId, quantity, product_price, booking_date, petName, petType } = detail;
 
-      if (!quantity || !product_price || (!productId && !serviceId)) {
-        console.log('Invalid detail:', JSON.stringify(detail, null, 2));
-        throw new Error('Invalid order detail data');
+      // Kiểm tra dữ liệu chi tiết
+      if (!quantity || (!productId && !serviceId)) {
+        const missingFields = [];
+        if (!quantity) missingFields.push('quantity');
+        if (!productId && !serviceId) missingFields.push('productId hoặc serviceId');
+        throw new Error(`Dữ liệu chi tiết đơn hàng không hợp lệ: Thiếu hoặc sai trường - ${missingFields.join(', ')}`);
+      }
+
+      if (productId && (!product_price || product_price <= 0)) {
+        throw new Error('Yêu cầu product_price và phải lớn hơn 0 cho đơn hàng sản phẩm');
       }
 
       if (productId) {
         const product = await productModel
           .findOne({ _id: productId, status: ProductStatus.AVAILABLE })
           .session(session);
-        if (!product) throw new Error(`Product not found or not available: ${productId}`);
+        if (!product) throw new Error(`Không tìm thấy hoặc sản phẩm không khả dụng: ${productId}`);
         if (product.stock < quantity) {
-          throw new Error(`Insufficient stock for product: ${productId}`);
+          throw new Error(`Không đủ hàng cho sản phẩm: ${productId}`);
         }
         await productModel.findByIdAndUpdate(productId, { $inc: { stock: -quantity } }, { session });
       }
 
       if (serviceId) {
         const service = await serviceModel.findOne({ _id: serviceId, status: ServiceStatus.ACTIVE }).session(session);
-        if (!service) throw new Error(`Service not found or not active: ${serviceId}`);
+        if (!service) throw new Error(`Không tìm thấy hoặc dịch vụ không hoạt động: ${serviceId}`);
         if (!petName || !petType) {
-          throw new Error('petName and petType are required for service booking');
+          throw new Error('Yêu cầu petName và petType cho đặt dịch vụ');
         }
       }
 
-      const detailTotalPrice = quantity * product_price;
-      calculatedTotalPrice += detailTotalPrice;
-
-      const standardizedBookingDate = serviceId && booking_date ? new Date(booking_date) : null;
-      if (standardizedBookingDate) {
-        standardizedBookingDate.setMinutes(0, 0, 0);
+      let detailTotalPrice = 0;
+      if (isOrder) {
+        detailTotalPrice = quantity * product_price;
+        calculatedTotalPrice += detailTotalPrice;
       }
+
+      // Chuẩn hóa booking_date sang UTC
+      const standardizedBookingDate = serviceId && booking_date
+        ? moment.tz(booking_date, 'Asia/Ho_Chi_Minh').utc().toDate()
+        : null;
 
       return {
         productId,
         serviceId,
         quantity,
-        product_price,
-        total_price: detailTotalPrice,
+        product_price: isOrder ? product_price : null,
+        total_price: isOrder ? detailTotalPrice : null,
         booking_date: standardizedBookingDate,
         petName: serviceId ? petName : null,
         petType: serviceId ? petType : null
@@ -125,12 +131,13 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
     });
 
     const validatedOrderDetails = await Promise.all(orderDetailsPromises);
-    const subtotal = calculatedTotalPrice;
+    const subtotal = isOrder ? calculatedTotalPrice : 0;
 
+    // Xử lý giảm giá
     let discount = 0;
-    if (couponID) {
+    if (isOrder && couponID) {
       const coupon = await couponModel.findById(couponID).session(session);
-      if (!coupon) throw new Error('Coupon not found');
+      if (!coupon) throw new Error('Không tìm thấy mã giảm giá');
       const currentDate = new Date();
       if (
         coupon.status !== CouponStatus.ACTIVE ||
@@ -138,50 +145,56 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
         currentDate > coupon.end_date ||
         coupon.used_count >= coupon.usage_limit
       ) {
-        throw new Error('Invalid or expired coupon');
+        throw new Error('Mã giảm giá không hợp lệ hoặc đã hết hạn');
       }
       const discountPercentage = coupon.discount_value;
       discount = (subtotal * discountPercentage) / 100;
       await couponModel.findByIdAndUpdate(couponID, { $inc: { used_count: 1 } }, { session });
     }
 
-    const discountedSubtotal = subtotal - discount;
-    const finalTotalPrice = isOrder ? discountedSubtotal + deliveryFee : discountedSubtotal;
+    const discountedSubtotal = isOrder ? subtotal - discount : 0;
+    const finalTotalPrice = isOrder ? discountedSubtotal + deliveryFee : 0;
 
-    if (Math.abs(finalTotalPrice - total_price) > 1) {
-      throw new Error('Total price mismatch');
+    // Kiểm tra total_price cho đơn hàng
+    if (isOrder && total_price && Math.abs(finalTotalPrice - total_price) > 1) {
+      throw new Error('Tổng giá không khớp');
     }
-    console.log(infoUserGuest, 'infoUserGuest');
 
-    // 7. Create and save order
+    // Chuẩn hóa order_date sang UTC
+    const standardizedOrderDate = orderdate
+      ? moment.tz(orderdate, 'Asia/Ho_Chi_Minh').utc().toDate()
+      : new Date();
+
+    // Tạo và lưu đơn hàng
     const order = new orderModel({
       userID: userID ? userID : null,
       fullname: infoUserGuest?.fullName || null,
       phone: infoUserGuest?.phone || null,
+      email: infoUserGuest?.email || null, // Thêm: Lưu email
       payment_typeID,
       deliveryID: isOrder ? deliveryID : null,
       couponID: couponID || null,
-      order_date: orderdate ? new Date(orderdate) : new Date(),
-      total_price: finalTotalPrice,
+      order_date: standardizedOrderDate,
+      total_price: isOrder ? finalTotalPrice : null,
       shipping_address,
       paymentOrderCode,
       status: isOrder ? OrderStatus.PENDING : null,
       bookingStatus: isBooking ? BookingStatus.CONFIRMED : null,
       payment_status: PaymentStatus.PENDING,
-      inforUserGuest: infoUserGuest || null
+      inforUserGuest: infoUserGuest || null // Giữ nguyên để tương thích với logic cũ
     });
 
     const savedOrder = await order.save({ session });
 
-    // 8. Create and save order details
+    // Tạo và lưu chi tiết đơn hàng
     const orderDetailDocs = validatedOrderDetails.map((detail: any) => {
       return new orderDetailModel({
         orderId: savedOrder._id,
         productId: detail.productId || null,
         serviceId: detail.serviceId || null,
         quantity: detail.quantity,
-        product_price: detail.product_price,
-        total_price: detail.total_price,
+        product_price: isOrder ? detail.product_price : null,
+        total_price: isOrder ? detail.total_price : null,
         booking_date: detail.booking_date,
         petName: detail.petName,
         petType: detail.petType
@@ -190,21 +203,20 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
 
     await Promise.all(orderDetailDocs.map((detail: any) => detail.save({ session })));
 
-    // 9. Commit transaction
+    // Commit transaction
     await session.commitTransaction();
     transactionCommitted = true;
 
-    // 10. Send email confirmation (chỉ cho booking)
+    // Gửi email xác nhận đặt dịch vụ
     let recipientEmail: string | null = null;
     if (userID) {
-      const user = await userModel.findById(userID); // Sửa lại để dùng userModel
+      const user = await userModel.findById(userID);
       recipientEmail = user?.email || null;
     } else if (infoUserGuest && infoUserGuest.email) {
       recipientEmail = infoUserGuest.email;
     }
 
     if (recipientEmail && isBooking) {
-      // Chỉ gửi email nếu là booking
       try {
         await sendBookingEmail({
           recipientEmail,
@@ -216,20 +228,15 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
           })),
           orderId: savedOrder._id.toString()
         });
-        console.log('Booking email sent to:', recipientEmail);
+        console.log('Đã gửi email xác nhận đặt dịch vụ đến:', recipientEmail);
       } catch (emailError) {
-        console.error('Failed to send booking email:', emailError);
+        console.error('Gửi email xác nhận thất bại:', emailError);
       }
-    } else if (recipientEmail && isOrder) {
-      console.log('Skipping email for product order as per requirement');
-    } else {
-      console.warn('No recipient email found, skipping email notification');
     }
 
-    // 11. Send response
     res.status(201).json({
       success: true,
-      message: 'Order and order details created successfully',
+      message: 'Tạo đơn hàng và chi tiết đơn hàng thành công',
       data: {
         order: savedOrder,
         orderDetails: orderDetailDocs
@@ -239,13 +246,13 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
     if (!transactionCommitted) {
       await session.abortTransaction();
     }
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Error in createOrderAfterPayment:', errorMessage);
+    const errorMessage = error instanceof Error ? error.message : 'Lỗi không xác định';
+    console.error('Lỗi trong createOrderAfterPayment:', errorMessage);
 
     res.status(400).json({
       success: false,
       message: errorMessage,
-      error: error instanceof Error ? error.stack : 'Unknown error stack'
+      error: error instanceof Error ? error.stack : 'Lỗi không xác định'
     });
   } finally {
     session.endSession();
@@ -608,7 +615,7 @@ export const cancelServiceBooking = async (req: Request, res: Response): Promise
 
       // Nội dung email
       const subject = 'Thông báo hủy lịch đặt dịch vụ';
-      const text = `Kính gửi ${customerName},\n\nLịch đặt dịch vụ của bạn đã được hủy thành công! Dưới đây là thông tin chi tiết về lịch hẹn đã hủy:\n\nDịch vụ: ${serviceName}\nThời gian: ${bookingTime}\nThú cưng: ${petName} (${petType})\nGiá dự tính: ${formatPrice(servicePrice)}\nThời gian dự kiến: ${duration} phút\nĐịa điểm: 123 Nguyen Van Cu, District 1, HCM City\nMã đặt lịch: ${orderIdString}\n\nNếu bạn cần thêm thông tin hoặc hỗ trợ, vui lòng liên hệ với chúng tôi qua hotline 19006336 hoặc email ngocthanhnt04@gmail.com.\n\nTrân trọng,\nPet Heaven`;
+      const text = `Kính gửi ${customerName},\n\nLịch đặt dịch vụ của bạn đã được hủy thành công! Dưới đây là thông tin chi tiết về lịch hẹn đã hủy:\n\nDịch vụ: ${serviceName}\nThời gian: ${bookingTime}\nThú cưng: ${petName} (${petType})\\nThời gian dự kiến: ${duration} phút\nĐịa điểm: 123 Nguyen Van Cu, District 1, HCM City\nMã đặt lịch: ${orderIdString}\n\nNếu bạn cần thêm thông tin hoặc hỗ trợ, vui lòng liên hệ với chúng tôi qua hotline 19006336 hoặc email ngocthanhnt04@gmail.com.\n\nTrân trọng,\nPet Heaven`;
       const html = `
         <p>Kính gửi <strong>${customerName}</strong>,</p>
         <p>Lịch đặt dịch vụ của bạn đã được hủy thành công! Dưới đây là thông tin chi tiết về lịch hẹn đã hủy:</p>

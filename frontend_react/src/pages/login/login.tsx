@@ -26,6 +26,7 @@ import "antd/dist/reset.css";
 import { EyeInvisibleOutlined, EyeOutlined } from "@ant-design/icons";
 import loginApi from "../../api/login";
 import ENV_VARS from "../../../config";
+import clearLocalStorageExceptCarts from "../../config/clearLocalStorage";
 const { Title, Text } = Typography;
 
 interface User {
@@ -71,29 +72,29 @@ export default function Login() {
                 placement: "topRight",
                 duration: 2,
               });
-              localStorage.clear();
+              clearLocalStorageExceptCarts();
               setUser(null);
               navigate("/login");
             } else {
               navigate("/");
             }
           } else {
-            localStorage.clear();
+            clearLocalStorageExceptCarts();
             setUser(null);
             navigate("/login");
           }
         })
         .catch(() => {
-          localStorage.clear();
+          clearLocalStorageExceptCarts();
           setUser(null);
           navigate("/login");
         });
     } else {
-      localStorage.clear();
+      // localStorage.clear();
       navigate("/login");
     }
   }, [navigate]);
-  
+
   const handleLogin = async () => {
     if (!email.trim() && !password.trim()) {
       notification.error({

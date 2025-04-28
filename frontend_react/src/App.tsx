@@ -37,6 +37,9 @@ import SuccessPage from "./pages/orders/success";
 import BookingManager from "./admin/booking/booking";
 import SuccessBooking from "./pages/orders/booking/successBooking";
 import BlogCategoryList from "./admin/blog_category/blog_category";
+import ChatbotController from "./components/ChatbotController";
+import ArticleDetail from "./pages/blogDetail/blogDetail";
+import BlogList from "./admin/blog/blog";
 
 interface User {
   id: string;
@@ -167,6 +170,7 @@ function App() {
         { path: "categories", element: <CategoryList /> },
         { path: "blogcategories", element: <BlogCategoryList /> },
         { path: "products", element: <ProductList /> },
+        { path: "blogs", element: <BlogList /> },
         { path: "brands", element: <BrandManager /> },
         { path: "tags", element: <TagManager /> },
         { path: "orders", element: <OrderList /> },
@@ -178,7 +182,12 @@ function App() {
     },
     {
       path: "",
-      element: <PageLayout />,
+      element: (
+        <>
+          <PageLayout />
+          {/* <ChatbotController /> */}
+        </>
+      ),
       children: [
         {
           path: "/",
@@ -297,6 +306,14 @@ function App() {
           element: (
             <PublicRoute>
               <Search />
+            </PublicRoute>
+          ),
+        },
+        {
+          path: "/blogs/:id",
+          element: (
+            <PublicRoute>
+              <ArticleDetail />
             </PublicRoute>
           ),
         },

@@ -43,13 +43,6 @@ export default function HotProduct({ data }: { data: Product[] }) {
     autoplaySpeed: 2000,
     arrows: false, // Tắt nút điều hướng mặc định
     responsive: [
-      // {
-      //   breakpoint: 1280, // xl
-      //   settings: {
-      //     slidesToShow: 3,
-      //     slidesToScroll: 1,
-      //   },
-      // },
       {
         breakpoint: 1024, // lg
         settings: {

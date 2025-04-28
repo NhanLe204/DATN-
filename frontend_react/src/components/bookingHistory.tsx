@@ -24,7 +24,7 @@ interface Order {
   deliveryID: string | null;
   couponID: string | null;
   order_date: string;
-  total_price: number;
+  realPrice: number;
   shipping_address: string | null;
   payment_status: string;
   status: string | null;
@@ -86,6 +86,7 @@ const BookingHistory = () => {
             booking_date: item.booking_date,
             petName: item.petName,
             petType: item.petType,
+            realPrice: item.realPrice,
             order: item.order || [],
             status:
               item.order[0]?.bookingStatus?.toLowerCase() ||
@@ -130,7 +131,7 @@ const BookingHistory = () => {
       );
       return;
     }
-
+  
     Modal.confirm({
       title: "Xác nhận hủy lịch",
       content: "Bạn có chắc chắn muốn hủy lịch đặt này không?",
@@ -139,11 +140,8 @@ const BookingHistory = () => {
       onOk: async () => {
         setLoading(true);
         try {
-          const orderDetailId = booking.serviceId || booking._id;
-          const response = await orderApi.cancelBooking(
-            booking.orderId,
-            orderDetailId
-          );
+          const orderDetailId = booking._id; // Sử dụng _id của booking
+          const response = await orderApi.cancelBooking(booking.orderId, orderDetailId);
           if (response.success) {
             setBookings((prevBookings) =>
               prevBookings.map((b) =>
@@ -152,11 +150,11 @@ const BookingHistory = () => {
             );
             message.success("Đã hủy lịch thành công!");
           } else {
-            throw new Error(response.message || "Hủy lịch thất bại");
+            message.error(response.message || "Hủy lịch thất bại!");
           }
         } catch (error) {
           console.error("Failed to cancel booking:", error);
-          message.error("Có lỗi xảy ra khi hủy lịch!");
+          message.error(error.response?.data?.message || "Có lỗi xảy ra khi hủy lịch!");
         } finally {
           setLoading(false);
         }
@@ -167,6 +165,7 @@ const BookingHistory = () => {
   const statusColors = {
     pending: "blue",
     confirmed: "green",
+    in_progress: "purple",
     completed: "green",
     cancelled: "red",
   };
@@ -174,6 +173,7 @@ const BookingHistory = () => {
   const statusText = {
     pending: "Chưa xác nhận",
     confirmed: "Đã xác nhận",
+    in_progress: "Đang thực hiện",
     completed: "Đã hoàn thành",
     cancelled: "Đã hủy",
   };
@@ -214,9 +214,9 @@ const BookingHistory = () => {
         <span className="text-xs">
           {booking_date
             ? new Date(booking_date).toLocaleString("vi-VN", {
-                dateStyle: "short",
-                timeStyle: "short",
-              })
+              dateStyle: "short",
+              timeStyle: "short",
+            })
             : "Chưa xác định"}
         </span>
       ),
@@ -241,8 +241,8 @@ const BookingHistory = () => {
         <span className="text-xs">
           {booking_date
             ? new Date(booking_date).toLocaleTimeString("vi-VN", {
-                timeStyle: "short",
-              })
+              timeStyle: "short",
+            })
             : "Chưa xác định"}
         </span>
       ),
@@ -258,15 +258,16 @@ const BookingHistory = () => {
       ),
     },
     {
-      title: "Giá",
-      dataIndex: "total_price",
-      key: "total_price",
-      render: (total_price: number) => (
+      title: "Giá thực tế",
+      dataIndex: "realPrice",
+      key: "realPrice",
+      render: (realPrice: number | null | undefined) => (
         <span className="text-blue-500 font-medium text-xs">
-          {total_price.toLocaleString()}đ
+          {realPrice ? `${realPrice.toLocaleString()}đ` : "Chưa tính"}
         </span>
       ),
-    },
+    }
+    ,
     {
       title: "Thời gian dự tính",
       dataIndex: "service",
@@ -299,6 +300,7 @@ const BookingHistory = () => {
   const tabItems = [
     { label: "Tất cả", key: "all" },
     { label: "Đã xác nhận", key: "confirmed" },
+    { label: "Đang thực hiện", key: "on_progress" },
     { label: "Đã hoàn thành", key: "completed" },
     { label: "Đã hủy", key: "cancelled" },
   ];
@@ -316,6 +318,9 @@ const BookingHistory = () => {
         <p>
           2. Nếu sau 15ph giờ hẹn mà quý khách không đến, và không có liên lạc
           thì lịch sẽ bị hủy
+        </p>
+        <p>
+          3. Giá được tính tại shop khi đã cân khối lượng của thú cưng
         </p>
       </div>
       <Tabs

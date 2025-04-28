@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response } from 'express';
-import mongoose from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 const ObjectId = mongoose.Types.ObjectId;
 import productModel from '../models/product.model.js';
 import { ProductStatus, ProductStatusMapping } from '../enums/product.enum.js';
@@ -521,32 +522,47 @@ export const getProductByTagId = async (req: Request, res: Response): Promise<vo
 };
 
 export const getProductRelated = async (req: Request, res: Response): Promise<void> => {
-  const productId = req.params.id;
-  const product = await productModel.findById(productId);
+  try {
+    const productId = req.params.id;
 
-  if (!product) {
-    res.status(404).json({ message: 'Sản phẩm không tồn tại' });
-    return;
+    // Tìm sản phẩm theo ID
+    const product = await productModel.findById(productId).lean();
+    if (!product) {
+      res.status(404).json({ message: 'Sản phẩm không tồn tại' });
+      return;
+    }
+
+    // Kiểm tra các trường cần thiết
+    const { category_id, tag_id } = product;
+    console.log(category_id, 'category_id');
+    console.log(tag_id, 'tag_id');
+
+    // Nếu không có tiêu chí nào để tìm sản phẩm liên quan
+    if (!category_id && !tag_id) {
+      res.status(200).json([]); // Trả về mảng rỗng
+      return;
+    }
+
+    // Tạo điều kiện query cho sản phẩm liên quan
+    const queryConditions: any[] = [];
+    if (category_id) queryConditions.push({ category_id: new Types.ObjectId(category_id) });
+    if (tag_id) queryConditions.push({ tag_id: new Types.ObjectId(tag_id) });
+    console.log(queryConditions, 'SSS1111111111111');
+    // Tìm sản phẩm liên quan
+    const relatedProducts = await productModel
+      .find({
+        _id: { $ne: new Types.ObjectId(productId) }, // Loại bỏ chính sản phẩm hiện tại
+        $and: queryConditions // Tìm sản phẩm có ít nhất một trường khớp
+      })
+      .find({ status: ProductStatus.AVAILABLE })
+      .limit(10) // Giới hạn số lượng sản phẩm trả về
+      .lean();
+
+    res.status(200).json(relatedProducts);
+  } catch (error) {
+    console.error('Lỗi khi lấy sản phẩm liên quan:', error);
+    res.status(500).json({ message: 'Lỗi server khi lấy sản phẩm liên quan' });
   }
-
-  // Tìm sản phẩm liên quan dựa trên category_id, brand_id, hoặc tag_id
-  const allProducts = await productModel.find();
-  const relatedProducts = allProducts.filter((p) => {
-    // Không bao gồm chính sản phẩm hiện tại
-    if (p._id.toString() === productId) return false;
-
-    // Sản phẩm liên quan nếu cùng category_id hoặc brand_id hoặc tag_id
-    return (
-      p.category_id?.toString() === product.category_id?.toString() ||
-      p.brand_id?.toString() === product.brand_id?.toString() ||
-      p.tag_id?.toString() === product.tag_id?.toString()
-    );
-  });
-
-  // Giới hạn số lượng sản phẩm liên quan (ví dụ: 4 sản phẩm)
-  const limitedRelatedProducts = relatedProducts.slice(0, 4);
-
-  res.status(200).json(limitedRelatedProducts);
 };
 export const toggleProduct = async (req: Request, res: Response) => {
   try {

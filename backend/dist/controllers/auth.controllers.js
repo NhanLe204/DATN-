@@ -351,14 +351,17 @@ const googleLogin = async (req, res) => {
             res.status(400).json({ success: false, message: 'No idToken provided' });
             return;
         }
+        // Xác thực idToken với Google
         const ticket = await client.verifyIdToken({
             idToken,
             audience: process.env.GOOGLE_CLIENT_ID
         });
         const payload = ticket.getPayload();
         const { sub: googleId, email, name, picture: avatar } = payload;
+        // Tìm hoặc tạo user
         let user = (await user_model_js_1.default.findOne({ googleId })) || (await user_model_js_1.default.findOne({ email }));
         if (user) {
+            // Kiểm tra trạng thái user
             if (user.status === 'inactive') {
                 res.status(401).json({ success: false, message: 'Tài khoản của bạn đã bị khóa!' });
                 return;
@@ -367,12 +370,13 @@ const googleLogin = async (req, res) => {
                 res.status(403).json({ success: false, message: 'Vui lòng xác thực email bằng OTP trước khi đăng nhập!' });
                 return;
             }
+            // Cập nhật googleId nếu user chưa có
             if (!user.googleId) {
                 user.googleId = googleId;
-                await user.save();
             }
         }
         else {
+            // Tạo user mới
             user = new user_model_js_1.default({
                 googleId,
                 email,
@@ -381,14 +385,19 @@ const googleLogin = async (req, res) => {
                 role: 'user',
                 status: 'active'
             });
-            await user.save();
         }
+        // Lưu user vào database (nếu có thay đổi hoặc user mới)
+        await user.save();
+        // Tạo refreshToken và accessToken sau khi user đã được lưu
         if (!process.env.JWT_SECRET) {
             throw new Error('JWT_SECRET is not defined');
         }
-        // const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
         const accessToken = await (0, jwt_js_1.generateAccessToken)(user._id, res);
         const refreshToken = await (0, jwt_js_1.generateRefreshToken)(user._id, res);
+        // Lưu refreshToken vào database
+        user.refreshToken = refreshToken;
+        await user.save();
+        // Chuẩn bị dữ liệu trả về
         const userData = {
             id: user._id.toString(),
             email: user.email,
@@ -397,17 +406,20 @@ const googleLogin = async (req, res) => {
             role: user.role || 'user',
             status: user.status || 'active'
         };
+        // Đặt cookie cho refreshToken
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
             secure: config_js_1.default.NODE_ENV === 'production',
             sameSite: 'strict',
             maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
         });
+        // Trả về phản hồi
         res.json({ success: true, accessToken, user: userData });
     }
     catch (error) {
         console.error('Google Sign-In error:', error);
-        res.status(401).json({ success: false, message: 'Invalid Google token or server error' });
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        res.status(401).json({ success: false, message: `Invalid Google token or server error: ${errorMessage}` });
     }
 };
 exports.googleLogin = googleLogin;

@@ -53,7 +53,8 @@ const orderDetailSchema = new mongoose_1.Schema({
         type: String,
         required: false,
         default: ''
-    }
+    },
+    isRated: { type: Boolean, default: false }
 }, { timestamps: true });
 const orderDetailModel = mongoose_1.default.models.orderDetail || (0, mongoose_1.model)('orderDetail', orderDetailSchema);
 exports.default = orderDetailModel;

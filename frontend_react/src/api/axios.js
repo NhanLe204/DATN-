@@ -28,23 +28,28 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Nếu lỗi là 401 và chưa thử refresh token
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Kiểm tra mã lỗi từ server
+    const errorCode = error.response?.data?.message;
+    console.log(errorCode, "errorCode");
+    const isTokenExpired = errorCode === "Token expired"; // Giả sử server trả về code này
+
+    // Chỉ refresh token nếu lỗi là do token hết hạn
+    if (
+      error.response?.status === 401 &&
+      isTokenExpired &&
+      !originalRequest._retry
+    ) {
       originalRequest._retry = true;
       try {
-        const response = await loginApi.refreshToken(); // Gọi API refreshToken
+        const response = await loginApi.refreshToken();
         const newAccessToken = response.data.newAccessToken;
 
-        // Lưu token mới vào localStorage
         localStorage.setItem("accessToken", newAccessToken);
-
-        // Cập nhật token mới vào header Authorization
         api.defaults.headers.common[
           "Authorization"
         ] = `Bearer ${newAccessToken}`;
         originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
 
-        // Gửi lại request ban đầu
         return api(originalRequest);
       } catch (refreshError) {
         console.error("Failed to refresh token:", refreshError);

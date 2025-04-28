@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { Form, Input, Select, Radio, DatePicker } from "antd";
 import { CalendarOutlined } from "@ant-design/icons";
 import moment from "moment-timezone";
+import PriceTableModal from "./PriceTableModal";
+import "tailwindcss/tailwind.css";
 
 const { Option } = Select;
 
@@ -22,7 +24,7 @@ interface PetInfoFormProps {
   slotAvailability: { [key: string]: number };
   handleServiceChange: (value: string, index: number) => void;
   handleDateChange: (date: moment.Moment | null, index: number) => void;
-  handleTimeChange: (time: string, index: number) => void; // Thêm prop mới
+  handleTimeChange: (time: string, index: number) => void;
   removePetForm?: (index: number) => void;
   isRemovable?: boolean;
   onViewPriceClick?: () => void;
@@ -38,11 +40,22 @@ const PetInfoForm: React.FC<PetInfoFormProps> = ({
   slotAvailability,
   handleServiceChange,
   handleDateChange,
-  handleTimeChange, 
+  handleTimeChange,
   removePetForm,
   isRemovable,
   onViewPriceClick,
 }) => {
+  const [isModalVisible, setIsModalVisible] = useState(false);
+
+  const showModal = () => {
+    setIsModalVisible(true);
+   
+  };
+
+  const handleModalClose = () => {
+    setIsModalVisible(false);
+  };
+
   const parseDuration = (duration: string | undefined): string => {
     if (!duration) return "Chưa chọn dịch vụ";
     const minutes = parseInt(duration, 10);
@@ -104,15 +117,20 @@ const PetInfoForm: React.FC<PetInfoFormProps> = ({
           </Select>
         </Form.Item>
       </div>
-      <div className="mb-4">
-        <span className="font-medium">Giá dự tính: </span>
-        <span className="text-green-600">
-          {petFormData?.estimatedPrice !== undefined
-            ? `${petFormData.estimatedPrice.toLocaleString("vi-VN")} VNĐ`
-            : "Chưa chọn dịch vụ"}
-        </span>
-        <span className="ml-4 font-medium">Thời gian dự tính: </span>
+      <div className="mb-2">
+        <span className="font-medium">Thời gian dự tính: </span>
         <span className="text-green-600">{parseDuration(petFormData?.estimatedDuration)}</span>
+      </div>
+      <div>
+        <p className="text-sm text-red-500 mb-2">
+          *Giá hiển thị là ước tính và có thể thay đổi tùy thuộc vào loại thú cưng và khối lượng thực tế khi cân tại cửa hàng:{" "}
+          <span
+            className="text-[#22A6DF] cursor-pointer hover:underline"
+            onClick={showModal}
+          >
+            Xem bảng giá
+          </span>
+        </p>
       </div>
       <h3 className="mb-2 font-medium text-md">Thời gian đặt hẹn</h3>
       <div className="flex mb-4 space-x-4">
@@ -141,7 +159,7 @@ const PetInfoForm: React.FC<PetInfoFormProps> = ({
             placeholder="Vui lòng chọn ngày trước"
             className="w-full"
             disabled={!selectedDate}
-            onChange={(value) => handleTimeChange(value, index)} 
+            onChange={(value) => handleTimeChange(value, index)}
           >
             {availableTimeSlots.map((time) => (
               <Option key={time} value={time}>
@@ -151,15 +169,8 @@ const PetInfoForm: React.FC<PetInfoFormProps> = ({
           </Select>
         </Form.Item>
       </div>
-      <p className="text-sm text-gray-500">
-        *Giá có thể thay đổi tùy thuộc vào loại thú cưng, khối lượng và chiều dài lông.{" "}
-        <span
-          className="text-[#22A6DF] cursor-pointer hover:underline"
-          onClick={onViewPriceClick}
-        >
-          Xem bảng giá
-        </span>
-      </p>
+
+      <PriceTableModal visible={isModalVisible} onClose={handleModalClose} />
     </div>
   );
 };

@@ -18,15 +18,21 @@ interface SpaBookingState {
   petForms: number[];
   petFormData: PetFormData[];
   selectedDates: (string | null)[];
-  guestUserInfo: GuestUserInfo; 
+  guestUserInfo: GuestUserInfo;
 }
+
+// Initialize guestUserInfo from localStorage if available
+const loadGuestUserInfo = (): GuestUserInfo => {
+  const savedGuestInfo = localStorage.getItem("guestUserInfo");
+  return savedGuestInfo ? JSON.parse(savedGuestInfo) : {};
+};
 
 const initialState: SpaBookingState = {
   formData: {},
   petForms: [0],
   petFormData: [{ estimatedPrice: undefined, estimatedDuration: undefined }],
   selectedDates: [null],
-  guestUserInfo: {},
+  guestUserInfo: loadGuestUserInfo(),
 };
 
 const spaBookingSlice = createSlice({
@@ -47,13 +53,15 @@ const spaBookingSlice = createSlice({
     },
     setGuestUserInfo(state, action: PayloadAction<GuestUserInfo>) {
       state.guestUserInfo = action.payload;
+      localStorage.setItem("guestUserInfo", JSON.stringify(action.payload));
     },
     resetForm(state) {
       state.formData = initialState.formData;
       state.petForms = initialState.petForms;
       state.petFormData = initialState.petFormData;
       state.selectedDates = initialState.selectedDates;
-      state.guestUserInfo = initialState.guestUserInfo; 
+      state.guestUserInfo = initialState.guestUserInfo;
+      localStorage.removeItem("guestUserInfo");
     },
   },
 });
@@ -63,7 +71,7 @@ export const {
   setPetForms,
   setPetFormData,
   setSelectedDates,
-  setGuestUserInfo, 
+  setGuestUserInfo,
   resetForm,
 } = spaBookingSlice.actions;
 export default spaBookingSlice.reducer;

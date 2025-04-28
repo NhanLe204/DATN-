@@ -4,19 +4,27 @@ import { BlogStatus } from '../enums/blog.enum.js';
 
 export const createBlog = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { title, content, image_url, author, product, user, status } = req.body;
+    let image_url = '';
+    if (req.file) {
+      image_url = req.file.path; // URL từ Cloudinary
+      console.log('Image uploaded to Cloudinary:', image_url);
+    } else {
+      res.status(400).json({ success: false, message: 'No file uploaded' });
+      return;
+    }
 
-    if (!title || !content || !author || !product || !user) {
-      res
-        .status(400)
-        .json({ success: false, message: 'Missing required fields: title, content, author, product, user' });
+    const { title, content, blog_category_id, author, product, user, status } = req.body;
+
+    if (!title || !content || !blog_category_id || !author) {
+      res.status(400).json({ success: false, message: 'Missing required fields: title, content, author' });
       return;
     }
 
     const newBlog = new blogModel({
       title,
       content,
-      image_url: image_url || [],
+      image_url,
+      blog_category_id,
       author,
       product,
       user,
@@ -26,6 +34,7 @@ export const createBlog = async (req: Request, res: Response): Promise<void> => 
     const savedBlog = await newBlog.save();
     res.status(201).json({ success: true, message: 'Blog created successfully', data: savedBlog });
   } catch (error) {
+    console.error('Error creating blog:', error);
     res.status(500).json({
       success: false,
       message: 'Server error when creating blog',
@@ -34,16 +43,14 @@ export const createBlog = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
-
 export const getAllBlogs = async (req: Request, res: Response): Promise<void> => {
   try {
-    const blogs = await blogModel.find();
+    const blogs = await blogModel.find().populate('blog_category_id', 'name');
     res.status(200).json({ success: true, data: blogs });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error when fetching blogs' });
   }
 };
-
 
 export const getActiveBlogs = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -85,24 +92,45 @@ export const getBlogById = async (req: Request, res: Response): Promise<void> =>
 export const updateBlog = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const { title, content, image_url, author, status } = req.body;
+    const { title, content, blog_category_id, author, product, user, status } = req.body;
 
+    // Tìm blog hiện tại
     const blog = await blogModel.findById(id);
     if (!blog) {
       res.status(404).json({ success: false, message: 'Blog not found' });
       return;
     }
 
-    if (title) blog.title = title;
-    if (content) blog.content = content;
-    if (image_url) blog.image_url = image_url;
-    if (author) blog.author = author;
-    if (status && Object.values(BlogStatus).includes(status)) blog.status = status;
+    // Giữ ảnh cũ nếu không upload ảnh mới
+    let image_url = blog.image_url;
+    if (req.file) {
+      image_url = req.file.path; // Cập nhật URL mới từ Cloudinary
+    }
 
-    const updatedBlog = await blog.save();
+    // Cập nhật blog
+    const updatedBlog = await blogModel.findByIdAndUpdate(
+      id,
+      {
+        title,
+        content,
+        image_url,
+        blog_category_id,
+        author,
+        product,
+        user,
+        status: status || BlogStatus.ACTIVE
+      },
+      { new: true }
+    );
+
     res.status(200).json({ success: true, message: 'Blog updated successfully', data: updatedBlog });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error when updating blog' });
+    console.error('Error updating blog:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error when updating blog',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 };
 

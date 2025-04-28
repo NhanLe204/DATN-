@@ -12,7 +12,9 @@ import { useDispatch } from "react-redux";
 import { addToCart } from "../redux/slices/cartslice";
 
 import ratingApi from "../api/ratingApi";
-import { set } from "mongoose";
+import { number } from "prop-types";
+import paymentApi from "../api/paymentApi";
+import ENV_VARS from "../../config";
 
 interface User {
   _id: string;
@@ -39,6 +41,7 @@ interface OrderItem {
   quantity: number;
   price: number;
   image_url: string[];
+  isRated: boolean;
 }
 
 interface Rating {
@@ -63,6 +66,28 @@ interface Order {
   couponCode: string;
 }
 
+interface ProductRating {
+  _id: {
+    _id: string;
+    productId: string;
+    quantity: number;
+    product_price: number;
+    total_price: number;
+  };
+  score: number;
+  userId: {
+    _id: string;
+    fullname: string;
+    avatar: string;
+  };
+  content: string;
+  createdAt: string;
+}
+
+const ProductRatings = ({ productId }: { productId: string }) => {
+  console.log(productId, "Thanh ne ProductID");
+};
+
 export default function OrderDetail() {
   const params = useParams();
   const [user, setUser] = useState<User | null>(null);
@@ -76,6 +101,11 @@ export default function OrderDetail() {
   const [isCancelModalVisible, setIsCancelModalVisible] = useState(false);
   const [orderToCancel, setOrderToCancel] = useState<Order | null>(null);
   const [isReviewModalVisible, setIsReviewModalVisible] = useState(false);
+  // Trong OrderDetail function, dưới các state hiện có
+  const [isSelectProductModalVisible, setIsSelectProductModalVisible] =
+    useState(false);
+  const [selectedOrderForReview, setSelectedOrderForReview] =
+    useState<Order | null>(null);
   // Rating
   const [selectedProductForReview, setSelectedProductForReview] =
     useState<OrderItem | null>(null);
@@ -83,7 +113,6 @@ export default function OrderDetail() {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
   const [reviewLoading, setReviewLoading] = useState(false);
-  const [ratedProducts, setRatedProducts] = useState<string[]>([]);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -115,11 +144,6 @@ export default function OrderDetail() {
         } else {
           setOrders(orderResponse.data.data || []);
         }
-        const getIDProduct = orderResponse.data.data.flatMap((order: Order) =>
-          order.items.map((item: OrderItem) => item.productId)
-        );
-        setRatedProducts(getIDProduct);
-        console.log("Rated Products:", getIDProduct);
       } catch (error) {
         console.error("Failed to fetch data:", error);
         setUser(null);
@@ -171,55 +195,82 @@ export default function OrderDetail() {
   // Rating
   const handleShowReviewModal = (order: Order, productId: string) => {
     const product = order.items.find((item) => item.id === productId);
-    const test = order.items[0].orderDetailId;
-    console.log("test", test);
-
-    if (product) {
-      setOrderDetailId(test);
+    if (product && !product.isRated) {
+      setOrderDetailId(product.orderDetailId);
       setSelectedProductForReview(product);
       setIsReviewModalVisible(true);
     }
   };
 
   const handleSubmitReview = async () => {
-    if (!selectedProductForReview) {
-      message.error("Không tìm thấy sản phẩm để đánh giá.");
+    if (!selectedProductForReview || !orderDetailId) {
+      message.error("Không tìm thấy sản phẩm hoặc đơn hàng để đánh giá.");
       return;
     }
 
-    // Gom dữ liệu đánh giá
-    const reviewData = {
-      productId: selectedProductForReview.id,
-      score: rating,
-      userId: user?._id,
-      content: comment.trim() || "",
-      orderDetailId: orderDetailId,
-    };
-    const response = await ratingApi.createRating(reviewData);
-    console.log(response, "SS");
-    // Kiểm tra dữ liệu
-    if (!reviewData.score || reviewData.score < 1 || reviewData.score > 5) {
-      message.error("Vui lòng chọn số sao hợp lệ.");
-      return;
-    }
-    if (reviewData.content.length > 200) {
-      message.error("Nhận xét không được vượt quá 200 ký tự.");
+    if (!comment.trim()) {
+      message.error("Vui lòng nhập nhận xét để gửi đánh giá.");
       return;
     }
 
     setReviewLoading(true);
+
     try {
-      message.success("Đánh giá của bạn đã được gửi thành công!");
-      setIsReviewModalVisible(false);
-      setRating(5); // Reset rating về mặc định
-      setComment(""); // Reset comment
-      setSelectedProductForReview(null); // Reset sản phẩm đã chọn
-    } catch (error) {
-      message.error("Có lỗi xảy ra khi gửi đánh giá.");
+      const reviewData = {
+        orderDetailId: orderDetailId,
+        score: rating,
+        content: comment.trim(),
+      };
+
+      const response = await ratingApi.createRating(reviewData);
+
+      const responseData = response.data;
+
+      if (responseData) {
+        message.success("Đánh giá sản phẩm thành công!");
+        setIsReviewModalVisible(false);
+        setRating(5);
+        setComment("");
+        setSelectedProductForReview(null);
+        setOrderDetailId(null);
+
+        // Cập nhật orders để phản ánh isRated
+        setOrders((prevOrders) =>
+          prevOrders.map((order) => ({
+            ...order,
+            items: order.items.map((item) =>
+              item.orderDetailId === orderDetailId
+                ? { ...item, isRated: true }
+                : item
+            ),
+          }))
+        );
+      } else {
+        console.warn("API success false:", responseData.message);
+        message.error(
+          responseData.message || "Không thể gửi đánh giá. Vui lòng thử lại."
+        );
+      }
+    } catch (error: any) {
+      console.error("Error submitting review:", error);
+      message.error(
+        error.response?.data?.message ||
+        error.message ||
+        "Lỗi hệ thống, vui lòng thử lại."
+      );
     } finally {
       setReviewLoading(false);
     }
   };
+
+  const confirmSubmitReview = () => {
+    Modal.confirm({
+      title: "Xác nhận gửi đánh giá",
+      content: "Bạn có chắc chắn muốn gửi đánh giá này?",
+      onOk: handleSubmitReview,
+    });
+  };
+
   // Rating
   const handleViewDetails = (order: Order) => {
     setSelectedOrder(order);
@@ -275,13 +326,42 @@ export default function OrderDetail() {
     CANCELLED: "Đã hủy",
   };
 
+  const handlePayment = async (id: string, total: number) => {
+    try {
+      const paymentData = {
+        orderId: id,
+        amount: total,
+        description: `Thanh toán đơn hàng ${id}`,
+        returnUrl: `${ENV_VARS.VITE_VNPAY_URL}/success`,
+        cancelUrl: `${ENV_VARS.VITE_VNPAY_URL}/cancel`,
+      };
+  
+      const response = await paymentApi.create(paymentData);
+      const checkoutUrl = response.url;
+  
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl;
+      } else {
+        message.error("Không thể tạo liên kết thanh toán.");
+      }
+    } catch (error) {
+      console.error("Error creating payment link:", error);
+      message.error("Có lỗi xảy ra khi tạo liên kết thanh toán.");
+    }
+  };
+
+  const paymentStatusText = {
+    PENDING: "Chưa thanh toán",
+    PAID: "Đã thanh toán",
+    CASH_ON_DELIVERY: "Thanh toán khi nhận hàng",
+  };
+
   const columns = [
     {
-      title: "Mã đơn hàng",
-      dataIndex: "orderNumber",
-      key: "orderNumber",
-      render: (text: string) => (
-        <span className="font-medium text-gray-800">{text}</span>
+      title: "STT",
+      key: "index",
+      render: (_: any, __: any, index: number) => (
+        <span className="font-medium text-gray-800">{index + 1}</span>
       ),
     },
     {
@@ -355,65 +435,81 @@ export default function OrderDetail() {
       ),
     },
     {
-      title: "Thao tác",
-      key: "action",
-      render: (_: any, record: Order) => (
-        <div className="flex flex-col space-y-2">
-          <Button
-            type="primary"
-            onClick={() => handleViewDetails(record)}
-            className="bg-green-500 hover:bg-green-600 flex items-center"
-            icon={<FaEye className="mr-2" />}
+      title: "Thanh toán",
+      dataIndex: "status",
+      key: "status",
+      render: (status: keyof typeof statusText, record: Order) => (
+        <div className="flex flex-col space-y-1">
+          <Tag
+            onClick={() =>
+              record.payment_status === "PENDING" && handlePayment(record.id, record.total)
+            }
+            color={
+              record.payment_status === "PAID"
+                ? "green"
+                : record.payment_status === "CASH_ON_DELIVERY"
+                ? "orange"
+                : "blue"
+            }
+            className={`flex items-center w-fit px-3 py-1 ${
+              record.payment_status === "PENDING" ? "cursor-pointer" : "cursor-not-allowed"
+            }`}
           >
-            Xem chi tiết
-          </Button>
-          {record.status == "DELIVERED" && (
-            <Button
-              type="primary"
-              onClick={() => handleReorder(record)}
-              className="bg-blue-500 hover:bg-blue-600 flex items-center"
-              icon={<FaShoppingBag className="mr-2" />}
-            >
-              Mua lại
-            </Button>
-          )}
-          {record.status == "pending" && (
-            <Button
-              danger
-              onClick={() => showCancelConfirm(record)}
-              className="flex items-center"
-              icon={<MdCancel className="mr-2" />}
-            >
-              Huỷ
-            </Button>
-          )}
-          {record.status === "DELIVERED" && (
-            <>
-              {!ratedProducts.includes(record.items[0].productId) ? (
-                <Button
-                  type="primary"
-                  onClick={() =>
-                    setIsDetailModalVisible(false) ||
-                    handleShowReviewModal(record, record.items[0].id)
-                  }
-                  className="bg-purple-500 hover:bg-purple-600 flex items-center"
-                  icon={<FaStar className="mr-2" />}
-                >
-                  Đánh giá {record.items[0].productId}
-                </Button>
-              ) : (
-                <Button
-                  disabled
-                  className="flex items-center"
-                  icon={<FaStar className="mr-2" />}
-                >
-                  Đã đánh giá
-                </Button>
-              )}
-            </>
-          )}
+            {paymentStatusText[record.payment_status as keyof typeof paymentStatusText]}
+          </Tag>
         </div>
       ),
+    },
+    {
+      title: "Thao tác",
+      key: "action",
+      render: (_: any, record: Order) => {
+        return (
+          <div className="flex flex-col space-y-2">
+            <Button
+              type="primary"
+              onClick={() => handleViewDetails(record)}
+              className="bg-green-500 hover:bg-green-600 flex items-center"
+              icon={<FaEye className="mr-2" />}
+            >
+              Xem chi tiết
+            </Button>
+            {record.status === "DELIVERED" && (
+              <>
+                <Button
+                  type="primary"
+                  onClick={() => handleReorder(record)}
+                  className="bg-blue-500 hover:bg-blue-600 flex items-center"
+                  icon={<FaShoppingBag className="mr-2" />}
+                >
+                  Mua lại
+                </Button>
+                <Button
+                  type="primary"
+                  onClick={() => {
+                    setSelectedOrderForReview(record);
+                    setIsSelectProductModalVisible(true);
+                  }}
+                  className="bg-purple-500 hover:bg-purple-600 flex items-center"
+                  icon={<FaStar className="mr-2 text-yellow-400" />}
+                >
+                  Đánh giá
+                </Button>
+              </>
+            )}
+            {record.status === "PENDING" && (
+              <Button
+                danger
+                onClick={() => showCancelConfirm(record)}
+                className="flex items-center"
+                icon={<MdCancel className="mr-2" />}
+              >
+                Huỷ
+              </Button>
+            )}
+          </div>
+        );
+      },
     },
   ];
 
@@ -662,9 +758,8 @@ export default function OrderDetail() {
                     <button
                       key={star}
                       onClick={() => setRating(star)}
-                      className={`text-2xl focus:outline-none transition-colors ${
-                        star <= rating ? "text-yellow-400" : "text-gray-300"
-                      }`}
+                      className={`text-2xl focus:outline-none transition-colors ${star <= rating ? "text-yellow-400" : "text-gray-300"
+                        }`}
                     >
                       ★
                     </button>
@@ -690,13 +785,80 @@ export default function OrderDetail() {
               </Button>
               <Button
                 type="primary"
-                onClick={handleSubmitReview}
+                onClick={confirmSubmitReview}
                 loading={reviewLoading}
                 className="bg-purple-500 hover:bg-purple-600"
               >
                 Gửi đánh giá
               </Button>
             </div>
+          </div>
+        )}
+      </Modal>
+
+      <Modal
+        title="Chọn sản phẩm để đánh giá"
+        open={isSelectProductModalVisible}
+        onCancel={() => setIsSelectProductModalVisible(false)}
+        footer={null}
+        width={600}
+      >
+        {selectedOrderForReview && (
+          <div className="p-4">
+            {selectedOrderForReview.items.length === 0 ? (
+              <p>Không có sản phẩm nào để đánh giá.</p>
+            ) : (
+              <div className="space-y-4">
+                {selectedOrderForReview.items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between p-4 border rounded-lg bg-white"
+                  >
+                    <div className="flex items-center space-x-4">
+                      <img
+                        src={item.image_url[0]}
+                        alt={item.name}
+                        className="w-16 h-16 object-cover rounded-lg border border-gray-200"
+                      />
+                      <div>
+                        <p className="font-medium text-gray-800">{item.name}</p>
+                        <p className="text-gray-500">
+                          Giá: {item.price.toLocaleString()}đ
+                        </p>
+                        {item.isRated && (
+                          <div className="flex items-center space-x-2">
+                            <p className="text-gray-400 text-sm">Đã đánh giá</p>
+                            <Button
+                              type="link"
+                              onClick={() =>
+                                navigate(`/detail/${item.productId}#reviews`)
+                              }
+                              className="text-blue-500 p-0"
+                            >
+                              Xem đánh giá
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    {!item.isRated && (
+                      <Button
+                        type="primary"
+                        onClick={() => {
+                          setOrderDetailId(item.orderDetailId);
+                          setSelectedProductForReview(item);
+                          setIsSelectProductModalVisible(false);
+                          setIsReviewModalVisible(true);
+                        }}
+                        className="bg-purple-500 hover:bg-purple-600"
+                      >
+                        Chọn
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </Modal>

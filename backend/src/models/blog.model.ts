@@ -2,23 +2,18 @@ import mongoose, { Schema, model } from 'mongoose';
 import { IBlog } from '../interfaces/blog.interface.js';
 import { BlogStatus } from '../enums/blog.enum.js';
 import Product from '../models/product.model.js';
-import User from '../models/user.model.js';
+import blogCategory from '../models/blogCategory.model.js';
 
 const blogSchema: Schema<IBlog> = new Schema<IBlog>(
   {
-    product: {
+    blog_category_id: {
       type: Schema.Types.ObjectId,
-      ref: Product,
-      autoPopulate: true
-    },
-    userID: {
-      type: Schema.Types.ObjectId,
-      ref: User,
+      ref: blogCategory,
       autoPopulate: true
     },
     image_url: {
-      type: [String],
-      default: []
+      type: String,
+      required: false
     },
     title: {
       type: String,

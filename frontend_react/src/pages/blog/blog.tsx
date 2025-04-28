@@ -9,7 +9,8 @@ import {
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import BlogApi from "../../api/blogApi";
-
+import parse from "html-react-parser";
+import Loader from "../../components/loader";
 interface Article {
   id: number;
   title: string;
@@ -72,7 +73,7 @@ export default function Blog() {
   };
 
   if (loading) {
-    return <div className="text-center py-8">Đang tải...</div>;
+    return <Loader />;
   }
 
   if (error) {
@@ -99,6 +100,30 @@ export default function Blog() {
       name: "Trải Nghiệm Dịch Vụ Tại Petshop",
       icon: <ThunderboltOutlined />,
       color: "from-[#22A6DF] to-[#1890ff]",
+    },
+  ];
+
+  const articles: Article[] = [
+    {
+      id: 1,
+      title:
+        "THÁC CÔNG TRỜI - CUNG ĐƯỜNG TREKKING SIÊU DỄ CHO NGƯỜI MỚI BẮT ĐẦU",
+      description:
+        "1. Thác công trời ở đâu2. Hành trình chinh phục Thác Công Trời3. Những vật dụng nên đem theo và những điều cần lưu ý1. Thác Công Trời ở đâu?Một thác nước tự nhiên trong Vườn Quốc Gia Bidoup - Núi bà thuộc địa phận...",
+      imageUrl: "https://picsum.photos/800/400",
+      category: "KỸ NĂNG - KINH NGHIỆM LEO NÚI, TREKKING",
+      readTime: "5 phút đọc",
+      date: "15 Th1 2024",
+    },
+    {
+      id: 2,
+      title: "BA LÔ CỦA BẠN NÊN NẶNG BAO NHIÊU",
+      description:
+        "Gói trọng lượng cho ba lô và đi bộ đường dài: Khi xác định trọng lượng gói của bạn, hãy làm theo các hướng dẫn này để có trải nghiệm đi bộ đường dài thoải mái và an toàn...",
+      imageUrl: "https://picsum.photos/800/401",
+      category: "TRẢI NGHIỆM, HƯỚNG DẪN CÁC CUNG ĐƯỜNG PHƯỢT",
+      readTime: "3 phút đọc",
+      date: "14 Th1 2024",
     },
   ];
 
@@ -200,17 +225,14 @@ export default function Blog() {
                       alt={post.title}
                       className="w-full h-full object-cover"
                     />
-                    <div className="absolute inset-0 ">
-                      <img
-                        src="https://picsum.photos/300/200"
-                        alt="Login form"
-                        className="h-full w-full bg-[#EAEAEA] object-cover"
-                      />
-                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent md:hidden"></div>
                   </div>
 
                   {/* Content Section - Right 50% */}
-                  <div className="w-full md:w-2/3 p-6 flex flex-col justify-between">
+                  <Link
+                    to={`/blogs/${post._id}`}
+                    className="w-full md:w-2/3 p-6 flex flex-col justify-between"
+                  >
                     <div>
                       {/* <Badge
                           className="mb-4"
@@ -221,7 +243,7 @@ export default function Blog() {
                         {post.title}
                       </h2>
                       <p className="text-gray-600 text-sm line-clamp-3">
-                        {post.content}
+                        {parse(post.content)}
                       </p>
                     </div>
 
@@ -236,14 +258,13 @@ export default function Blog() {
                           whileHover={{ x: 5 }}
                           whileTap={{ x: -2 }}
                           className="inline-flex items-center text-[#22A6DF] hover:text-[#1890ff] font-medium text-sm cursor-pointer"
-                          href="/blogDetail"
                         >
                           Đọc thêm
                           <span className="ml-1">»</span>
                         </motion.a>
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 </motion.article>
               ))}
             </div>

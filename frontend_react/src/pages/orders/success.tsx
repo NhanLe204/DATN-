@@ -55,7 +55,7 @@ const SuccessPage = () => {
       // Thanh toán thất bại
       message.error(`Thanh toán thất bại`);
       orderApi
-        .updatePaymentStatus(orderId, { payment_status: "CANCELLED" })
+        .updatePaymentStatus(orderId, { payment_status: "PENDING" })
         .then(() => {
           setTimeout(() => navigate("/cancel"), 1000);
         })

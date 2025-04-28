@@ -39,9 +39,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
 const orderdetail_model_js_1 = __importDefault(require("./orderdetail.model.js"));
 const user_model_js_1 = __importDefault(require("./user.model.js"));
-const product_model_js_1 = __importDefault(require("./product.model.js"));
 const rateSchema = new mongoose_1.Schema({
-    orderDetailId: {
+    _id: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: orderdetail_model_js_1.default,
         required: true
@@ -57,16 +56,19 @@ const rateSchema = new mongoose_1.Schema({
         ref: user_model_js_1.default,
         required: true
     },
-    productId: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: product_model_js_1.default,
-        required: true
-    },
     content: {
         type: String,
         required: true
+    },
+    likes: {
+        type: Number,
+        default: 0
+    },
+    likedBy: {
+        type: [String],
+        default: []
     }
-}, { timestamps: true });
+}, { timestamps: true, _id: false });
 const rateModel = mongoose_1.default.models.rate || (0, mongoose_1.model)('rate', rateSchema);
 exports.default = rateModel;
 //# sourceMappingURL=rating.model.js.map

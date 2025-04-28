@@ -1,30 +1,33 @@
-"use client";
-import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import { Breadcrumb, Button, Image, Avatar, Divider } from "antd";
+import React, { useState, useEffect, useRef } from "react";
+import { useLocation, useParams } from "react-router-dom";
+import { Breadcrumb, Button, Image, Avatar, Divider, message } from "antd";
 import { motion } from "framer-motion";
 import { Star, ThumbsUp, MessageCircle, Clock, Award } from "lucide-react";
 import productsApi from "../../api/productsApi";
 import { useDispatch } from "react-redux";
 import { addToCart } from "../../redux/slices/cartslice";
 import parse from "html-react-parser";
-import { LikeOutlined, MessageOutlined } from "@ant-design/icons";
 import ratingApi from "../../api/ratingApi";
+import Slider, { Settings } from "react-slick";
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 export default function DetailProduct() {
   const params = useParams();
+  const location = useLocation();
   const [selectedImage, setSelectedImage] = useState("");
+  const [likes, setLikes] = useState<{ [key: number]: boolean }>({});
   const [quantity, setQuantity] = useState(1);
+  const sliderRef = useRef<any>(null);
+
   const [comments, setComments] = useState<
     {
-      content: string;
       id: number;
-      username: string;
+      userName: string;
+      userAvatar: string;
+      content: string;
       score: number;
-      rating: number;
-      date: string;
-      flavor?: string;
-      comment: string;
+      createdAt: string;
+      likes: number;
     }[]
   >([]);
   const [productsDetail, setProductDetail] = useState<{
@@ -37,6 +40,7 @@ export default function DetailProduct() {
     price?: string;
     image_url: string[];
     discount?: number;
+    quantity?: number;
     description?: string;
     details?: string[];
   } | null>(null);
@@ -48,14 +52,23 @@ export default function DetailProduct() {
       price?: string;
       image_url?: string[];
     }[]
-  >([]); // State cho sản phẩm liên quan
+  >([]);
   const dispatch = useDispatch();
+
+  // Cuộn đến phần đánh giá khi có hash #reviews
+  useEffect(() => {
+    if (location.hash !== "#reviews" || !productsDetail) return;
+
+    const reviewsSection = document.getElementById("reviews");
+    if (reviewsSection) {
+      reviewsSection.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [location.hash, productsDetail]);
 
   // Fetch product detail và related products
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Lấy chi tiết sản phẩm
         const productDetailResponse = await productsApi.getProductByID(
           params.id
         );
@@ -69,17 +82,40 @@ export default function DetailProduct() {
           image_url: productDetailData.image_url || [],
         });
 
-        // Lấy sản phẩm liên quan
         const relatedResponse = await productsApi.getProductRelatedList(
           params.id
         );
         setRelatedProducts(relatedResponse.data || []);
-        // lấy đánh giá từ client
+
         const reviewsResponse = await ratingApi.getRatingsByProductId(
           params.id
         );
-        console.warn(reviewsResponse, "Detail ID Rating");
-        setComments(reviewsResponse.data || []);
+        console.log("Fetched comments (raw):", reviewsResponse.data);
+        const fetchedComments = reviewsResponse.data || [];
+
+        const formattedComments = fetchedComments.map((comment) => ({
+          id: comment._id,
+          userName: comment.userName || "Người dùng ẩn danh",
+          userAvatar: comment.userAvatar || "/default-avatar.png",
+          content: comment.content,
+          score: comment.score,
+          createdAt: comment.createdAt,
+          likes: comment.likes || 0,
+          likedBy: comment.likedBy || [],
+        }));
+        setComments(formattedComments);
+        console.log("Fetched comments:", formattedComments);
+
+
+        // Initialize likes
+        const userId = localStorage.getItem("accountID") || "";
+        console.log("User ID:", userId);
+
+        const initialLikes = {};
+        fetchedComments.forEach((comment: any) => {
+          initialLikes[comment._id] = comment.likedBy?.includes(userId) || false; // Giả sử userId có sẵn từ context/auth
+        });
+        setLikes(initialLikes);
       } catch (error) {
         console.error("Error fetching product data:", error);
       }
@@ -87,28 +123,79 @@ export default function DetailProduct() {
     fetchData();
   }, [params.id]);
 
+  const handleLike = async (ratingId: number) => {
+    try {
+      const response = await ratingApi.likeRating(ratingId);
+      const { data } = response;
+      const { likes: newLikes, isLiked } = data;
+
+      // Cập nhật state likes
+      setLikes((prev) => ({
+        ...prev,
+        [ratingId]: isLiked,
+      }));
+
+      // Cập nhật số lượt likes trong comments
+      setComments((prev) =>
+        prev.map((comment) =>
+          comment.id === ratingId
+            ? { ...comment, likes: newLikes }
+            : comment
+        )
+      );
+    } catch (error) {
+      console.error("Error updating like:", error);
+    }
+  };
+
   const product = productsDetail;
   if (!product)
     return <div>Không tìm thấy sản phẩm. Vui lòng kiểm tra lại.</div>;
 
-  // Các hàm xử lý sự kiện giữ nguyên
   const handleImageClick = (image) => setSelectedImage(image);
   const handleChange = (event) => {
     const value = event.target.value;
-    if (/^\d+$/.test(value)) setQuantity(Math.max(1, Number(value)));
+    if (/^\d+$/.test(value)) {
+      const newQuantity = Number(value);
+      const maxQuantity = productsDetail?.quantity || 1;
+
+      if (newQuantity > maxQuantity) {
+        message.error(`Số lượng vượt quá tồn kho!`);
+        setQuantity(maxQuantity);
+      } else {
+        setQuantity(Math.max(1, newQuantity));
+      }
+    }
   };
-  const handleIncrement = () => setQuantity((prev) => prev + 1);
-  const handleDecrement = () =>
+
+  const handleIncrement = () => {
+    const maxQuantity = productsDetail?.quantity || 1;
+    if (quantity + 1 > maxQuantity) {
+      message.error(`Số lượng vượt quá tồn kho!`);
+    } else {
+      setQuantity((prev) => prev + 1);
+    }
+  };
+
+  const handleDecrement = () => {
     setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
+  };
   const handleAddToCart = () => {
+    const maxQuantity = productsDetail?.quantity || 1;
+    if (quantity > maxQuantity) {
+      message.error(`Số lượng vượt quá tồn kho! Tối đa: ${maxQuantity}`);
+      return;
+    }
     const item = {
       id: product._id || product.id,
       name: product.name,
       price: Number(product.price),
       image: product.image_url[0],
+      stockQuantity: productsDetail?.quantity || 0, // Đảm bảo lưu stockQuantity
     };
+    console.log("Adding to cart:", item); // Kiểm tra dữ liệu trước khi dispatch
     dispatch(addToCart({ item, quantity }));
-    console.log(`Added to cart: ${item.name}, Quantity: ${quantity}`);
+    message.success("Đã thêm vào giỏ hàng!");
   };
   const formatDate = (dateString) => {
     const options = {
@@ -122,29 +209,72 @@ export default function DetailProduct() {
   const displayStatus =
     product.status === "available" ? "Còn hàng" : product.status;
 
+  const averageScore = comments.length > 0
+    ? Math.round(comments.reduce((sum, review) => sum + review.score, 0) / comments.length)
+    : 0;
+
+  const totalReviews = comments.length;
+
+  const sliderSettings: Settings = {
+    dots: true, // Bật chấm điều hướng
+    arrows: false,
+    infinite: true, // Lướt vô hạn
+    speed: 1000,
+    slidesToShow: 4,
+    slidesToScroll: 1,
+    autoplay: true, // Tự động chạy
+    autoplaySpeed: 2000, // Tốc độ tự động chạy
+    responsive: [
+      {
+        breakpoint: 1024, // lg
+        settings: {
+          slidesToShow: 2,
+          slidesToScroll: 1,
+        },
+      },
+      {
+        breakpoint: 768, // md
+        settings: {
+          slidesToShow: 1,
+          slidesToScroll: 1,
+        },
+      },
+      {
+        breakpoint: 640, // sm
+        settings: {
+          slidesToShow: 1,
+          slidesToScroll: 1,
+        },
+      },
+    ],
+  };
+
   return (
     <div className="text-black">
-      <div className="mx-auto w-full px-[154px] py-10">
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {/* Phần hình ảnh */}
-          <div className="sticky top-0 h-fit">
-            <div className="flex items-start gap-6">
-              <div className="flex flex-col gap-4">
+      <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 xl:px-[154px] py-6 lg:py-10">
+        {/* Main Product Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Image Section */}
+          <div className="lg:sticky lg:top-0 h-fit">
+            <div className="flex flex-col-reverse lg:flex-row items-center lg:items-start gap-4 lg:gap-6">
+              {/* Thumbnail Images */}
+              <div className="flex lg:flex-col gap-4 overflow-x-auto lg:overflow-x-visible w-full lg:w-auto">
                 {product.image_url.map((image, index) => (
                   <img
                     key={index}
                     src={image}
                     alt={`Detail ${index + 1}`}
-                    className={`w-20 h-20 cursor-pointer rounded-lg border object-cover transition-all duration-300 ${
-                      selectedImage === image
-                        ? "border-[#28A745]"
-                        : "border-[#EAEAEA] hover:border-[#28A745]"
-                    }`}
+                    className={`w-16 h-16 lg:w-20 lg:h-20 flex-shrink-0 cursor-pointer rounded-lg border object-cover transition-all duration-300 ${selectedImage === image
+                      ? "border-[#28A745]"
+                      : "border-[#EAEAEA] hover:border-[#28A745]"
+                      }`}
                     onClick={() => handleImageClick(image)}
                   />
                 ))}
               </div>
-              <div className="relative w-[602px] h-[602px] overflow-hidden">
+
+              {/* Main Image */}
+              <div className="relative w-full lg:w-[602px] aspect-square">
                 <Image
                   src={selectedImage || product.image_url[0]}
                   alt="Main product"
@@ -153,11 +283,9 @@ export default function DetailProduct() {
                     mask: "Xem ảnh lớn",
                     maskClassName: "custom-preview-mask",
                   }}
-                  width="100%"
-                  height="100%"
                 />
                 {(product.discount ?? 0) > 0 && (
-                  <div className="absolute top-4 left-4 bg-[#FF0000] text-white text-lg font-medium px-3 py-1 rounded-sm">
+                  <div className="absolute top-4 left-4 bg-[#FF0000] text-white text-sm lg:text-lg font-medium px-2 lg:px-3 py-1 rounded-sm">
                     -{product.discount}%
                   </div>
                 )}
@@ -165,16 +293,31 @@ export default function DetailProduct() {
             </div>
           </div>
 
-          {/* Phần thông tin sản phẩm */}
-          <div className="flex flex-col">
-            <h1 className="mb-2 text-3xl font-bold text-gray-800">
+          {/* Product Info Section */}
+          <div className="flex flex-col space-y-4">
+            <h1 className="text-2xl lg:text-3xl font-bold text-gray-800">
               {product.name}
             </h1>
-            <div className="flex items-center mb-4">
-              <span className="text-yellow-400">★★★★★</span>
-              <span className="ml-2 text-sm text-gray-600">(123 đánh giá)</span>
+
+            <div className="flex items-center">
+              <div className="flex">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={`w-4 h-4 ${star <= averageScore
+                      ? "text-yellow-400 fill-yellow-400"
+                      : "text-gray-200 fill-gray-200"
+                      }`}
+                  />
+                ))}
+              </div>
+              <span className="ml-2 text-xs lg:text-sm text-gray-600">
+                ({totalReviews} đánh giá)
+              </span>
             </div>
-            <div className="mb-4 text-sm text-gray-600">
+
+            {/* Product Details */}
+            <div className="text-xs lg:text-sm text-gray-600 space-y-1">
               <p>
                 <span className="font-semibold">Thương hiệu:</span>{" "}
                 {product.brand}
@@ -187,64 +330,85 @@ export default function DetailProduct() {
                 {displayStatus}
               </p>
             </div>
-            <div className="mb-6 mt-2 text-2xl font-bold text-[#FF0000]">
-              {new Intl.NumberFormat("vi-VN", {
-                style: "currency",
-                currency: "VND",
-              }).format(
-                Number(product.price) * (1 - (product.discount || 0) / 100)
-              )}
+
+            {/* Price Section */}
+            <div className="flex items-center flex-wrap gap-2">
+              <span className="text-xl lg:text-2xl font-bold text-[#FF0000]">
+                {new Intl.NumberFormat("vi-VN", {
+                  style: "currency",
+                  currency: "VND",
+                }).format(
+                  Number(product.price) * (1 - (product.discount || 0) / 100)
+                )}
+              </span>
               {(product.discount ?? 0) > 0 && (
                 <>
-                  <span className="ml-2 text-sm text-[#686868] line-through">
+                  <span className="text-xs lg:text-sm text-[#686868] line-through">
                     {new Intl.NumberFormat("vi-VN", {
                       style: "currency",
                       currency: "VND",
                     }).format(Number(product.price))}
                   </span>
-                  <span className="ml-2 rounded border border-[#FF0000] px-2 py-1 font-medium text-[#FF0000]">
+                  <span className="text-xs lg:text-sm rounded border border-[#FF0000] px-2 py-1 font-medium text-[#FF0000]">
                     -{product.discount}%
                   </span>
                 </>
               )}
             </div>
-            <div className="flex gap-4 mt-4 mb-6">
-              <span className="font-semibold">Số lượng:</span>
+
+            {/* Quantity Selector */}
+            <div className="flex items-center gap-4">
+              <span className="font-semibold text-sm lg:text-base">
+                Số lượng:
+              </span>
               <div className="flex items-center border rounded-lg">
-                <Button onClick={handleDecrement} className="px-4 py-2">
+                <Button
+                  onClick={handleDecrement}
+                  className="px-3 lg:px-4 py-2"
+                >
                   -
                 </Button>
                 <input
                   min={1}
                   value={quantity}
                   onChange={handleChange}
-                  className="w-4 text-center border-none md:w-12"
+                  className="w-8 lg:w-12 text-center border-none"
                 />
-                <Button onClick={handleIncrement} className="px-4 py-2">
+                <Button
+                  onClick={handleIncrement}
+                  className="px-3 lg:px-4 py-2"
+                  disabled={quantity >= (productsDetail?.quantity || 1)} // Vô hiệu hóa nút tăng nếu đạt tối đa
+                >
                   +
                 </Button>
               </div>
+              <span className="text-sm text-gray-500">
+                (Số lượng hàng còn: {productsDetail?.quantity || 0})
+              </span>
             </div>
-            <div className="flex flex-col gap-4 md:flex-row">
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3">
               <Button
-                className="rounded-lg bg-[#22A6DF] px-6 py-5 text-white"
+                className="w-full sm:w-auto rounded-lg bg-[#22A6DF] px-4 lg:px-6 py-3 lg:py-5 text-white text-sm lg:text-base"
                 onClick={handleAddToCart}
               >
                 Thêm vào giỏ hàng
               </Button>
-              <Button className="rounded-lg bg-[#FF0000] px-6 py-5 text-white">
+              <Button className="w-full sm:w-auto rounded-lg bg-[#FF0000] px-4 lg:px-6 py-3 lg:py-5 text-white text-sm lg:text-base">
                 MUA NGAY
               </Button>
             </div>
-            <div className="mt-8">
-              <h2 className="text-xl font-bold text-gray-800">
+
+            {/* Product Description */}
+            <div className="mt-6">
+              <h2 className="text-lg lg:text-xl font-bold text-gray-800 mb-3">
                 Thông tin sản phẩm
               </h2>
-              <p className="mt-2 text-sm text-gray-600">
+              <div className="text-sm lg:text-base text-gray-600">
                 {parse(product.description || "")}
-              </p>
-
-              <ul className="pl-6 mt-2 text-sm text-gray-600 list-disc">
+              </div>
+              <ul className="pl-6 mt-3 text-sm lg:text-base text-gray-600 list-disc">
                 {product.details?.map((detail, index) => (
                   <li key={index}>{detail}</li>
                 ))}
@@ -253,11 +417,11 @@ export default function DetailProduct() {
           </div>
         </div>
 
-        {/* Phần đánh giá và sản phẩm liên quan */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-2xl shadow-lg p-8 mb-8"
+          id="reviews"
         >
           <h2 className="text-2xl font-bold text-gray-800 mb-8 flex items-center gap-3">
             <MessageCircle className="w-6 h-6 text-blue-600" />
@@ -269,33 +433,19 @@ export default function DetailProduct() {
             {/* Average Rating Card */}
             <div className="bg-gradient-to-br from-blue-50 to-white p-6 rounded-xl shadow-sm">
               <div className="text-4xl font-bold text-[#22A6DF] mb-2">
-                {comments.length > 0
-                  ? (
-                      comments.reduce((sum, review) => sum + review.score, 0) /
-                      comments.length
-                    ).toFixed(1)
-                  : "0.0"}
+                {comments.length > 0 ? (comments.reduce((sum, review) => sum + review.score, 0) / comments.length).toFixed(1) : "0.0"}
               </div>
               <div className="flex text-yellow-400 mb-2">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star
                     key={star}
-                    className={`w-5 h-5 ${
-                      star <=
-                      Math.round(
-                        comments.reduce(
-                          (sum, review) => sum + review.score,
-                          0
-                        ) / comments.length
-                      )
-                        ? "fill-yellow-400"
-                        : "fill-gray-200"
-                    }`}
+                    className={`w-5 h-5 ${star <= averageScore ? "fill-yellow-400" : "fill-gray-200"
+                      }`}
                   />
                 ))}
               </div>
               <p className="text-gray-600">
-                Dựa trên {comments.length} đánh giá
+                Dựa trên {totalReviews} đánh giá
               </p>
             </div>
 
@@ -357,68 +507,93 @@ export default function DetailProduct() {
             {comments.map((review, index) => (
               <motion.div
                 key={review.id}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="bg-white rounded-xl p-6 border border-gray-100 hover:shadow-md transition-shadow"
+                transition={{
+                  delay: index * 0.1,
+                  duration: 0.5,
+                  ease: "easeOut",
+                }}
+                whileHover={{ scale: 1.02 }}
+                className="bg-white rounded-xl p-6 border border-gray-100 hover:shadow-lg transition-shadow"
               >
                 <div className="flex gap-4">
                   <div className="flex-shrink-0">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-lg font-semibold">
-                      <Avatar
-                        src={review.userId.avatar}
-                        alt={review.userId.fullname}
-                        size={48}
-                        className="rounded-full"
-                      />
-                    </div>
+                    <Avatar
+                      src={review.userAvatar || "/default-avatar.png"}
+                      alt={review.userName}
+                      size={48}
+                      className="rounded-full"
+                    />
                   </div>
-
                   <div className="flex-grow">
                     <div className="flex justify-between items-start mb-3">
-                      <div>
+                      <motion.div
+                        initial={{ x: -20, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ duration: 0.5, ease: "easeOut" }}
+                      >
                         <h4 className="font-semibold text-gray-800 mb-1">
-                          {review.userId.fullname}
+                          {review.userName}
                         </h4>
                         <div className="flex items-center gap-3">
                           <div className="flex">
                             {[1, 2, 3, 4, 5].map((star) => (
-                              <Star
+                              <motion.div
                                 key={star}
-                                className={`w-4 h-4 ${
-                                  star <= review.score
+                                whileHover={{ scale: 1.2 }}
+                                transition={{ duration: 0.2 }}
+                              >
+                                <Star
+                                  className={`w-4 h-4 ${star <= review.score
                                     ? "text-yellow-400 fill-yellow-400"
                                     : "text-gray-200 fill-gray-200"
-                                }`}
-                              />
+                                    }`}
+                                />
+                              </motion.div>
                             ))}
                           </div>
                           <span className="text-sm text-gray-500">
-                            {formatDate(review.createdAt)}
+                            {new Date(review.createdAt).toLocaleDateString(
+                              "vi-VN"
+                            )}
                           </span>
                         </div>
-                      </div>
+                      </motion.div>
                     </div>
-
-                    {review.flavor && (
-                      <div className="bg-blue-50 p-4 rounded-lg mb-4">
-                        <div className="flex items-center gap-2">
-                          <span className="text-blue-600 font-medium">
-                            Mùi hương:
-                          </span>
-                          <span className="text-gray-700">{review.flavor}</span>
-                        </div>
-                      </div>
-                    )}
-
-                    <p className="text-gray-700 leading-relaxed mb-4">
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.2, duration: 0.5 }}
+                      className="text-gray-700 leading-relaxed mb-4"
+                    >
                       {review.content}
-                    </p>
-
-                    <button className="flex items-center gap-2 text-gray-500 hover:text-blue-600 transition-colors">
-                      <ThumbsUp className="w-4 h-4" />
-                      <span className="text-sm">Hữu ích (0)</span>
-                    </button>
+                    </motion.p>
+                    <div className="flex items-center gap-4 mt-4">
+                      <motion.button
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => handleLike(review.id)}
+                        className={`flex items-center gap-2 px-3 py-1 rounded-full transition-all ${likes[review.id]
+                          ? "bg-blue-100 text-blue-600"
+                          : "text-gray-500 hover:text-blue-600"
+                          }`}
+                      >
+                        <ThumbsUp
+                          className={`w-4 h-4 ${likes[review.id] ? "fill-blue-600" : ""
+                            }`}
+                        />
+                        <motion.span
+                          initial={{ scale: 1 }}
+                          animate={{
+                            scale: likes[review.id] ? [1, 1.3, 1] : 1,
+                          }}
+                          transition={{ duration: 0.3 }}
+                          className="text-sm"
+                        >
+                          {review.likes} Thích
+                        </motion.span>
+                      </motion.button>
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -434,35 +609,37 @@ export default function DetailProduct() {
             </div>
           )}
         </motion.div>
-        {/* Related Products Section */}
-        <div>
-          <h3 className="mb-4 text-xl font-bold">SẢN PHẨM LIÊN QUAN</h3>
+
+        {/* Related Products */}
+        <div className="mt-8">
+          <h3 className="text-lg lg:text-xl font-bold mb-4">
+            SẢN PHẨM LIÊN QUAN
+          </h3>
           {relatedProducts.length > 0 ? (
-            <div className="grid grid-cols-4 gap-4">
+            <Slider ref={sliderRef} {...sliderSettings}>
               {relatedProducts.map((product) => (
-                <div
-                  key={product._id || product.id}
-                  className="p-4 border rounded-lg"
-                >
-                  <div className="mb-2 aspect-square">
-                    <img
-                      src={product.image_url?.[0] || "/placeholder-image.jpg"}
-                      alt={product.name}
-                      className="object-contain w-full h-full"
-                    />
+                <div key={product._id || product.id} className="px-2 flex">
+                  <div className="flex-1 p-3 lg:p-4 border rounded-lg hover:shadow-md transition-shadow bg-white">
+                    <div className="mb-2 aspect-square">
+                      <img
+                        src={product.image_url?.[0] || "/placeholder-image.jpg"}
+                        alt={product.name}
+                        className="object-contain w-full h-full"
+                      />
+                    </div>
+                    <h4 className="flex flex-1 text-xs lg:text-sm mb-2 line-clamp-2">{product.name}</h4>
+                    <p className="font-medium text-blue-500 text-sm lg:text-base mt-auto">
+                      {new Intl.NumberFormat("vi-VN", {
+                        style: "currency",
+                        currency: "VND",
+                      }).format(Number(product.price))}
+                    </p>
                   </div>
-                  <h4 className="mb-2 text-sm line-clamp-2">{product.name}</h4>
-                  <p className="font-medium text-blue-500">
-                    {new Intl.NumberFormat("vi-VN", {
-                      style: "currency",
-                      currency: "VND",
-                    }).format(Number(product.price))}
-                  </p>
                 </div>
               ))}
-            </div>
+            </Slider>
           ) : (
-            <p>Không có sản phẩm liên quan.</p>
+            <p className="text-gray-500 text-center">Không có sản phẩm liên quan.</p>
           )}
         </div>
       </div>

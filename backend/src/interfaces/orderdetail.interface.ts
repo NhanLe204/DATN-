@@ -9,6 +9,7 @@ export interface IOrderDetail {
   productID?: IProduct;
   serviceID?: IService;
   quantity?: number;
+  isRated?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
