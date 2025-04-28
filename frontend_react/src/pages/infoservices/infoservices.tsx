@@ -113,10 +113,19 @@ const PetSpaServices = () => {
     <div className="min-h-screen bg-white px-4 sm:px-6 lg:px-8">
       
       <div className="container mx-auto px-4 py-8">
-          <h1 className="mb-8 text-3xl font-bold text-gray-800 text-center">
+          <h1 className="mb-3 text-3xl font-bold text-gray-800 text-center">
             DỊCH VỤ SPA CHUYÊN NGHIỆP CHO THÚ CƯNG TẠI PET HEAVEN
           </h1>
-
+        <div className="text-center mb-4">
+          <Button
+              type="primary"
+              size="large"
+              className="bg-[#22A6DF] hover:opacity-90 mt-4"
+              onClick={handleBookAppointment}
+            >
+              ĐẶT LỊCH NGAY
+          </Button>
+        </div>
         <Card className="mb-7">
           <h2 className="mb-6 text-xl font-semibold">
             Quy trình tắm vệ sinh bao gồm 12 bước:
@@ -255,16 +264,7 @@ const PetSpaServices = () => {
             hotline, fanpage Pet Heaven để được hỗ trợ.
           </Paragraph>
         </Text>
-        <div className="text-center">
-          <Button
-              type="primary"
-              size="large"
-              className="bg-[#22A6DF] hover:opacity-90 mt-4"
-              onClick={handleBookAppointment}
-            >
-              ĐẶT LỊCH NGAY
-          </Button>
-        </div>
+        
       </div>
     </div>
   );

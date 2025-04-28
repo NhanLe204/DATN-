@@ -64,6 +64,7 @@ const removeAccents = (str: string) => {
 const ProductList: React.FC = () => {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [isLoggedOut, setIsLoggedOut] = useState(false);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(false);
@@ -78,6 +79,25 @@ const ProductList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalFiltered, setTotalFiltered] = useState(0);
   const pageSize = 10;
+
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === "logoutEvent") {
+        setAllProducts([]); 
+        setFilteredProducts([]);
+        setTotalFiltered(0);
+        setIsLoggedOut(true);
+      }
+    };
+  
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+  useEffect(() => {
+    if (isLoggedOut) return; // Ngăn filterProducts chạy sau khi đăng xuất
+    console.log("Filtering products with allProducts:", allProducts);
+    filterProducts();
+  }, [searchText, filterStatus, filterBrand, filterTag, allProducts, currentPage, isLoggedOut]);
 
   const showModal = (product?: Product) => {
     console.log("Product passed to modal:", product);

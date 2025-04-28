@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Layout, Menu, Avatar, Typography, Button, Divider } from "antd";
+import { Layout, Menu, Avatar, Typography, Button, Divider, notification } from "antd";
 import {
   UserOutlined,
   PieChartOutlined,
@@ -21,6 +21,7 @@ import React from "react";
 import Navigation from "../navigation";
 import SubMenu from "antd/es/menu/SubMenu";
 import { MdOutlineRoomService } from "react-icons/md";
+import loginApi from "../../api/login";
 
 
 const { Header, Sider, Content } = Layout;
@@ -71,6 +72,24 @@ const AdminLayout = () => {
     const timerId = setInterval(updateTime, 1000);
     return () => clearInterval(timerId);
   }, []);
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      console.log("Storage event:", event); 
+      if (event.key === "accessToken" && event.newValue === null) {
+        notification.info({
+          message: "Phiên đăng nhập đã hết",
+          description: "Vui lòng đăng nhập lại.",
+          placement: "topRight",
+          duration: 2, 
+        });
+        localStorage.clear();
+        navigate("/login");
+      }
+    };
+  
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, [navigate]);
 
   // Danh sách menu đầy đủ cho admin
   const adminMenuItems = [
@@ -103,11 +122,15 @@ const AdminLayout = () => {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("accountId");
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("userData");
-    navigate("/login");
+  const handleLogout = async() => {
+    try {
+      await loginApi.logout();
+      localStorage.setItem("logoutEvent", Date.now().toString());
+      localStorage.clear();
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   };
 
   // quay lại trang web user
