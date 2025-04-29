@@ -29,6 +29,16 @@ import { CSVLink } from 'react-csv';
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 
+interface Product {
+  orderDetailId: string;
+  productId: string | null;
+  productName: string;
+  productPrice: number;
+  productImage: string | null;
+  quantity: number;
+  totalPrice: number;
+}
+
 interface Order {
   key: string;
   orderId: string;
@@ -36,9 +46,9 @@ interface Order {
   orderDate?: string;
   product: string;
   status: 'PENDING' | 'PROCESSING' | 'SHIPPING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
-  payment_status?: 'PENDING' | 'PAID' | 'CANCELLED';
   quantity?: number;
   price?: string;
+  products?: Product[];
 }
 
 interface FilterParams {
@@ -73,48 +83,51 @@ const OrderList: React.FC = () => {
         return;
       }
 
-      const orderList = response.data.result;
-      if (!Array.isArray(orderList)) {
-        console.error('API result is not an array:', orderList);
-        message.error('Dữ liệu đơn hàng không hợp lệ');
-        setOrders([]);
-        return;
-      }
+      const orderDetails = response.data.result;
 
-      const formattedOrders = orderList.map((order: any, index: number) => ({
-        key: order._id || index.toString(),
-        orderId: order._id || `ORDER_${index}`,
-        fullname: order.userID?.fullname || order.fullname || 'Không xác định',
-        product: order.product || 'Không xác định',
-        status: order.status || 'PENDING',
-        payment_status: order.payment_status || 'PENDING',
-        quantity: order.quantity || 0,
+      // Group order details by orderId
+      const groupedOrders: { [key: string]: any } = {};
+
+      orderDetails.forEach((detail: any) => {
+        const orderId = detail.orderId._id;
+        if (!groupedOrders[orderId]) {
+          groupedOrders[orderId] = {
+            orderId: orderId,
+            orderDate: detail.orderId.order_date,
+            status: detail.orderId.status,
+            fullname: detail.orderId.userID?.fullname || 'Không xác định',
+            total_price: detail.orderId.total_price,
+            products: [],
+          };
+        }
+
+        groupedOrders[orderId].products.push({
+          orderDetailId: detail._id,
+          productId: detail.productId?._id || null,
+          productName: detail.productId?.name || 'Không xác định',
+          productPrice: detail.product_price || 0,
+          productImage: null, // API response doesn't include product image; adjust if available
+          quantity: detail.quantity || 0,
+          totalPrice: detail.total_price || 0,
+        });
+      });
+
+      // Convert grouped orders to the Order interface
+      const formattedOrders: Order[] = Object.values(groupedOrders).map((order: any, index: number) => ({
+        key: order.orderId || `order-${index}`,
+        orderId: order.orderId || `ORDER${index}`,
+        fullname: order.fullname,
+        product: order.products.map((p: Product) => p.productName).join(', ') || 'Không xác định',
+        status: (order.status || 'PENDING').toUpperCase() as Order['status'],
+        quantity: order.products.reduce((sum: number, p: Product) => sum + p.quantity, 0) || 0,
         price: order.total_price?.toString() || '0',
-        orderDate: order.createdAt ? moment(order.createdAt).format('DD/MM/YYYY HH:mm') : 'Không xác định',
+        orderDate: order.orderDate ? moment(order.orderDate).format('DD/MM/YYYY HH:mm') : 'Không xác định',
+        products: order.products,
       }));
 
-      const updatedOrders = await Promise.all(
-        formattedOrders.map(async (order) => {
-          if (order.payment_status === 'PAID' && order.status === 'PENDING') {
-            try {
-              console.log(`Updating status for order ${order.orderId} from PENDING to PROCESSING`);
-              await orderApi.updateOrderStatus(order.orderId, 'PROCESSING');
-              return { ...order, status: 'PROCESSING' };
-            } catch (error: any) {
-              console.error(
-                `Failed to update status for order ${order.orderId}:`,
-                error.response?.data || error.message
-              );
-              return order;
-            }
-          }
-          return order;
-        })
-      );
-
-      const filteredOrders = applyFilters(updatedOrders);
+      const filteredOrders = applyFilters(formattedOrders);
       setOrders(filteredOrders);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching orders:', error.response?.data || error.message);
       message.error(
         error.response?.status === 404
@@ -136,7 +149,7 @@ const OrderList: React.FC = () => {
       }
 
       if (filters.dateRange) {
-        const orderDate = moment(order.createdAt);
+        const orderDate = moment(order.orderDate, 'DD/MM/YYYY HH:mm');
         matches = matches && orderDate.isBetween(filters.dateRange[0], filters.dateRange[1], 'day', '[]');
       }
 
@@ -144,8 +157,7 @@ const OrderList: React.FC = () => {
         const searchRegex = new RegExp(filters.search, 'i');
         matches = matches && (
           searchRegex.test(order.orderId) ||
-          searchRegex.test(order.fullname) ||
-          searchRegex.test(order.product)
+          searchRegex.test(order.fullname)
         );
       }
 
@@ -188,7 +200,7 @@ const OrderList: React.FC = () => {
           message.success('Xóa đơn hàng thành công');
           await fetchOrders();
           setSelectedRows([]);
-        } catch (error: any) {
+        } catch (error) {
           console.error('Error deleting orders:', error.response?.data || error.message);
           message.error('Xóa đơn hàng thất bại');
         }
@@ -200,21 +212,14 @@ const OrderList: React.FC = () => {
     try {
       const values = await form.validateFields();
       if (selectedOrder) {
-        console.log('Updating order ID:', selectedOrder.orderId);
         await orderApi.updateOrderStatus(selectedOrder.orderId, values.status);
         message.success('Cập nhật trạng thái thành công');
         await fetchOrders();
         setIsModalVisible(false);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error updating order status:', error.response?.data || error.message);
-      if (error.response?.status === 404) {
-        message.error('Đơn hàng không tồn tại hoặc không thể cập nhật');
-      } else if (error.response?.status === 405) {
-        message.error('Phương thức cập nhật không được hỗ trợ');
-      } else {
-        message.error('Cập nhật trạng thái thất bại');
-      }
+      message.error('Cập nhật trạng thái thất bại');
     }
   };
 
@@ -249,7 +254,9 @@ const OrderList: React.FC = () => {
       dataIndex: 'orderId',
       key: 'orderId',
       render: (text: string) => (
-        <span className="text-[14px] font-normal text-gray-700">{text.substring(0, 8)}...</span>
+        <span className="text-[14px] font-normal text-gray-700">
+          {text ? text.substring(0, 8) : 'N/A'}...
+        </span>
       ),
     },
     {
@@ -259,7 +266,7 @@ const OrderList: React.FC = () => {
       render: (text: string) => (
         <div className="flex items-center">
           <div className="h-8 w-8 rounded-full bg-blue-50 flex items-center justify-center">
-            <span className="text-sm text-blue-500">{text.charAt(0).toUpperCase()}</span>
+            <span className="text-sm text-blue-500">{text ? text.charAt(0).toUpperCase() : '?'}</span>
           </div>
           <span className="ml-3 text-[14px] font-normal text-gray-700">{text || 'Không xác định'}</span>
         </div>
@@ -319,11 +326,6 @@ const OrderList: React.FC = () => {
       className="p-6 bg-gray-50 min-h-screen"
     >
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-gray-800">Quản lý đơn hàng</h1>
-          <p className="mt-1 text-[14px] text-gray-500">Quản lý và theo dõi tất cả đơn hàng trong hệ thống</p>
-        </div>
-
         <Card
           bordered={false}
           className="shadow-sm bg-white rounded-lg"
@@ -442,29 +444,39 @@ const OrderList: React.FC = () => {
                       </div>
                     </div>
                   </div>
+
                   <div className="col-span-2">
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                      <h3 className="font-medium text-gray-800 mb-4 text-[15px]">Chi tiết đơn hàng</h3>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-[13px] text-gray-500">Khách hàng</p>
-                          <p className="text-[14px] font-normal text-gray-700">{selectedOrder.fullname}</p>
-                        </div>
-                        <div>
-                          <p className="text-[13px] text-gray-500">Sản phẩm</p>
-                          <p className="text-[14px] font-normal text-gray-700">{selectedOrder.product}</p>
-                        </div>
-                        <div>
-                          <p className="text-[13px] text-gray-500">Số lượng</p>
-                          <p className="text-[14px] font-normal text-gray-700">{selectedOrder.quantity}</p>
-                        </div>
-                        <div>
-                          <p className="text-[13px] text-gray-500">Giá (VNĐ)</p>
-                          <p className="text-[14px] font-normal text-gray-700">{selectedOrder.price}</p>
-                        </div>
+                    {selectedOrder?.products && selectedOrder.products.length > 0 ? (
+                      <div className="p-4 bg-gray-50 rounded-lg max-h-60 overflow-y-auto">
+                        <h3 className="font-medium text-gray-800 mb-4 text-[15px]">Danh sách sản phẩm</h3>
+                        {selectedOrder.products.map((product: Product, index: number) => (
+                          <div key={index} className="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                              <p className="text-[13px] text-gray-500">ID Sản phẩm</p>
+                              <p className="text-[14px] font-normal text-gray-700">{product.productId || 'Không xác định'}</p>
+                            </div>
+                            <div>
+                              <p className="text-[13px] text-gray-500">Tên sản phẩm</p>
+                              <p className="text-[14px] font-normal text-gray-700">{product.productName || 'Không xác định'}</p>
+                            </div>
+                            <div>
+                              <p className="text-[13px] text-gray-500">Số lượng</p>
+                              <p className="text-[14px] font-normal text-gray-700">{product.quantity || '0'}</p>
+                            </div>
+                            <div>
+                              <p className="text-[13px] text-gray-500">Giá</p>
+                              <p className="text-[14px] font-normal text-gray-700">{product.productPrice || '0'} VNĐ</p>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    </div>
+                    ) : (
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <p className="text-[14px] text-gray-500">Không có sản phẩm trong đơn hàng</p>
+                      </div>
+                    )}
                   </div>
+
                   <div className="col-span-2">
                     <Form form={form} layout="vertical">
                       <Form.Item

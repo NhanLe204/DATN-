@@ -66,6 +66,15 @@ const orderDetailApi = {
       throw error;
     }
   },
+  getOrderByOrderId: async (orderId) => {
+    try {
+      const response = await api.get(`/v1/order-details/${orderId}`);
+      return response.data; 
+    } catch (error) {
+      console.error('Error fetching order details:', error.response?.data || error.message);
+      throw error; 
+    }
+  },
 };
 
 export default orderDetailApi;

@@ -10,7 +10,8 @@ import {
   changeBookingStatus,
   cancelBooking,
   updateRealPrice,
-  updateBooking
+  updateBooking,
+	getOrderById
 } from '../controllers/orderDetail.controllers.js';
 
 const orderDetailRouter = Router();
@@ -24,6 +25,7 @@ orderDetailRouter.get('/getOrderByUserId', verifyToken, getOrderByUserId);
 orderDetailRouter.patch('/bookings/status', changeBookingStatus);
 orderDetailRouter.patch('/realPrice', updateRealPrice);
 orderDetailRouter.patch('/updateBooking', updateBooking);
+orderDetailRouter.get('/order-details/:orderId', getOrderById);
 // orderRouter.patch('/ratings/:id', updateRating);
 // orderRouter.delete('/ratings/:id', deleteRating);
 // brandRouter.post('/brands', verifyToken, requireAdmin, insertBrand);
