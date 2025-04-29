@@ -1,6 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useParams } from "react-router-dom";
-import { Breadcrumb, Button, Image, Avatar, Divider, message } from "antd";
+import {
+  Breadcrumb,
+  Button,
+  Image,
+  Avatar,
+  Divider,
+  message,
+  Badge,
+} from "antd";
 import { motion } from "framer-motion";
 import { Star, ThumbsUp, MessageCircle, Clock, Award } from "lucide-react";
 import productsApi from "../../api/productsApi";
@@ -10,6 +18,7 @@ import parse from "html-react-parser";
 import ratingApi from "../../api/ratingApi";
 import Slider, { Settings } from "react-slick";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { BsHeart } from "react-icons/bs";
 
 export default function DetailProduct() {
   const params = useParams();
@@ -28,6 +37,7 @@ export default function DetailProduct() {
       score: number;
       createdAt: string;
       likes: number;
+      discount?: number;
     }[]
   >([]);
   const [productsDetail, setProductDetail] = useState<{
@@ -106,14 +116,14 @@ export default function DetailProduct() {
         setComments(formattedComments);
         console.log("Fetched comments:", formattedComments);
 
-
         // Initialize likes
         const userId = localStorage.getItem("accountID") || "";
         console.log("User ID:", userId);
 
         const initialLikes = {};
         fetchedComments.forEach((comment: any) => {
-          initialLikes[comment._id] = comment.likedBy?.includes(userId) || false; // Giả sử userId có sẵn từ context/auth
+          initialLikes[comment._id] =
+            comment.likedBy?.includes(userId) || false; // Giả sử userId có sẵn từ context/auth
         });
         setLikes(initialLikes);
       } catch (error) {
@@ -138,9 +148,7 @@ export default function DetailProduct() {
       // Cập nhật số lượt likes trong comments
       setComments((prev) =>
         prev.map((comment) =>
-          comment.id === ratingId
-            ? { ...comment, likes: newLikes }
-            : comment
+          comment.id === ratingId ? { ...comment, likes: newLikes } : comment
         )
       );
     } catch (error) {
@@ -209,9 +217,13 @@ export default function DetailProduct() {
   const displayStatus =
     product.status === "available" ? "Còn hàng" : product.status;
 
-  const averageScore = comments.length > 0
-    ? Math.round(comments.reduce((sum, review) => sum + review.score, 0) / comments.length)
-    : 0;
+  const averageScore =
+    comments.length > 0
+      ? Math.round(
+          comments.reduce((sum, review) => sum + review.score, 0) /
+            comments.length
+        )
+      : 0;
 
   const totalReviews = comments.length;
 
@@ -249,6 +261,13 @@ export default function DetailProduct() {
     ],
   };
 
+  function handleNavigateToProduct(_id: string | undefined): void {
+    if (!_id) {
+      console.error("Product ID is undefined");
+      return;
+    }
+    window.location.href = `/detail/${_id}`;
+  }
   return (
     <div className="text-black">
       <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 xl:px-[154px] py-6 lg:py-10">
@@ -264,10 +283,11 @@ export default function DetailProduct() {
                     key={index}
                     src={image}
                     alt={`Detail ${index + 1}`}
-                    className={`w-16 h-16 lg:w-20 lg:h-20 flex-shrink-0 cursor-pointer rounded-lg border object-cover transition-all duration-300 ${selectedImage === image
-                      ? "border-[#28A745]"
-                      : "border-[#EAEAEA] hover:border-[#28A745]"
-                      }`}
+                    className={`w-16 h-16 lg:w-20 lg:h-20 flex-shrink-0 cursor-pointer rounded-lg border object-cover transition-all duration-300 ${
+                      selectedImage === image
+                        ? "border-[#28A745]"
+                        : "border-[#EAEAEA] hover:border-[#28A745]"
+                    }`}
                     onClick={() => handleImageClick(image)}
                   />
                 ))}
@@ -304,10 +324,11 @@ export default function DetailProduct() {
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star
                     key={star}
-                    className={`w-4 h-4 ${star <= averageScore
-                      ? "text-yellow-400 fill-yellow-400"
-                      : "text-gray-200 fill-gray-200"
-                      }`}
+                    className={`w-4 h-4 ${
+                      star <= averageScore
+                        ? "text-yellow-400 fill-yellow-400"
+                        : "text-gray-200 fill-gray-200"
+                    }`}
                   />
                 ))}
               </div>
@@ -362,10 +383,7 @@ export default function DetailProduct() {
                 Số lượng:
               </span>
               <div className="flex items-center border rounded-lg">
-                <Button
-                  onClick={handleDecrement}
-                  className="px-3 lg:px-4 py-2"
-                >
+                <Button onClick={handleDecrement} className="px-3 lg:px-4 py-2">
                   -
                 </Button>
                 <input
@@ -433,20 +451,24 @@ export default function DetailProduct() {
             {/* Average Rating Card */}
             <div className="bg-gradient-to-br from-blue-50 to-white p-6 rounded-xl shadow-sm">
               <div className="text-4xl font-bold text-[#22A6DF] mb-2">
-                {comments.length > 0 ? (comments.reduce((sum, review) => sum + review.score, 0) / comments.length).toFixed(1) : "0.0"}
+                {comments.length > 0
+                  ? (
+                      comments.reduce((sum, review) => sum + review.score, 0) /
+                      comments.length
+                    ).toFixed(1)
+                  : "0.0"}
               </div>
               <div className="flex text-yellow-400 mb-2">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star
                     key={star}
-                    className={`w-5 h-5 ${star <= averageScore ? "fill-yellow-400" : "fill-gray-200"
-                      }`}
+                    className={`w-5 h-5 ${
+                      star <= averageScore ? "fill-yellow-400" : "fill-gray-200"
+                    }`}
                   />
                 ))}
               </div>
-              <p className="text-gray-600">
-                Dựa trên {totalReviews} đánh giá
-              </p>
+              <p className="text-gray-600">Dựa trên {totalReviews} đánh giá</p>
             </div>
 
             {/* Rating Bars */}
@@ -545,10 +567,11 @@ export default function DetailProduct() {
                                 transition={{ duration: 0.2 }}
                               >
                                 <Star
-                                  className={`w-4 h-4 ${star <= review.score
-                                    ? "text-yellow-400 fill-yellow-400"
-                                    : "text-gray-200 fill-gray-200"
-                                    }`}
+                                  className={`w-4 h-4 ${
+                                    star <= review.score
+                                      ? "text-yellow-400 fill-yellow-400"
+                                      : "text-gray-200 fill-gray-200"
+                                  }`}
                                 />
                               </motion.div>
                             ))}
@@ -573,14 +596,16 @@ export default function DetailProduct() {
                       <motion.button
                         whileTap={{ scale: 0.9 }}
                         onClick={() => handleLike(review.id)}
-                        className={`flex items-center gap-2 px-3 py-1 rounded-full transition-all ${likes[review.id]
-                          ? "bg-blue-100 text-blue-600"
-                          : "text-gray-500 hover:text-blue-600"
-                          }`}
+                        className={`flex items-center gap-2 px-3 py-1 rounded-full transition-all ${
+                          likes[review.id]
+                            ? "bg-blue-100 text-blue-600"
+                            : "text-gray-500 hover:text-blue-600"
+                        }`}
                       >
                         <ThumbsUp
-                          className={`w-4 h-4 ${likes[review.id] ? "fill-blue-600" : ""
-                            }`}
+                          className={`w-4 h-4 ${
+                            likes[review.id] ? "fill-blue-600" : ""
+                          }`}
                         />
                         <motion.span
                           initial={{ scale: 1 }}
@@ -617,29 +642,112 @@ export default function DetailProduct() {
           </h3>
           {relatedProducts.length > 0 ? (
             <Slider ref={sliderRef} {...sliderSettings}>
-              {relatedProducts.map((product) => (
-                <div key={product._id || product.id} className="px-2 flex">
-                  <div className="flex-1 p-3 lg:p-4 border rounded-lg hover:shadow-md transition-shadow bg-white">
-                    <div className="mb-2 aspect-square">
-                      <img
-                        src={product.image_url?.[0] || "/placeholder-image.jpg"}
-                        alt={product.name}
-                        className="object-contain w-full h-full"
-                      />
+              {relatedProducts.map((product, index) => (
+                <motion.div
+                  key={product._id || index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  whileHover={{ y: -10 }}
+                  transition={{ duration: 0.3 }}
+                  className="h-full"
+                >
+                  <div className="group relative h-full overflow-hidden rounded-xl border border-gray-100 bg-white p-3 shadow-sm transition-all duration-300 hover:shadow-xl">
+                    {/* Wishlist Button */}
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      className="absolute top-2 left-2 z-10 rounded-full bg-white p-2 shadow-md transition-all hover:bg-gray-50"
+                    >
+                      <BsHeart className="text-gray-600 hover:text-red-500" />
+                    </motion.button>
+
+                    {/* Image Container */}
+                    <div
+                      onClick={() => handleNavigateToProduct(product._id)} // Điều hướng khi nhấn vào sản phẩm
+                      className="cursor-pointer"
+                    >
+                      <div className="relative mb-4 overflow-hidden rounded-lg pt-[100%]">
+                        <motion.div
+                          className="absolute inset-0 overflow-hidden"
+                          whileHover={{ scale: 1.05 }}
+                          transition={{ duration: 0.4 }}
+                        >
+                          <img
+                            src={
+                              product.image_url?.[0] || "/placeholder-image.jpg"
+                            }
+                            alt={product.name}
+                            className="h-full w-full object-contain transition-all duration-500"
+                          />
+                          {product.image_url?.[1] && (
+                            <img
+                              src={product.image_url[1]}
+                              alt={product.name}
+                              className="absolute inset-0 h-full w-full object-contain opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                            />
+                          )}
+                        </motion.div>
+                      </div>
                     </div>
-                    <h4 className="flex flex-1 text-xs lg:text-sm mb-2 line-clamp-2">{product.name}</h4>
-                    <p className="font-medium text-blue-500 text-sm lg:text-base mt-auto">
-                      {new Intl.NumberFormat("vi-VN", {
-                        style: "currency",
-                        currency: "VND",
-                      }).format(Number(product.price))}
-                    </p>
+
+                    {/* Discount Badge */}
+                    {Number(product.discount) > 0 && (
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="absolute top-2 right-2"
+                      >
+                        <Badge.Ribbon
+                          text={`-${product.discount}%`}
+                          color="red"
+                          className="font-semibold"
+                        />
+                      </motion.div>
+                    )}
+
+                    {/* Product Info */}
+                    <div className="space-y-3 px-2 text-center">
+                      {/* Name */}
+                      <h3
+                        onClick={() => handleNavigateToProduct(product._id)} // Điều hướng khi nhấn vào tên sản phẩm
+                        className="line-clamp-2 min-h-[2.5rem] text-sm font-medium text-gray-800 transition-colors duration-300 group-hover:text-[#22A6DF] cursor-pointer"
+                      >
+                        {product.name}
+                      </h3>
+
+                      {/* Price */}
+                      <div className="flex flex-row items-center justify-center gap-1 sm:flex-row sm:gap-2">
+                        <motion.p
+                          className="text-lg font-bold text-[#22A6DF]"
+                          whileHover={{ scale: 1.05 }}
+                        >
+                          {new Intl.NumberFormat("vi-VN", {
+                            style: "currency",
+                            currency: "VND",
+                          }).format(
+                            Number(product.price) *
+                              (1 - (product.discount || 0) / 100)
+                          )}
+                        </motion.p>
+
+                        {product.discount > 0 && (
+                          <p className="text-xs text-gray-500 line-through">
+                            {new Intl.NumberFormat("vi-VN", {
+                              style: "currency",
+                              currency: "VND",
+                            }).format(Number(product.price))}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </Slider>
           ) : (
-            <p className="text-gray-500 text-center">Không có sản phẩm liên quan.</p>
+            <p className="text-gray-500 text-center">
+              Không có sản phẩm liên quan.
+            </p>
           )}
         </div>
       </div>

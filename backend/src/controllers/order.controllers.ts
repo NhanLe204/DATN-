@@ -177,7 +177,8 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       paymentOrderCode,
       status: isOrder ? OrderStatus.PENDING : null,
       bookingStatus: isBooking ? BookingStatus.CONFIRMED : null,
-      payment_status: PaymentStatus.PENDING,
+      payment_status:
+        payment_typeID == '67d67442aeb5082f01074c28' ? PaymentStatus.CASH_ON_DELIVERY : PaymentStatus.PENDING,
       inforUserGuest: infoUserGuest || null // Giữ nguyên để tương thích với logic cũ
     });
 
@@ -259,6 +260,7 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
 export const getAvailableSlots = async (req: Request, res: Response): Promise<void> => {
   try {
     const { date } = req.query; // Ngày cần kiểm tra, ví dụ: "2025-03-29"
+    console.log(date, 'Đặt lịch');
     if (!date) throw new Error('Date is required');
 
     const maxSlots = 5;
@@ -280,7 +282,9 @@ export const getAvailableSlots = async (req: Request, res: Response): Promise<vo
 
     bookings.forEach((booking) => {
       const bookingDate = new Date(booking.booking_date);
+      console.log(bookingDate, 'bookingDate');
       const hour = bookingDate.getHours();
+      console.log(hour, 'HOUR');
       const serviceDuration = booking.serviceId?.duration || 60;
       const affectedSlots = Math.ceil(serviceDuration / 60);
 
