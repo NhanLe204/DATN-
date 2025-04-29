@@ -287,9 +287,19 @@ const Introduction = () => {
                     </div>
                   </div>
                 </div>
-                <div className="w-full md:w-1/3">
+                <div className="w-full md:w-1/3 space-y-4">
                   <img
-                    src="https://picsum.photos/id/870/400/400"
+                    src="https://res.cloudinary.com/dboomrlp9/image/upload/v1744967492/backgroundAI.jpg"
+                    alt="Nhân viên Pet Heaven"
+                    className="w-full h-64 object-cover rounded-lg shadow-md"
+                  />
+                  <img
+                    src="https://res.cloudinary.com/dboomrlp9/image/upload/v1744967663/assistantLogo.jpg"
+                    alt="Nhân viên Pet Heaven"
+                    className="w-full h-64 object-cover rounded-lg shadow-md"
+                  />
+                  <img
+                    src="https://res.cloudinary.com/dboomrlp9/image/upload/v1744967491/assitantLogo.jpg"
                     alt="Nhân viên Pet Heaven"
                     className="w-full h-64 object-cover rounded-lg shadow-md"
                   />

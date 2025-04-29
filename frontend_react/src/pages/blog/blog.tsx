@@ -11,18 +11,11 @@ import { Link } from "react-router-dom";
 import BlogApi from "../../api/blogApi";
 import parse from "html-react-parser";
 import Loader from "../../components/loader";
-interface Article {
-  id: number;
-  title: string;
-  description: string;
-  imageUrl: string;
-  category: string;
-  readTime: string;
-  date: string;
-}
+import blogCategoryApi from "../../api/blogCategoryApi";
 
 interface Blog {
   _id: string;
+  blog_category_id: string;
   title: string;
   content: string;
   image_url: string;
@@ -31,10 +24,17 @@ interface Blog {
   likes?: number;
 }
 
+interface BlogCategory {
+  _id: string;
+  name: string;
+  description: string;
+}
+
 export default function Blog() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState("TẤT CẢ");
   const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [blogCategorys, setBlogsCategory] = useState<BlogCategory[]>([]);
   const [visiblePosts, setVisiblePosts] = useState<number>(4);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +43,7 @@ export default function Blog() {
   useEffect(() => {
     const fetchBlogs = async () => {
       try {
-        const blogResponse = await BlogApi.getAllBlogs();
+        const blogResponse = await BlogApi.getBlogActive();
         const blogData = blogResponse.data.data;
         console.log("Processed blogData:", blogData);
 
@@ -58,6 +58,27 @@ export default function Blog() {
     };
 
     fetchBlogs();
+  }, []);
+
+  useEffect(() => {
+    const fetchBlogCategorys = async () => {
+      try {
+        const blogCategoryResponse = await blogCategoryApi.getCategoriesActive();
+        const blogCategoryData = blogCategoryResponse.data.result;
+
+        setBlogsCategory(blogCategoryData || []);
+        setLoading(false);
+      } catch (err: any) {
+        console.error("Error fetching blog categories:", err);
+        setError(
+          "Không thể tải danh sách danh mục bài viết. Vui lòng thử lại sau."
+        );
+        setBlogsCategory([]);
+        setLoading(false);
+      }
+    };
+
+    fetchBlogCategorys();
   }, []);
 
   const handleLoadMore = () => {
@@ -80,52 +101,30 @@ export default function Blog() {
     return <div className="text-center py-8 text-red-500">{error}</div>;
   }
 
-  const categories = [
-    {
-      name: "TẤT CẢ",
-      icon: <BookOutlined />,
-      color: "from-[#22A6DF] to-[#1890ff]",
-    },
-    {
-      name: "Kỹ Năng Chăm Sóc Thú Cưng",
-      icon: <CompassOutlined />,
-      color: "from-[#22A6DF] to-[#1890ff]",
-    },
-    {
-      name: "Kinh Nghiệm Lựa Chọn Dịch Vụ và Sản Phẩm",
-      icon: <ThunderboltOutlined />,
-      color: "from-[#22A6DF] to-[#1890ff]",
-    },
-    {
-      name: "Trải Nghiệm Dịch Vụ Tại Petshop",
-      icon: <ThunderboltOutlined />,
-      color: "from-[#22A6DF] to-[#1890ff]",
-    },
-  ];
-
-  const articles: Article[] = [
-    {
-      id: 1,
-      title:
-        "THÁC CÔNG TRỜI - CUNG ĐƯỜNG TREKKING SIÊU DỄ CHO NGƯỜI MỚI BẮT ĐẦU",
-      description:
-        "1. Thác công trời ở đâu2. Hành trình chinh phục Thác Công Trời3. Những vật dụng nên đem theo và những điều cần lưu ý1. Thác Công Trời ở đâu?Một thác nước tự nhiên trong Vườn Quốc Gia Bidoup - Núi bà thuộc địa phận...",
-      imageUrl: "https://picsum.photos/800/400",
-      category: "KỸ NĂNG - KINH NGHIỆM LEO NÚI, TREKKING",
-      readTime: "5 phút đọc",
-      date: "15 Th1 2024",
-    },
-    {
-      id: 2,
-      title: "BA LÔ CỦA BẠN NÊN NẶNG BAO NHIÊU",
-      description:
-        "Gói trọng lượng cho ba lô và đi bộ đường dài: Khi xác định trọng lượng gói của bạn, hãy làm theo các hướng dẫn này để có trải nghiệm đi bộ đường dài thoải mái và an toàn...",
-      imageUrl: "https://picsum.photos/800/401",
-      category: "TRẢI NGHIỆM, HƯỚNG DẪN CÁC CUNG ĐƯỜNG PHƯỢT",
-      readTime: "3 phút đọc",
-      date: "14 Th1 2024",
-    },
-  ];
+  const filteredBlogs = blogs
+    .filter((post) => {
+      // Nếu chọn "TẤT CẢ", hiển thị tất cả bài viết
+      if (activeCategory === "TẤT CẢ") {
+        return true;
+      }
+      // Tìm danh mục tương ứng với activeCategory
+      const selectedCategory = blogCategorys.find(
+        (category) => category.name === activeCategory
+      );
+      // Nếu không tìm thấy danh mục hoặc bài viết không có blog_category_id, trả về false
+      if (!selectedCategory || !post.blog_category_id) {
+        return false;
+      }
+      // So sánh blog_category_id của bài viết với _id của danh mục được chọn
+      return post.blog_category_id === selectedCategory._id;
+    })
+    .filter((post) => {
+      // Lọc bài viết dựa trên từ khóa tìm kiếm
+      return (
+        post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        post.content.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -159,26 +158,40 @@ export default function Blog() {
                 Danh mục
               </h2>
               <nav className="space-y-3">
-                {categories.map((category) => (
+                {/* Mục "TẤT CẢ" */}
+                <motion.a
+                  key="TẤT CẢ"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  href="#"
+                  className={`block p-3 rounded-xl transition-all duration-200 ${activeCategory === "TẤT CẢ"
+                    ? "bg-gradient-to-r from-[#22A6DF] to-[#1890ff] text-white shadow-lg"
+                    : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                    }`}
+                  onClick={() => setActiveCategory("TẤT CẢ")}
+                >
+                  <div className="flex items-center gap-3">
+                    <BookOutlined />
+                    <span className="text-sm font-medium">TẤT CẢ</span>
+                  </div>
+                </motion.a>
+
+                {/* Các danh mục từ API */}
+                {blogCategorys.map((category) => (
                   <motion.a
-                    key={category.name}
+                    key={category._id}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     href="#"
-                    className={`block p-3 rounded-xl transition-all duration-200 ${
-                      activeCategory === category.name
-                        ? "bg-gradient-to-r " +
-                          category.color +
-                          " text-white shadow-lg"
-                        : "bg-gray-50 text-gray-700 hover:bg-gray-100"
-                    }`}
+                    className={`block p-3 rounded-xl transition-all duration-200 ${activeCategory === category.name
+                      ? "bg-gradient-to-r from-[#22A6DF] to-[#1890ff] text-white shadow-lg"
+                      : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                      }`}
                     onClick={() => setActiveCategory(category.name)}
                   >
                     <div className="flex items-center gap-3">
-                      {category.icon}
-                      <span className="text-sm font-medium">
-                        {category.name}
-                      </span>
+                      <CompassOutlined /> {/* Có thể thay đổi icon tùy theo danh mục */}
+                      <span className="text-sm font-medium">{category.name}</span>
                     </div>
                   </motion.a>
                 ))}
@@ -210,7 +223,7 @@ export default function Blog() {
 
             {/* Articles */}
             <div className="space-y-8">
-              {blogs.slice(0, visiblePosts).map((post, index) => (
+              {filteredBlogs.slice(0, visiblePosts).map((post, index) => (
                 <motion.article
                   key={post._id}
                   initial={{ opacity: 0, y: 20 }}
@@ -218,7 +231,7 @@ export default function Blog() {
                   transition={{ delay: index * 0.1 }}
                   className="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row"
                 >
-                  {/* Image Section - Left 50% */}
+                  {/* Image Section */}
                   <div className="w-full md:w-1/3 relative h-72 md:h-auto">
                     <img
                       src={post.image_url}
@@ -228,17 +241,12 @@ export default function Blog() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent md:hidden"></div>
                   </div>
 
-                  {/* Content Section - Right 50% */}
+                  {/* Content Section */}
                   <Link
                     to={`/blogs/${post._id}`}
                     className="w-full md:w-2/3 p-6 flex flex-col justify-between"
                   >
                     <div>
-                      {/* <Badge
-                          className="mb-4"
-                          color="#22A6DF"
-                          text={post.category}
-                        /> */}
                       <h2 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2">
                         {post.title}
                       </h2>
