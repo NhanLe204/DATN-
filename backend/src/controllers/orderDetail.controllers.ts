@@ -176,52 +176,48 @@ export const getAllBookings = async (req: Request, res: Response): Promise<void>
       {
         $match: {
           orderId: { $in: orderIds },
-          serviceId: { $ne: null },
-        },
+          serviceId: { $ne: null }
+        }
       },
       {
         $lookup: {
           from: 'orders',
           localField: 'orderId',
           foreignField: '_id',
-          as: 'order',
-        },
+          as: 'order'
+        }
       },
       {
         $lookup: {
           from: 'services',
           localField: 'serviceId',
           foreignField: '_id',
-          as: 'service',
-        },
+          as: 'service'
+        }
       },
       {
-        $unwind: '$order',
+        $unwind: '$order'
       },
       {
-        $unwind: '$service',
+        $unwind: '$service'
       },
       {
         $project: {
           orderId: '$order._id',
           fullname: {
-            $ifNull: [
-              '$order.fullname',
-              '$order.inforUserGuest.fullName',
-              'Khách vãng lai',
-            ],
+            $ifNull: ['$order.fullname', '$order.inforUserGuest.fullName', 'Khách vãng lai']
           },
           email: {
-            $ifNull: ['$order.email', '$order.inforUserGuest.email', null],
+            $ifNull: ['$order.email', '$order.inforUserGuest.email', null]
           },
           phone: {
-            $ifNull: ['$order.phone', '$order.inforUserGuest.phone', 'Unknown Phone'],
+            $ifNull: ['$order.phone', '$order.inforUserGuest.phone', 'Unknown Phone']
           },
           service: {
             _id: '$service._id',
             name: '$service.service_name',
             price: '$service.service_price',
-            duration: '$service.duration',
+            duration: '$service.duration'
           },
           booking_date: '$booking_date',
           order_date: '$order.order_date',
@@ -229,15 +225,15 @@ export const getAllBookings = async (req: Request, res: Response): Promise<void>
           petName: '$petName',
           petType: '$petType',
           petWeight: '$petWeight',
-          realPrice: '$realPrice',
-        },
-      },
+          realPrice: '$realPrice'
+        }
+      }
     ]);
 
     if (!bookings.length) {
       res.status(404).json({
         success: false,
-        message: 'Không tìm thấy lịch hẹn nào',
+        message: 'Không tìm thấy lịch hẹn nào'
       });
       return;
     }
@@ -248,7 +244,7 @@ export const getAllBookings = async (req: Request, res: Response): Promise<void>
     res.status(500).json({
       success: false,
       message: 'Lỗi khi lấy danh sách lịch hẹn',
-      error: error instanceof Error ? error.message : 'Lỗi không xác định',
+      error: error instanceof Error ? error.message : 'Lỗi không xác định'
     });
   }
 };
@@ -334,7 +330,7 @@ export const changeBookingStatus = async (req: Request, res: Response): Promise<
     if (!orderId || !bookingStatus) {
       res.status(400).json({
         success: false,
-        message: 'orderId và bookingStatus là bắt buộc',
+        message: 'orderId và bookingStatus là bắt buộc'
       });
       return;
     }
@@ -343,7 +339,7 @@ export const changeBookingStatus = async (req: Request, res: Response): Promise<
     if (!Object.values(BookingStatus).includes(bookingStatus)) {
       res.status(400).json({
         success: false,
-        message: `Trạng thái lịch hẹn không hợp lệ. Phải là một trong: ${Object.values(BookingStatus).join(', ')}`,
+        message: `Trạng thái lịch hẹn không hợp lệ. Phải là một trong: ${Object.values(BookingStatus).join(', ')}`
       });
       return;
     }
@@ -360,7 +356,7 @@ export const changeBookingStatus = async (req: Request, res: Response): Promise<
         session.endSession();
         res.status(404).json({
           success: false,
-          message: 'Không tìm thấy đơn hàng',
+          message: 'Không tìm thấy đơn hàng'
         });
         return;
       }
@@ -374,7 +370,7 @@ export const changeBookingStatus = async (req: Request, res: Response): Promise<
         session.endSession();
         res.status(404).json({
           success: false,
-          message: 'Không tìm thấy lịch hẹn cho đơn hàng này',
+          message: 'Không tìm thấy lịch hẹn cho đơn hàng này'
         });
         return;
       }
@@ -385,7 +381,7 @@ export const changeBookingStatus = async (req: Request, res: Response): Promise<
         session.endSession();
         res.status(400).json({
           success: false,
-          message: 'Không thể thay đổi trạng thái của lịch hẹn đã hoàn thành',
+          message: 'Không thể thay đổi trạng thái của lịch hẹn đã hoàn thành'
         });
         return;
       }
@@ -396,7 +392,7 @@ export const changeBookingStatus = async (req: Request, res: Response): Promise<
         [BookingStatus.CONFIRMED]: [BookingStatus.IN_PROGRESS, BookingStatus.CANCELLED],
         [BookingStatus.IN_PROGRESS]: [BookingStatus.COMPLETED],
         [BookingStatus.COMPLETED]: [],
-        [BookingStatus.CANCELLED]: [],
+        [BookingStatus.CANCELLED]: []
       };
 
       const currentStatus = order.bookingStatus || BookingStatus.PENDING;
@@ -405,14 +401,14 @@ export const changeBookingStatus = async (req: Request, res: Response): Promise<
         session.endSession();
         res.status(400).json({
           success: false,
-          message: `Chuyển đổi trạng thái không hợp lệ từ ${currentStatus} sang ${bookingStatus}`,
+          message: `Chuyển đổi trạng thái không hợp lệ từ ${currentStatus} sang ${bookingStatus}`
         });
         return;
       }
 
       // Cập nhật trạng thái lịch hẹn và trạng thái đơn hàng
       const updateFields: { bookingStatus: string; status?: string } = {
-        bookingStatus,
+        bookingStatus
       };
       switch (bookingStatus) {
         case BookingStatus.PENDING:
@@ -442,7 +438,7 @@ export const changeBookingStatus = async (req: Request, res: Response): Promise<
         session.endSession();
         res.status(500).json({
           success: false,
-          message: 'Không thể cập nhật trạng thái lịch hẹn',
+          message: 'Không thể cập nhật trạng thái lịch hẹn'
         });
         return;
       }
@@ -451,21 +447,32 @@ export const changeBookingStatus = async (req: Request, res: Response): Promise<
       if (bookingStatus === BookingStatus.COMPLETED) {
         try {
           const user = await userModel.findById(order.userID).session(session);
-          const orderDetail = await orderDetailModel
-            .findOne({ orderId, serviceId: { $ne: null } })
-            .session(session);
+          const orderDetail = await orderDetailModel.findOne({ orderId, serviceId: { $ne: null } }).session(session);
 
           const userData = user
             ? { email: user.email, name: user.fullname }
             : order.infoUserGuest
-            ? { email: order.infoUserGuest.email, name: order.infoUserGuest.fullName }
-            : null;
+              ? { email: order.infoUserGuest.email, name: order.infoUserGuest.fullName }
+              : null;
 
           console.log('User data for email:', userData);
           console.log('Order detail:', orderDetail);
 
           if (userData && userData.email && orderDetail) {
             const service = await ServiceModel.findById(orderDetail.serviceId).select('service_name');
+            interface BookingEmailData {
+              recipientEmail: string;
+              customerName: string;
+              orderDetails: Array<{
+                serviceId: string | null;
+                booking_date: Date | null;
+                petName: string | null;
+                petType: string | null;
+              }>;
+              orderId: string;
+              isCancellation: boolean;
+            }
+
             const emailData: BookingEmailData = {
               recipientEmail: userData.email,
               customerName: userData.name,
@@ -474,11 +481,11 @@ export const changeBookingStatus = async (req: Request, res: Response): Promise<
                   serviceId: orderDetail.serviceId?.toString() || null,
                   booking_date: orderDetail.booking_date || null,
                   petName: orderDetail.petName || null,
-                  petType: orderDetail.petType || null,
-                },
+                  petType: orderDetail.petType || null
+                }
               ],
               orderId: orderId,
-              isCancellation: false,
+              isCancellation: false
             };
 
             // Gửi email sử dụng sendBookingEmail với nội dung tùy chỉnh
@@ -496,7 +503,7 @@ export const changeBookingStatus = async (req: Request, res: Response): Promise<
                       ? new Intl.DateTimeFormat('vi-VN', {
                           timeZone: 'Asia/Ho_Chi_Minh',
                           dateStyle: 'short',
-                          timeStyle: 'short',
+                          timeStyle: 'short'
                         }).format(orderDetail.booking_date)
                       : 'N/A'
                   }</li>
@@ -507,7 +514,7 @@ export const changeBookingStatus = async (req: Request, res: Response): Promise<
                 </ul>
                 <p>Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!</p>
                 <p>Trân trọng,<br><strong>Pet Heaven</strong></p>
-              `,
+              `
             });
             console.log(`Completion email sent to ${userData.email} for order ${orderId}`);
           } else {
@@ -528,8 +535,8 @@ export const changeBookingStatus = async (req: Request, res: Response): Promise<
         data: {
           orderId: updatedOrder._id,
           bookingStatus: updatedOrder.bookingStatus,
-          orderStatus: updatedOrder.status,
-        },
+          orderStatus: updatedOrder.status
+        }
       });
     } catch (error) {
       await session.abortTransaction();
@@ -541,7 +548,7 @@ export const changeBookingStatus = async (req: Request, res: Response): Promise<
     res.status(500).json({
       success: false,
       message: 'Lỗi khi cập nhật trạng thái lịch hẹn',
-      error: error instanceof Error ? error.message : 'Lỗi không xác định',
+      error: error instanceof Error ? error.message : 'Lỗi không xác định'
     });
   }
 };
@@ -554,7 +561,7 @@ export const cancelBooking = async (req: Request, res: Response): Promise<void> 
     if (!orderId || !orderDetailId) {
       res.status(400).json({
         success: false,
-        message: 'orderId and orderDetailId are required',
+        message: 'orderId and orderDetailId are required'
       });
       return;
     }
@@ -564,7 +571,7 @@ export const cancelBooking = async (req: Request, res: Response): Promise<void> 
     if (!order) {
       res.status(404).json({
         success: false,
-        message: 'Order not found',
+        message: 'Order not found'
       });
       return;
     }
@@ -573,12 +580,12 @@ export const cancelBooking = async (req: Request, res: Response): Promise<void> 
     const orderDetail = await orderDetailModel.findOne({
       _id: orderDetailId,
       orderId,
-      serviceId: { $ne: null },
+      serviceId: { $ne: null }
     });
     if (!orderDetail) {
       res.status(404).json({
         success: false,
-        message: 'Chi tiết đơn hàng không tồn tại',
+        message: 'Chi tiết đơn hàng không tồn tại'
       });
       return;
     }
@@ -588,67 +595,59 @@ export const cancelBooking = async (req: Request, res: Response): Promise<void> 
     res.status(500).json({
       success: false,
       message: 'Error cancelling booking',
-      error,
+      error
     });
   }
 };
 
-
 // Bảng giá
 const bathData = [
-  { weight: "< 5kg", price: 150000 },
-  { weight: "5 - 10kg", price: 200000 },
-  { weight: "10 - 20kg", price: 250000 },
-  { weight: "20 - 40kg", price: 300000 },
-  { weight: "> 40kg", price: 350000 },
+  { weight: '< 5kg', price: 150000 },
+  { weight: '5 - 10kg', price: 200000 },
+  { weight: '10 - 20kg', price: 250000 },
+  { weight: '20 - 40kg', price: 300000 },
+  { weight: '> 40kg', price: 350000 }
 ];
 
 const comboBathData = [
-  { weight: "< 5kg", price: 320000 },
-  { weight: "5 - 10kg", price: 520000 },
-  { weight: "10 - 20kg", price: 620000 },
-  { weight: "20 - 40kg", price: 720000 },
-  { weight: "> 40kg", price: 820000 },
+  { weight: '< 5kg', price: 320000 },
+  { weight: '5 - 10kg', price: 520000 },
+  { weight: '10 - 20kg', price: 620000 },
+  { weight: '20 - 40kg', price: 720000 },
+  { weight: '> 40kg', price: 820000 }
 ];
 
 const serviceBathData = [
-  { weight: "< 5kg", price: 150000 },
-  { weight: "5 - 10kg", price: 180000 },
-  { weight: "10 - 20kg", price: 210000 },
-  { weight: "20 - 40kg", price: 240000 },
-  { weight: "> 40kg", price: 270000 },
+  { weight: '< 5kg', price: 150000 },
+  { weight: '5 - 10kg', price: 180000 },
+  { weight: '10 - 20kg', price: 210000 },
+  { weight: '20 - 40kg', price: 240000 },
+  { weight: '> 40kg', price: 270000 }
 ];
 
 // Hàm calculatePrice
-const calculatePrice = (
-  serviceName: string,
-  petWeight: number,
-  petType: string
-): number => {
+const calculatePrice = (serviceName: string, petWeight: number, petType: string): number => {
   const getWeightRange = (weight: number): string => {
-    if (weight < 5) return "< 5kg";
-    if (weight >= 5 && weight <= 10) return "5 - 10kg";
-    if (weight > 10 && weight <= 20) return "10 - 20kg";
-    if (weight > 20 && weight <= 40) return "20 - 40kg";
-    return "> 40kg";
+    if (weight < 5) return '< 5kg';
+    if (weight >= 5 && weight <= 10) return '5 - 10kg';
+    if (weight > 10 && weight <= 20) return '10 - 20kg';
+    if (weight > 20 && weight <= 40) return '20 - 40kg';
+    return '> 40kg';
   };
 
   const weightRange = getWeightRange(petWeight);
   const normalizedServiceName = serviceName.toLowerCase();
 
-  if (
-    normalizedServiceName.includes("tắm") &&
-    !normalizedServiceName.includes("combo")
-  ) {
+  if (normalizedServiceName.includes('tắm') && !normalizedServiceName.includes('combo')) {
     const priceEntry = bathData.find((item) => item.weight === weightRange);
     return priceEntry ? priceEntry.price : 0;
-  } else if (normalizedServiceName.includes("combo")) {
+  } else if (normalizedServiceName.includes('combo')) {
     const priceEntry = comboBathData.find((item) => item.weight === weightRange);
     return priceEntry ? priceEntry.price : 0;
   } else if (
-    normalizedServiceName.includes("cắt") ||
-    normalizedServiceName.includes("tỉa") ||
-    normalizedServiceName.includes("cạo")
+    normalizedServiceName.includes('cắt') ||
+    normalizedServiceName.includes('tỉa') ||
+    normalizedServiceName.includes('cạo')
   ) {
     const priceEntry = serviceBathData.find((item) => item.weight === weightRange);
     return priceEntry ? priceEntry.price : 0;
@@ -665,7 +664,7 @@ export const updateRealPrice = async (req: Request, res: Response): Promise<void
     if (!orderId || petWeight == null || !petType || !serviceName) {
       res.status(400).json({
         success: false,
-        message: `Yêu cầu đầy đủ các trường: orderId=${orderId}, petWeight=${petWeight}, petType=${petType}, serviceName=${serviceName}`,
+        message: `Yêu cầu đầy đủ các trường: orderId=${orderId}, petWeight=${petWeight}, petType=${petType}, serviceName=${serviceName}`
       });
       return;
     }
@@ -674,7 +673,7 @@ export const updateRealPrice = async (req: Request, res: Response): Promise<void
     if (typeof petWeight !== 'number' || petWeight < 0 || petWeight > 100) {
       res.status(400).json({
         success: false,
-        message: `Cân nặng phải là số từ 0 đến 100 kg, nhận được: ${petWeight}`,
+        message: `Cân nặng phải là số từ 0 đến 100 kg, nhận được: ${petWeight}`
       });
       return;
     }
@@ -686,7 +685,7 @@ export const updateRealPrice = async (req: Request, res: Response): Promise<void
     if (realPrice === 0) {
       res.status(400).json({
         success: false,
-        message: `Không thể tính giá cho dịch vụ "${serviceName}" với cân nặng ${petWeight} kg`,
+        message: `Không thể tính giá cho dịch vụ "${serviceName}" với cân nặng ${petWeight} kg`
       });
       return;
     }
@@ -701,28 +700,27 @@ export const updateRealPrice = async (req: Request, res: Response): Promise<void
     if (!updatedOrderDetail) {
       res.status(404).json({
         success: false,
-        message: `Không tìm thấy chi tiết đơn hàng với orderId=${orderId} và serviceId không null`,
+        message: `Không tìm thấy chi tiết đơn hàng với orderId=${orderId} và serviceId không null`
       });
       return;
     }
 
     res.status(200).json({
       success: true,
-      message: "Cập nhật giá thực tế thành công",
+      message: 'Cập nhật giá thực tế thành công',
       data: {
         orderId,
-        realPrice,
-      },
+        realPrice
+      }
     });
   } catch (error) {
-    console.error("Lỗi khi cập nhật giá thực tế:", error);
+    console.error('Lỗi khi cập nhật giá thực tế:', error);
     res.status(500).json({
       success: false,
-      message: "Lỗi khi cập nhật giá thực tế",
+      message: 'Lỗi khi cập nhật giá thực tế'
     });
   }
 };
-
 
 // update
 export const updateBooking = async (req: Request, res: Response): Promise<void> => {
@@ -734,7 +732,7 @@ export const updateBooking = async (req: Request, res: Response): Promise<void> 
       console.error('Invalid orderId:', orderId);
       res.status(400).json({
         success: false,
-        message: 'orderId không hợp lệ',
+        message: 'orderId không hợp lệ'
       });
       return;
     }
@@ -747,7 +745,7 @@ export const updateBooking = async (req: Request, res: Response): Promise<void> 
       console.error('Order not found for orderId:', orderId);
       res.status(404).json({
         success: false,
-        message: 'Không tìm thấy đơn hàng',
+        message: 'Không tìm thấy đơn hàng'
       });
       return;
     }
@@ -755,7 +753,7 @@ export const updateBooking = async (req: Request, res: Response): Promise<void> 
       console.error('OrderDetail not found for orderId:', orderId);
       res.status(404).json({
         success: false,
-        message: 'Không tìm thấy chi tiết đơn hàng',
+        message: 'Không tìm thấy chi tiết đơn hàng'
       });
       return;
     }
@@ -771,7 +769,7 @@ export const updateBooking = async (req: Request, res: Response): Promise<void> 
         console.error('Invalid bookingDate:', bookingDate);
         res.status(400).json({
           success: false,
-          message: 'bookingDate phải có định dạng YYYY-MM-DD HH:mm:ss',
+          message: 'bookingDate phải có định dạng YYYY-MM-DD HH:mm:ss'
         });
         return;
       }
@@ -809,11 +807,15 @@ export const updateBooking = async (req: Request, res: Response): Promise<void> 
     if (bookingStatus && Object.values(BookingStatus).includes(bookingStatus)) {
       updateOrderFields.bookingStatus = bookingStatus;
       updateOrderFields.status =
-        bookingStatus === BookingStatus.PENDING ? 'pending' :
-        bookingStatus === BookingStatus.CONFIRMED ? 'confirmed' :
-        bookingStatus === BookingStatus.IN_PROGRESS ? 'processing' :
-        bookingStatus === BookingStatus.COMPLETED ? 'completed' :
-        'cancelled';
+        bookingStatus === BookingStatus.PENDING
+          ? 'pending'
+          : bookingStatus === BookingStatus.CONFIRMED
+            ? 'confirmed'
+            : bookingStatus === BookingStatus.IN_PROGRESS
+              ? 'processing'
+              : bookingStatus === BookingStatus.COMPLETED
+                ? 'completed'
+                : 'cancelled';
       console.log('Setting bookingStatus to:', bookingStatus);
     }
 
@@ -821,16 +823,12 @@ export const updateBooking = async (req: Request, res: Response): Promise<void> 
     let updatedOrder = order;
     if (Object.keys(updateOrderFields).length > 0) {
       console.log('Updating order with fields:', updateOrderFields);
-      updatedOrder = await orderModel.findByIdAndUpdate(
-        orderId,
-        { $set: updateOrderFields },
-        { new: true }
-      );
+      updatedOrder = await orderModel.findByIdAndUpdate(orderId, { $set: updateOrderFields }, { new: true });
       if (!updatedOrder) {
         console.error('Failed to update order for orderId:', orderId);
         res.status(500).json({
           success: false,
-          message: 'Không thể cập nhật đơn hàng',
+          message: 'Không thể cập nhật đơn hàng'
         });
         return;
       }
@@ -850,7 +848,7 @@ export const updateBooking = async (req: Request, res: Response): Promise<void> 
         console.error('Failed to update orderDetail for orderId:', orderId);
         res.status(500).json({
           success: false,
-          message: 'Không thể cập nhật chi tiết đơn hàng',
+          message: 'Không thể cập nhật chi tiết đơn hàng'
         });
         return;
       }
@@ -870,15 +868,15 @@ export const updateBooking = async (req: Request, res: Response): Promise<void> 
         fullname: updatedOrder.fullname, // Sửa từ username
         bookingStatus: updatedOrder.bookingStatus,
         email: updatedOrder.email,
-        phone: updatedOrder.phone,
-      },
+        phone: updatedOrder.phone
+      }
     });
   } catch (error) {
     console.error('Error updating booking:', error);
     res.status(500).json({
       success: false,
       message: 'Lỗi khi cập nhật booking',
-      error: error instanceof Error ? error.message : 'Lỗi không xác định',
+      error: error instanceof Error ? error.message : 'Lỗi không xác định'
     });
   }
 };
@@ -894,7 +892,7 @@ export const cancelOverdueBookings = () => {
       const overdueBookings = await orderDetailModel
         .find({
           serviceId: { $ne: null },
-          booking_date: { $ne: null },
+          booking_date: { $ne: null }
         })
         .populate('orderId');
 
@@ -918,9 +916,7 @@ export const cancelOverdueBookings = () => {
         const bookingDateTime = dayjs(booking.booking_date).tz('Asia/Ho_Chi_Minh');
 
         if (!bookingDateTime.isValid()) {
-          console.warn(
-            `Invalid booking date for order ${order._id}: ${booking.booking_date}`
-          );
+          console.warn(`Invalid booking date for order ${order._id}: ${booking.booking_date}`);
           continue;
         }
 
@@ -933,8 +929,8 @@ export const cancelOverdueBookings = () => {
             {
               $set: {
                 bookingStatus: BookingStatus.CANCELLED,
-                status: 'cancelled',
-              },
+                status: 'cancelled'
+              }
             },
             { new: true }
           );

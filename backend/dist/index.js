@@ -26,6 +26,7 @@ const paymentType_routes_js_1 = __importDefault(require("./routes/paymentType.ro
 const delivery_routes_js_1 = __importDefault(require("./routes/delivery.routes.js"));
 const orderDetail_routes_js_1 = __importDefault(require("./routes/orderDetail.routes.js"));
 const contact_routes_js_1 = __importDefault(require("./routes/contact.routes.js")); // Import contact router
+const revenue_routes_js_1 = __importDefault(require("./routes/revenue.routes.js")); // Import revenue router
 const blog_routes_js_1 = __importDefault(require("./routes/blog.routes.js"));
 const blogCategory_routes_js_1 = __importDefault(require("./routes/blogCategory.routes.js"));
 dotenv_1.default.config(); // Đọc file .env
@@ -62,7 +63,8 @@ app.use('/api/v1', payment_routes_js_1.default);
 app.use('/api/v1', orderDetail_routes_js_1.default);
 app.use('/api/v1', blog_routes_js_1.default);
 app.use('/api/v1', blogCategory_routes_js_1.default);
-app.use('/api/v1', contact_routes_js_1.default); // Thêm router contact vào đây
+app.use('/api/v1', revenue_routes_js_1.default);
+app.use('/api/v1', contact_routes_js_1.default);
 app.use(errorHandler_js_1.errorHandler);
 // // Hàm khởi tạo ngrok tunnel
 // async function startNgrok() {

@@ -13,7 +13,7 @@ import { Router } from 'express';
 const serviceRouter = Router();
 
 // Định nghĩa các route cho Service
-serviceRouter.get('/services', verifyToken, requireAdmin, getAllServices); // Lấy tất cả dịch vụ
+serviceRouter.get('/services', verifyToken, getAllServices); // Lấy tất cả dịch vụ
 serviceRouter.post('/services', createService); // Tạo mới một dịch vụ
 serviceRouter.get('/services/status/active', getServiceActive);
 serviceRouter.get('/services/:id', getServiceById);

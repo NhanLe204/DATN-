@@ -38,7 +38,6 @@ const service_enum_js_1 = require("../enums/service.enum.js");
 const serviceSchema = new mongoose_1.Schema({
     service_name: { type: String, required: true, default: '' },
     description: { type: String, default: '' },
-    service_price: { type: Number, required: true, default: 0 },
     duration: { type: Number, required: true, default: 0 },
     status: {
         type: String,

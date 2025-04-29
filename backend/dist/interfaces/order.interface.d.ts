@@ -16,4 +16,5 @@ export interface IOrder {
     paymentOrderCode: number;
     status: OrderStatus;
     bookingStatus?: BookingStatus;
+    email?: string;
 }

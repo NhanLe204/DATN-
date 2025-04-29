@@ -87,8 +87,9 @@ const PetSpaServices = () => {
   };
   return (
     <div className="min-h-screen bg-white px-4 sm:px-6 lg:px-8">
+      <div className="max-w-screen-xl mx-auto">
       
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 ư">
           <h1 className="mb-3 text-3xl font-bold text-gray-800 text-center">
             DỊCH VỤ SPA CHUYÊN NGHIỆP CHO THÚ CƯNG TẠI PET HEAVEN
           </h1>
@@ -102,12 +103,11 @@ const PetSpaServices = () => {
               ĐẶT LỊCH NGAY
           </Button>
         </div>
-        <Card className="mb-7">
+        <Card className="mb-7 text-center ">
           <h2 className="mb-6 text-xl font-semibold">
             Quy trình tắm vệ sinh bao gồm 12 bước:
           </h2>
           <div className="grid gap-4 md:grid-cols-2">
-            <div>
               <ol className="list-inside list-decimal space-y-2">
                 {[
                   "Kiểm tra sức khỏe cơ bản",
@@ -133,7 +133,6 @@ const PetSpaServices = () => {
                 ))}
               </ol>
             </div>
-          </div>
           </Card>
         </div>
 
@@ -162,6 +161,7 @@ const PetSpaServices = () => {
         </div>
 
         {/* Notes Section */}
+        <div className="mb-12">
         <Text>
           <Title level={2} className="text-[#22A6DF] mb-6">
             NHỮNG LƯU Ý KHI SỬ DỤNG DỊCH VỤ SPA TẠI PET HEAVEN
@@ -172,8 +172,9 @@ const PetSpaServices = () => {
             <br />- Làm xong dịch vụ, Khách hàng vui lòng kiểm tra thật kỹ thú cưng của mình khi đến đón về. Điều này nhằm đảm bảo nhân viên spa tại Pet Heaven đã hoàn thành đúng quy trình spa cho các bé. Nếu có bất cứ điều gì chưa hài lòng, hãy liên hệ với Pet Heaven qua hotline, fanpage Pet Heaven để được hỗ trợ.
           </Paragraph>
         </Text>
-        
+        </div>
       </div>
+    </div>
   );
 };
 

@@ -90,6 +90,11 @@ const productSchema = new mongoose_1.Schema({
         type: Number,
         min: 0,
         default: 0
+    },
+    quantity: {
+        type: Number,
+        min: 0,
+        default: 0
     }
 }, { timestamps: true });
 const productModel = mongoose_1.default.models.product || (0, mongoose_1.model)('product', productSchema);

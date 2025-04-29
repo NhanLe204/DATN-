@@ -5,7 +5,7 @@ var PaymentStatus;
 (function (PaymentStatus) {
     PaymentStatus["PENDING"] = "PENDING";
     PaymentStatus["PAID"] = "PAID";
-    PaymentStatus["CANCELLED"] = "CANCELLED";
+    PaymentStatus["CASH_ON_DELIVERY"] = "CASH_ON_DELIVERY";
 })(PaymentStatus || (exports.PaymentStatus = PaymentStatus = {}));
 var OrderStatus;
 (function (OrderStatus) {

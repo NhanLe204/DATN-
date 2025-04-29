@@ -7,7 +7,10 @@ export declare const deleteOrderDetail: (req: Request, res: Response) => Promise
 export declare const getBookingsByUserId: (req: Request<object, object, object, {
     userId?: string;
 }>, res: Response, next: NextFunction) => Promise<void>;
-export declare const getAllBookings: (req: Request, res: Response, next: NextFunction) => Promise<void>;
+export declare const getAllBookings: (req: Request, res: Response) => Promise<void>;
 export declare const getOrderByUserId: (req: Request, res: Response) => Promise<void>;
 export declare const changeBookingStatus: (req: Request, res: Response) => Promise<void>;
-export declare const getCancelledBookings: (req: Request, res: Response) => Promise<void>;
+export declare const cancelBooking: (req: Request, res: Response) => Promise<void>;
+export declare const updateRealPrice: (req: Request, res: Response) => Promise<void>;
+export declare const updateBooking: (req: Request, res: Response) => Promise<void>;
+export declare const cancelOverdueBookings: () => void;

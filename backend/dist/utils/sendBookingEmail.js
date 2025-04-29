@@ -8,7 +8,7 @@ const service_model_js_1 = __importDefault(require("../models/service.model.js")
 const user_model_js_1 = __importDefault(require("../models/user.model.js"));
 const order_model_js_1 = __importDefault(require("../models/order.model.js"));
 const config_js_1 = __importDefault(require("../config/config.js"));
-const sendBookingEmail = async ({ recipientEmail, customerName, orderDetails, orderId, isCancellation = false }) => {
+const sendBookingEmail = async ({ recipientEmail, customerName, orderDetails, orderId, isCancellation = false, subject: customSubject, html: customHtml, }) => {
     console.log('Input data:', { recipientEmail, customerName, orderDetails, orderId, isCancellation });
     let finalOrderId = orderId;
     let finalCustomerName = customerName || 'Khách hàng';
@@ -21,7 +21,7 @@ const sendBookingEmail = async ({ recipientEmail, customerName, orderDetails, or
                 finalCustomerName = user.fullname;
             }
             else {
-                finalCustomerName = order.fullname || 'Khách hàng';
+                finalCustomerName = order.fullname || order.infoUserGuest?.fullName || 'Khách hàng';
                 console.log(`No fullname found for userID: ${order.userID}`);
             }
         }
@@ -55,7 +55,7 @@ const sendBookingEmail = async ({ recipientEmail, customerName, orderDetails, or
             service_name: serviceName,
             service_price: servicePrice,
             duration: duration,
-            customerName: finalCustomerName
+            customerName: finalCustomerName,
         };
     });
     const enrichedOrderDetails = await Promise.all(servicePromises);
@@ -69,7 +69,7 @@ const sendBookingEmail = async ({ recipientEmail, customerName, orderDetails, or
             year: 'numeric',
             hour: '2-digit',
             minute: '2-digit',
-            timeZone: 'Asia/Ho_Chi_Minh'
+            timeZone: 'Asia/Ho_Chi_Minh',
         }).format(date);
     };
     const formatPrice = (price) => {
@@ -79,24 +79,24 @@ const sendBookingEmail = async ({ recipientEmail, customerName, orderDetails, or
         return price;
     };
     console.log('Final data:', { finalCustomerName, finalOrderId });
-    const subject = isCancellation ? 'Thông báo hủy lịch đặt dịch vụ' : 'Xác nhận đặt lịch thành công';
+    const subject = customSubject || (isCancellation ? 'Thông báo hủy lịch đặt dịch vụ' : 'Xác nhận đặt lịch thành công');
     const text = `Kính gửi ${finalCustomerName},
 
 ${isCancellation ? 'Lịch đặt dịch vụ của bạn đã được hủy thành công' : 'Cảm ơn bạn đã đặt lịch với chúng tôi! Dưới đây là thông tin chi tiết về lịch hẹn của bạn'}:
 
 ${enrichedOrderDetails
-        .map((detail) => `- Dịch vụ: ${detail.service_name}\n- Thời gian: ${formatDateTime(detail.booking_date)}\n- Thú cưng: ${detail.petName} (${detail.petType})\n- Giá dự tính: ${formatPrice(detail.service_price)}\n- Thời gian dự tính: ${detail.duration} phút`)
+        .map((detail) => `- Dịch vụ: ${detail.service_name}\n- Thời gian: ${formatDateTime(detail.booking_date)}\n- Thú cưng: ${detail.petName || 'N/A'} (${detail.petType || 'N/A'})\n- Thời gian dự tính: ${detail.duration} phút`)
         .join('\n\n')}
 - Địa điểm: ${config_js_1.default.ADDRESS}
 - Mã đặt lịch: ${finalOrderId}
 
-Nếu bạn cần thêm thông tin hoặc hỗ trợ, vui lòng liên hệ với chúng tôi qua số 0888-666-333 hoặc email ${config_js_1.default.EMAIL_USER}.
+Nếu bạn cần thêm thông tin hoặc hỗ trợ, vui lòng liên hệ với chúng tôi qua số ${config_js_1.default.HOTLINE} hoặc email ${config_js_1.default.EMAIL_USER}.
 
 Trân trọng,
 Pet Heaven
 Hotline: ${config_js_1.default.HOTLINE}
 Email: ${config_js_1.default.EMAIL_USER}`;
-    const html = `
+    const html = customHtml || `
     <p>Kính gửi <strong>${finalCustomerName}</strong>,</p>
     <p>${isCancellation ? 'Lịch đặt dịch vụ của bạn đã được hủy thành công' : 'Cảm ơn bạn đã đặt lịch với chúng tôi! Dưới đây là thông tin chi tiết về lịch hẹn của bạn'}:</p>
     <ul>
@@ -105,8 +105,7 @@ Email: ${config_js_1.default.EMAIL_USER}`;
             <li>
               <strong>Dịch vụ:</strong> ${detail.service_name}<br>
               <strong>Thời gian:</strong> ${formatDateTime(detail.booking_date)}<br>
-              <strong>Thú cưng:</strong> ${detail.petName} (${detail.petType})<br>
-              <strong>Giá dự tính:</strong> ${formatPrice(detail.service_price)}<br>
+              <strong>Thú cưng:</strong> ${detail.petName || 'N/A'} (${detail.petType || 'N/A'})<br>
               <strong>Thời gian dự kiến:</strong> ${detail.duration} phút
             </li>
           `)

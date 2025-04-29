@@ -45,16 +45,18 @@ const orderDetailSchema = new mongoose_1.Schema({
     productId: { type: mongoose_1.Schema.Types.ObjectId, ref: product_model_js_1.default, required: false, default: '' },
     serviceId: { type: mongoose_1.Schema.Types.ObjectId, ref: service_model_js_1.default, required: false, default: '' },
     quantity: { type: Number, required: true },
-    product_price: { type: Number, required: true },
-    total_price: { type: Number, required: true },
-    booking_date: { type: String, required: false, default: '' },
+    product_price: { type: Number, required: false },
+    total_price: { type: Number, required: false },
+    booking_date: { type: Date, required: false, default: '' },
     petName: { type: String, required: false, default: '' },
     petType: {
         type: String,
         required: false,
         default: ''
     },
-    isRated: { type: Boolean, default: false }
+    isRated: { type: Boolean, default: false },
+    petWeight: { type: Number, require: false, default: '' },
+    realPrice: { type: Number, require: false, default: '' },
 }, { timestamps: true });
 const orderDetailModel = mongoose_1.default.models.orderDetail || (0, mongoose_1.model)('orderDetail', orderDetailSchema);
 exports.default = orderDetailModel;
