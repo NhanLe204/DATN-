@@ -176,8 +176,8 @@ export const getAllBookings = async (req: Request, res: Response): Promise<void>
       {
         $match: {
           orderId: { $in: orderIds },
-          serviceId: { $ne: null }
-        }
+          serviceId: { $ne: null },
+        },
       },
       {
         $lookup: {
@@ -503,14 +503,13 @@ export const changeBookingStatus = async (req: Request, res: Response): Promise<
                       ? new Intl.DateTimeFormat('vi-VN', {
                           timeZone: 'Asia/Ho_Chi_Minh',
                           dateStyle: 'short',
-                          timeStyle: 'short'
+                          timeStyle: 'short',
                         }).format(orderDetail.booking_date)
                       : 'N/A'
                   }</li>
                   <li><strong>Thú cưng:</strong> ${orderDetail.petName || 'N/A'} (${orderDetail.petType || 'N/A'})</li>
-                  <li><strong>Giá thực tế:</strong> ${
-                    orderDetail.realPrice ? orderDetail.realPrice.toLocaleString('vi-VN') + ' VND' : 'N/A'
-                  }</li>
+                  <li><strong>Giá thực tế:</strong> ${orderDetail.realPrice ? orderDetail.realPrice.toLocaleString('vi-VN') + ' VND' : 'N/A'
+                }</li>
                 </ul>
                 <p>Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!</p>
                 <p>Trân trọng,<br><strong>Pet Heaven</strong></p>
@@ -618,11 +617,11 @@ const comboBathData = [
 ];
 
 const serviceBathData = [
-  { weight: '< 5kg', price: 150000 },
-  { weight: '5 - 10kg', price: 180000 },
-  { weight: '10 - 20kg', price: 210000 },
-  { weight: '20 - 40kg', price: 240000 },
-  { weight: '> 40kg', price: 270000 }
+  { weight: "< 5kg", price: 150000 },
+  { weight: "5 - 10kg", price: 180000 },
+  { weight: "10 - 20kg", price: 210000 },
+  { weight: "20 - 40kg", price: 240000 },
+  { weight: "> 40kg", price: 270000 },
 ];
 
 // Hàm calculatePrice
@@ -807,15 +806,11 @@ export const updateBooking = async (req: Request, res: Response): Promise<void> 
     if (bookingStatus && Object.values(BookingStatus).includes(bookingStatus)) {
       updateOrderFields.bookingStatus = bookingStatus;
       updateOrderFields.status =
-        bookingStatus === BookingStatus.PENDING
-          ? 'pending'
-          : bookingStatus === BookingStatus.CONFIRMED
-            ? 'confirmed'
-            : bookingStatus === BookingStatus.IN_PROGRESS
-              ? 'processing'
-              : bookingStatus === BookingStatus.COMPLETED
-                ? 'completed'
-                : 'cancelled';
+        bookingStatus === BookingStatus.PENDING ? 'pending' :
+        bookingStatus === BookingStatus.CONFIRMED ? 'confirmed' :
+        bookingStatus === BookingStatus.IN_PROGRESS ? 'processing' :
+        bookingStatus === BookingStatus.COMPLETED ? 'completed' :
+        'cancelled';
       console.log('Setting bookingStatus to:', bookingStatus);
     }
 
@@ -880,7 +875,62 @@ export const updateBooking = async (req: Request, res: Response): Promise<void> 
     });
   }
 };
+export const getOrderById = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
 
+    // Tìm đơn hàng theo ID và populate các trường liên quan
+    const order = await orderModel
+      .findById(id)
+      .populate('userID', 'fullname email phone') // Populate userID với các trường cần thiết
+      .populate('payment_typeID', 'name') // Populate payment_typeID nếu cần
+      .populate('deliveryID', 'name delivery_fee') // Populate deliveryID nếu cần
+      .populate('couponID', 'code discount_value') // Populate couponID nếu cần
+      .lean();
+
+    if (!order) {
+      res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng' });
+      return;
+    }
+
+    // Lấy chi tiết đơn hàng liên quan đến orderId
+    const orderDetails = await orderDetailModel
+      .find({ orderId: id })
+      .populate('productId', 'name price image_url') // Populate productId với các trường cần thiết
+      .populate('serviceId', 'service_name duration') // Populate serviceId nếu cần
+      .lean();
+
+    // Lọc dữ liệu chi tiết đơn hàng
+    const filteredOrderDetails = orderDetails.map((detail) => ({
+      orderDetailId: detail._id,
+      productId: detail.productId?._id || null,
+      productName: detail.productId?.name || 'Không xác định',
+      productPrice: detail.productId?.price || 0,
+      productImage: detail.productId?.image_url?.[0] || null,
+      serviceId: detail.serviceId?._id || null,
+      serviceName: detail.serviceId?.service_name || 'Không xác định',
+      serviceDuration: detail.serviceId?.duration || null,
+      quantity: detail.quantity || 0,
+      totalPrice: detail.total_price || 0,
+      bookingDate: detail.booking_date || null,
+      petName: detail.petName || null,
+      petType: detail.petType || null,
+    }));
+
+    res.status(200).json({
+      success: true,
+      message: 'Lấy đơn hàng thành công',
+      data: {
+        order,
+        orderDetails: filteredOrderDetails,
+      },
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`Error fetching order: ${errorMessage}`);
+    res.status(500).json({ success: false, message: 'Internal Server Error', details: errorMessage });
+  }
+};
 // Hàm mới: Tự động hủy các đặt lịch quá hạn
 export const cancelOverdueBookings = () => {
   schedule.scheduleJob('*/1 * * * *', async () => {

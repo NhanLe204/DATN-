@@ -425,7 +425,7 @@ export default function Header() {
     { path: "/", label: "Trang chủ" },
     { path: "/product", label: "Sản phẩm" },
     { path: "/info", label: "Dịch vụ thú cưng" },
-    { path: "/blog", label: "Blog" },
+    { path: "/blogs", label: "Bài viết" },
     { path: "/about-us", label: "Giới thiệu" },
     { path: "/contact", label: "Liên hệ" },
   ];
@@ -623,7 +623,7 @@ export default function Header() {
             { key: "home", label: <a href="/">Trang chủ</a> },
             { key: "products", label: <a href="/product">Sản phẩm</a> },
             { key: "services", label: <a href="/info">Dịch vụ thú cưng</a> },
-            { key: "blog", label: <a href="/blog">Blog</a> },
+            { key: "blogs", label: <a href="/blogs">Bài viết</a> },
             { key: "about", label: <a href="/about-us">Giới thiệu</a> },
             { key: "contact", label: <a href="/contact">Liên hệ</a> },
           ]}

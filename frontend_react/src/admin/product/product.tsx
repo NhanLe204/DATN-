@@ -12,351 +12,124 @@ import {
 } from "antd";
 import { PlusOutlined, EditOutlined, SearchOutlined } from "@ant-design/icons";
 import { motion } from "framer-motion";
-import productsApi from "../../api/productsApi";
-import brandApi from "../../api/brandApi";
-import tagApi from "../../api/tagApi";
-import ProductModal from "../components/productModal";
-import { Image } from "antd";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const { Option } = Select;
 
-interface Product {
-  key: string;
-  _id: string;
-  productCode: string;
-  name: string;
-  image: string;
-  images?: string[];
-  quantity: number;
-  quantity_sold: number;
-  status: string;
-  price: string;
-  category: string;
-  brand?: string;
-  tag?: string;
-  category_id?: { _id: string; name: string };
-  brand_id?: { _id: string; brand_name: string };
-  tag_id?: { _id: string; tag_name: string };
-  discount?: number;
-  image_url?: string[];
-  description?: string;
-}
+const ProductList = () => {
+  interface Product {
+    type: string;
+    tag: string;
+    price: number;
+    brand_id: string;
+    [key: string]: any; // Add this if there are additional properties
+  }
 
-interface Brand {
-  _id: string;
-  brand_name: string;
-}
-
-interface Tag {
-  _id: string;
-  tag_name: string;
-}
-
-// Hàm loại bỏ dấu tiếng Việt
-const removeAccents = (str: string) => {
-  return str
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/đ/g, "d")
-    .replace(/Đ/g, "D");
-};
-
-const ProductList: React.FC = () => {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
-  const [isLoggedOut, setIsLoggedOut] = useState(false);
-  const [brands, setBrands] = useState<Brand[]>([]);
-  const [tags, setTags] = useState<Tag[]>([]);
+  const [brands, setBrands] = useState([]);
+  const [tags, setTags] = useState<{ _id: string; tag_name: string }[]>([]);
   const [loading, setLoading] = useState(false);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [searchText, setSearchText] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string | undefined>(
-    undefined
-  );
-  const [filterBrand, setFilterBrand] = useState<string | undefined>(undefined);
+  const [filterType, setFilterType] = useState<string | undefined>(undefined);
   const [filterTag, setFilterTag] = useState<string | undefined>(undefined);
+  const [selectedPriceRanges, setSelectedPriceRanges] = useState<string[]>([]);
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalFiltered, setTotalFiltered] = useState(0);
   const pageSize = 10;
 
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Sync URL with filters
   useEffect(() => {
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === "logoutEvent") {
-        setAllProducts([]); 
-        setFilteredProducts([]);
-        setTotalFiltered(0);
-        setIsLoggedOut(true);
-      }
-    };
-  
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
-  }, []);
+    const params = new URLSearchParams(location.search);
+    
+    // Get all filter values from URL
+    const type = params.get("type");
+    const tag = params.get("tag");
+    const price = params.get("price")?.split(",") || [];
+    const brands = params.get("brands")?.split(",") || [];
+    
+    // Set filter states based on URL parameters
+    if (type) setFilterType(type);
+    if (tag) setFilterTag(tag);
+    if (price.length > 0) setSelectedPriceRanges(price);
+    if (brands.length > 0) setSelectedBrands(brands);
+    
+  }, [location.search]);
+
+  // Update URL when filters change
   useEffect(() => {
-    if (isLoggedOut) return; // Ngăn filterProducts chạy sau khi đăng xuất
-    console.log("Filtering products with allProducts:", allProducts);
-    filterProducts();
-  }, [searchText, filterStatus, filterBrand, filterTag, allProducts, currentPage, isLoggedOut]);
+    const params = new URLSearchParams();
 
-  const showModal = (product?: Product) => {
-    console.log("Product passed to modal:", product);
-    setEditingProduct(product || null);
-    setIsModalVisible(true);
-  };
+    // Add parameters only if they have values
+    if (filterType) params.set("type", filterType);
+    if (filterTag) params.set("tag", filterTag);
+    if (selectedPriceRanges.length > 0) params.set("price", selectedPriceRanges.join(","));
+    if (selectedBrands.length > 0) params.set("brands", selectedBrands.join(","));
 
-  const closeModal = () => {
-    setIsModalVisible(false);
-    setEditingProduct(null);
-  };
+    // Update URL
+    navigate({
+      pathname: "/products",
+      search: params.toString()
+    }, { replace: true });
 
-  useEffect(() => {
-    fetchProducts();
-    fetchBrands();
-    fetchTags();
-  }, []);
+  }, [filterType, filterTag, selectedPriceRanges, selectedBrands, navigate]);
 
-  useEffect(() => {
-    filterProducts();
-  }, [
-    searchText,
-    filterStatus,
-    filterBrand,
-    filterTag,
-    allProducts,
-    currentPage,
-  ]);
-
-  const fetchProducts = async () => {
-    setLoading(true);
-    try {
-      const response = await productsApi.getAll({ limit: "1000" });
-      const productList = response.data.result || [];
-
-      if (!Array.isArray(productList)) {
-        throw new Error("Dữ liệu không hợp lệ từ API");
-      }
-
-      const formattedProducts = productList.map((product: any) => ({
-        key: product._id,
-        _id: product._id,
-        productCode: product._id,
-        name: product.name,
-        image: product.image_url?.[0] || "",
-        images: product.image_url || [],
-        quantity: product.quantity || 0,
-        quantity_sold: product.quantity_sold || 0,
-        status: product.status,
-        price: product.price,
-        category: product.category_id?.name || "Không xác định",
-        brand: product.brand_id?.brand_name || "Không có thương hiệu",
-        tag: product.tag_id?.tag_name || "Không có thẻ",
-        category_id: product.category_id,
-        brand_id: product.brand_id,
-        tag_id: product.tag_id,
-        discount: product.discount,
-        image_url: product.image_url || [],
-        description: product.description || "Không có mô tả",
-      }));
-
-      setAllProducts(formattedProducts);
-      setTotalFiltered(formattedProducts.length);
-    } catch (error) {
-      notification.error({
-        message: "Lỗi",
-        description: "Lỗi khi tải danh sách sản phẩm!",
-        placement: "topRight",
-      });
-      console.error("Lỗi khi lấy sản phẩm:", error);
-    }
-    setLoading(false);
-  };
-
-  const fetchBrands = async () => {
-    try {
-      const response = await brandApi.getAll();
-      const brandList = response.data.result || [];
-      setBrands(brandList);
-    } catch (error) {
-      console.error("Lỗi khi lấy danh sách thương hiệu:", error);
-    }
-  };
-
-  const fetchTags = async () => {
-    try {
-      const response = await tagApi.getAll();
-      const tagList = response.data.result || [];
-      setTags(tagList);
-    } catch (error) {
-      console.error("Lỗi khi lấy danh sách tag:", error);
-    }
-  };
-
+  // Filter products based on all criteria
   const filterProducts = () => {
     let result = [...allProducts];
 
-    // Lọc theo searchText (hỗ trợ không dấu)
-    if (searchText) {
-      const searchNoAccents = removeAccents(searchText.toLowerCase());
-      result = result.filter((product) =>
-        removeAccents(product.name.toLowerCase()).includes(searchNoAccents)
-      );
+    if (filterType) {
+      result = result.filter(product => product.type === filterType);
     }
 
-    // Lọc theo status
-    if (filterStatus) {
-      result = result.filter((product) => product.status === filterStatus);
-    }
-
-    // Lọc theo brand
-    if (filterBrand) {
-      result = result.filter((product) =>
-        product.brand_id && typeof product.brand_id === "object"
-          ? product.brand_id._id === filterBrand
-          : product.brand_id === filterBrand
-      );
-    }
-
-    // Lọc theo tag
     if (filterTag) {
-      result = result.filter((product) =>
-        product.tag_id && typeof product.tag_id === "object"
-          ? product.tag_id._id === filterTag
-          : product.tag_id === filterTag
-      );
+      result = result.filter(product => product.tag === filterTag);
     }
 
-    setTotalFiltered(result.length);
-    const start = (currentPage - 1) * pageSize;
-    const end = start + pageSize;
-    setFilteredProducts(result.slice(start, end));
+    if (selectedPriceRanges.length > 0) {
+      result = result.filter(product => {
+        return selectedPriceRanges.some(range => {
+          switch (range) {
+            case 'under150':
+              return product.price < 150000;
+            case '150to300':
+              return product.price >= 150000 && product.price < 300000;
+            case '300to500':
+              return product.price >= 300000 && product.price < 500000;
+            case '500to700':
+              return product.price >= 500000 && product.price < 700000;
+            case 'above700':
+              return product.price >= 700000;
+            default:
+              return true;
+          }
+        });
+      });
+    }
+
+    if (selectedBrands.length > 0) {
+      result = result.filter(product => selectedBrands.includes(product.brand_id));
+    }
+
+    setFilteredProducts(result.slice((currentPage - 1) * pageSize, currentPage * pageSize));
   };
 
-  const handleSearch = (value: string) => {
-    setSearchText(value);
+  useEffect(() => {
+    filterProducts();
+  }, [filterType, filterTag, selectedPriceRanges, selectedBrands, allProducts, currentPage]);
+
+  // Handle filter changes
+  const handleTypeChange = (value) => {
+    setFilterType(value);
     setCurrentPage(1);
   };
 
-  const handleStatusChange = async (productId: string, newStatus: string) => {
-    try {
-      await productsApi.toggleStatus(productId, newStatus);
-      notification.success({
-        message: "Thành công",
-        description: "Cập nhật trạng thái sản phẩm thành công!",
-        placement: "topRight",
-      });
-      fetchProducts();
-    } catch (error) {
-      notification.error({
-        message: "Lỗi",
-        description: "Lỗi khi cập nhật trạng thái sản phẩm!",
-        placement: "topRight",
-      });
-      console.error("Toggle status error:", error);
-    }
+  const handleTagChange = (value) => {
+    setFilterTag(value);
+    setCurrentPage(1);
   };
-
-  const getStatusDisplayName = (status: string) => {
-    switch (status) {
-      case "available":
-        return "Còn hàng";
-      case "out_of_stock":
-        return "Hết hàng";
-      case "discontinued":
-        return "Ngừng kinh doanh";
-      default:
-        return status;
-    }
-  };
-
-  const statusOptions = [
-    { value: "available", label: "Còn hàng" },
-    { value: "out_of_stock", label: "Hết hàng" },
-    { value: "discontinued", label: "Ngừng kinh doanh" },
-  ];
-
-  const columns = [
-    {
-      title: "STT",
-      key: "index",
-      width: 30,
-      render: (_: any, __: Product, index: number) =>
-        (currentPage - 1) * pageSize + index + 1,
-    },
-    { title: "Tên sản phẩm", dataIndex: "name", key: "name", width: 400 },
-    {
-      title: "Ảnh",
-      dataIndex: "image",
-      key: "image",
-      width: 180,
-      render: (text: string) => (
-        <Image src={text} alt="Product" className="object-cover w-24 h-24" />
-      ),
-    },
-    {
-      title: "Tình trạng",
-      dataIndex: "status",
-      key: "status",
-      width: 150,
-      render: (status: string, record: Product) => (
-        <Select
-          value={status}
-          style={{ width: 120 }}
-          onChange={(value) => handleStatusChange(record._id, value)}
-        >
-          {statusOptions.map((opt) => (
-            <Option key={opt.value} value={opt.value}>
-              {opt.label}
-            </Option>
-          ))}
-        </Select>
-      ),
-    },
-    {
-      title: "Giá tiền",
-      dataIndex: "price",
-      key: "price",
-      width: 100,
-      render: (price: any) => `${price?.toLocaleString() || 0} VNĐ`,
-    },
-    { title: "Danh mục", dataIndex: "category", key: "category", width: 200 },
-    { title: "Thương hiệu", dataIndex: "brand", key: "brand", width: 200 },
-    {
-      title: "Tags",
-      dataIndex: "tag",
-      key: "tag",
-      width: 100,
-      render: (tag: string) => (tag ? <Tag color="blue">{tag}</Tag> : null),
-    },
-    {
-      title: "Số lượng",
-      dataIndex: "quantity",
-      key: "quantity",
-      width: 100,
-      render: (quantity: number) => quantity || 0,
-    },
-    {
-      title: "Số lượng đã bán",
-      dataIndex: "quantity_sold",
-      key: "quantity_sold",
-      width: 100,
-      render: (quantity_sold: number) => quantity_sold || 0,
-    },
-    {
-      title: "Chức năng",
-      key: "action",
-      width: 120,
-      render: (_: any, record: Product) => (
-        <Space>
-          <Button
-            icon={<EditOutlined />}
-            size="small"
-            onClick={() => showModal(record)}
-          />
-        </Space>
-      ),
-    },
-  ];
 
   return (
     <motion.div
@@ -368,64 +141,28 @@ const ProductList: React.FC = () => {
         title={
           <Input
             placeholder="Tìm kiếm..."
-            value={searchText}
-            onChange={(e) => handleSearch(e.target.value)}
             style={{ width: 200 }}
             prefix={<SearchOutlined />}
           />
         }
         bordered={false}
         className="shadow-sm"
-        extra={
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => showModal()}
-          >
-            Thêm sản phẩm
-          </Button>
-        }
       >
         <Space style={{ marginBottom: 16 }}>
           <Select
-            placeholder="Lọc theo trạng thái"
-            value={filterStatus}
-            onChange={(value) => {
-              setFilterStatus(value);
-              setCurrentPage(1);
-            }}
+            placeholder="Lọc theo loại"
+            value={filterType}
+            onChange={handleTypeChange}
             style={{ width: 200 }}
             allowClear
           >
-            {statusOptions.map((opt) => (
-              <Option key={opt.value} value={opt.value}>
-                {opt.label}
-              </Option>
-            ))}
-          </Select>
-          <Select
-            placeholder="Lọc theo thương hiệu"
-            value={filterBrand}
-            onChange={(value) => {
-              setFilterBrand(value);
-              setCurrentPage(1);
-            }}
-            style={{ width: 200 }}
-            allowClear
-          >
-            {brands.map((brand) => (
-              <Option key={brand._id} value={brand._id}>
-                {brand.brand_name}
-              </Option>
-            ))}
+            <Option value="dog">Chó</Option>
+            <Option value="cat">Mèo</Option>
           </Select>
           <Select
             placeholder="Lọc theo tag"
             value={filterTag}
-            onChange={(value) => {
-              setFilterTag(value);
-              setCurrentPage(1);
-            }}
+            onChange={handleTagChange}
             style={{ width: 200 }}
             allowClear
           >
@@ -437,24 +174,21 @@ const ProductList: React.FC = () => {
           </Select>
         </Space>
         <Table
-          columns={columns}
+          columns={[
+            { title: "Tên sản phẩm", dataIndex: "name", key: "name" },
+            { title: "Loại", dataIndex: "type", key: "type" },
+            { title: "Tag", dataIndex: "tag", key: "tag" },
+          ]}
           dataSource={filteredProducts}
           loading={loading}
           pagination={{
             current: currentPage,
             pageSize,
-            total: totalFiltered,
+            total: filteredProducts.length,
             onChange: (page) => setCurrentPage(page),
           }}
         />
       </Card>
-
-      <ProductModal
-        visible={isModalVisible}
-        onClose={closeModal}
-        onReload={fetchProducts}
-        product={editingProduct}
-      />
     </motion.div>
   );
 };

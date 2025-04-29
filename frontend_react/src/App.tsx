@@ -264,7 +264,7 @@ function App() {
           ),
         },
         {
-          path: "/blog",
+          path: "/blogs",
           element: (
             <PublicRoute>
               <BlogContent />

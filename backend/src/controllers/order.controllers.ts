@@ -177,7 +177,8 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       paymentOrderCode,
       status: isOrder ? OrderStatus.PENDING : null,
       bookingStatus: isBooking ? BookingStatus.CONFIRMED : null,
-      payment_status: PaymentStatus.PENDING,
+      payment_status:
+        payment_typeID == '67d67442aeb5082f01074c28' ? PaymentStatus.CASH_ON_DELIVERY : PaymentStatus.PENDING,
       inforUserGuest: infoUserGuest || null // Giữ nguyên để tương thích với logic cũ
     });
 
@@ -259,6 +260,7 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
 export const getAvailableSlots = async (req: Request, res: Response): Promise<void> => {
   try {
     const { date } = req.query; // Ngày cần kiểm tra, ví dụ: "2025-03-29"
+    console.log(date, 'Đặt lịch');
     if (!date) throw new Error('Date is required');
 
     const maxSlots = 5;
@@ -280,7 +282,9 @@ export const getAvailableSlots = async (req: Request, res: Response): Promise<vo
 
     bookings.forEach((booking) => {
       const bookingDate = new Date(booking.booking_date);
+      console.log(bookingDate, 'bookingDate');
       const hour = bookingDate.getHours();
+      console.log(hour, 'HOUR');
       const serviceDuration = booking.serviceId?.duration || 60;
       const affectedSlots = Math.ceil(serviceDuration / 60);
 
@@ -313,46 +317,33 @@ export const getAvailableSlots = async (req: Request, res: Response): Promise<vo
 
 export const getAllOrders = async (req: Request, res: Response): Promise<void> => {
   try {
-    const orders = await orderModel
-      .find()
-      .populate('userID')
-      .populate('payment_typeID')
-      .populate('deliveryID')
-      .populate('couponID')
+    const orders = await orderDetailModel
+      .find({ productId: { $ne: null }, serviceId: null })
+      .populate({path: 'orderId', // Populate orderId
+				populate: {
+					path: 'userID', // Nested populate userID từ orderId
+					select: 'fullname email phone avatar' // Chỉ lấy các trường cần thiết
+				}})
+      .populate('productId', 'name price')
       .lean();
 
-    // Lấy order details cho mỗi order
-    const ordersWithDetails = await Promise.all(
-      orders.map(async (order) => {
-        const details = await orderDetailModel
-          .find({ orderId: order._id })
-          .populate('serviceId')
-          .populate('productId')
-          .lean();
-        return {
-          ...order,
-          orderDetails: details // Thêm orderDetails vào response
-        };
-      })
-    );
-
-    res.status(200).json({ success: true, result: ordersWithDetails });
+    res.status(200).json({ success: true, result: orders });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error(`Error fetching orders: ${errorMessage}`);
     res.status(500).json({ success: false, message: 'Internal Server Error', details: errorMessage });
   }
 };
-
 export const getOrderById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const order = await orderModel
-      .findById(id)
-      .populate('userID')
-      .populate('payment_typeID')
-      .populate('deliveryID')
-      .populate('couponID');
+       .findById(id)
+      .populate('userID', 'fullname email phone') // Populate userID với các trường cần thiết
+      .populate('payment_typeID', 'name') // Populate payment_typeID nếu cần
+      .populate('deliveryID', 'name delivery_fee') // Populate deliveryID nếu cần
+      .populate('couponID', 'code discount_value') // Populate couponID nếu cần
+      .lean();
     if (!order) {
       res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng' });
       return;

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Checkbox, Typography } from "antd";
 import { FaChevronUp, FaChevronDown } from "react-icons/fa";
+import { useLocation, useNavigate } from "react-router-dom";
 import tagApi from "../api/tagApi";
 import brandApi from "../api/brandApi";
 
@@ -58,12 +59,161 @@ export default function LeftProductList({
   setSelectedCategory,
   categories,
 }: LeftProductListProps) {
-  const [tags, setTags] = useState<Tag[]>([]); 
+  const [tags, setTags] = useState<Tag[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [loadingTags, setLoadingTags] = useState(false);
   const [loadingBrands, setLoadingBrands] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [expandedTagCategory, setExpandedTagCategory] = useState<string | null>(null);
+  const [expandedTagCategory, setExpandedTagCategory] = useState<string | null>(
+    null
+  );
+
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const getCategoryNameById = (id: string): string => {
+    const category = categories.find((cat) => cat._id === id);
+    return category ? category.name.toLowerCase().replace(/\s+/g, "-") : "";
+  };
+
+  const getCategoryIdByName = (name: string): string => {
+    const category = categories.find(
+      (cat) => cat.name.toLowerCase().replace(/\s+/g, "-") === name
+    );
+    return category ? category._id : "";
+  };
+
+  const getBrandNameById = (id: string): string => {
+    const brand = brands.find((b) => b._id === id);
+    return brand
+      ? ((brand.brand_name as string) || brand.name)
+          .toLowerCase()
+          .replace(/\s+/g, "-")
+      : "";
+  };
+
+  const getBrandIdByName = (name: string): string => {
+    const brand = brands.find(
+      (b) =>
+        ((b.brand_name as string) || b.name)
+          .toLowerCase()
+          .replace(/\s+/g, "-") === name
+    );
+    return brand ? brand._id : "";
+  };
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const categoryParam = params.get("category");
+    const brandsParam = params.get("brands")?.split(",") || [];
+    const pricesParam = params.get("prices")?.split(",") || [];
+    const tagsParam = params.get("tags")?.split(",") || [];
+
+    if (categoryParam) {
+      const categoryId = getCategoryIdByName(categoryParam);
+      if (categoryId) {
+        setSelectedCategory(categoryId);
+      }
+    }
+
+    if (brandsParam.length > 0) {
+      const brandIds = brandsParam
+        .map((brandName) => getBrandIdByName(brandName))
+        .filter(Boolean);
+      brandIds.forEach((id) => toggleBrand(id));
+    }
+
+    if (pricesParam.length > 0) {
+      pricesParam.forEach((price) => togglePriceRange(price));
+    }
+
+    if (tagsParam.length > 0) {
+      tagsParam.forEach((tag) => toggleTag(tag));
+    }
+  }, [location.search]);
+
+  const updateURL = (type: string, value: string | string[]) => {
+    const params = new URLSearchParams(location.search);
+
+    switch (type) {
+      case "category":
+        if (value && value !== "all") {
+          const categoryName = getCategoryNameById(value as string);
+          params.set(type, categoryName);
+        } else {
+          params.delete(type);
+        }
+        break;
+
+      case "brands":
+        if (Array.isArray(value) && value.length > 0) {
+          const brandNames = value
+            .map((id) => getBrandNameById(id))
+            .filter(Boolean);
+          params.set(type, brandNames.join(","));
+        } else {
+          params.delete(type);
+        }
+        break;
+
+      default:
+        if (Array.isArray(value)) {
+          if (value.length > 0) {
+            params.set(type, value.join(","));
+          } else {
+            params.delete(type);
+          }
+        } else if (value) {
+          params.set(type, value as string);
+        } else {
+          params.delete(type);
+        }
+    }
+
+    navigate(
+      {
+        pathname: location.pathname,
+        search: params.toString(),
+      },
+      { replace: true }
+    );
+  };
+
+  const handleCategoryClick = (categoryId: string) => {
+    if (selectedCategory !== categoryId) {
+      setSelectedCategory(categoryId);
+      setExpandedTagCategory(categoryId);
+      updateURL("category", categoryId);
+    } else {
+      setExpandedTagCategory(
+        expandedTagCategory === categoryId ? null : categoryId
+      );
+    }
+  };
+
+  const handleTagToggle = (tagId: string) => {
+    toggleTag(tagId);
+    const newTags = selectedTags.includes(tagId)
+      ? selectedTags.filter((t) => t !== tagId)
+      : [...selectedTags, tagId];
+    updateURL("tags", newTags);
+  };
+
+  const handlePriceToggle = (range: string) => {
+    togglePriceRange(range);
+    const newPrices = priceRanges.includes(range)
+      ? priceRanges.filter((p) => p !== range)
+      : [...priceRanges, range];
+    updateURL("prices", newPrices);
+  };
+
+  const handleBrandToggle = (brandId: string) => {
+    toggleBrand(brandId);
+    const newBrands = selectedBrands.includes(brandId)
+      ? selectedBrands.filter((b) => b !== brandId)
+      : [...selectedBrands, brandId];
+    updateURL("brands", newBrands);
+  };
 
   useEffect(() => {
     const fetchTags = async () => {
@@ -73,7 +223,9 @@ export default function LeftProductList({
         const response = await tagApi.getAll();
         const tagsData = response.data;
         const tagsArray =
-          tagsData.result && Array.isArray(tagsData.result) ? tagsData.result : [];
+          tagsData.result && Array.isArray(tagsData.result)
+            ? tagsData.result
+            : [];
         setTags(tagsArray);
       } catch (error) {
         console.error("Error fetching tags:", error);
@@ -103,18 +255,7 @@ export default function LeftProductList({
 
     fetchTags();
     fetchBrands();
-  }, [categories]); 
-
-  const handleCategoryClick = (categoryId: string) => {
-    if (selectedCategory !== categoryId) {
-      setSelectedCategory(categoryId);
-      setExpandedTagCategory(categoryId);
-    } else {
-      setExpandedTagCategory(
-        expandedTagCategory === categoryId ? null : categoryId
-      );
-    }
-  };
+  }, [categories]);
 
   return (
     <div className="p-2">
@@ -143,6 +284,7 @@ export default function LeftProductList({
               onClick={() => {
                 setSelectedCategory("all");
                 setExpandedTagCategory(null);
+                updateURL("category", "all");
               }}
             >
               Tất cả sản phẩm
@@ -167,14 +309,16 @@ export default function LeftProductList({
                 {expandedTagCategory === category._id && (
                   <ul className="ml-4 mt-1 space-y-1">
                     {loadingTags ? (
-                      <li className="text-xs text-gray-500">Đang tải tags...</li>
+                      <li className="text-xs text-gray-500">
+                        Đang tải tags...
+                      </li>
                     ) : error ? (
                       <li className="text-xs text-red-500">{error}</li>
                     ) : tags.length > 0 ? (
                       tags.map((tag) => (
                         <li key={tag._id} className="flex items-center">
                           <Checkbox
-                            onChange={() => toggleTag(tag._id)}
+                            onChange={() => handleTagToggle(tag._id)}
                             checked={selectedTags.includes(tag._id)}
                             className="text-gray-700 text-xs"
                           >
@@ -209,45 +353,24 @@ export default function LeftProductList({
         </div>
         {expandPrice && (
           <div className="space-y-1">
-            <Checkbox
-              onChange={() => togglePriceRange("under150")}
-              checked={priceRanges.includes("under150")}
-              className="text-gray-700 text-xs"
-            >
-              0đ - 150,000đ
-            </Checkbox>
-            <br />
-            <Checkbox
-              onChange={() => togglePriceRange("150to300")}
-              checked={priceRanges.includes("150to300")}
-              className="text-gray-700 text-xs"
-            >
-              150,000đ - 300,000đ
-            </Checkbox>
-            <br />
-            <Checkbox
-              onChange={() => togglePriceRange("300to500")}
-              checked={priceRanges.includes("300to500")}
-              className="text-gray-700 text-xs"
-            >
-              300,000đ - 500,000đ
-            </Checkbox>
-            <br />
-            <Checkbox
-              onChange={() => togglePriceRange("500to700")}
-              checked={priceRanges.includes("500to700")}
-              className="text-gray-700 text-xs"
-            >
-              500,000đ - 700,000đ
-            </Checkbox>
-            <br />
-            <Checkbox
-              onChange={() => togglePriceRange("above700")}
-              checked={priceRanges.includes("above700")}
-              className="text-gray-700 text-xs"
-            >
-              700,000đ - Trở lên
-            </Checkbox>
+            {[
+              { id: "under150", label: "0đ - 150,000đ" },
+              { id: "150to300", label: "150,000đ - 300,000đ" },
+              { id: "300to500", label: "300,000đ - 500,000đ" },
+              { id: "500to700", label: "500,000đ - 700,000đ" },
+              { id: "above700", label: "700,000đ - Trở lên" },
+            ].map((range) => (
+              <React.Fragment key={range.id}>
+                <Checkbox
+                  onChange={() => handlePriceToggle(range.id)}
+                  checked={priceRanges.includes(range.id)}
+                  className="text-gray-700 text-xs"
+                >
+                  {range.label}
+                </Checkbox>
+                <br />
+              </React.Fragment>
+            ))}
           </div>
         )}
       </div>
@@ -276,7 +399,7 @@ export default function LeftProductList({
               brands.map((brand) => (
                 <div key={brand._id}>
                   <Checkbox
-                    onChange={() => toggleBrand(brand._id)}
+                    onChange={() => handleBrandToggle(brand._id)}
                     checked={selectedBrands.includes(brand._id)}
                     className="text-gray-700 text-xs"
                   >

@@ -255,8 +255,8 @@ export default function OrderDetail() {
       console.error("Error submitting review:", error);
       message.error(
         error.response?.data?.message ||
-        error.message ||
-        "Lỗi hệ thống, vui lòng thử lại."
+          error.message ||
+          "Lỗi hệ thống, vui lòng thử lại."
       );
     } finally {
       setReviewLoading(false);
@@ -288,7 +288,7 @@ export default function OrderDetail() {
       );
       if (response.success) {
         const updatedOrders = orders.map((o) =>
-          o.id === orderToCancel.id ? { ...o, status: "cancelled" } : o
+          o.id === orderToCancel.id ? { ...o, status: "CANCELLED" } : o
         );
         setOrders(updatedOrders);
         message.success("Đơn hàng đã được hủy thành công!");
@@ -335,10 +335,10 @@ export default function OrderDetail() {
         returnUrl: `${ENV_VARS.VITE_VNPAY_URL}/success`,
         cancelUrl: `${ENV_VARS.VITE_VNPAY_URL}/cancel`,
       };
-  
+
       const response = await paymentApi.create(paymentData);
       const checkoutUrl = response.url;
-  
+
       if (checkoutUrl) {
         window.location.href = checkoutUrl;
       } else {
@@ -442,7 +442,8 @@ export default function OrderDetail() {
         <div className="flex flex-col space-y-1">
           <Tag
             onClick={() =>
-              record.payment_status === "PENDING" && handlePayment(record.id, record.total)
+              record.payment_status === "PENDING" &&
+              handlePayment(record.id, record.total)
             }
             color={
               record.payment_status === "PAID"
@@ -452,10 +453,16 @@ export default function OrderDetail() {
                 : "blue"
             }
             className={`flex items-center w-fit px-3 py-1 ${
-              record.payment_status === "PENDING" ? "cursor-pointer" : "cursor-not-allowed"
+              record.payment_status === "PENDING"
+                ? "cursor-pointer"
+                : "cursor-not-allowed"
             }`}
           >
-            {paymentStatusText[record.payment_status as keyof typeof paymentStatusText]}
+            {
+              paymentStatusText[
+                record.payment_status as keyof typeof paymentStatusText
+              ]
+            }
           </Tag>
         </div>
       ),
@@ -758,8 +765,9 @@ export default function OrderDetail() {
                     <button
                       key={star}
                       onClick={() => setRating(star)}
-                      className={`text-2xl focus:outline-none transition-colors ${star <= rating ? "text-yellow-400" : "text-gray-300"
-                        }`}
+                      className={`text-2xl focus:outline-none transition-colors ${
+                        star <= rating ? "text-yellow-400" : "text-gray-300"
+                      }`}
                     >
                       ★
                     </button>
