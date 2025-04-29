@@ -13,6 +13,7 @@ import "slick-carousel/slick/slick-theme.css"; // Import theme CSS
 import ENV_VARS from "../../../config";
 import productsApi from "../../api/productsApi";
 import categoryApi from "../../api/categoryApi";
+import { Link } from "react-router-dom";
 
 export default function Home() {
   const [newProduct, setNewProduct] = useState([]);
@@ -151,7 +152,10 @@ export default function Home() {
 
       {/* Sản phẩm theo danh mục */}
       {categories.map((category) => (
-        <div key={category._id} className=" mt-[30px] rounded-lg p-6 px-4 sm:px-[40px] lg:px-[154px]">
+        <div
+          key={category._id}
+          className=" mt-[30px] rounded-lg p-6 px-4 sm:px-[40px] lg:px-[154px]"
+        >
           <div className="mx-auto flex h-[50px] w-full max-w-[900px] items-center justify-center rounded-[40px] bg-[#22A6DF] text-base font-medium text-white md:text-lg">
             MUA SẮM CHO {category.name.toUpperCase()}
           </div>

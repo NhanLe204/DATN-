@@ -480,7 +480,7 @@ const Payment = () => {
       );
 
       if (!matchedCoupon) {
-        message.error("Mã giảm giá không hợp lệ hoặc không tồn tại!");
+        message.error("Mã giảm giá không hợp lệ hoặc đã hết hạn!");
         setAppliedCoupon(null);
         setDiscount(0);
         return;
@@ -659,7 +659,6 @@ const Payment = () => {
         processCheckout();
       }
 
-      message.loading("Đang xử lý đơn hàng...", 0);
       // message.destroy();
     } catch (error) {
       console.error("Checkout process error:", error);
