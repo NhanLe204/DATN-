@@ -590,21 +590,23 @@ const Payment = () => {
       const createdOrder = orderResponse.data;
       const order = createdOrder.order;
       console.log("Order created:", order);
-      const paymentData = {
-        orderId: order._id,
-        amount: totalAmount,
-        description: `Thanh toán đơn hàng`,
-        returnUrl: `${ENV_VARS.VITE_VNPAY_URL}/success`,
-        cancelUrl: `${ENV_VARS.VITE_VNPAY_URL}/cancel`,
-      };
 
-      console.warn("Creating payment with data:", paymentData);
-      if (orderResponse) {
-        // Backend sẽ tự động chuyển đến trang thanh toán và trả về URL
+      if (selectedPayment === "67d67442aeb5082f01074c28") {
+        // Thanh toán khi nhận hàng
         message.success("Đơn hàng của bạn đã được tạo thành công!");
-        await handlePayment(paymentData);
+        navigate("/userprofile/orders"); // Điều hướng đến trang thành công
       } else {
-        message.error("Không thể tạo đơn hàng!");
+        // Thanh toán online
+        const paymentData = {
+          orderId: order._id,
+          amount: totalAmount,
+          description: `Thanh toán đơn hàng`,
+          returnUrl: `${ENV_VARS.VITE_VNPAY_URL}/success`,
+          cancelUrl: `${ENV_VARS.VITE_VNPAY_URL}/cancel`,
+        };
+
+        console.warn("Creating payment with data:", paymentData);
+        await handlePayment(paymentData);
       }
     } catch (error) {
       console.error("Error creating order:", error);

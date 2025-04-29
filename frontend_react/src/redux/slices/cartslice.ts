@@ -28,7 +28,7 @@ const getAllCartsFromLocal = (): Record<
 // Lấy cart của userId hoặc guest
 const getCartForUser = (userId: string | null) => {
   const allCarts = getAllCartsFromLocal();
-  return allCarts[userId || 'guest'] || [];
+  return allCarts[userId || "guest"] || [];
 };
 
 const cartSlice = createSlice({
@@ -44,13 +44,13 @@ const cartSlice = createSlice({
       if (newUserId) {
         localStorage.setItem("accountID", newUserId);
         // Khi đăng nhập, chuyển cart của guest sang user nếu có
-        const guestCart = getCartForUser('guest');
+        const guestCart = getCartForUser("guest");
         if (guestCart.length > 0) {
           state.items = [...guestCart];
           saveCartsToLocal(newUserId, state.items);
           // Xóa cart của guest sau khi chuyển
           const allCarts = getAllCartsFromLocal();
-          delete allCarts['guest'];
+          delete allCarts["guest"];
           localStorage.setItem("carts", JSON.stringify(allCarts));
         } else {
           state.items = getCartForUser(newUserId);
@@ -58,13 +58,15 @@ const cartSlice = createSlice({
       } else {
         localStorage.removeItem("accountID");
         state.userId = null;
-        state.items = getCartForUser('guest');
+        state.items = getCartForUser("guest");
       }
     },
     addToCart: (state, action) => {
       const userId = state.userId || "guest";
       const { item, quantity } = action.payload;
-      const existingItem = state.items.find((cartItem) => cartItem.id === item.id);
+      const existingItem = state.items.find(
+        (cartItem) => cartItem.id === item.id
+      );
       if (existingItem) {
         existingItem.quantity += quantity;
       } else {
@@ -77,7 +79,7 @@ const cartSlice = createSlice({
       saveCartsToLocal(userId, state.items);
     },
     increaseQuantity: (state, action) => {
-      const userId = state.userId || 'guest';
+      const userId = state.userId || "guest";
       const item = state.items.find(
         (cartItem) => cartItem.id === action.payload.id
       );
@@ -87,7 +89,7 @@ const cartSlice = createSlice({
       }
     },
     decreaseQuantity: (state, action) => {
-      const userId = state.userId || 'guest';
+      const userId = state.userId || "guest";
       const item = state.items.find(
         (cartItem) => cartItem.id === action.payload.id
       );
@@ -97,14 +99,14 @@ const cartSlice = createSlice({
       }
     },
     removeProduct: (state, action) => {
-      const userId = state.userId || 'guest';
+      const userId = state.userId || "guest";
       state.items = state.items.filter(
         (cartItem) => cartItem.id !== action.payload.id
       );
       saveCartsToLocal(userId, state.items);
     },
     clearProduct: (state) => {
-      const userId = state.userId || 'guest';
+      const userId = state.userId || "guest";
       state.items = [];
       const allCarts = getAllCartsFromLocal();
       delete allCarts[userId];
