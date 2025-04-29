@@ -13,6 +13,7 @@ orderDetailRouter.get('/getOrderByUserId', verifyToken_js_1.verifyToken, orderDe
 orderDetailRouter.patch('/bookings/status', orderDetail_controllers_js_1.changeBookingStatus);
 orderDetailRouter.patch('/realPrice', orderDetail_controllers_js_1.updateRealPrice);
 orderDetailRouter.patch('/updateBooking', orderDetail_controllers_js_1.updateBooking);
+orderDetailRouter.get('/order-details/:orderId', orderDetail_controllers_js_1.getOrderById);
 // orderRouter.patch('/ratings/:id', updateRating);
 // orderRouter.delete('/ratings/:id', deleteRating);
 // brandRouter.post('/brands', verifyToken, requireAdmin, insertBrand);

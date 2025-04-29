@@ -13,4 +13,5 @@ export declare const changeBookingStatus: (req: Request, res: Response) => Promi
 export declare const cancelBooking: (req: Request, res: Response) => Promise<void>;
 export declare const updateRealPrice: (req: Request, res: Response) => Promise<void>;
 export declare const updateBooking: (req: Request, res: Response) => Promise<void>;
+export declare const getOrderById: (req: Request, res: Response) => Promise<void>;
 export declare const cancelOverdueBookings: () => void;

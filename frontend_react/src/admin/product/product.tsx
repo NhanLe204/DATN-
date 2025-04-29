@@ -17,23 +17,15 @@ import { useLocation, useNavigate } from "react-router-dom";
 const { Option } = Select;
 
 const ProductList = () => {
-  interface Product {
-    type: string;
-    tag: string;
-    price: number;
-    brand_id: string;
-    [key: string]: any; // Add this if there are additional properties
-  }
-
-  const [allProducts, setAllProducts] = useState<Product[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [brands, setBrands] = useState([]);
-  const [tags, setTags] = useState<{ _id: string; tag_name: string }[]>([]);
+  const [tags, setTags] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [filterType, setFilterType] = useState<string | undefined>(undefined);
-  const [filterTag, setFilterTag] = useState<string | undefined>(undefined);
-  const [selectedPriceRanges, setSelectedPriceRanges] = useState<string[]>([]);
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+  const [filterType, setFilterType] = useState(undefined);
+  const [filterTag, setFilterTag] = useState(undefined);
+  const [selectedPriceRanges, setSelectedPriceRanges] = useState([]);
+  const [selectedBrands, setSelectedBrands] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cancelOverdueBookings = exports.updateBooking = exports.updateRealPrice = exports.cancelBooking = exports.changeBookingStatus = exports.getOrderByUserId = exports.getAllBookings = exports.getBookingsByUserId = exports.deleteOrderDetail = exports.updateOrderDetail = exports.createOrderDetail = exports.getOrderDetailsByOrderId = exports.getOrderDetails = void 0;
+exports.cancelOverdueBookings = exports.getOrderById = exports.updateBooking = exports.updateRealPrice = exports.cancelBooking = exports.changeBookingStatus = exports.getOrderByUserId = exports.getAllBookings = exports.getBookingsByUserId = exports.deleteOrderDetail = exports.updateOrderDetail = exports.createOrderDetail = exports.getOrderDetailsByOrderId = exports.getOrderDetails = void 0;
 const orderdetail_model_js_1 = __importDefault(require("../models/orderdetail.model.js"));
 const order_model_js_1 = __importDefault(require("../models/order.model.js"));
 const mongoose_1 = __importDefault(require("mongoose"));
@@ -798,6 +798,59 @@ const updateBooking = async (req, res) => {
     }
 };
 exports.updateBooking = updateBooking;
+const getOrderById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        // Tìm đơn hàng theo ID và populate các trường liên quan
+        const order = await order_model_js_1.default
+            .findById(id)
+            .populate('userID', 'fullname email phone') // Populate userID với các trường cần thiết
+            .populate('payment_typeID', 'name') // Populate payment_typeID nếu cần
+            .populate('deliveryID', 'name delivery_fee') // Populate deliveryID nếu cần
+            .populate('couponID', 'code discount_value') // Populate couponID nếu cần
+            .lean();
+        if (!order) {
+            res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng' });
+            return;
+        }
+        // Lấy chi tiết đơn hàng liên quan đến orderId
+        const orderDetails = await orderdetail_model_js_1.default
+            .find({ orderId: id })
+            .populate('productId', 'name price image_url') // Populate productId với các trường cần thiết
+            .populate('serviceId', 'service_name duration') // Populate serviceId nếu cần
+            .lean();
+        // Lọc dữ liệu chi tiết đơn hàng
+        const filteredOrderDetails = orderDetails.map((detail) => ({
+            orderDetailId: detail._id,
+            productId: detail.productId?._id || null,
+            productName: detail.productId?.name || 'Không xác định',
+            productPrice: detail.productId?.price || 0,
+            productImage: detail.productId?.image_url?.[0] || null,
+            serviceId: detail.serviceId?._id || null,
+            serviceName: detail.serviceId?.service_name || 'Không xác định',
+            serviceDuration: detail.serviceId?.duration || null,
+            quantity: detail.quantity || 0,
+            totalPrice: detail.total_price || 0,
+            bookingDate: detail.booking_date || null,
+            petName: detail.petName || null,
+            petType: detail.petType || null
+        }));
+        res.status(200).json({
+            success: true,
+            message: 'Lấy đơn hàng thành công',
+            data: {
+                order,
+                orderDetails: filteredOrderDetails
+            }
+        });
+    }
+    catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.error(`Error fetching order: ${errorMessage}`);
+        res.status(500).json({ success: false, message: 'Internal Server Error', details: errorMessage });
+    }
+};
+exports.getOrderById = getOrderById;
 // Hàm mới: Tự động hủy các đặt lịch quá hạn
 const cancelOverdueBookings = () => {
     node_schedule_1.default.scheduleJob('*/1 * * * *', async () => {

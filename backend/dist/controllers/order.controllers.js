@@ -153,7 +153,7 @@ const createOrderAfterPayment = async (req, res) => {
             paymentOrderCode,
             status: isOrder ? order_enum_js_1.OrderStatus.PENDING : null,
             bookingStatus: isBooking ? booking_enum_js_1.BookingStatus.CONFIRMED : null,
-            payment_status: order_enum_js_1.PaymentStatus.PENDING,
+            payment_status: payment_typeID == '67d67442aeb5082f01074c28' ? order_enum_js_1.PaymentStatus.CASH_ON_DELIVERY : order_enum_js_1.PaymentStatus.PENDING,
             inforUserGuest: infoUserGuest || null // Giữ nguyên để tương thích với logic cũ
         });
         const savedOrder = await order.save({ session });
@@ -231,6 +231,7 @@ exports.createOrderAfterPayment = createOrderAfterPayment;
 const getAvailableSlots = async (req, res) => {
     try {
         const { date } = req.query; // Ngày cần kiểm tra, ví dụ: "2025-03-29"
+        console.log(date, 'Đặt lịch');
         if (!date)
             throw new Error('Date is required');
         const maxSlots = 5;
@@ -248,7 +249,9 @@ const getAvailableSlots = async (req, res) => {
         availableTimeSlots.forEach((time) => (slotOccupancy[time] = 0));
         bookings.forEach((booking) => {
             const bookingDate = new Date(booking.booking_date);
+            console.log(bookingDate, 'bookingDate');
             const hour = bookingDate.getHours();
+            console.log(hour, 'HOUR');
             const serviceDuration = booking.serviceId?.duration || 60;
             const affectedSlots = Math.ceil(serviceDuration / 60);
             for (let i = 0; i < affectedSlots; i++) {
@@ -279,26 +282,16 @@ const getAvailableSlots = async (req, res) => {
 exports.getAvailableSlots = getAvailableSlots;
 const getAllOrders = async (req, res) => {
     try {
-        const orders = await order_model_js_1.default
-            .find()
-            .populate('userID')
-            .populate('payment_typeID')
-            .populate('deliveryID')
-            .populate('couponID')
+        const orders = await orderdetail_model_js_1.default
+            .find({ productId: { $ne: null }, serviceId: null })
+            .populate({ path: 'orderId', // Populate orderId
+            populate: {
+                path: 'userID', // Nested populate userID từ orderId
+                select: 'fullname email phone avatar' // Chỉ lấy các trường cần thiết
+            } })
+            .populate('productId', 'name price')
             .lean();
-        // Lấy order details cho mỗi order
-        const ordersWithDetails = await Promise.all(orders.map(async (order) => {
-            const details = await orderdetail_model_js_1.default
-                .find({ orderId: order._id })
-                .populate('serviceId')
-                .populate('productId')
-                .lean();
-            return {
-                ...order,
-                orderDetails: details // Thêm orderDetails vào response
-            };
-        }));
-        res.status(200).json({ success: true, result: ordersWithDetails });
+        res.status(200).json({ success: true, result: orders });
     }
     catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -312,10 +305,11 @@ const getOrderById = async (req, res) => {
         const { id } = req.params;
         const order = await order_model_js_1.default
             .findById(id)
-            .populate('userID')
-            .populate('payment_typeID')
-            .populate('deliveryID')
-            .populate('couponID');
+            .populate('userID', 'fullname email phone') // Populate userID với các trường cần thiết
+            .populate('payment_typeID', 'name') // Populate payment_typeID nếu cần
+            .populate('deliveryID', 'name delivery_fee') // Populate deliveryID nếu cần
+            .populate('couponID', 'code discount_value') // Populate couponID nếu cần
+            .lean();
         if (!order) {
             res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng' });
             return;

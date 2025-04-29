@@ -176,8 +176,8 @@ export const getAllBookings = async (req: Request, res: Response): Promise<void>
       {
         $match: {
           orderId: { $in: orderIds },
-          serviceId: { $ne: null },
-        },
+          serviceId: { $ne: null }
+        }
       },
       {
         $lookup: {
@@ -503,13 +503,14 @@ export const changeBookingStatus = async (req: Request, res: Response): Promise<
                       ? new Intl.DateTimeFormat('vi-VN', {
                           timeZone: 'Asia/Ho_Chi_Minh',
                           dateStyle: 'short',
-                          timeStyle: 'short',
+                          timeStyle: 'short'
                         }).format(orderDetail.booking_date)
                       : 'N/A'
                   }</li>
                   <li><strong>Thú cưng:</strong> ${orderDetail.petName || 'N/A'} (${orderDetail.petType || 'N/A'})</li>
-                  <li><strong>Giá thực tế:</strong> ${orderDetail.realPrice ? orderDetail.realPrice.toLocaleString('vi-VN') + ' VND' : 'N/A'
-                }</li>
+                  <li><strong>Giá thực tế:</strong> ${
+                    orderDetail.realPrice ? orderDetail.realPrice.toLocaleString('vi-VN') + ' VND' : 'N/A'
+                  }</li>
                 </ul>
                 <p>Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!</p>
                 <p>Trân trọng,<br><strong>Pet Heaven</strong></p>
@@ -617,11 +618,11 @@ const comboBathData = [
 ];
 
 const serviceBathData = [
-  { weight: "< 5kg", price: 150000 },
-  { weight: "5 - 10kg", price: 180000 },
-  { weight: "10 - 20kg", price: 210000 },
-  { weight: "20 - 40kg", price: 240000 },
-  { weight: "> 40kg", price: 270000 },
+  { weight: '< 5kg', price: 150000 },
+  { weight: '5 - 10kg', price: 180000 },
+  { weight: '10 - 20kg', price: 210000 },
+  { weight: '20 - 40kg', price: 240000 },
+  { weight: '> 40kg', price: 270000 }
 ];
 
 // Hàm calculatePrice
@@ -806,11 +807,15 @@ export const updateBooking = async (req: Request, res: Response): Promise<void> 
     if (bookingStatus && Object.values(BookingStatus).includes(bookingStatus)) {
       updateOrderFields.bookingStatus = bookingStatus;
       updateOrderFields.status =
-        bookingStatus === BookingStatus.PENDING ? 'pending' :
-        bookingStatus === BookingStatus.CONFIRMED ? 'confirmed' :
-        bookingStatus === BookingStatus.IN_PROGRESS ? 'processing' :
-        bookingStatus === BookingStatus.COMPLETED ? 'completed' :
-        'cancelled';
+        bookingStatus === BookingStatus.PENDING
+          ? 'pending'
+          : bookingStatus === BookingStatus.CONFIRMED
+            ? 'confirmed'
+            : bookingStatus === BookingStatus.IN_PROGRESS
+              ? 'processing'
+              : bookingStatus === BookingStatus.COMPLETED
+                ? 'completed'
+                : 'cancelled';
       console.log('Setting bookingStatus to:', bookingStatus);
     }
 
@@ -914,7 +919,7 @@ export const getOrderById = async (req: Request, res: Response): Promise<void> =
       totalPrice: detail.total_price || 0,
       bookingDate: detail.booking_date || null,
       petName: detail.petName || null,
-      petType: detail.petType || null,
+      petType: detail.petType || null
     }));
 
     res.status(200).json({
@@ -922,8 +927,8 @@ export const getOrderById = async (req: Request, res: Response): Promise<void> =
       message: 'Lấy đơn hàng thành công',
       data: {
         order,
-        orderDetails: filteredOrderDetails,
-      },
+        orderDetails: filteredOrderDetails
+      }
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';

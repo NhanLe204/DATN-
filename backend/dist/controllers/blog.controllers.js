@@ -60,7 +60,11 @@ const getActiveBlogs = async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
-        const blogs = await blog_model_js_1.default.find({ status: blog_enum_js_1.BlogStatus.ACTIVE }).skip(skip).limit(limit);
+        const blogs = await blog_model_js_1.default
+            .find({ status: blog_enum_js_1.BlogStatus.ACTIVE })
+            .skip(skip)
+            .limit(limit)
+            .populate('blog_category_id', 'name');
         const total = await blog_model_js_1.default.countDocuments({ status: blog_enum_js_1.BlogStatus.ACTIVE });
         res.status(200).json({
             success: true,
