@@ -114,9 +114,8 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       }
 
       // Chuẩn hóa booking_date sang UTC
-      const standardizedBookingDate = serviceId && booking_date
-        ? moment.tz(booking_date, 'Asia/Ho_Chi_Minh').utc().toDate()
-        : null;
+      const standardizedBookingDate =
+        serviceId && booking_date ? moment.tz(booking_date, 'Asia/Ho_Chi_Minh').utc().toDate() : null;
 
       return {
         productId,
@@ -161,9 +160,7 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
     }
 
     // Chuẩn hóa order_date sang UTC
-    const standardizedOrderDate = orderdate
-      ? moment.tz(orderdate, 'Asia/Ho_Chi_Minh').utc().toDate()
-      : new Date();
+    const standardizedOrderDate = orderdate ? moment.tz(orderdate, 'Asia/Ho_Chi_Minh').utc().toDate() : new Date();
 
     // Tạo và lưu đơn hàng
     const order = new orderModel({
