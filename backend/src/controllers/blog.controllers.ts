@@ -58,7 +58,11 @@ export const getActiveBlogs = async (req: Request, res: Response): Promise<void>
     const limit = parseInt(req.query.limit as string) || 10;
     const skip = (page - 1) * limit;
 
-    const blogs = await blogModel.find({ status: BlogStatus.ACTIVE }).skip(skip).limit(limit);
+    const blogs = await blogModel
+      .find({ status: BlogStatus.ACTIVE })
+      .skip(skip)
+      .limit(limit)
+      .populate('blog_category_id', 'name');
     const total = await blogModel.countDocuments({ status: BlogStatus.ACTIVE });
 
     res.status(200).json({
