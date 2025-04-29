@@ -30,7 +30,7 @@ const adminPageNameMapping: { [key: string]: string } = {
     contact: "Liên hệ",
     detail: "Chi tiết sản phẩm",
     info: "Dịch vụ Spa",
-    blog: "Bài viết",
+    blogs: "Bài viết",
     "about-us": "Về chúng tôi",
     service: "Đặt lịch Spa",
     cart: "Giỏ hàng",
