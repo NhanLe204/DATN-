@@ -176,7 +176,7 @@ export const getAllBookings = async (req: Request, res: Response): Promise<void>
       {
         $match: {
           orderId: { $in: orderIds },
-          serviceId: { $ne: null },
+          serviceId: { $ne: null }
         },
       },
       {
@@ -458,8 +458,8 @@ export const changeBookingStatus = async (req: Request, res: Response): Promise<
           const userData = user
             ? { email: user.email, name: user.fullname }
             : order.infoUserGuest
-            ? { email: order.infoUserGuest.email, name: order.infoUserGuest.fullName }
-            : null;
+              ? { email: order.infoUserGuest.email, name: order.infoUserGuest.fullName }
+              : null;
 
           console.log('User data for email:', userData);
           console.log('Order detail:', orderDetail);
@@ -491,19 +491,17 @@ export const changeBookingStatus = async (req: Request, res: Response): Promise<
                 <ul>
                   <li><strong>Mã đơn hàng:</strong> ${orderId}</li>
                   <li><strong>Dịch vụ:</strong> ${service?.service_name || 'Không xác định'}</li>
-                  <li><strong>Thời gian:</strong> ${
-                    orderDetail.booking_date
-                      ? new Intl.DateTimeFormat('vi-VN', {
-                          timeZone: 'Asia/Ho_Chi_Minh',
-                          dateStyle: 'short',
-                          timeStyle: 'short',
-                        }).format(orderDetail.booking_date)
-                      : 'N/A'
-                  }</li>
+                  <li><strong>Thời gian:</strong> ${orderDetail.booking_date
+                  ? new Intl.DateTimeFormat('vi-VN', {
+                    timeZone: 'Asia/Ho_Chi_Minh',
+                    dateStyle: 'short',
+                    timeStyle: 'short',
+                  }).format(orderDetail.booking_date)
+                  : 'N/A'
+                }</li>
                   <li><strong>Thú cưng:</strong> ${orderDetail.petName || 'N/A'} (${orderDetail.petType || 'N/A'})</li>
-                  <li><strong>Giá thực tế:</strong> ${
-                    orderDetail.realPrice ? orderDetail.realPrice.toLocaleString('vi-VN') + ' VND' : 'N/A'
-                  }</li>
+                  <li><strong>Giá thực tế:</strong> ${orderDetail.realPrice ? orderDetail.realPrice.toLocaleString('vi-VN') + ' VND' : 'N/A'
+                }</li>
                 </ul>
                 <p>Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!</p>
                 <p>Trân trọng,<br><strong>Pet Heaven</strong></p>
@@ -616,30 +614,23 @@ const serviceBathData = [
   { weight: "5 - 10kg", price: 180000 },
   { weight: "10 - 20kg", price: 210000 },
   { weight: "20 - 40kg", price: 240000 },
-  { weight: "> 40kg", price: 270000 },
+  { weight: '> 40kg', price: 270000 }
 ];
 
 // Hàm calculatePrice
-const calculatePrice = (
-  serviceName: string,
-  petWeight: number,
-  petType: string
-): number => {
+const calculatePrice = (serviceName: string, petWeight: number, petType: string): number => {
   const getWeightRange = (weight: number): string => {
-    if (weight < 5) return "< 5kg";
-    if (weight >= 5 && weight <= 10) return "5 - 10kg";
-    if (weight > 10 && weight <= 20) return "10 - 20kg";
-    if (weight > 20 && weight <= 40) return "20 - 40kg";
-    return "> 40kg";
+    if (weight < 5) return '< 5kg';
+    if (weight >= 5 && weight <= 10) return '5 - 10kg';
+    if (weight > 10 && weight <= 20) return '10 - 20kg';
+    if (weight > 20 && weight <= 40) return '20 - 40kg';
+    return '> 40kg';
   };
 
   const weightRange = getWeightRange(petWeight);
   const normalizedServiceName = serviceName.toLowerCase();
 
-  if (
-    normalizedServiceName.includes("tắm") &&
-    !normalizedServiceName.includes("combo")
-  ) {
+  if (normalizedServiceName.includes('tắm') && !normalizedServiceName.includes('combo')) {
     const priceEntry = bathData.find((item) => item.weight === weightRange);
     return priceEntry ? priceEntry.price : 0;
   } else if (normalizedServiceName.includes("combo")) {
@@ -810,10 +801,10 @@ export const updateBooking = async (req: Request, res: Response): Promise<void> 
       updateOrderFields.bookingStatus = bookingStatus;
       updateOrderFields.status =
         bookingStatus === BookingStatus.PENDING ? 'pending' :
-        bookingStatus === BookingStatus.CONFIRMED ? 'confirmed' :
-        bookingStatus === BookingStatus.IN_PROGRESS ? 'processing' :
-        bookingStatus === BookingStatus.COMPLETED ? 'completed' :
-        'cancelled';
+          bookingStatus === BookingStatus.CONFIRMED ? 'confirmed' :
+            bookingStatus === BookingStatus.IN_PROGRESS ? 'processing' :
+              bookingStatus === BookingStatus.COMPLETED ? 'completed' :
+                'cancelled';
       console.log('Setting bookingStatus to:', bookingStatus);
     }
 
