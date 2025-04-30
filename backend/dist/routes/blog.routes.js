@@ -11,6 +11,7 @@ const cloudinary_config_js_1 = __importDefault(require("../config/cloudinary.con
 const blogRouter = (0, express_1.Router)();
 // Lấy tất cả bài viết
 blogRouter.get('/blogs', blog_controllers_js_1.getAllBlogs);
+blogRouter.get('/blogs/status/active', blog_controllers_js_1.getActiveBlogs);
 // Lấy bài viết theo ID
 blogRouter.get('/blogs/:id', blog_controllers_js_1.getBlogById);
 // Tạo bài viết mới (yêu cầu xác thực và quyền admin)

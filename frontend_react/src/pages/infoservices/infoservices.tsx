@@ -85,65 +85,30 @@ const PetSpaServices = () => {
   const handleBookAppointment = () => {
     navigate("/service");
   };
-
   return (
-    <div className="min-h-screen bg-gray-50 px-[154px] py-8">
-      {/* Call-to-Action Button */}
-      <div className="text-center mb-8">
-        <Button
-          type="primary"
-          size="large"
-          className="bg-[#22A6DF] hover:bg-[#1e93c6] w-full sm:w-auto px-8 py-6 text-xl font-semibold"
-          onClick={handleBookAppointment}
-        >
-          ĐĂNG KÝ ĐẶT LỊCH CHĂM SÓC THÚ CƯNG NGAY
-        </Button>
-      </div>
-
-      <div className="container mx-auto">
-        {/* Pricing Tables */}
-        <div className="mb-12">
-          <Title level={2} className="text-[#22A6DF] mb-6 text-center">
-            BẢNG GIÁ DỊCH VỤ TẮM VỆ SINH, CẮT TỈA LÔNG
-          </Title>
-          <Paragraph className="text-gray-700 mb-6 text-center">
-            Bảng giá đã bao gồm đầy đủ quy trình 12 bước spa tại Pet Heaven.
-            Dịch vụ có thể phát sinh thêm phụ phí theo yêu cầu thêm của Khách
-            hàng như: Gỡ rối lông hay làm ngoài giờ.
-          </Paragraph>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card title="BẢNG GIÁ TẮM, VỆ SINH" bordered={false} className="shadow-md">
-              <Table
-                columns={bathColumns}
-                dataSource={formattedBathData}
-                pagination={false}
-              />
-            </Card>
-            <Card title="BẢNG GIÁ THEO COMBO" bordered={false} className="shadow-md">
-              <Table
-                columns={comboBathColumns}
-                dataSource={formattedComboBathData}
-                pagination={false}
-              />
-            </Card>
-            <Card title="BẢNG GIÁ CẮT, TỈA - CẠO LÔNG" bordered={false} className="shadow-md">
-              <Table
-                columns={serviceBathColumns}
-                dataSource={formattedServiceBathData}
-                pagination={false}
-              />
-            </Card>
-          </div>
+    <div className="min-h-screen bg-white px-4 sm:px-6 lg:px-8">
+      <div className="max-w-screen-xl mx-auto">
+      
+      <div className="container mx-auto px-4 py-8 ư">
+          <h1 className="mb-3 text-3xl font-bold text-gray-800 text-center">
+            DỊCH VỤ SPA CHUYÊN NGHIỆP CHO THÚ CƯNG TẠI PET HEAVEN
+          </h1>
+        <div className="text-center mb-4">
+          <Button
+              type="primary"
+              size="large"
+              className="bg-[#22A6DF] hover:opacity-90 mt-4"
+              onClick={handleBookAppointment}
+            >
+              ĐẶT LỊCH NGAY
+          </Button>
         </div>
-
-        {/* 12-Step Process */}
-        <div className="mb-12">
-          <Card className="shadow-md">
-            <Title level={3} className="text-[#22A6DF] mb-6">
-              Quy trình tắm vệ sinh bao gồm 12 bước
-            </Title>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <ol className="list-decimal list-inside space-y-2 text-red-800">
+        <Card className="mb-7 text-center ">
+          <h2 className="mb-6 text-xl font-semibold">
+            Quy trình tắm vệ sinh bao gồm 12 bước:
+          </h2>
+          <div className="grid gap-4 md:grid-cols-2">
+              <ol className="list-inside list-decimal space-y-2">
                 {[
                   "Kiểm tra sức khỏe cơ bản",
                   "Vệ sinh tai, nhổ lông tai",
@@ -196,7 +161,8 @@ const PetSpaServices = () => {
         </div>
 
         {/* Notes Section */}
-        <div>
+        <div className="mb-12">
+        <Text>
           <Title level={2} className="text-[#22A6DF] mb-6">
             NHỮNG LƯU Ý KHI SỬ DỤNG DỊCH VỤ SPA TẠI PET HEAVEN
           </Title>
@@ -205,6 +171,7 @@ const PetSpaServices = () => {
             <br />- Để đảm bảo sức khỏe cho thú cưng đến làm dịch vụ spa, khi đưa các bé đến Khách hàng lưu ý: Không để thú cưng quá đói, quá no hay vận động quá sức trước khi đến spa. Nếu thú cưng có những biểu hiện bất thường xin hãy liên hệ với Pet Heaven để được hỗ trợ.
             <br />- Làm xong dịch vụ, Khách hàng vui lòng kiểm tra thật kỹ thú cưng của mình khi đến đón về. Điều này nhằm đảm bảo nhân viên spa tại Pet Heaven đã hoàn thành đúng quy trình spa cho các bé. Nếu có bất cứ điều gì chưa hài lòng, hãy liên hệ với Pet Heaven qua hotline, fanpage Pet Heaven để được hỗ trợ.
           </Paragraph>
+        </Text>
         </div>
       </div>
     </div>

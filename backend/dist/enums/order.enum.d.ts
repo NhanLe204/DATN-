@@ -1,7 +1,7 @@
 export declare enum PaymentStatus {
     PENDING = "PENDING",
     PAID = "PAID",
-    CANCELLED = "CANCELLED"
+    CASH_ON_DELIVERY = "CASH_ON_DELIVERY"
 }
 export declare enum OrderStatus {
     PENDING = "PENDING",// Đơn hàng đang chờ xử lý

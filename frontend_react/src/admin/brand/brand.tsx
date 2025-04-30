@@ -58,6 +58,19 @@ const BrandManager: React.FC = () => {
     fetchBrands();
   }, []);
 
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === "logoutEvent") {
+        setBrands([]); 
+        setFilteredBrands([]);
+        setSearchText('');
+      }
+    };
+  
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+
   const handleSearch = (value: string) => {
     setSearchText(value);
     const normalizedSearchText = removeAccents(value.toLowerCase());

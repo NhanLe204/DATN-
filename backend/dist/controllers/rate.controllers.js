@@ -64,7 +64,7 @@ const getRatingByProductId = async (req, res) => {
         // Parse productId thành ObjectId
         const productObjectId = new mongoose_1.default.Types.ObjectId(productId);
         // Tìm tất cả các orderDetail có productId này
-        const orderDetails = await orderdetail_model_js_1.default.find({ productId: productObjectId });
+        const orderDetails = await orderdetail_model_js_1.default.find({ productId: productObjectId }).select('_id');
         if (!orderDetails || orderDetails.length === 0) {
             res.status(404).json({ success: false, message: 'No order details found for this product' });
             return;

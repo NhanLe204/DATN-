@@ -230,7 +230,8 @@ export default function Header() {
   const handleLogout = async () => {
     try {
       await loginApi.logout();
-      clearLocalStorageExceptCarts();
+      localStorage.setItem("logoutEvent", Date.now().toString());
+      localStorage.clear();
       setUser(null);
       dispatch(setUserId(null));
       setIsUserLoaded(false);

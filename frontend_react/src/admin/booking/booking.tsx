@@ -385,6 +385,7 @@ const BookingManager: React.FC = () => {
           petName: values.petName,
           petType: values.petType,
           petWeight: 0,
+          email: ''
         };
   
         const updatedBookings = [...bookings, newBooking];

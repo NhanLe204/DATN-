@@ -1,5 +1,13 @@
 import { useState, useEffect } from "react";
-import { Layout, Menu, Avatar, Typography, Button, Divider } from "antd";
+import {
+  Layout,
+  Menu,
+  Avatar,
+  Typography,
+  Button,
+  Divider,
+  notification,
+} from "antd";
 import {
   UserOutlined,
   PieChartOutlined,
@@ -15,13 +23,15 @@ import {
   StarOutlined,
   TagOutlined,
   HomeOutlined,
+  DollarOutlined,
+  FormOutlined,
 } from "@ant-design/icons";
 import { Outlet, useNavigate } from "react-router-dom";
 import React from "react";
 import Navigation from "../navigation";
 import SubMenu from "antd/es/menu/SubMenu";
 import { MdOutlineRoomService } from "react-icons/md";
-
+import loginApi from "../../api/login";
 
 const { Header, Sider, Content } = Layout;
 const { Text } = Typography;
@@ -71,27 +81,111 @@ const AdminLayout = () => {
     const timerId = setInterval(updateTime, 1000);
     return () => clearInterval(timerId);
   }, []);
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      console.log("Storage event:", event);
+      if (event.key === "accessToken" && event.newValue === null) {
+        notification.info({
+          message: "Phiên đăng nhập đã hết",
+          description: "Vui lòng đăng nhập lại.",
+          placement: "topRight",
+          duration: 2,
+        });
+        localStorage.clear();
+        navigate("/login");
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, [navigate]);
 
   // Danh sách menu đầy đủ cho admin
   const adminMenuItems = [
-    { key: "1", icon: <PieChartOutlined />, label: "Dashboard", path: "/admin/dashboard" },
-    { key: "2", icon: <AppstoreOutlined />, label: "Quản lý danh mục", path: "/admin/categories" },
-    { key: "3", icon: <AppstoreOutlined />, label: "Quản lý danh mục bài viết", path: "/admin/blogcategories" },
-    { key: "4", icon: <ShoppingOutlined />, label: "Quản lý sản phẩm", path: "/admin/products" },
-    { key: "5", icon: <ShoppingOutlined />, label: "Quản lý bài viết", path: "/admin/blogs" },
-    { key: "6", icon: <StarOutlined />, label: "Quản lý thương hiệu", path: "/admin/brands" },
-    { key: "7", icon: <TagOutlined />, label: "Quản lý tags", path: "/admin/tags" },
-    { key: "8", icon: <IdcardOutlined />, label: "Quản lý nhân viên", path: "/admin/employees" },
-    { key: "9", icon: <FileTextOutlined />, label: "Quản lý đơn hàng", path: "/admin/orders" },
-    { key: "10", icon: <MdOutlineRoomService  />, label: "Quản lý lịch hẹn", path: "/admin/bookings" },
-    { key: "11", icon: <ToolOutlined />, label: "Quản lý dịch vụ", path: "/admin/services" },
-    { key: "12", icon: <UserOutlined />, label: "Quản lý người dùng", path: "/admin/users" },
-    { key: "13", icon: <SettingOutlined />, label: "Cài đặt hệ thống", path: "/admin/settings" },
+    {
+      key: "1",
+      icon: <PieChartOutlined />,
+      label: "Dashboard",
+      path: "/admin/dashboard",
+    },
+    {
+      key: "2",
+      icon: <DollarOutlined />,
+      label: "Quản lý doanh thu",
+      path: "/admin/revenue",
+    },
+    {
+      key: "3",
+      icon: <AppstoreOutlined />,
+      label: "Quản lý danh mục",
+      path: "/admin/categories",
+    },
+    {
+      key: "4",
+      icon: <ShoppingOutlined />,
+      label: "Quản lý sản phẩm",
+      path: "/admin/products",
+    },
+    {
+      key: "5",
+      icon: <FormOutlined />,
+      label: "Quản lý danh mục bài viết",
+      path: "/admin/blogcategories",
+    },
+    {
+      key: "6",
+      icon: <ShoppingOutlined />,
+      label: "Quản lý bài viết",
+      path: "/admin/blogs",
+    },
+    {
+      key: "7",
+      icon: <StarOutlined />,
+      label: "Quản lý thương hiệu",
+      path: "/admin/brands",
+    },
+    {
+      key: "8",
+      icon: <TagOutlined />,
+      label: "Quản lý tags",
+      path: "/admin/tags",
+    },
+    // { key: "9", icon: <IdcardOutlined />, label: "Quản lý nhân viên", path: "/admin/employees" },
+    {
+      key: "9",
+      icon: <FileTextOutlined />,
+      label: "Quản lý đơn hàng",
+      path: "/admin/orders",
+    },
+    {
+      key: "10",
+      icon: <MdOutlineRoomService />,
+      label: "Quản lý lịch hẹn",
+      path: "/admin/bookings",
+    },
+    {
+      key: "11",
+      icon: <ToolOutlined />,
+      label: "Quản lý dịch vụ",
+      path: "/admin/services",
+    },
+    {
+      key: "12",
+      icon: <UserOutlined />,
+      label: "Quản lý người dùng",
+      path: "/admin/users",
+    },
+    {
+      key: "13",
+      icon: <SettingOutlined />,
+      label: "Cài đặt hệ thống",
+      path: "/admin/settings",
+    },
   ];
 
   // Danh sách menu cho employee (loại bỏ các menu nhạy cảm)
   const employeeMenuItems = adminMenuItems.filter((item) =>
-    ["1", "2", "3", "4", "5", "7"].includes(item.key)
+    ["1", "9", "3", "4", "5", "6", "7", "10"].includes(item.key)
   );
 
   // Chọn danh sách menu dựa trên vai trò
@@ -104,16 +198,20 @@ const AdminLayout = () => {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("accountId");
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("userData");
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      await loginApi.logout();
+      localStorage.setItem("logoutEvent", Date.now().toString());
+      localStorage.clear();
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   };
 
   // quay lại trang web user
   const handleBackToUserSite = () => {
-    navigate("/"); 
+    navigate("/");
   };
 
   return (
@@ -171,15 +269,16 @@ const AdminLayout = () => {
             onClick={() => setCollapsed(!collapsed)}
             className="text-lg mr-96"
           />
-          <div className="flex items-center space-x-16">
-          <Button
+          <div className="flex items-center justify-center flex-1">
+            <Button
+              className="mr-24"
               type="text"
               icon={<HomeOutlined />}
               onClick={handleBackToUserSite}
             >
               Quay lại trang web
             </Button>
-            <div className="text-sm">
+            <div className="text-sm mr-24">
               <span>
                 {currentDate} - {currentTime}
               </span>

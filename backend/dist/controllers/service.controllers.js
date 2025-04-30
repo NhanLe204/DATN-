@@ -8,21 +8,16 @@ const service_model_js_1 = __importDefault(require("../models/service.model.js")
 const service_enum_js_1 = require("../enums/service.enum.js");
 const createService = async (req, res) => {
     try {
-        const { service_name, description, service_price, duration, status } = req.body;
+        const { service_name, description, duration, status } = req.body;
         // Validate dữ liệu đầu vào
-        if (!service_name || service_price === undefined || duration === undefined) {
+        if (!service_name || duration === undefined) {
             res
                 .status(400)
                 .json({ success: false, message: 'Thiếu các trường bắt buộc: service_name, service_price, duration' });
             return;
         }
         // Kiểm tra kiểu dữ liệu
-        const price = Number(service_price);
         const dur = Number(duration);
-        if (isNaN(price) || price < 0) {
-            res.status(400).json({ success: false, message: 'Giá dịch vụ phải là số không âm' });
-            return;
-        }
         if (isNaN(dur) || dur <= 0) {
             res.status(400).json({ success: false, message: 'Thời lượng phải là số lớn hơn 0' });
             return;
@@ -36,7 +31,6 @@ const createService = async (req, res) => {
         const newService = new service_model_js_1.default({
             service_name,
             description: description || '',
-            service_price: price,
             duration: dur,
             status: status || 'active'
         });

@@ -40,6 +40,7 @@ import BlogCategoryList from "./admin/blog_category/blog_category";
 import ChatbotController from "./components/ChatbotController";
 import ArticleDetail from "./pages/blogDetail/blogDetail";
 import BlogList from "./admin/blog/blog";
+import Revenue from "./admin/revenue/revenue";
 
 interface User {
   id: string;
@@ -166,6 +167,7 @@ function App() {
       children: [
         { path: "", element: <Dashboard /> },
         { path: "dashboard", element: <Dashboard /> },
+        { path: "revenue", element: <Revenue /> },
         { path: "employees", element: <EmployeeList /> },
         { path: "categories", element: <CategoryList /> },
         { path: "blogcategories", element: <BlogCategoryList /> },
