@@ -13,9 +13,9 @@ const dayjs_1 = __importDefault(require("dayjs"));
 const node_schedule_1 = __importDefault(require("node-schedule"));
 const timezone_1 = __importDefault(require("dayjs/plugin/timezone"));
 const utc_1 = __importDefault(require("dayjs/plugin/utc"));
-const user_model_js_1 = __importDefault(require("@/models/user.model.js"));
-const sendBookingEmail_js_1 = __importDefault(require("@/utils/sendBookingEmail.js"));
-const service_model_js_1 = __importDefault(require("@/models/service.model.js"));
+const user_model_js_1 = __importDefault(require("../models/user.model.js"));
+const sendBookingEmail_js_1 = __importDefault(require("../utils/sendBookingEmail.js"));
+const service_model_js_1 = __importDefault(require("../models/service.model.js"));
 dayjs_1.default.extend(utc_1.default);
 dayjs_1.default.extend(timezone_1.default);
 // Lấy danh sách tất cả order details

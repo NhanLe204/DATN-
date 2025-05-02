@@ -4,14 +4,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendBookingCompletionEmail = void 0;
-const service_model_1 = __importDefault(require("@/models/service.model"));
+const service_model_1 = __importDefault(require("../models/service.model"));
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const transporter = nodemailer_1.default.createTransport({
     service: 'gmail',
     auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-    },
+        pass: process.env.EMAIL_PASS
+    }
 });
 // Kiểm tra kết nối SMTP khi khởi động
 transporter.verify((error, success) => {
@@ -35,7 +35,7 @@ const sendBookingCompletionEmail = async (orderDetail, order, user) => {
             ? new Intl.DateTimeFormat('vi-VN', {
                 timeZone: 'Asia/Ho_Chi_Minh',
                 dateStyle: 'short',
-                timeStyle: 'short',
+                timeStyle: 'short'
             }).format(booking_date)
             : 'N/A';
         const mailOptions = {
@@ -54,7 +54,7 @@ const sendBookingCompletionEmail = async (orderDetail, order, user) => {
         </ul>
         <p>Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!</p>
         <p>Trân trọng,<br><strong>Pet Heaven</strong></p>
-      `,
+      `
         };
         await transporter.sendMail(mailOptions);
         console.log(`Completion email sent to ${email} for order ${orderId}`);

@@ -1,12 +1,12 @@
-import ServiceModel from '@/models/service.model';
+import ServiceModel from '../models/service.model';
 import nodemailer from 'nodemailer';
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
+    pass: process.env.EMAIL_PASS
+  }
 });
 
 // Kiểm tra kết nối SMTP khi khởi động
@@ -18,7 +18,11 @@ transporter.verify((error, success) => {
   }
 });
 
-export const sendBookingCompletionEmail = async (orderDetail: { realPrice: any; serviceId: any; petName: any; petType: any; booking_date: any; }, order: { orderId: any; }, user: { email: any; name: any; }) => {
+export const sendBookingCompletionEmail = async (
+  orderDetail: { realPrice: any; serviceId: any; petName: any; petType: any; booking_date: any },
+  order: { orderId: any },
+  user: { email: any; name: any }
+) => {
   try {
     const { realPrice, serviceId, petName, petType, booking_date } = orderDetail;
     const { orderId } = order;
@@ -33,7 +37,7 @@ export const sendBookingCompletionEmail = async (orderDetail: { realPrice: any; 
       ? new Intl.DateTimeFormat('vi-VN', {
           timeZone: 'Asia/Ho_Chi_Minh',
           dateStyle: 'short',
-          timeStyle: 'short',
+          timeStyle: 'short'
         }).format(booking_date)
       : 'N/A';
 
@@ -53,7 +57,7 @@ export const sendBookingCompletionEmail = async (orderDetail: { realPrice: any; 
         </ul>
         <p>Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!</p>
         <p>Trân trọng,<br><strong>Pet Heaven</strong></p>
-      `,
+      `
     };
 
     await transporter.sendMail(mailOptions);

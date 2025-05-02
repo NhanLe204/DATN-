@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getRevenue = void 0;
 const order_model_js_1 = __importDefault(require("../models/order.model.js"));
 const booking_enum_js_1 = require("../enums/booking.enum.js");
-const orderdetail_model_js_1 = __importDefault(require("@/models/orderdetail.model.js"));
+const orderdetail_model_js_1 = __importDefault(require("../models/orderdetail.model.js"));
 const getRevenue = async (req, res) => {
     try {
         const { type = 'daily', from, to } = req.query;

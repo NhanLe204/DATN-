@@ -166,8 +166,10 @@ export default function Home() {
 
           <div className="mt-6 text-center">
             <Button className="rounded-md border border-gray-300 px-6 py-5 text-base hover:bg-gray-100">
-              Xem thêm sản phẩm{" "}
-              <span className="font-semibold">dành cho {category.name}</span>
+              <Link to={`/product?category=${category.name.toLowerCase()}`}>
+                Xem thêm sản phẩm{" "}
+                <span className="font-semibold">dành cho {category.name}</span>
+              </Link>
             </Button>
           </div>
         </div>
@@ -184,7 +186,10 @@ export default function Home() {
             { src: "/images/brands/lapaw.png", alt: "LaPaw" },
             { src: "/images/brands/tropiclean.png", alt: "TropiClean" },
           ].map((brand, index) => (
-            <div key={index} className="group flex items-center justify-center p-2 transition-transform duration-300 hover:scale-105">
+            <div
+              key={index}
+              className="group flex items-center justify-center p-2 transition-transform duration-300 hover:scale-105"
+            >
               <img
                 src={brand.src}
                 alt={brand.alt}
@@ -202,7 +207,10 @@ export default function Home() {
             <h3 className="text-sm font-bold uppercase tracking-wider sm:text-base md:text-lg">
               CÓ THỂ BẠN MUỐN BIẾT
             </h3>
-            <a href="/blogs" className="text-xs font-medium text-gray-500 transition-colors hover:text-[#22A6DF] hover:underline sm:text-sm">
+            <a
+              href="/blogs"
+              className="text-xs font-medium text-gray-500 transition-colors hover:text-[#22A6DF] hover:underline sm:text-sm"
+            >
               Tin tức khác »
             </a>
           </div>
@@ -231,35 +239,47 @@ export default function Home() {
                   <span className="flex items-center gap-2">
                     <FaUserEdit className="text-[#22A6DF]" />
                     <span className="flex gap-1">
-                      by <span className="font-semibold">{blogs[0].author}</span>
+                      by{" "}
+                      <span className="font-semibold">{blogs[0].author}</span>
                     </span>
                   </span>
                   <span className="flex items-center gap-2">
                     <FaCalendarAlt className="text-[#22A6DF]" />
-                    <span>{new Date(blogs[0].createdAt).toLocaleDateString()}</span>
+                    <span>
+                      {new Date(blogs[0].createdAt).toLocaleDateString()}
+                    </span>
                   </span>
                 </div>
 
                 <p className="mb-4 text-xs leading-relaxed text-gray-700 sm:text-sm md:mb-6">
-                  {parse(blogs[0].content.slice(0, 1000) + "...")} {/* Cắt ngắn nội dung */}
+                  {parse(blogs[0].content.slice(0, 1000) + "...")}{" "}
+                  {/* Cắt ngắn nội dung */}
                 </p>
 
                 <Link to={`/blogs/${blogs[0]._id}`}>
                   <button className="group flex items-center gap-2 self-start rounded-md border border-[#22A6DF] px-4 py-2 text-xs font-medium text-[#22A6DF] transition-all hover:bg-[#22A6DF] hover:text-white sm:text-sm">
                     Đọc thêm
-                    <span className="transform transition-transform group-hover:translate-x-1">»</span>
+                    <span className="transform transition-transform group-hover:translate-x-1">
+                      »
+                    </span>
                   </button>
                 </Link>
               </div>
             </div>
           ) : (
-            <p className="text-center text-gray-500">Không có bài viết nào để hiển thị.</p>
+            <p className="text-center text-gray-500">
+              Không có bài viết nào để hiển thị.
+            </p>
           )}
 
           {/* Related Articles */}
           <div className="mt-6 grid gap-4 sm:mt-8 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             {blogs.slice(1, 4).map((blog, index) => (
-              <Link to={`/blogs/${blog._id}`} key={index} className="group flex items-start gap-3 sm:gap-4">
+              <Link
+                to={`/blogs/${blog._id}`}
+                key={index}
+                className="group flex items-start gap-3 sm:gap-4"
+              >
                 <div className="relative h-[80px] w-[100px] min-w-[100px] overflow-hidden rounded-lg sm:h-[100px] sm:w-[120px] sm:min-w-[120px] md:h-[120px] md:w-[140px] md:min-w-[140px]">
                   <img
                     src={blog.image_url || "/images/brands/concho.png"} // Dữ liệu động từ API
