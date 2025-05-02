@@ -319,11 +319,13 @@ export const getAllOrders = async (req: Request, res: Response): Promise<void> =
   try {
     const orders = await orderDetailModel
       .find({ productId: { $ne: null }, serviceId: null })
-      .populate({path: 'orderId', // Populate orderId
-				populate: {
-					path: 'userID', // Nested populate userID từ orderId
-					select: 'fullname email phone avatar' // Chỉ lấy các trường cần thiết
-				}})
+      .populate({
+        path: 'orderId', // Populate orderId
+        populate: {
+          path: 'userID', // Nested populate userID từ orderId
+          select: 'fullname email phone avatar' // Chỉ lấy các trường cần thiết
+        }
+      })
       .populate('productId', 'name price')
       .lean();
 
@@ -338,7 +340,7 @@ export const getOrderById = async (req: Request, res: Response): Promise<void> =
   try {
     const { id } = req.params;
     const order = await orderModel
-       .findById(id)
+      .findById(id)
       .populate('userID', 'fullname email phone') // Populate userID với các trường cần thiết
       .populate('payment_typeID', 'name') // Populate payment_typeID nếu cần
       .populate('deliveryID', 'name delivery_fee') // Populate deliveryID nếu cần

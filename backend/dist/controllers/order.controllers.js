@@ -284,11 +284,13 @@ const getAllOrders = async (req, res) => {
     try {
         const orders = await orderdetail_model_js_1.default
             .find({ productId: { $ne: null }, serviceId: null })
-            .populate({ path: 'orderId', // Populate orderId
+            .populate({
+            path: 'orderId', // Populate orderId
             populate: {
                 path: 'userID', // Nested populate userID từ orderId
                 select: 'fullname email phone avatar' // Chỉ lấy các trường cần thiết
-            } })
+            }
+        })
             .populate('productId', 'name price')
             .lean();
         res.status(200).json({ success: true, result: orders });

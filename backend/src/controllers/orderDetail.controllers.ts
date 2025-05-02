@@ -8,9 +8,9 @@ import dayjs from 'dayjs';
 import schedule from 'node-schedule';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
-import userModel from '@/models/user.model.js';
-import sendBookingEmail from '@/utils/sendBookingEmail.js';
-import ServiceModel from '@/models/service.model.js';
+import userModel from '../models/user.model.js';
+import sendBookingEmail from '../utils/sendBookingEmail.js';
+import ServiceModel from '../models/service.model.js';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 // Lấy danh sách tất cả order details

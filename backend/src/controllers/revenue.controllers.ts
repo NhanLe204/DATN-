@@ -3,7 +3,7 @@ import orderModel from '../models/order.model.js';
 import bookingModel from '../models/booking.model.js';
 import serviceModel from '../models/service.model.js';
 import { BookingStatus } from '../enums/booking.enum.js';
-import orderDetailModel from '@/models/orderdetail.model.js';
+import orderDetailModel from '../models/orderdetail.model.js';
 
 export const getRevenue = async (req: Request, res: Response): Promise<void> => {
   try {
