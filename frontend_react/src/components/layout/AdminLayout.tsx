@@ -150,7 +150,6 @@ const AdminLayout = () => {
       label: "Quản lý tags",
       path: "/admin/tags",
     },
-    // { key: "9", icon: <IdcardOutlined />, label: "Quản lý nhân viên", path: "/admin/employees" },
     {
       key: "9",
       icon: <FileTextOutlined />,

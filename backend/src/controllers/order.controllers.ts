@@ -16,6 +16,8 @@ import { BookingStatus } from '../enums/booking.enum.js';
 import sendBookingEmail from '../utils/sendBookingEmail.js';
 import sendEmail from '../utils/sendEmail.js';
 import moment from 'moment-timezone';
+import request from 'request';
+import { log } from 'console';
 
 export const createOrderAfterPayment = async (req: Request, res: Response): Promise<void> => {
   const session = await mongoose.startSession();
@@ -653,3 +655,38 @@ export const cancelServiceBooking = async (req: Request, res: Response): Promise
     });
   }
 };
+
+
+export const getRecentOrder = async (req:Request, res: Response): Promise<void> =>{
+  try {
+    const recentOrder = await orderModel
+    .find({ bookingStatus: null})
+    .sort({createdAt: -1})
+    .limit(4)
+    .populate('payment_typeID', 'payment_type_name')
+    .populate('deliveryID', 'delivery_name')
+    .lean();
+
+    const formattedOrders = recentOrder.map((order) => ({
+      orderId: order._id,
+      paymentType: order.payment_typeID?.payment_type_name || 'Không xác định',
+      delivery: order.deliveryID?.delivery_name || 'Không xác định',
+      totalPrice: `${order.total_price?.toLocaleString() || 0} VNĐ`,
+    }));
+
+    res.status(200).json({
+      success: true,
+      message: 'Lấy 4 đơn hàng mới nhất thành công',
+      result: formattedOrders,
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`Error fetching recent orders: ${errorMessage}`);
+    res.status(500).json({
+      success: false,
+      message: 'Internal Server Error',
+      details: errorMessage,
+    });
+    
+  }
+}

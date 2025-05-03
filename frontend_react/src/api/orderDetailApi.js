@@ -16,6 +16,13 @@ const orderDetailApi = {
     const response = await api.get(`/v1/getOrderByUserId?userId=${userId}`);
     return { data: response.data };
   },
+
+  getDetailBooking: async (userId) => {
+    const response = await api.get(`/v1/getDetailBooking?userId=${userId}`);
+    return { data: response.data };
+  },
+
+
   changeBookingStatus: async (data) => {
     try {
       console.log("Actual body sent to /v1/bookings/status:", {
@@ -38,6 +45,13 @@ const orderDetailApi = {
   },
   cancelBooking: async (orderId, orderDetailId) => {
     const response = await api.post('/v1/orders/cancel-booking', {
+      orderId,
+      orderDetailId,
+    });
+    return response.data;
+  },
+  getCancelled: async (orderId, orderDetailId) => {
+    const response = await api.get('/v1/getCancelled', {
       orderId,
       orderDetailId,
     });

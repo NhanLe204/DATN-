@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { Bar } from "react-chartjs-2";
 import { Card, Row, Col, Table, Tag, Statistic, message } from "antd";
 import {
   UserOutlined,
@@ -15,25 +14,11 @@ import userApi from "../../api/userApi";
 import productsApi from "../../api/productsApi";
 import orderApi from "../../api/orderApi";
 import orderDetailApi from "../../api/orderDetailApi";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
 
-// Đăng ký các thành phần cần thiết của Chart.js
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend
-);
+const tableContainerStyle = {
+  height: "250px",
+  overflowY: "auto",
+} as React.CSSProperties;
 
 const { Text } = Typography;
 
@@ -45,6 +30,7 @@ const Dashboard: React.FC = () => {
   const [canceledOrders, setCanceledOrders] = useState(0);
   const [totalAppointments, setTotalAppointments] = useState(0);
   const [canceledAppointments, setCanceledAppointments] = useState(0);
+
   interface Customer {
     avatar?: string;
     fullname?: string;
@@ -62,15 +48,7 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     const updateTime = () => {
       const today = new Date();
-      const weekday = [
-        "Chủ Nhật",
-        "Thứ Hai",
-        "Thứ Ba",
-        "Thứ Tư",
-        "Thứ Năm",
-        "Thứ Sáu",
-        "Thứ Bảy",
-      ];
+      const weekday = ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
       const day = weekday[today.getDay()];
       let dd = today.getDate().toString().padStart(2, "0");
       let mm = (today.getMonth() + 1).toString().padStart(2, "0");
@@ -96,26 +74,23 @@ const Dashboard: React.FC = () => {
         setTotalUsers(usersResponse.data.result?.length || 0);
 
         const newUserResponse = await userApi.getNewUsers();
-        setNewCustomers(newUserResponse.data.result || []);
+        const limitedCustomers = (newUserResponse.data.result || []).slice(0, 4);
+        setNewCustomers(limitedCustomers);
 
-        const ordersResponse = await orderApi.getAll();
-        const allOrders = ordersResponse.data.result || [];
-        setTotalOrders(allOrders.length);
-        const canceled = allOrders.filter(
-          (order) => order.status === "canceled"
-        ).length;
-        setCanceledOrders(canceled);
+        const recentOrdersResponse = await orderApi.get4New();
+        const recentOrders = recentOrdersResponse.data.result || [];
 
-        const formattedOrders = allOrders.map((order, index) => ({
-          key: index.toString(),
-          id: order._id || "N/A",
-          customer:
-            order.userID?.fullname || order.userID?.name || "Khách vãng lai",
-          paymentType: order.payment_typeID?.name || "Không xác định",
-          delivery: order.deliveryID?.delivery_name || "Không xác định",
-          total: `${order.total_price?.toLocaleString() || 0} VNĐ`,
-        }));
-        setOrders(formattedOrders);
+        setOrders(
+          recentOrders.map((order, index) => ({
+            key: index.toString(),
+            id: order.orderId || "N/A",
+            paymentType: order.paymentType || "Không xác định",
+            delivery: order.delivery || "Không xác định",
+            total: order.totalPrice || "0 VNĐ",
+          }))
+        );
+        setTotalOrders(recentOrders.length);
+        setCanceledOrders(0);
 
         const outOfStockResponse = await productsApi.getProductOutStock();
         const outOfStockItems = outOfStockResponse.data.result || [];
@@ -152,12 +127,10 @@ const Dashboard: React.FC = () => {
         setHotProducts(formattedHotProducts);
 
         const allBookingsResponse = await orderDetailApi.getAllBookings();
-        console.log("tất cả booking", allBookingsResponse);
         const allBookings = allBookingsResponse.data || [];
         setTotalAppointments(allBookings.length);
 
-        const cancelledBookingsResponse =
-          await orderDetailApi.getCancelledBookings();
+        const cancelledBookingsResponse = await orderDetailApi.getCancelled();
         if (cancelledBookingsResponse) {
           const cancelledBookings = cancelledBookingsResponse.data || [];
           setCanceledAppointments(cancelledBookings.length);
@@ -166,7 +139,6 @@ const Dashboard: React.FC = () => {
         }
       } catch (error) {
         console.error("Lỗi khi lấy dữ liệu dashboard:", error);
-        // message.error(`Lỗi khi lấy dữ liệu dashboard: ${data.message}`);
       } finally {
         setLoading(false);
       }
@@ -175,79 +147,26 @@ const Dashboard: React.FC = () => {
     fetchDashboardData();
   }, []);
 
-  const salesData = [
-    { name: "Tháng 1", sales2024: 20, sales2025: 25 },
-    { name: "Tháng 2", sales2024: 59, sales2025: 62 },
-    { name: "Tháng 3", sales2024: 90, sales2025: 85 },
-    { name: "Tháng 4", sales2024: 51, sales2025: null },
-    { name: "Tháng 5", sales2024: 56, sales2025: null },
-    { name: "Tháng 6", sales2024: 100, sales2025: null },
-    { name: "Tháng 7", sales2024: 75, sales2025: null },
-    { name: "Tháng 8", sales2024: 82, sales2025: null },
-    { name: "Tháng 9", sales2024: 68, sales2025: null },
-    { name: "Tháng 10", sales2024: 95, sales2025: null },
-    { name: "Tháng 11", sales2024: 87, sales2025: null },
-    { name: "Tháng 12", sales2024: 110, sales2025: null },
-  ];
-
-  const chartData = {
-    labels: salesData.map((data) => data.name),
-    datasets: [
-      {
-        label: "Doanh số 2024",
-        data: salesData.map((data) => data.sales2024),
-        backgroundColor: "#FFD43B",
-        borderColor: "#FFD43B",
-        borderWidth: 1,
-      },
-      {
-        label: "Doanh số 2025",
-        data: salesData.map((data) => data.sales2025),
-        backgroundColor: "#096DEF",
-        borderColor: "#096DEF",
-        borderWidth: 1,
-      },
-    ],
-  };
-
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { position: "top" as const },
-      title: { display: false },
-    },
-    scales: {
-      x: { title: { display: true, text: "Tháng" } },
-      y: { title: { display: true, text: "Doanh số" }, beginAtZero: true },
-    },
-  };
-
   const ordersColumns = [
-    { title: "ID đơn hàng", dataIndex: "id", key: "id" },
-    { title: "Khách hàng", dataIndex: "customer", key: "customer" },
-    {
-      title: "Phương thức thanh toán",
-      dataIndex: "paymentType",
-      key: "paymentType",
-    },
-    { title: "Phương thức giao hàng", dataIndex: "delivery", key: "delivery" },
-    { title: "Tổng tiền", dataIndex: "total", key: "total" },
+    { title: "ID đơn hàng", dataIndex: "id", key: "id", width: 100 },
+    { title: "Thanh toán", dataIndex: "paymentType", key: "paymentType", width: 200 },
+    { title: "Giao hàng", dataIndex: "delivery", key: "delivery", width: 200 },
+    { title: "Tổng tiền", dataIndex: "total", key: "total", width: 100 },
   ];
 
   const productColumns = [
-    { title: "Mã sản phẩm", dataIndex: "_id", key: "_id", width: 150 },
-    { title: "Tên sản phẩm", dataIndex: "name", key: "name", width: 200 },
+    { title: "Mã SP", dataIndex: "_id", key: "_id", width: 100 },
+    { title: "Tên", dataIndex: "name", key: "name", width: 150 },
     {
       title: "Ảnh",
       dataIndex: "image",
       key: "image",
-      width: 180,
+      width: 80,
       render: (text: string) => (
         <img
           src={text || "https://via.placeholder.com/64"}
           alt="Product"
-          className="object-cover w-24 h-24"
+          className="object-cover w-16 h-16"
         />
       ),
     },
@@ -255,7 +174,7 @@ const Dashboard: React.FC = () => {
       title: "Tình trạng",
       dataIndex: "status",
       key: "status",
-      width: 150,
+      width: 100,
       render: (status: string) => (
         <Tag color={status === "out_of_stock" ? "error" : "success"}>
           {status === "out_of_stock" ? "Hết hàng" : "Còn hàng"}
@@ -263,56 +182,60 @@ const Dashboard: React.FC = () => {
       ),
     },
     {
-      title: "Giá tiền",
+      title: "Giá",
       dataIndex: "price",
       key: "price",
       width: 100,
       render: (price: any) => `${price?.toLocaleString() || 0} VNĐ`,
     },
-    {
-      title: "Danh mục",
-      dataIndex: "category",
-      key: "category",
-      width: 100,
-      render: (category: string) => category || "Không xác định",
-    },
-    {
-      title: "Thương hiệu",
-      dataIndex: "brand",
-      key: "brand",
-      width: 100,
-      render: (brand: string) => brand || "Không có thương hiệu",
-    },
+    { title: "Danh mục", dataIndex: "category", key: "category", width: 100 },
+    { title: "Thương hiệu", dataIndex: "brand", key: "brand", width: 100 },
     {
       title: "Thẻ",
       dataIndex: "tag",
       key: "tag",
       width: 100,
-      render: (tag: string) =>
-        tag ? <Tag color="blue">{tag}</Tag> : "Không có thẻ",
+      render: (tag: string) => (tag ? <Tag color="blue">{tag}</Tag> : "Không có"),
+    },
+  ];
+
+  const customerColumns = [
+    {
+      title: "Khách hàng",
+      dataIndex: "fullname",
+      key: "fullname",
+      render: (_: any, record: Customer) => (
+        <div className="flex items-center space-x-2">
+          <img
+            src={record.avatar || "https://img.lovepik.com/png/20231127/young-businessman-3d-cartoon-avatar-portrait-character-digital_708913_wh860.png"}
+            alt="avatar"
+            className="rounded-full w-8 h-8"
+          />
+          <Text>{record.fullname || record.name || "Không xác định"}</Text>
+        </div>
+      ),
+    },
+    {
+      title: "Trạng thái",
+      dataIndex: "status",
+      key: "status",
+      render: (status: string) => (
+        <Text className="text-sm text-blue-600">{status || "Hoạt động"}</Text>
+      ),
     },
   ];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
       <div className="mb-6">
         <Row gutter={[16, 16]} className="mb-6">
           <Col xs={24} sm={12} md={8} lg={8}>
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
+            <motion.div whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
               <Card bordered={false} className="shadow-sm">
                 <Statistic
                   title="Tổng số người dùng"
                   value={totalUsers}
-                  prefix={
-                    <UserOutlined className="mr-2 text-xl text-cyan-500" />
-                  }
+                  prefix={<UserOutlined className="mr-2 text-xl text-cyan-500" />}
                   suffix="tài khoản"
                   loading={loading}
                 />
@@ -320,17 +243,12 @@ const Dashboard: React.FC = () => {
             </motion.div>
           </Col>
           <Col xs={24} sm={12} md={8} lg={8}>
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
+            <motion.div whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
               <Card bordered={false} className="shadow-sm">
                 <Statistic
-                  title="Tổng đơn hàng"
+                  title="Đơn hàng mới"
                   value={totalOrders}
-                  prefix={
-                    <ShoppingCartOutlined className="mr-2 text-xl text-yellow-500" />
-                  }
+                  prefix={<ShoppingCartOutlined className="mr-2 text-xl text-yellow-500" />}
                   suffix="đơn hàng"
                   loading={loading}
                 />
@@ -338,17 +256,12 @@ const Dashboard: React.FC = () => {
             </motion.div>
           </Col>
           <Col xs={24} sm={12} md={8} lg={8}>
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
+            <motion.div whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
               <Card bordered={false} className="shadow-sm">
                 <Statistic
                   title="Hết hàng"
                   value={outOfStockProducts.length}
-                  prefix={
-                    <ExceptionOutlined className="mr-2 text-xl text-yellow-500" />
-                  }
+                  prefix={<ExceptionOutlined className="mr-2 text-xl text-yellow-500" />}
                   suffix="sản phẩm"
                   loading={loading}
                 />
@@ -356,17 +269,12 @@ const Dashboard: React.FC = () => {
             </motion.div>
           </Col>
           <Col xs={24} sm={12} md={8} lg={8}>
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
+            <motion.div whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
               <Card bordered={false} className="shadow-sm">
                 <Statistic
                   title="Đơn hàng hủy"
                   value={canceledOrders}
-                  prefix={
-                    <FileTextOutlined className="mr-2 text-xl text-red-500" />
-                  }
+                  prefix={<FileTextOutlined className="mr-2 text-xl text-red-500" />}
                   suffix="đơn hàng"
                   loading={loading}
                 />
@@ -374,17 +282,12 @@ const Dashboard: React.FC = () => {
             </motion.div>
           </Col>
           <Col xs={24} sm={12} md={8} lg={8}>
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
+            <motion.div whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
               <Card bordered={false} className="shadow-sm">
                 <Statistic
                   title="Tổng lịch hẹn"
                   value={totalAppointments}
-                  prefix={
-                    <CalendarOutlined className="mr-2 text-xl text-green-500" />
-                  }
+                  prefix={<CalendarOutlined className="mr-2 text-xl text-green-500" />}
                   suffix="lịch hẹn"
                   loading={loading}
                 />
@@ -392,17 +295,12 @@ const Dashboard: React.FC = () => {
             </motion.div>
           </Col>
           <Col xs={24} sm={12} md={8} lg={8}>
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
+            <motion.div whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
               <Card bordered={false} className="shadow-sm">
                 <Statistic
                   title="Lịch đã hủy"
                   value={canceledAppointments}
-                  prefix={
-                    <CloseCircleOutlined className="mr-2 text-xl text-red-500" />
-                  }
+                  prefix={<CloseCircleOutlined className="mr-2 text-xl text-red-500" />}
                   suffix="lịch hẹn"
                   loading={loading}
                 />
@@ -411,59 +309,38 @@ const Dashboard: React.FC = () => {
           </Col>
         </Row>
 
-        <Row gutter={[32, 16]} className="mb-6">
-          <Col xs={24} lg={16}>
-            <Card
-              title="THỐNG KẾ DOANH SỐ"
-              bordered={false}
-              className="shadow-sm"
-            >
-              <div className="h-80">
-                <Bar data={chartData} options={chartOptions} />
+        <Row gutter={[16, 16]} className="mb-6">
+          <Col xs={24} lg={16}> 
+            <Card title="TỔNG ĐƠN HÀNG" bordered={false} className="shadow-sm">
+              <div style={tableContainerStyle}>
+                <Table
+                  columns={ordersColumns}
+                  dataSource={orders}
+                  pagination={false} 
+                  className="overflow-x-auto"
+                  loading={loading}
+                  size="small"
+                />
               </div>
             </Card>
           </Col>
-          <Col xs={24} lg={8}>
-            <Card
-              title="Khách hàng mới"
-              bordered={false}
-              className="w-full shadow-sm"
-            >
-              <div className="space-y-6">
-                {newCustomers.map((customer, index) => (
-                  <div key={index} className="flex items-center space-x-4">
-                    <img
-                      src={
-                        customer.avatar ||
-                        "https://img.lovepik.com/png/20231127/young-businessman-3d-cartoon-avatar-portrait-character-digital_708913_wh860.png"
-                      }
-                      alt="avatar"
-                      className="rounded-full w-14 h-14"
-                    />
-                    <div>
-                      <Text
-                        type="secondary"
-                        className="text-base text-gray-500"
-                      >
-                        {customer.fullname || customer.name}
-                      </Text>
-                      <br />
-                      <Text className="text-sm text-blue-600">
-                        {customer.status || "Hoạt động"}
-                      </Text>
-                    </div>
-                  </div>
-                ))}
+          <Col xs={24} lg={8}> 
+            <Card title="KHÁCH HÀNG MỚI" bordered={false} className="shadow-sm">
+              <div style={tableContainerStyle}>
+                <Table
+                  columns={customerColumns}
+                  dataSource={newCustomers}
+                  pagination={false}
+                  className="overflow-x-auto"
+                  loading={loading}
+                  size="small"
+                />
               </div>
             </Card>
           </Col>
         </Row>
 
-        <Card
-          title="SẢN PHẨM BÁN CHẠY"
-          bordered={false}
-          className="mb-6 shadow-sm"
-        >
+        <Card title="SẢN PHẨM BÁN CHẠY" bordered={false} className="mb-6 shadow-sm">
           <Table
             columns={productColumns}
             dataSource={hotProducts}
@@ -473,16 +350,6 @@ const Dashboard: React.FC = () => {
               onChange: (page) => setCurrentPageHotProducts(page),
               total: hotProducts.length,
             }}
-            className="overflow-x-auto"
-            loading={loading}
-          />
-        </Card>
-
-        <Card title="TỔNG ĐƠN HÀNG" bordered={false} className="mb-6 shadow-sm">
-          <Table
-            columns={ordersColumns}
-            dataSource={orders}
-            pagination={{ pageSize: 4, total: orders.length }}
             className="overflow-x-auto"
             loading={loading}
           />

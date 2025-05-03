@@ -273,25 +273,25 @@ const ProductList: React.FC = () => {
         <Image src={text} alt="Product" className="object-cover w-24 h-24" />
       ),
     },
-    {
-      title: "Tình trạng",
-      dataIndex: "status",
-      key: "status",
-      width: 150,
-      render: (status: string, record: Product) => (
-        <Select
-          value={status}
-          style={{ width: 120 }}
-          onChange={(value) => handleStatusChange(record._id, value)}
-        >
-          {statusOptions.map((opt) => (
-            <Option key={opt.value} value={opt.value}>
-              {opt.label}
-            </Option>
-          ))}
-        </Select>
-      ),
-    },
+    // {
+    //   title: "Tình trạng",
+    //   dataIndex: "status",
+    //   key: "status",
+    //   width: 150,
+    //   render: (status: string, record: Product) => (
+    //     <Select
+    //       value={status}
+    //       style={{ width: 120 }}
+    //       onChange={(value) => handleStatusChange(record._id, value)}
+    //     >
+    //       {statusOptions.map((opt) => (
+    //         <Option key={opt.value} value={opt.value}>
+    //           {opt.label}
+    //         </Option>
+    //       ))}
+    //     </Select>
+    //   ),
+    // },
     {
       title: "Giá tiền",
       dataIndex: "price",

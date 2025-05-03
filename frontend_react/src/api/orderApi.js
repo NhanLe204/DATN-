@@ -6,6 +6,12 @@ const orderApi = {
       data: response.data,
     };
   },
+  get4New: async () => {
+    const response = await api.get("/v1/recentOrders");
+    return {
+      data: response.data,
+    };
+  },
   getAvailableSlots: async (date) => {
     try {
       const response = await api.get(

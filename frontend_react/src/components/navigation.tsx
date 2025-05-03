@@ -23,6 +23,7 @@ const adminPageNameMapping: { [key: string]: string } = {
   settings: "Cài đặt hệ thống",
   posts: "Quản lý bài viết",
   bookings: "Quản lí lịch hẹn",
+  revenue:"Quản lí doanh thu"
   };
   const publicPageNameMapping: { [key: string]: string } = {
     "": "Trang chủ",
