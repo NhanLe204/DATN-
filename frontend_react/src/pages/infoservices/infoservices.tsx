@@ -1,114 +1,42 @@
 "use client";
 import React from "react";
-import { Table, Card, Button, Typography } from "antd";
+import { Card, Button, Typography } from "antd";
 const { Title, Text, Paragraph } = Typography;
 import { useNavigate } from "react-router-dom";
 import "tailwindcss/tailwind.css";
-import { bathData, comboBathData, serviceBathData } from "../../components/booking/priceData";
-
-// Import pricedata
-// import { bathData, comboBathData, serviceBathData } from "../../components/booking/priceData";
-
 
 const PetSpaServices = () => {
-  // Format price to "k" format (e.g., 150000 -> "150k")
-  const formatPrice = (price) => `${price / 1000}k`;
-
-  // Transform bathData for table display
-  const formattedBathData = bathData.map((item, index) => ({
-    key: `${index + 1}`,
-    weight: item.weight,
-    price: formatPrice(item.price),
-  }));
-
-  // Transform comboBathData for table display
-  const formattedComboBathData = comboBathData.map((item, index) => ({
-    key: `${index + 1}`,
-    weight: item.weight,
-    price: formatPrice(item.price),
-  }));
-
-  // Transform serviceBathData for table display
-  const formattedServiceBathData = serviceBathData.map((item, index) => ({
-    key: `${index + 1}`,
-    weight: item.weight,
-    price: formatPrice(item.price),
-  }));
-
-  // Table columns
-  const bathColumns = [
-    {
-      title: "Cân nặng",
-      dataIndex: "weight",
-      key: "weight",
-      render: (text) => <span className="text-[#22A6DF]">{text}</span>,
-    },
-    {
-      title: "Giá tiền",
-      dataIndex: "price",
-      key: "price",
-      render: (text) => <span className="text-[#22A6DF]">{text}</span>,
-    },
-  ];
-
-  const comboBathColumns = [
-    {
-      title: "Cân nặng",
-      dataIndex: "weight",
-      key: "weight",
-      render: (text) => <span className="text-[#22A6DF]">{text}</span>,
-    },
-    {
-      title: "Giá combo (Tắm + Cắt/Tỉa/Cạo)",
-      dataIndex: "price",
-      key: "price",
-      render: (text) => <span className="text-[#22A6DF]">{text}</span>,
-    },
-  ];
-
-  const serviceBathColumns = [
-    {
-      title: "Cân nặng",
-      dataIndex: "weight",
-      key: "weight",
-      render: (text) => <span className="text-[#22A6DF]">{text}</span>,
-    },
-    {
-      title: "Giá tiền",
-      dataIndex: "price",
-      key: "price",
-      render: (text) => <span className="text-[#22A6DF]">{text}</span>,
-    },
-  ];
-
   const navigate = useNavigate();
   const handleBookAppointment = () => {
     navigate("/service");
   };
+
   return (
-    <div className="min-h-screen bg-white px-4 sm:px-6 lg:px-8">
-      <div className="max-w-screen-xl mx-auto">
-      
-      <div className="container mx-auto px-4 py-8 ư">
-          <h1 className="mb-3 text-3xl font-bold text-gray-800 text-center">
-            DỊCH VỤ SPA CHUYÊN NGHIỆP CHO THÚ CƯNG TẠI PET HEAVEN
-          </h1>
-        <div className="text-center mb-4">
-          <Button
-              type="primary"
-              size="large"
-              className="bg-[#22A6DF] hover:opacity-90 mt-4"
-              onClick={handleBookAppointment}
-            >
-              ĐẶT LỊCH NGAY
-          </Button>
-        </div>
-        <Card className="mb-7 text-center ">
-          <h2 className="mb-6 text-xl font-semibold">
-            Quy trình tắm vệ sinh bao gồm 12 bước:
-          </h2>
-          <div className="grid gap-4 md:grid-cols-2">
-              <ol className="list-inside list-decimal space-y-2">
+    <div className="min-h-screen bg-gray-50 px-[154px] py-8">
+      {/* Call-to-Action Button and Header */}
+      <div className="text-center mb-8">
+        <Title level={2} className="text-[#22A6DF] mb-4">
+          DỊCH VỤ SPA CHUYÊN NGHIỆP CHO THÚ CƯNG TẠI PET HEAVEN
+        </Title>
+        <Button
+          type="primary"
+          size="large"
+          className="bg-[#22A6DF] hover:bg-[#1e93c6] w-full sm:w-auto px-8 py-6 text-xl font-semibold"
+          onClick={handleBookAppointment}
+        >
+          ĐĂNG KÝ ĐẶT LỊCH CHĂM SÓC THÚ CƯNG NGAY
+        </Button>
+      </div>
+
+      <div className="container mx-auto">
+        {/* 12-Step Process */}
+        <div className="mb-12">
+          <Card className="shadow-md">
+            <Title level={3} className="text-[#22A6DF] mb-6">
+              Quy trình tắm vệ sinh bao gồm 12 bước
+            </Title>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-lg">
+              <ol className="list-decimal list-inside space-y-3 text-red-800">
                 {[
                   "Kiểm tra sức khỏe cơ bản",
                   "Vệ sinh tai, nhổ lông tai",
@@ -117,10 +45,10 @@ const PetSpaServices = () => {
                   "Cắt móng, dũa móng",
                   "Vắt tuyến hôi",
                 ].map((step, index) => (
-                  <li key={index}>{step}</li>
+                  <li key={index} className="font-medium">{step}</li>
                 ))}
               </ol>
-              <ol className="list-decimal list-inside space-y-2 text-red-800" start={7}>
+              <ol className="list-decimal list-inside space-y-3 text-red-800" start={7}>
                 {[
                   "Tắm và dưỡng xả lông",
                   "Sấy khô lông",
@@ -129,7 +57,7 @@ const PetSpaServices = () => {
                   "Tỉa gọn lông vùng mắt",
                   "Thoa dưỡng và thơm lông",
                 ].map((step, index) => (
-                  <li key={index}>{step}</li>
+                  <li  className="font-medium">{step}</li>
                 ))}
               </ol>
             </div>
@@ -154,15 +82,14 @@ const PetSpaServices = () => {
             </strong>
             <Paragraph className="ml-2 text-base text-gray-700">
               - Chi phí cho dịch vụ spa chó mèo tại Pet Heaven luôn đảm bảo hợp lý và cạnh tranh nhất hiện nay để tất cả thú cưng đều có thể đến và trải nghiệm dịch vụ.
-              <br />- Bên cạnh chi phí hợp lý, còn có rất nhiều ưu đãi kèm theo khi đăng ký làm thành viên hoặc vào các dịp lễ, Tết, ví dụ như: giảm giá 30% cho các dịch vụ, tặng kèm các sản phẩm chăm sóc thú cưng...
+              <br />- Bên cánh chi phí hợp lý, còn có rất nhiều ưu đãi kèm theo khi đăng ký làm thành viên hoặc vào các dịp lễ, Tết, ví dụ như: giảm giá 30% cho các dịch vụ, tặng kèm các sản phẩm chăm sóc thú cưng...
               <br />- Pet Heaven không ngừng phát triển trình độ và tay nghề của nhân viên spa để đem lại kết quả tốt nhất khi làm dịch vụ. Tại Pet Heaven, chúng tôi không cam kết mức giá dịch vụ rẻ nhất nhưng với mức giá đó, đảm bảo Khách hàng sẽ hài lòng nhất khi chọn dịch vụ tại Pet Heaven.
             </Paragraph>
           </Text>
         </div>
 
         {/* Notes Section */}
-        <div className="mb-12">
-        <Text>
+        <div>
           <Title level={2} className="text-[#22A6DF] mb-6">
             NHỮNG LƯU Ý KHI SỬ DỤNG DỊCH VỤ SPA TẠI PET HEAVEN
           </Title>
@@ -171,7 +98,6 @@ const PetSpaServices = () => {
             <br />- Để đảm bảo sức khỏe cho thú cưng đến làm dịch vụ spa, khi đưa các bé đến Khách hàng lưu ý: Không để thú cưng quá đói, quá no hay vận động quá sức trước khi đến spa. Nếu thú cưng có những biểu hiện bất thường xin hãy liên hệ với Pet Heaven để được hỗ trợ.
             <br />- Làm xong dịch vụ, Khách hàng vui lòng kiểm tra thật kỹ thú cưng của mình khi đến đón về. Điều này nhằm đảm bảo nhân viên spa tại Pet Heaven đã hoàn thành đúng quy trình spa cho các bé. Nếu có bất cứ điều gì chưa hài lòng, hãy liên hệ với Pet Heaven qua hotline, fanpage Pet Heaven để được hỗ trợ.
           </Paragraph>
-        </Text>
         </div>
       </div>
     </div>
