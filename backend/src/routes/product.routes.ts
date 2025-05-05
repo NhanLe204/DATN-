@@ -15,7 +15,7 @@ import {
   toggleProductStatus,
   getProductRelated,
   getProductOutStock,
-  deleteProduct,
+  deleteProduct
 } from '../controllers/product.controllers.js';
 import { protectRoute, requireAdmin } from '../middlewares/protectRoute.js';
 import { get } from 'http';

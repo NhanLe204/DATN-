@@ -60,7 +60,7 @@ const EMPLOYEE_ALLOWED_PAGES = [
   "/admin/services",
   "/admin/brands",
   "/admin/tags",
-  "/admin/Revenue"
+  "/admin/Revenue",
 ];
 
 const ProtectedRoute = ({
@@ -137,7 +137,7 @@ function App() {
       element: (
         <>
           <PageLayout />
-          <ChatbotController />
+          {/* <ChatbotController /> */}
         </>
       ),
       children: [
