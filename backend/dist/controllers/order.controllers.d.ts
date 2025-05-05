@@ -7,4 +7,4 @@ export declare const checkAvailableSlots: (req: Request, res: Response) => Promi
 export declare const updateOrderStatus: (req: Request, res: Response) => Promise<void>;
 export declare const updatePaymentStatus: (req: Request, res: Response) => Promise<void>;
 export declare const cancelServiceBooking: (req: Request, res: Response) => Promise<void>;
-export declare const getRecentOrder: (req: Request, res: Response) => Promise<void>;
+export declare const getPendingOrders: (req: Request, res: Response) => Promise<void>;
