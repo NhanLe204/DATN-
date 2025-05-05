@@ -14,6 +14,7 @@ import userApi from "../../api/userApi";
 import productsApi from "../../api/productsApi";
 import orderApi from "../../api/orderApi";
 import orderDetailApi from "../../api/orderDetailApi";
+import moment from "moment";
 
 const tableContainerStyle = {
   overflowY: "auto",
@@ -21,12 +22,12 @@ const tableContainerStyle = {
 
 const { Text } = Typography;
 
-const Dashboard: React.FC = () => {
+const Dashboard = () => {
   const [currentTime, setCurrentTime] = useState("");
   const [currentDate, setCurrentDate] = useState("");
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalOrders, setTotalOrders] = useState(0);
-  const [canceledOrders, setCanceledOrders] = useState(0);
+  const [canceledOrders, setCanceledOrders] = useState([]); // Đã có state này
   const [totalAppointments, setTotalAppointments] = useState(0);
   const [canceledAppointments, setCanceledAppointments] = useState(0);
   const [currentPageOrders, setCurrentPageOrders] = useState(1);
@@ -36,6 +37,29 @@ const Dashboard: React.FC = () => {
     fullname?: string;
     name?: string;
     status?: string;
+  }
+
+  // Định nghĩa interface Product và Order từ đoạn mã của OrderList
+  interface Product {
+    orderDetailId: string;
+    productId: string | null;
+    productName: string;
+    productPrice: number;
+    productImage: string | null;
+    quantity: number;
+    totalPrice: number;
+  }
+
+  interface Order {
+    key: string;
+    orderId: string;
+    fullname: string;
+    orderDate?: string;
+    product: string;
+    status: "PENDING" | "PROCESSING" | "SHIPPING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+    quantity?: number;
+    price?: string;
+    products?: Product[];
   }
 
   const [newCustomers, setNewCustomers] = useState<Customer[]>([]);
@@ -96,7 +120,55 @@ const Dashboard: React.FC = () => {
 
         setOrders(formattedOrders);
         setTotalOrders(recentOrders.length);
-        setCanceledOrders(0);
+
+        // Thêm logic lấy danh sách đơn hàng bị hủy từ đoạn mã của bạn
+        const response = await orderApi.getAll();
+        if (!response.data || !response.data.result) {
+          message.error("Không thể tải danh sách đơn hàng");
+          setOrders([]);
+          setCanceledOrders([]);
+          return;
+        }
+
+        const orderDetails = response.data.result;
+        const groupedOrders: { [key: string]: any } = {};
+        orderDetails.forEach((detail: any) => {
+          const orderId = detail.orderId._id;
+          if (!groupedOrders[orderId]) {
+            groupedOrders[orderId] = {
+              orderId: orderId,
+              orderDate: detail.orderId.order_date,
+              status: detail.orderId.status,
+              fullname: detail.orderId.userID?.fullname || "Không xác định",
+              total_price: detail.orderId.total_price,
+              products: [],
+            };
+          }
+          groupedOrders[orderId].products.push({
+            orderDetailId: detail._id,
+            productId: detail.productId?._id || null,
+            productName: detail.productId?.name || "Không xác định",
+            productPrice: detail.product_price || 0,
+            productImage: null,
+            quantity: detail.quantity || 0,
+            totalPrice: detail.total_price || 0,
+          });
+        });
+
+        const formattedOrders: Order[] = Object.values(groupedOrders).map((order: any, index: number) => ({
+          key: order.orderId || `order-${index}`,
+          orderId: order.orderId || `ORDER${index}`,
+          fullname: order.fullname,
+          product: order.products.map((p: Product) => p.productName).join(", ") || "Không xác định",
+          status: (order.status || "PENDING").toUpperCase() as Order["status"],
+          quantity: order.products.reduce((sum: number, p: Product) => sum + p.quantity, 0) || 0,
+          price: order.total_price?.toString() || "0",
+          orderDate: order.orderDate ? moment(order.orderDate).format("DD/MM/YYYY HH:mm") : "Không xác định",
+          products: order.products,
+        }));
+
+        const canceled = formattedOrders.filter((order) => order.status === "CANCELLED");
+        setCanceledOrders(canceled);
 
         const outOfStockResponse = await productsApi.getProductOutStock();
         const outOfStockItems = outOfStockResponse.data.result || [];
@@ -198,6 +270,49 @@ const Dashboard: React.FC = () => {
     },
   ];
 
+  // Sử dụng columns từ OrderList cho bảng "Đơn hàng hủy"
+  const canceledOrdersColumns = [
+    {
+      title: "Mã đơn hàng",
+      dataIndex: "orderId",
+      key: "orderId",
+      render: (text: string) => (
+        <span className="text-[14px] font-normal text-gray-700">
+          {text ? text.substring(0, 8) : "N/A"}...
+        </span>
+      ),
+    },
+    {
+      title: "Khách hàng",
+      dataIndex: "fullname",
+      key: "fullname",
+      render: (text: string) => (
+        <div className="flex items-center">
+          <div className="h-8 w-8 rounded-full bg-blue-50 flex items-center justify-center">
+            <span className="text-sm text-blue-500">{text ? text.charAt(0).toUpperCase() : "?"}</span>
+          </div>
+          <span className="ml-3 text-[14px] font-normal text-gray-700">{text || "Không xác định"}</span>
+        </div>
+      ),
+    },
+    {
+      title: "Đơn hàng",
+      dataIndex: "product",
+      key: "product",
+      render: (text: string) => <span className="text-[14px] font-normal text-gray-700">{text}</span>,
+    },
+    {
+      title: "Tình trạng",
+      dataIndex: "status",
+      key: "status",
+      render: (status: string) => (
+        <Tag color="error" className="px-3 py-0.5 text-[13px] font-normal rounded-full">
+          Đã hủy
+        </Tag>
+      ),
+    },
+  ];
+
   const productColumns = [
     {
       title: "Mã SP",
@@ -211,12 +326,8 @@ const Dashboard: React.FC = () => {
       dataIndex: "image",
       key: "image",
       width: 80,
-      render: (text: string) => (
-        <img
-          src={text || "https://via.placeholder.com/64"}
-          alt="Product"
-          className="object-cover w-16 h-16"
-        />
+      render: (text) => (
+        <img src={text || "https://via.placeholder.com/64"} alt="Product" className="object-cover w-16 h-16" />
       ),
     },
     {
@@ -231,7 +342,7 @@ const Dashboard: React.FC = () => {
       dataIndex: "price",
       key: "price",
       width: 100,
-      render: (price: any) => `${price?.toLocaleString() || 0} VNĐ`,
+      render: (price) => `${price?.toLocaleString() || 0} VNĐ`,
     },
     { title: "Danh mục", dataIndex: "category", key: "category", width: 100 },
     { title: "Thương hiệu", dataIndex: "brand", key: "brand", width: 100 },
@@ -240,7 +351,7 @@ const Dashboard: React.FC = () => {
       dataIndex: "tag",
       key: "tag",
       width: 100,
-      render: (tag: string) => (tag ? <Tag color="blue">{tag}</Tag> : "Không có"),
+      render: (tag) => (tag ? <Tag color="blue">{tag}</Tag> : "Không có"),
     },
   ];
 
@@ -264,9 +375,7 @@ const Dashboard: React.FC = () => {
       title: "Trạng thái",
       dataIndex: "status",
       key: "status",
-      render: (status: string) => (
-        <Text className="text-sm text-blue-600">{status || "Hoạt động"}</Text>
-      ),
+      render: (status) => <Text className="text-sm text-blue-600">{status || "Hoạt động"}</Text>,
     },
   ];
 
@@ -371,6 +480,7 @@ const Dashboard: React.FC = () => {
             loading={loading}
           />
         </Card>
+
       </div>
     </motion.div>
   );
