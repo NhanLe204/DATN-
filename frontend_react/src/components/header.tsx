@@ -28,14 +28,12 @@ import { useContext } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useLocation } from "react-router-dom";
 import { SearchContext } from "./searchContext";
-import { addToCart, setUserId } from "../redux/slices/cartslice";
+import { setUserId } from "../redux/slices/cartslice";
 import productsApi from "../api/productsApi";
 import { UserOutlined } from "@ant-design/icons";
 import loginApi from "../api/login";
 import ENV_VARS from "../../config";
 import clearLocalStorageExceptCarts from "../config/clearLocalStorage";
-
-const { Title, Text } = Typography;
 
 interface Product {
   _id: string;
@@ -433,25 +431,13 @@ export default function Header() {
   return (
     <>
       <header className="w-full">
-        <div className="flex h-[34px] items-center justify-between bg-[#22A6DF] px-4 text-[10px] text-white sm:h-[34px] sm:px-[40px] sm:text-xs lg:px-[154px] lg:text-sm">
-          <Space className="gap-4 sm:gap-4 lg:gap-10">
-            <span className="flex items-center gap-1">
-              <BsGeoAltFill className="h-3 w-3 sm:h-4 sm:w-4" /> Địa điểm
-            </span>
-            <span className="flex items-center gap-1">
-              <FaTruck className="h-3 w-3 sm:h-4 sm:w-4" /> Trạng thái đơn hàng
-            </span>
-          </Space>
-          <Space className="hidden items-center gap-1 text-xs sm:flex sm:text-xs">
+        <div className="flex h-[34px] items-center justify-center bg-[#22A6DF] px-4 text-[10px] text-white sm:h-[34px] sm:px-[40px] sm:text-xs lg:px-[154px] lg:text-sm">
+          <div className="flex items-center gap-1 text-xs sm:text-xs">
             <div className="flex items-center rounded-xl bg-black px-2 py-1 font-semibold">
               %15 Off
             </div>{" "}
             khi mua tại cửa hàng
-          </Space>
-          <Space className="hidden gap-10 lg:flex">
-            <span>VND ▼</span>
-            <span>Tiếng Việt ▼</span>
-          </Space>
+          </div>
         </div>
 
         <div className="flex items-center justify-between px-4 py-3 sm:px-[40px] sm:py-4 lg:px-[154px]">
@@ -501,15 +487,15 @@ export default function Header() {
           <Space size={50} className="hidden xl:flex">
             <div className="flex flex-col items-center">
               <FaGift className="text-2xl text-[#22A6DF]" />
-              <span>Free shipping</span>
+              <span>Miễn phí vận chuyển</span>
               <span className="text-xs text-gray-500">
-                Details & Restrictions
+                Cho đơn từ 200.000đ
               </span>
             </div>
             <div className="flex flex-col items-center">
               <FaCheckCircle className="text-2xl text-[#22A6DF]" />
-              <span>100% Satisfaction</span>
-              <span className="text-xs text-gray-500">30 days no hassle</span>
+              <span>Cam kết chất lượng</span>
+              <span className="text-xs text-gray-500">Đổi trả trong 30 ngày</span>
             </div>
             <a href="/cart">
               <Badge count={cartCount}>
@@ -570,19 +556,17 @@ export default function Header() {
             {menuItems.map((item) => (
               <a key={item.path} href={item.path} className="group relative">
                 <Typography.Text
-                  className={`text-sm font-bold transition-colors duration-300 lg:text-sm xl:text-lg relative z-10 ${
-                    currentPath === item.path
+                  className={`text-sm font-bold transition-colors duration-300 lg:text-sm xl:text-lg relative z-10 ${currentPath === item.path
                       ? "text-[#22A6DF]"
                       : "text-black group-hover:text-[#22A6DF]"
-                  }`}
+                    }`}
                 >
                   {item.label}
                   <span
-                    className={`absolute bottom-0 left-0 h-[2px] bg-[#22A6DF] transition-all duration-300 ${
-                      currentPath === item.path
+                    className={`absolute bottom-0 left-0 h-[2px] bg-[#22A6DF] transition-all duration-300 ${currentPath === item.path
                         ? "w-full"
                         : "w-0 group-hover:w-full"
-                    }`}
+                      }`}
                   ></span>
                 </Typography.Text>
               </a>

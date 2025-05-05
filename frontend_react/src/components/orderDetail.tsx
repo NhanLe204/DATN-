@@ -7,9 +7,12 @@ import { useNavigate, useParams } from "react-router-dom";
 import userApi from "../api/userApi";
 import orderDetailApi from "../api/orderDetailApi";
 import orderApi from "../api/orderApi";
+
 import { useDispatch } from "react-redux";
 import { addToCart } from "../redux/slices/cartslice";
+
 import ratingApi from "../api/ratingApi";
+import { number } from "prop-types";
 import paymentApi from "../api/paymentApi";
 import ENV_VARS from "../../config";
 
@@ -41,6 +44,12 @@ interface OrderItem {
   isRated: boolean;
 }
 
+interface Rating {
+  rating: number;
+  comment: string;
+  productId: string;
+}
+
 interface Order {
   id: string;
   orderDetailId: string;
@@ -56,6 +65,28 @@ interface Order {
   payment_status: string;
   couponCode: string;
 }
+
+interface ProductRating {
+  _id: {
+    _id: string;
+    productId: string;
+    quantity: number;
+    product_price: number;
+    total_price: number;
+  };
+  score: number;
+  userId: {
+    _id: string;
+    fullname: string;
+    avatar: string;
+  };
+  content: string;
+  createdAt: string;
+}
+
+const ProductRatings = ({ productId }: { productId: string }) => {
+  console.log(productId, "Thanh ne ProductID");
+};
 
 export default function OrderDetail() {
   const params = useParams();
@@ -91,6 +122,10 @@ export default function OrderDetail() {
         .getItem("accountID")
         ?.replace(/"/g, "")
         .trim();
+      const accountID = localStorage
+        .getItem("accountID")
+        ?.replace(/"/g, "")
+        .trim();
 
       if (!token || !accountID) {
         setUser(null);
@@ -103,7 +138,10 @@ export default function OrderDetail() {
         setUser(userResponse.data.data);
 
         const orderResponse = await orderDetailApi.getOrderByUserId(accountID);
+        console.log("Order Response:", orderResponse);
+
         if (!orderResponse.data.success) {
+          console.warn("API Error:", orderResponse.data.message);
           setOrders([]);
         } else {
           setOrders(orderResponse.data.data || []);
@@ -156,7 +194,7 @@ export default function OrderDetail() {
       setLoading(false);
     }
   };
-
+  // Rating
   const handleShowReviewModal = (order: Order, productId: string) => {
     const product = order.items.find((item) => item.id === productId);
     if (product && !product.isRated) {
@@ -187,6 +225,7 @@ export default function OrderDetail() {
       };
 
       const response = await ratingApi.createRating(reviewData);
+
       const responseData = response.data;
 
       if (responseData) {
@@ -197,6 +236,7 @@ export default function OrderDetail() {
         setSelectedProductForReview(null);
         setOrderDetailId(null);
 
+        // Cập nhật orders để phản ánh isRated
         setOrders((prevOrders) =>
           prevOrders.map((order) => ({
             ...order,
@@ -208,10 +248,18 @@ export default function OrderDetail() {
           }))
         );
       } else {
-        message.error("Không thể gửi đánh giá. Vui lòng thử lại.");
+        console.warn("API success false:", responseData.message);
+        message.error(
+          responseData.message || "Không thể gửi đánh giá. Vui lòng thử lại."
+        );
       }
     } catch (error: any) {
-      message.error("Lỗi hệ thống, vui lòng thử lại.");
+      console.error("Error submitting review:", error);
+      message.error(
+        error.response?.data?.message ||
+          error.message ||
+          "Lỗi hệ thống, vui lòng thử lại."
+      );
     } finally {
       setReviewLoading(false);
     }
@@ -225,6 +273,7 @@ export default function OrderDetail() {
     });
   };
 
+  // Rating
   const handleViewDetails = (order: Order) => {
     setSelectedOrder(order);
     setIsDetailModalVisible(true);
@@ -235,6 +284,10 @@ export default function OrderDetail() {
 
     setLoading(true);
     try {
+      const response = await orderApi.updateOrderStatus(
+        orderToCancel.id,
+        "CANCELLED"
+      );
       const response = await orderApi.updateOrderStatus(
         orderToCancel.id,
         "CANCELLED"
@@ -265,6 +318,7 @@ export default function OrderDetail() {
     PENDING: "blue",
     PROCESSING: "green",
     SHIPPING: "orange",
+    SHIPPED: "orange",
     DELIVERED: "green",
     CANCELLED: "red",
   };
@@ -273,6 +327,7 @@ export default function OrderDetail() {
     PENDING: "Chưa xác nhận",
     PROCESSING: "Đã xác nhận",
     SHIPPING: "Đang vận chuyển",
+    SHIPPED: "Đã vận chuyển",
     DELIVERED: "Hoàn thành",
     CANCELLED: "Đã hủy",
   };
@@ -296,14 +351,9 @@ export default function OrderDetail() {
         message.error("Không thể tạo liên kết thanh toán.");
       }
     } catch (error) {
+      console.error("Error creating payment link:", error);
       message.error("Có lỗi xảy ra khi tạo liên kết thanh toán.");
     }
-  };
-
-  const paymentStatusColors = {
-    PENDING: "blue",
-    PAID: "green",
-    CASH_ON_DELIVERY: "orange",
   };
 
   const paymentStatusText = {
@@ -329,7 +379,7 @@ export default function OrderDetail() {
       key: "items",
       width: "35%",
       render: (items: OrderItem[], record: Order) => {
-        const maxItemsToShow = 1;
+        const maxItemsToShow = 2;
         const displayedItems = items.slice(0, maxItemsToShow);
         const remainingItems = items.length - maxItemsToShow;
 
@@ -361,7 +411,7 @@ export default function OrderDetail() {
                 onClick={() => handleViewDetails(record)}
                 className="text-blue-600 p-0 text-[10px] sm:text-xs font-medium hover:text-blue-800 transition-colors duration-200"
               >
-                +{remainingItems} sản phẩm
+                Xem thêm {remainingItems} sản phẩm
               </Button>
             )}
           </div>
@@ -541,6 +591,7 @@ export default function OrderDetail() {
     { label: "Chưa xác nhận", key: "PENDING" },
     { label: "Đã xác nhận", key: "PROCESSING" },
     { label: "Đang vận chuyển", key: "SHIPPING" },
+    { label: "Đã vận chuyển", key: "SHIPPED" },
     { label: "Hoàn thành", key: "DELIVERED" },
     { label: "Đã hủy", key: "CANCELLED" },
   ];
@@ -553,6 +604,13 @@ export default function OrderDetail() {
 
   const subTotal = (items: OrderItem[]): number => {
     return items.reduce((sum, item) => sum + item.quantity * item.price, 0);
+  };
+
+  const calculateDiscount = (order: Order): number => {
+    const subtotal = subTotal(order.items);
+    const subtotalAfterDiscount = order.total - order.deliveryFee; // Tổng tiền sản phẩm sau khi giảm giá
+    const discount = subtotal - subtotalAfterDiscount;
+    return discount > 0 ? discount : 0; // Đảm bảo không trả về giá trị âm
   };
 
   return (
@@ -588,7 +646,6 @@ export default function OrderDetail() {
           pageSize: 5,
           total: filteredOrders.length,
           showSizeChanger: false,
-          responsive: true,
         }}
         className="border rounded-lg shadow-sm"
         locale={{
@@ -599,7 +656,6 @@ export default function OrderDetail() {
             />
           ),
         }}
-        scroll={{ x: false }}
       />
 
       <Modal
@@ -727,14 +783,12 @@ export default function OrderDetail() {
                   rowKey="id"
                   pagination={false}
                   className="border rounded-lg"
-                  scroll={{ x: false }}
                 />
               </div>
             </div>
           </div>
         )}
       </Modal>
-
       <Modal
         title="Đánh giá sản phẩm"
         open={isReviewModalVisible}
@@ -832,13 +886,13 @@ export default function OrderDetail() {
                 Không có sản phẩm nào để đánh giá.
               </p>
             ) : (
-              <div className="space-y-1 sm:space-y-2">
+              <div className="space-y-4">
                 {selectedOrderForReview.items.map((item) => (
                   <div
                     key={item.id}
-                    className="flex flex-col sm:flex-row items-center justify-between p-1 sm:p-2 border rounded-lg bg-white"
+                    className="flex items-center justify-between p-4 border rounded-lg bg-white"
                   >
-                    <div className="flex flex-col sm:flex-row items-center space-x-0 sm:space-x-2 w-full">
+                    <div className="flex items-center space-x-4">
                       <img
                         src={item.image_url[0]}
                         alt={item.name}

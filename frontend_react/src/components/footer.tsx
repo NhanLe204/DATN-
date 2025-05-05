@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   FaFacebookF,
   FaInstagram,
@@ -9,10 +9,33 @@ import {
 import { MdEmail } from "react-icons/md";
 import { BsGeoAltFill } from "react-icons/bs";
 import { Typography, Space } from "antd";
+import categoryApi from "../api/categoryApi";
+import { Link } from "react-router-dom";
 
 const { Title, Text } = Typography;
 
 export default function Footer() {
+  const [categories, setCategories] = useState<{ _id: string; name: string }[]>(
+      []
+    );
+
+    useEffect(() => {
+      const fetchProducts = async () => {
+        try {
+          // Lấy danh mục
+          const categoriesResponse = await categoryApi.getCategoriesActive();
+          const categoriesData = await categoriesResponse.data.result;
+          setCategories(categoriesData);
+  
+        } catch (error) {
+          console.error("Error fetching products:", error);
+          setCategories([]);
+        }
+      };
+      fetchProducts();
+    }, []);
+
+
   return (
     <>
       <footer className="border-y border-dashed border-gray-300 px-4 py-4 text-black sm:px-6 sm:py-5 lg:px-[154px]">
@@ -194,8 +217,15 @@ export default function Footer() {
                 size="small"
                 className="space-y-1 text-xs sm:text-sm"
               >
-                <a href="#">Dành cho chó</a>
-                <a href="#">Dành cho mèo</a>
+                {categories.map((category) => (
+                  <Link
+                    key={category._id}
+                    to={`/product?category=${category.name.toLowerCase()}`}
+                    className="hover:text-[#22A6DF] transition-colors duration-300"
+                  >
+                    {category.name === "Chó" ? "Dành cho chó" : category.name === "Mèo" ? "Dành cho mèo" : category.name}
+                  </Link>
+                ))}
                 <a href="#">Thương hiệu</a>
                 <a href="#">Bộ sưu tập</a>
               </Space>
@@ -211,12 +241,12 @@ export default function Footer() {
                 size="small"
                 className="space-y-1 text-xs sm:text-sm"
               >
-                <a href="#">Giới thiệu</a>
+                <a href="/about-us">Giới thiệu</a>
                 <a href="#">Thành viên</a>
                 <a href="#">Điều khoản sử dụng</a>
                 <a href="#">Tuyển dụng</a>
               </Space>
-            </div>
+            </div> 
 
             {/* Hỗ trợ khách hàng */}
             <div className="text-center lg:text-left">

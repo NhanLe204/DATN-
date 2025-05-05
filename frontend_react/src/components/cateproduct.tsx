@@ -56,14 +56,6 @@ export default function CateProduct({ data }: { data: APIProduct[] }) {
               className="group relative h-full overflow-hidden rounded-xl border border-gray-100 bg-white p-3 shadow-sm transition-all duration-300 hover:shadow-xl"
               bodyStyle={{ padding: 0 }}
             >
-              {/* Wishlist Button */}
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                className="absolute top-2 left-2 z-10 rounded-full bg-white p-2 shadow-md transition-all hover:bg-gray-50"
-              >
-                <BsHeart className="text-gray-600 hover:text-red-500" />
-              </motion.button>
 
               {/* Image Container */}
               <Link to={`/detail/${product._id}`}>
@@ -94,7 +86,7 @@ export default function CateProduct({ data }: { data: APIProduct[] }) {
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="absolute top-2 right-2"
+                  className="absolute top-2 left-10"
                 >
                   <Badge.Ribbon 
                     text={`-${product.discount}%`}
@@ -107,11 +99,11 @@ export default function CateProduct({ data }: { data: APIProduct[] }) {
               {/* Product Info */}
               <div className="space-y-3 px-2 text-center">
                 {/* Rating */}
-                <div className="flex items-center justify-center gap-1">
+                {/* <div className="flex items-center justify-center gap-1">
                   {[...Array(5)].map((_, index) => (
                     <BsStarFill key={index} className="text-yellow-400 text-sm" />
                   ))}
-                </div>
+                </div> */}
 
                 {/* Name */}
                 <Link to={`/detail/${product._id}`}>
