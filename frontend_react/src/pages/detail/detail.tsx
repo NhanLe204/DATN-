@@ -197,13 +197,17 @@ export default function DetailProduct() {
     const item = {
       id: product._id || product.id,
       name: product.name,
-      price: Number(product.price),
+      price: Number((Number(product.price || 0) * (1 - (Number(product.discount || 0) / 100)))),
       image: product.image_url[0],
       stockQuantity: productsDetail?.quantity || 0, // Đảm bảo lưu stockQuantity
     };
     console.log("Adding to cart:", item); // Kiểm tra dữ liệu trước khi dispatch
     dispatch(addToCart({ item, quantity }));
     message.success("Đã thêm vào giỏ hàng!");
+  };
+  const handleBuyNow = () => {
+    handleAddToCart();
+    window.location.href = "/checkout";
   };
   const formatDate = (dateString) => {
     const options = {
@@ -413,7 +417,10 @@ export default function DetailProduct() {
               >
                 Thêm vào giỏ hàng
               </Button>
-              <Button className="w-full sm:w-auto rounded-lg bg-[#FF0000] px-4 lg:px-6 py-3 lg:py-5 text-white text-sm lg:text-base">
+              <Button 
+                className="w-full sm:w-auto rounded-lg bg-[#FF0000] px-4 lg:px-6 py-3 lg:py-5 text-white text-sm lg:text-base"
+                onClick={handleBuyNow}
+                >
                 MUA NGAY
               </Button>
             </div>

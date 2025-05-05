@@ -1,8 +1,10 @@
 import React from "react";
-import { Badge, Button, Card } from "antd";
-import { Link } from "react-router-dom";
+import { Badge, Button, Card, message } from "antd";
+import { Link, useNavigate } from "react-router-dom";
 import { BsHandbag, BsHeart, BsStarFill } from "react-icons/bs";
 import { motion } from "framer-motion";
+import { useDispatch } from "react-redux";
+import { addToCart } from "../redux/slices/cartslice";
 
 interface APIProduct {
   _id: string;
@@ -10,9 +12,34 @@ interface APIProduct {
   image_url: string[];
   price: number;
   discount: number;
+  quantity: number;
 }
 
 export default function CateProduct({ data }: { data: APIProduct[] }) {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const handleBuyNow = (product: APIProduct) => {
+    const quantity = 1;
+    const stockQuantity = product.quantity || Infinity;
+
+    if (quantity > stockQuantity) {
+      message.error(`Sản phẩm ${product.name} đã hết hàng!`);
+      return;
+    }
+
+    const item = {
+      id: product._id,
+      name: product.name,
+      price: Number(product.price * (1 - product.discount / 100)),
+      image: product.image_url[0] || "/placeholder-image.jpg",
+      stockQuantity: product.quantity || 0,
+    };
+
+    dispatch(addToCart({ item, quantity }));
+    navigate("/checkout");
+  };
+
   return (
     <div className="container md:px-4">
       <div className="mt-4 grid grid-cols-2 gap-4 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4">
@@ -120,16 +147,15 @@ export default function CateProduct({ data }: { data: APIProduct[] }) {
                   className="relative overflow-hidden rounded-lg mt-auto"
                   whileHover={{ scale: 1.02 }}
                 >
-                  <Link to={`/detail/${product._id}`}>
                     <Button 
                       className="w-full bg-transparent hover:bg-[#22A6DF] border-[#22A6DF] text-[#22A6DF] hover:text-white transition-all duration-300 uppercase font-medium"
+                      onClick={() => handleBuyNow(product)}
                     >
                       <div className="flex items-center justify-center gap-2">
                         <BsHandbag className="text-lg" />
                         <span>Mua ngay</span>
                       </div>
                     </Button>
-                  </Link>
                 </motion.div>
               </div>
             </Card>
