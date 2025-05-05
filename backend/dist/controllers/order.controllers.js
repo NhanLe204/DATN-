@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cancelServiceBooking = exports.updatePaymentStatus = exports.updateOrderStatus = exports.checkAvailableSlots = exports.getOrderById = exports.getAllOrders = exports.getAvailableSlots = exports.createOrderAfterPayment = void 0;
+exports.getRecentOrder = exports.cancelServiceBooking = exports.updatePaymentStatus = exports.updateOrderStatus = exports.checkAvailableSlots = exports.getOrderById = exports.getAllOrders = exports.getAvailableSlots = exports.createOrderAfterPayment = void 0;
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const mongoose_1 = __importDefault(require("mongoose"));
 const order_model_js_1 = __importDefault(require("../models/order.model.js"));
@@ -601,4 +601,36 @@ const cancelServiceBooking = async (req, res) => {
     }
 };
 exports.cancelServiceBooking = cancelServiceBooking;
+const getRecentOrder = async (req, res) => {
+    try {
+        const recentOrder = await order_model_js_1.default
+            .find({ bookingStatus: null })
+            .sort({ createdAt: -1 })
+            .limit(4)
+            .populate('payment_typeID', 'payment_type_name')
+            .populate('deliveryID', 'delivery_name')
+            .lean();
+        const formattedOrders = recentOrder.map((order) => ({
+            orderId: order._id,
+            paymentType: order.payment_typeID?.payment_type_name || 'Không xác định',
+            delivery: order.deliveryID?.delivery_name || 'Không xác định',
+            totalPrice: `${order.total_price?.toLocaleString() || 0} VNĐ`,
+        }));
+        res.status(200).json({
+            success: true,
+            message: 'Lấy 4 đơn hàng mới nhất thành công',
+            result: formattedOrders,
+        });
+    }
+    catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.error(`Error fetching recent orders: ${errorMessage}`);
+        res.status(500).json({
+            success: false,
+            message: 'Internal Server Error',
+            details: errorMessage,
+        });
+    }
+};
+exports.getRecentOrder = getRecentOrder;
 //# sourceMappingURL=order.controllers.js.map

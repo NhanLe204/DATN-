@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cancelOverdueBookings = exports.getOrderById = exports.updateBooking = exports.updateRealPrice = exports.cancelBooking = exports.changeBookingStatus = exports.getOrderByUserId = exports.getAllBookings = exports.getBookingsByUserId = exports.deleteOrderDetail = exports.updateOrderDetail = exports.createOrderDetail = exports.getOrderDetailsByOrderId = exports.getOrderDetails = void 0;
+exports.getBookingDetailsByUserId = exports.getCancelledBookings = exports.cancelOverdueBookings = exports.getOrderById = exports.updateBooking = exports.updateRealPrice = exports.cancelBooking = exports.changeBookingStatus = exports.getOrderByUserId = exports.getAllBookings = exports.getBookingsByUserId = exports.deleteOrderDetail = exports.updateOrderDetail = exports.createOrderDetail = exports.getOrderDetailsByOrderId = exports.getOrderDetails = void 0;
 const orderdetail_model_js_1 = __importDefault(require("../models/orderdetail.model.js"));
 const order_model_js_1 = __importDefault(require("../models/order.model.js"));
 const mongoose_1 = __importDefault(require("mongoose"));
@@ -502,24 +502,39 @@ exports.changeBookingStatus = changeBookingStatus;
 const cancelBooking = async (req, res) => {
     try {
         const { orderId, orderDetailId } = req.body;
-        // Validate input
+        // Kiểm tra đầu vào
         if (!orderId || !orderDetailId) {
             res.status(400).json({
                 success: false,
-                message: 'orderId and orderDetailId are required'
+                message: 'Yêu cầu orderId và orderDetailId'
             });
             return;
         }
-        // Check if order exists
+        // Kiểm tra định dạng ObjectId
+        if (!mongoose_1.default.Types.ObjectId.isValid(orderId)) {
+            res.status(400).json({
+                success: false,
+                message: 'Order ID không hợp lệ'
+            });
+            return;
+        }
+        if (!mongoose_1.default.Types.ObjectId.isValid(orderDetailId)) {
+            res.status(400).json({
+                success: false,
+                message: 'Order Detail ID không hợp lệ'
+            });
+            return;
+        }
+        // Kiểm tra đơn hàng tồn tại
         const order = await order_model_js_1.default.findById(orderId);
         if (!order) {
             res.status(404).json({
                 success: false,
-                message: 'Order not found'
+                message: 'Không tìm thấy đơn hàng'
             });
             return;
         }
-        // Check if orderDetail exists
+        // Kiểm tra chi tiết đơn hàng tồn tại
         const orderDetail = await orderdetail_model_js_1.default.findOne({
             _id: orderDetailId,
             orderId,
@@ -528,18 +543,50 @@ const cancelBooking = async (req, res) => {
         if (!orderDetail) {
             res.status(404).json({
                 success: false,
-                message: 'Chi tiết đơn hàng không tồn tại'
+                message: 'Chi tiết đơn hàng không tồn tại hoặc không phải lịch hẹn'
             });
             return;
         }
-        // ... (phần còn lại của logic)
+        // Kiểm tra nếu lịch hẹn đã bị hủy
+        if (order.bookingStatus === booking_enum_js_1.BookingStatus.CANCELLED) {
+            res.status(400).json({
+                success: false,
+                message: 'Lịch hẹn đã được hủy trước đó'
+            });
+            return;
+        }
+        // Cập nhật trạng thái lịch hẹn thành CANCELLED
+        const session = await mongoose_1.default.startSession();
+        session.startTransaction();
+        try {
+            const updatedOrder = await order_model_js_1.default.findByIdAndUpdate(orderId, { $set: { bookingStatus: booking_enum_js_1.BookingStatus.CANCELLED, status: 'cancelled' } }, { new: true, session });
+            if (!updatedOrder) {
+                throw new Error('Không thể cập nhật trạng thái đơn hàng');
+            }
+            await session.commitTransaction();
+            session.endSession();
+            res.status(200).json({
+                success: true,
+                message: 'Hủy lịch hẹn thành công',
+                data: {
+                    orderId,
+                    orderDetailId,
+                    bookingStatus: booking_enum_js_1.BookingStatus.CANCELLED
+                }
+            });
+        }
+        catch (error) {
+            await session.abortTransaction();
+            session.endSession();
+            throw error;
+        }
     }
     catch (error) {
-        console.error('Error cancelling booking:', error);
+        console.error('Lỗi khi hủy lịch hẹn:', error);
         res.status(500).json({
             success: false,
-            message: 'Error cancelling booking',
-            error
+            message: 'Lỗi khi hủy lịch hẹn',
+            error: error instanceof Error ? error.message : 'Lỗi không xác định'
         });
     }
 };
@@ -597,7 +644,6 @@ const calculatePrice = (serviceName, petWeight, petType) => {
     }
     return 0;
 };
-// API updateRealPrice
 const updateRealPrice = async (req, res) => {
     try {
         const { orderId, petWeight, petType, serviceName } = req.body;
@@ -904,4 +950,211 @@ const cancelOverdueBookings = () => {
 exports.cancelOverdueBookings = cancelOverdueBookings;
 // Khởi động công việc tự động hủy khi file được load
 (0, exports.cancelOverdueBookings)();
+// tìm số lương lịch hủy
+const getCancelledBookings = async (req, res) => {
+    try {
+        const cancelledBookings = await orderdetail_model_js_1.default.aggregate([
+            {
+                $match: {
+                    serviceId: { $ne: null }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'orders',
+                    localField: 'orderId',
+                    foreignField: '_id',
+                    as: 'order'
+                }
+            },
+            {
+                $unwind: '$order'
+            },
+            {
+                $match: {
+                    'order.bookingStatus': booking_enum_js_1.BookingStatus.CANCELLED
+                }
+            },
+            {
+                $lookup: {
+                    from: 'services',
+                    localField: 'serviceId',
+                    foreignField: '_id',
+                    as: 'service'
+                }
+            },
+            {
+                $unwind: '$service'
+            },
+            {
+                $project: {
+                    orderId: '$order._id',
+                    orderDetailId: '$_id',
+                    fullname: {
+                        $ifNull: ['$order.fullname', '$order.inforUserGuest.fullName', 'Khách vãng lai']
+                    },
+                    email: {
+                        $ifNull: ['$order.email', '$order.inforUserGuest.email', null]
+                    },
+                    phone: {
+                        $ifNull: ['$order.phone', '$order.inforUserGuest.phone', 'Unknown Phone']
+                    },
+                    service: {
+                        _id: '$service._id',
+                        name: '$service.service_name',
+                        price: '$service.service_price',
+                        duration: '$service.duration'
+                    },
+                    booking_date: '$booking_date',
+                    order_date: '$order.order_date',
+                    bookingStatus: '$order.bookingStatus',
+                    petName: '$petName',
+                    petType: '$petType',
+                    petWeight: '$petWeight',
+                    realPrice: '$realPrice'
+                }
+            }
+        ]);
+        if (!cancelledBookings.length) {
+            res.status(404).json({
+                success: false,
+                message: 'Không tìm thấy lịch hẹn đã hủy'
+            });
+            return;
+        }
+        res.status(200).json({
+            success: true,
+            message: 'Lấy danh sách lịch hẹn đã hủy thành công',
+            data: cancelledBookings
+        });
+    }
+    catch (error) {
+        console.error('Lỗi khi lấy danh sách lịch hẹn đã hủy:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Lỗi khi lấy danh sách lịch hẹn đã hủy',
+            error: error instanceof Error ? error.message : 'Lỗi không xác định'
+        });
+    }
+};
+exports.getCancelledBookings = getCancelledBookings;
+// chi tiết lịch đặt cho user
+const getBookingDetailsByUserId = async (req, res, next) => {
+    try {
+        const { userId } = req.query;
+        // Kiểm tra userId hợp lệ
+        if (!userId || typeof userId !== 'string' || !mongoose_1.default.Types.ObjectId.isValid(userId)) {
+            res.status(400).json({
+                success: false,
+                message: 'userId không hợp lệ'
+            });
+            return;
+        }
+        // Bước 1: Tìm các đơn hàng của user
+        const userOrders = await order_model_js_1.default.find({ userID: userId }).select('_id bookingStatus order_date').lean();
+        if (!userOrders.length) {
+            res.status(404).json({
+                success: false,
+                message: 'Không tìm thấy đơn hàng nào cho user này'
+            });
+            return;
+        }
+        // Lấy danh sách orderId
+        const orderIds = userOrders.map((order) => order._id);
+        // Bước 2: Tìm các orderDetail có serviceId từ các đơn hàng của user
+        const bookings = await orderdetail_model_js_1.default.aggregate([
+            {
+                $match: {
+                    orderId: { $in: orderIds },
+                    serviceId: { $ne: null }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'orders',
+                    localField: 'orderId',
+                    foreignField: '_id',
+                    as: 'order'
+                }
+            },
+            {
+                $unwind: '$order'
+            },
+            {
+                $lookup: {
+                    from: 'services',
+                    localField: 'serviceId',
+                    foreignField: '_id',
+                    as: 'service'
+                }
+            },
+            {
+                $unwind: '$service'
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'order.userID',
+                    foreignField: '_id',
+                    as: 'user'
+                }
+            },
+            {
+                $unwind: {
+                    path: '$user',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $project: {
+                    orderId: '$order._id',
+                    orderDetailId: '$_id',
+                    fullname: {
+                        $ifNull: ['$order.fullname', '$order.inforUserGuest.fullName', '$user.fullname', 'Khách vãng lai']
+                    },
+                    email: {
+                        $ifNull: ['$order.email', '$order.inforUserGuest.email', '$user.email', null]
+                    },
+                    phone: {
+                        $ifNull: ['$order.phone', '$order.inforUserGuest.phone', '$user.phone', 'Không xác định']
+                    },
+                    service: {
+                        _id: '$service._id',
+                        name: '$service.service_name',
+                        price: '$service.service_price',
+                        duration: '$service.duration'
+                    },
+                    booking_date: '$booking_date',
+                    order_date: '$order.order_date',
+                    bookingStatus: '$order.bookingStatus',
+                    petName: '$petName',
+                    petType: '$petType',
+                    petWeight: '$petWeight',
+                    realPrice: '$realPrice'
+                }
+            }
+        ]);
+        if (!bookings.length) {
+            res.status(404).json({
+                success: false,
+                message: 'Không tìm thấy lịch hẹn nào cho user này'
+            });
+            return;
+        }
+        res.status(200).json({
+            success: true,
+            message: 'Lấy chi tiết lịch hẹn thành công',
+            data: bookings
+        });
+    }
+    catch (error) {
+        console.error('Lỗi khi lấy chi tiết lịch hẹn:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Lỗi khi lấy chi tiết lịch hẹn',
+            error: error instanceof Error ? error.message : 'Lỗi không xác định'
+        });
+    }
+};
+exports.getBookingDetailsByUserId = getBookingDetailsByUserId;
 //# sourceMappingURL=orderDetail.controllers.js.map
