@@ -2,14 +2,19 @@
 import React, { useEffect, useState } from "react";
 import {
   Button,
+  Empty,
   Form,
   Input,
   Modal,
   Select,
+  Tooltip,
   message,
 } from "antd";
 import { useParams } from "react-router-dom";
 import userApi from "../api/userApi";
+import { AnimatePresence, motion } from "framer-motion";
+import { DeleteOutlined, EditOutlined, PlusOutlined, StarFilled, StarOutlined } from "@ant-design/icons";
+
 
 const { Item } = Form;
 
@@ -350,66 +355,111 @@ export default function Address() {
 
   return (
     <>
-      <div className="flex justify-between">
-        <h3 className="mb-4 text-lg font-bold text-gray-800">Địa chỉ của tôi</h3>
-        <Button
-          className="w-1/6 bg-[#22A6DF] hover:bg-[#1890ff] hover:border-[#22A6DF] rounded text-white"
+      <div className="bg-white rounded-2xl shadow-sm p-6">
+      {/* Header Section */}
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center gap-3">
+          <h3 className="text-xl font-bold text-gray-800">Địa chỉ của tôi</h3>
+        </div>
+        
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="flex items-center gap-2 px-4 py-2 bg-[#22A6DF] hover:bg-[#1890ff] hover:border-[#22A6DF] text-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
           onClick={() => setIsModalVisible(true)}
         >
-          + Thêm địa chỉ
-        </Button>
+          <PlusOutlined />
+          Thêm địa chỉ
+        </motion.button>
       </div>
+
       <hr className="mt-2 border-gray-300" />
-      <div className="m-4">
-        {user?.address && user.address.length > 0 ? (
-          user.address.map((addr, index) => (
-            <div
-              key={index}
-              className="flex justify-between items-center gap-6 border-b border-gray-200 py-4"
+
+      <div className="mt-6 space-y-4">
+        <AnimatePresence>
+          {user?.address && user.address.length > 0 ? (
+            user.address.map((addr, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="group relative bg-gray-50 rounded-xl p-6 hover:bg-gray-100 transition-all duration-200"
+              >
+                {addr.isDefault && (
+                  <div className="absolute -top-2 -right-2">
+                    <Tooltip title="Địa chỉ mặc định">
+                      <div className="bg-orange-500 text-white p-2 rounded-full shadow-lg">
+                        <StarFilled />
+                      </div>
+                    </Tooltip>
+                  </div>
+                )}
+
+                <div className="flex justify-between items-start">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <h4 className="text-lg font-semibold text-gray-800">{addr.name}</h4>
+                      <span className="text-gray-400">|</span>
+                      <span className="text-gray-600">{addr.phone}</span>
+                      {addr.isDefault && (
+                        <span className="px-3 py-1 text-xs font-medium text-orange-700 bg-orange-100 rounded-full">
+                          Mặc định
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-gray-600 max-w-2xl">{addr.address}</p>
+                  </div>
+
+                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <Tooltip title="Chỉnh sửa">
+                      <Button
+                        icon={<EditOutlined />}
+                        className="flex items-center justify-center w-9 h-9 text-[#22A6DF] border-[#22A6DF] hover:bg-blue-50"
+                        shape="circle"
+                        onClick={() => handleEditAddress(index)}
+                      />
+                    </Tooltip>
+                    
+                    <Tooltip title="Xóa">
+                      <Button
+                        icon={<DeleteOutlined />}
+                        className="flex items-center justify-center w-9 h-9 text-red-600 border-red-600 hover:bg-red-50"
+                        shape="circle"
+                        onClick={() => handleDeleteAddress(index)}
+                      />
+                    </Tooltip>
+
+                    {!addr.isDefault && (
+                      <Tooltip title="Đặt làm mặc định">
+                        <Button
+                          icon={<StarOutlined />}
+                          className="flex items-center justify-center w-9 h-9 text-green-600 border-green-600 hover:bg-green-50"
+                          shape="circle"
+                          onClick={() => handleSetDefaultAddress(index)}
+                        />
+                      </Tooltip>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            ))
+          ) : (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="py-12"
             >
-              <div className="w-full max-w-md text-center">
-                <p className="text-base font-semibold">
-                  {addr.name}
-                  <span className="mx-2 text-gray-500">|</span>
-                  <span className="font-normal text-gray-500">{addr.phone}</span>
-                  {addr.isDefault && (
-                    <span className="ml-2 inline-block px-2 py-1 text-xs font-semibold text-orange-600 bg-orange-100 rounded">
-                      Mặc định
-                    </span>
-                  )}
-                </p>
-                <p className="mt-2 text-base text-gray-500">{addr.address}</p>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  className="w-1/7 bg-[#22A6DF] hover:bg-[#1890ff] rounded text-white"
-                  onClick={() => handleEditAddress(index)}
-                >
-                  Sửa
-                </Button>
-                <Button
-                  className="w-1/7 bg-red-500 hover:bg-red-600 rounded text-white"
-                  onClick={() => handleDeleteAddress(index)}
-                >
-                  Xóa
-                </Button>
-                <Button
-                  className={`w-1/7 rounded text-white ${addr.isDefault
-                      ? "bg-gray-400 cursor-not-allowed"
-                      : "bg-green-500 hover:bg-green-600"
-                    }`}
-                  onClick={() => handleSetDefaultAddress(index)}
-                  disabled={addr.isDefault}
-                >
-                  {addr.isDefault ? "Mặc định" : "Đặt làm mặc định"}
-                </Button>
-              </div>
-            </div>
-          ))
-        ) : (
-          <p className="text-center text-gray-500">Chưa có địa chỉ nào.</p>
-        )}
+              <Empty
+                description={
+                  <span className="text-gray-500">Chưa có địa chỉ nào</span>
+                }
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
+    </div>
 
       <Modal
         title={<span className="text-xl font-semibold text-gray-800">Thêm địa chỉ mới</span>}
