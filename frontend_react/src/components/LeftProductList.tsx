@@ -101,36 +101,35 @@ export default function LeftProductList({
     );
     return brand ? brand._id : "";
   };
-
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const categoryParam = params.get("category");
     const brandsParam = params.get("brands")?.split(",") || [];
     const pricesParam = params.get("prices")?.split(",") || [];
     const tagsParam = params.get("tags")?.split(",") || [];
-
+  
     if (categoryParam) {
       const categoryId = getCategoryIdByName(categoryParam);
       if (categoryId) {
         setSelectedCategory(categoryId);
       }
     }
-
+  
     if (brandsParam.length > 0) {
       const brandIds = brandsParam
         .map((brandName) => getBrandIdByName(brandName))
         .filter(Boolean);
       brandIds.forEach((id) => toggleBrand(id));
     }
-
+  
     if (pricesParam.length > 0) {
       pricesParam.forEach((price) => togglePriceRange(price));
     }
-
+  
     if (tagsParam.length > 0) {
       tagsParam.forEach((tag) => toggleTag(tag));
     }
-  }, [location.search]);
+  }, [location.search, categories, getCategoryIdByName, setSelectedCategory, toggleBrand, togglePriceRange, toggleTag]);
 
   const updateURL = (type: string, value: string | string[]) => {
     const params = new URLSearchParams(location.search);
