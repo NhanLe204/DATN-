@@ -9,6 +9,8 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+
+
 // Kiểm tra kết nối SMTP khi khởi động
 transporter.verify((error, success) => {
   if (error) {
@@ -35,12 +37,16 @@ export const sendBookingCompletionEmail = async (
     const service = await ServiceModel.findById(serviceId).select('service_name');
     const formattedBookingDate = booking_date
       ? new Intl.DateTimeFormat('vi-VN', {
-          timeZone: 'Asia/Ho_Chi_Minh',
-          dateStyle: 'short',
-          timeStyle: 'short'
-        }).format(booking_date)
+        timeZone: 'Asia/Ho_Chi_Minh',
+        dateStyle: 'short',
+        timeStyle: 'short'
+      }).format(booking_date)
       : 'N/A';
-
+    const petTypeMap: { [key: string]: string } = {
+      cat: 'Mèo',
+      dog: 'Chó'
+    };
+    const petTypeInVietnamese = petTypeMap[petType?.toLowerCase()] || petType || 'N/A';
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
@@ -65,7 +71,7 @@ export const sendBookingCompletionEmail = async (
             </tr>
             <tr>
               <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Thú cưng:</td>
-              <td style="padding: 10px; border: 1px solid #e0e0e0;">${petName || 'N/A'} (${petType || 'N/A'})</td>
+              <td style="padding: 10px; border: 1px solid #e0e0e0;">${petName || 'N/A'} (${petTypeInVietnamese || 'N/A'})</td>
             </tr>
             <tr>
               <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Giá thực tế:</td>

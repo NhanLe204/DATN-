@@ -21,6 +21,7 @@ import {
   DownloadOutlined,
 } from '@ant-design/icons';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import orderApi from '../../api/orderApi';
 import moment from 'moment';
 import 'moment/locale/vi';
@@ -58,6 +59,8 @@ interface FilterParams {
 }
 
 const OrderList: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
@@ -85,7 +88,6 @@ const OrderList: React.FC = () => {
 
       const orderDetails = response.data.result;
 
-      // Group order details by orderId
       const groupedOrders: { [key: string]: any } = {};
 
       orderDetails.forEach((detail: any) => {
@@ -106,13 +108,12 @@ const OrderList: React.FC = () => {
           productId: detail.productId?._id || null,
           productName: detail.productId?.name || 'Không xác định',
           productPrice: detail.product_price || 0,
-          productImage: null, // API response doesn't include product image; adjust if available
+          productImage: null,
           quantity: detail.quantity || 0,
           totalPrice: detail.total_price || 0,
         });
       });
 
-      // Convert grouped orders to the Order interface
       const formattedOrders: Order[] = Object.values(groupedOrders).map((order: any, index: number) => ({
         key: order.orderId || `order-${index}`,
         orderId: order.orderId || `ORDER${index}`,
@@ -127,6 +128,21 @@ const OrderList: React.FC = () => {
 
       const filteredOrders = applyFilters(formattedOrders);
       setOrders(filteredOrders);
+
+      // Kiểm tra orderId từ query string và mở modal nếu có
+      const orderIdFromQuery = searchParams.get('orderId');
+      if (orderIdFromQuery) {
+        const orderToView = filteredOrders.find((order) => order.orderId === orderIdFromQuery);
+        if (orderToView) {
+          setSelectedOrder(orderToView);
+          form.setFieldsValue({ status: orderToView.status });
+          setIsModalVisible(true);
+          // Xóa query string sau khi mở modal để tránh lặp lại
+          setSearchParams({}, { replace: true });
+        } else {
+          message.error('Không tìm thấy đơn hàng với ID này');
+        }
+      }
     } catch (error) {
       console.error('Error fetching orders:', error.response?.data || error.message);
       message.error(
@@ -221,6 +237,10 @@ const OrderList: React.FC = () => {
       console.error('Error updating order status:', error.response?.data || error.message);
       message.error('Cập nhật trạng thái thất bại');
     }
+  };
+
+  const handleModalCancel = () => {
+    setIsModalVisible(false);
   };
 
   const columns = [
@@ -412,7 +432,7 @@ const OrderList: React.FC = () => {
           }
           open={isModalVisible}
           onOk={handleModalOk}
-          onCancel={() => setIsModalVisible(false)}
+          onCancel={handleModalCancel}
           okText="Lưu thay đổi"
           cancelText="Hủy bỏ"
           width={600}
