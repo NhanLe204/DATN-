@@ -344,7 +344,7 @@ export default function Login() {
         <Col className="flex w-full flex-col justify-between gap-4 sm:gap-0 lg:w-[400px]">
           <div className="h-[200px] sm:h-1/2">
             <img
-              src="https://picsum.photos/300/200"
+              src="/images/cat&dog.png"
               alt="Login form"
               className="h-full w-full bg-[#EAEAEA] object-cover"
             />

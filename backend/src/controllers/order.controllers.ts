@@ -645,19 +645,45 @@ export const cancelServiceBooking = async (req: Request, res: Response): Promise
       const subject = 'Thông báo hủy lịch đặt dịch vụ';
       const text = `Kính gửi ${customerName},\n\nLịch đặt dịch vụ của bạn đã được hủy thành công! Dưới đây là thông tin chi tiết về lịch hẹn đã hủy:\n\nDịch vụ: ${serviceName}\nThời gian: ${bookingTime}\nThú cưng: ${petName} (${petType})\\nThời gian dự kiến: ${duration} phút\nĐịa điểm: 123 Nguyen Van Cu, District 1, HCM City\nMã đặt lịch: ${orderIdString}\n\nNếu bạn cần thêm thông tin hoặc hỗ trợ, vui lòng liên hệ với chúng tôi qua hotline 19006336 hoặc email ngocthanhnt04@gmail.com.\n\nTrân trọng,\nPet Heaven`;
       const html = `
-        <p>Kính gửi <strong>${customerName}</strong>,</p>
-        <p>Lịch đặt dịch vụ của bạn đã được hủy thành công! Dưới đây là thông tin chi tiết về lịch hẹn đã hủy:</p>
-        <ul>
-          <li><strong>Dịch vụ:</strong> ${serviceName}</li>
-          <li><strong>Thời gian:</strong> ${bookingTime}</li>
-          <li><strong>Thú cưng:</strong> ${petName} (${petType})</li>
-          <li><strong>Giá dự tính:</strong> ${formatPrice(servicePrice)}</li>
-          <li><strong>Thời gian dự kiến:</strong> ${duration} phút</li>
-          <li><strong>Địa điểm:</strong> 123 Nguyen Van Cu, District 1, HCM City</li>
-          <li><strong>Mã đặt lịch:</strong> ${orderIdString}</li>
-        </ul>
-        <p>Nếu bạn cần thêm thông tin hoặc hỗ trợ, vui lòng liên hệ với chúng tôi qua hotline <strong>19006336</strong> hoặc email <strong>ngocthanhnt04@gmail.com</strong>.</p>
-        <p>Trân trọng,<br><strong>Pet Heaven</strong></p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+  <h2 style="color: #333; text-align: center;">Thông báo hủy lịch đặt dịch vụ</h2>
+  <p style="color: #555; line-height: 1.6;">Kính gửi <strong>${customerName}</strong>,</p>
+  <p style="color: #555; line-height: 1.6;">Lịch đặt dịch vụ của bạn đã được hủy thành công! Dưới đây là thông tin chi tiết về lịch hẹn đã hủy:</p>
+  <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+    <tr>
+      <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold; width: 30%;">Dịch vụ:</td>
+      <td style="padding: 10px; border: 1px solid #e0e0e0;">${serviceName}</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Thời gian:</td>
+      <td style="padding: 10px; border: 1px solid #e0e0e0;">${bookingTime}</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Thú cưng:</td>
+      <td style="padding: 10px; border: 1px solid #e0e0e0;">${petName} (${petType})</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Giá dự tính:</td>
+      <td style="padding: 10px; border: 1px solid #e0e0e0;">${formatPrice(servicePrice)}</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Thời gian dự kiến:</td>
+      <td style="padding: 10px; border: 1px solid #e0e0e0;">${duration} phút</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Địa điểm:</td>
+      <td style="padding: 10px; border: 1px solid #e0e0e0;">123 Nguyen Van Cu, District 1, HCM City</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Mã đặt lịch:</td>
+      <td style="padding: 10px; border: 1px solid #e0e0e0;">${orderIdString}</td>
+    </tr>
+  </table>
+  <p style="color: #555; line-height: 1.6;">
+    Nếu bạn cần thêm thông tin hoặc hỗ trợ, vui lòng liên hệ với chúng tôi qua hotline <strong>19006336</strong> hoặc email <strong>ngocthanhnt04@gmail.com</strong>.
+  </p>
+  <p style="color: #555; text-align: center;">Trân trọng,<br><strong>Pet Heaven</strong></p>
+</div>
       `;
 
       try {

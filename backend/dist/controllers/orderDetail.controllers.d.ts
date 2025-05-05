@@ -15,3 +15,7 @@ export declare const updateRealPrice: (req: Request, res: Response) => Promise<v
 export declare const updateBooking: (req: Request, res: Response) => Promise<void>;
 export declare const getOrderById: (req: Request, res: Response) => Promise<void>;
 export declare const cancelOverdueBookings: () => void;
+export declare const getCancelledBookings: (req: Request, res: Response) => Promise<void>;
+export declare const getBookingDetailsByUserId: (req: Request<object, object, object, {
+    userId?: string;
+}>, res: Response, next: NextFunction) => Promise<void>;
