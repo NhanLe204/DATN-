@@ -1,13 +1,13 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Avatar, Card, Tabs, Badge, Table, Tag, Button, Empty, Tooltip, Modal, message } from "antd";
-import { FaUser, FaMoneyCheckAlt, FaEdit, FaShoppingBag, FaBox, FaTruck, FaCheck, FaTimes } from "react-icons/fa";
+import { Avatar } from "antd";
+import { FaUser, FaMoneyCheckAlt, FaEdit } from "react-icons/fa";
+import { MdOutlineRoomService } from "react-icons/md";
 import { Routes, Route, useParams, useNavigate } from "react-router-dom";
 import userApi from "../../api/userApi";
 import Account from "../../components/account";
 import Address from "../../components/address";
 import ChangePassword from "../../components/change-password";
-import { MdOutlineRoomService } from "react-icons/md";
 import BookingHistory from "../../components/bookingHistory";
 import OrderDetail from "../../components/orderDetail";
 
@@ -15,44 +15,8 @@ interface User {
   _id: string;
   email: string;
   fullname: string;
-  password: string;
   phone_number: string;
-  address: Address[];
-  role: string;
   avatar: string;
-  reset_password_token: string | null;
-  reset_password_expires: string | null;
-  refreshToken: string;
-  dateOfBirth: string;
-  createdAt: string;
-  updatedAt: string;
-  __v: number;
-}
-
-interface Address {
-  name: string;
-  phone: string;
-  address: string;
-}
-
-interface OrderItem {
-  id: string;
-  name: string;
-  quantity: number;
-  price: number;
-  image: string;
-  weight: string;
-}
-
-interface Order {
-  id: string;
-  orderNumber: string;
-  date: string;
-  status: 'pending' | 'confirmed' | 'shipping' | 'completed' | 'cancelled';
-  total: number;
-  items: OrderItem[];
-  paymentMethod: string;
-  shippingAddress: string;
 }
 
 export default function UserProfile() {
@@ -64,7 +28,10 @@ export default function UserProfile() {
   useEffect(() => {
     const fetchUserData = async () => {
       const token = localStorage.getItem("accessToken");
-      const accountID = localStorage.getItem("accountID")?.replace(/"/g, "").trim();
+      const accountID = localStorage
+        .getItem("accountID")
+        ?.replace(/"/g, "")
+        .trim();
 
       if (!token || !accountID) {
         setUser(null);
@@ -83,12 +50,11 @@ export default function UserProfile() {
     fetchUserData();
   }, []);
 
-
   const renderSidebar = () => (
-    <Card className="w-full md:w-1/4 border-none" styles={{ body: { padding: 0 } }}>
-      <div className="mb-4 flex items-center gap-4">
+    <div className="bg-white rounded-lg shadow-md p-4 h-fit md:h-full">
+      <div className="flex flex-col items-center md:items-start gap-4">
         <Avatar size={75} src={user?.avatar || "/images/avatar/avatar1.png"} />
-        <div>
+        <div className="text-center md:text-left">
           <h2 className="text-lg font-bold text-gray-800">{user?.fullname}</h2>
           <p
             className="flex items-center gap-2 text-sm text-gray-500 cursor-pointer hover:underline"
@@ -98,53 +64,58 @@ export default function UserProfile() {
           </p>
         </div>
       </div>
-      <div className="space-y-2 text-lg text-gray-600">
-        <div className="flex items-center gap-2">
-          <FaUser className="text-[#22A6DF]" /> Tài khoản của tôi
-        </div>
+      <div className="mt-6 space-y-4 text-gray-600">
         <div
-          className={`ml-7 cursor-pointer ${type === "account" ? "text-[#22A6DF]" : "text-gray-600"}`}
+          className={`flex items-center gap-2 cursor-pointer ${
+            type === "account" ? "text-[#22A6DF]" : "text-gray-600"
+          }`}
           onClick={() => navigate("/userprofile/account")}
         >
-          Hồ sơ
+          <FaUser className="text-[#22A6DF]" /> Hồ sơ
         </div>
         <div
-          className={`ml-7 cursor-pointer ${type === "address" ? "text-[#22A6DF]" : "text-gray-600"}`}
+          className={`flex items-center gap-2 cursor-pointer ${
+            type === "address" ? "text-[#22A6DF]" : "text-gray-600"
+          }`}
           onClick={() => navigate("/userprofile/address")}
         >
-          Địa chỉ
+          <FaUser className="text-[#22A6DF]" /> Địa chỉ
         </div>
         <div
-          className={`ml-7 cursor-pointer ${type === "change-password" ? "text-[#22A6DF]" : "text-gray-600"}`}
+          className={`flex items-center gap-2 cursor-pointer ${
+            type === "change-password" ? "text-[#22A6DF]" : "text-gray-600"
+          }`}
           onClick={() => navigate("/userprofile/change-password")}
         >
-          Đổi mật khẩu
+          <FaUser className="text-[#22A6DF]" /> Đổi mật khẩu
         </div>
-        <div 
-          className={`flex items-center gap-2 cursor-pointer ${type === "orders" ? "text-[#22A6DF]" : "text-gray-600"}`}
+        <div
+          className={`flex items-center gap-2 cursor-pointer ${
+            type === "orders" ? "text-[#22A6DF]" : "text-gray-600"
+          }`}
           onClick={() => navigate("/userprofile/orders")}
         >
           <FaMoneyCheckAlt className="text-[#22A6DF]" /> Đơn mua
         </div>
-
         <div
           className={`flex items-center gap-2 cursor-pointer ${
             type === "bookings" ? "text-[#22A6DF]" : "text-gray-600"
           }`}
-          onClick={() => navigate("/userprofile/bookings")} 
+          onClick={() => navigate("/userprofile/bookings")}
         >
-          <div className="flex items-center gap-2">
-            <MdOutlineRoomService className="text-[#22A6DF]" /> Lịch đã đặt
-          </div>
+          <MdOutlineRoomService className="text-[#22A6DF]" /> Lịch đã đặt
         </div>
       </div>
-    </Card>
+    </div>
   );
 
   return (
-    <div className="flex my-6 flex-col gap-6 md:flex-row md:gap-8 sm:px-[40px] lg:px-[154px]">
-      {renderSidebar()}
-      <Card className="w-full md:w-3/4 rounded-lg border border-gray-200 shadow-md">
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 px-4 sm:px-8 lg:px-16 xl:px-24">
+      {/* Sidebar */}
+      <div className="md:col-span-1 sticky top-4">{renderSidebar()}</div>
+
+      {/* Main Content */}
+      <div className="md:col-span-3 bg-white rounded-lg shadow-md p-4 overflow-y-auto max-h-[80vh]">
         <Routes>
           <Route path="account" element={<Account />} />
           <Route path="address" element={<Address />} />
@@ -153,7 +124,7 @@ export default function UserProfile() {
           <Route path="bookings" element={<BookingHistory />} />
           <Route path="*" element={<div>Trang không tồn tại</div>} />
         </Routes>
-      </Card>
+      </div>
     </div>
   );
 }

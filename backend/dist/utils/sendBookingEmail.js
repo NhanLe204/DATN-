@@ -125,7 +125,7 @@ Email: ${config_js_1.default.EMAIL_USER}`;
               </tr>
               <tr>
                 <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Giá dịch vụ:</td>
-                <td style="padding: 10px; border: 1px solid #e0e0e0;">${formatPrice(detail.service_price)}</td>
+                <td style="padding: 10px; border: 1px solid #e0e0e0;"> Giá sẽ được tính tại shop dựa vào khối lượng của pet</td>
               </tr>
             `)
             .join('')}

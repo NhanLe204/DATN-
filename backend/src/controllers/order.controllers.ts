@@ -19,7 +19,6 @@ import moment from 'moment-timezone';
 import request from 'request';
 import { log } from 'console';
 
-
 export const createOrderAfterPayment = async (req: Request, res: Response): Promise<void> => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -466,10 +465,7 @@ export const updateOrderStatus = async (req: Request, res: Response): Promise<vo
           product.quantity_sold = (product.quantity_sold || 0) + detail.quantity;
         }
         // Khi chuyển từ PROCESSING sang CANCELLED
-        else if (
-          status === OrderStatus.CANCELLED &&
-          order.status === OrderStatus.PROCESSING
-        ) {
+        else if (status === OrderStatus.CANCELLED && order.status === OrderStatus.PROCESSING) {
           product.quantity += detail.quantity;
           product.quantity_sold = Math.max(0, (product.quantity_sold || 0) - detail.quantity);
         }
@@ -486,7 +482,7 @@ export const updateOrderStatus = async (req: Request, res: Response): Promise<vo
     res.status(200).json({
       success: true,
       message: 'Trạng thái đơn hàng được cập nhật thành công',
-      order,
+      order
     });
   } catch (error) {
     await session.abortTransaction();
@@ -734,13 +730,13 @@ export const getPendingOrders = async (req: Request, res: Response): Promise<voi
       paymentType: order.payment_typeID?.payment_type_name || 'Không xác định',
       delivery: order.deliveryID?.delivery_name || 'Không xác định',
       totalPrice: order.total_price ? `${order.total_price.toLocaleString()} VNĐ` : '0 VNĐ',
-      fullname: order.userID?.fullname || order.inforUserGuest?.fullName || 'Khách vãng lai',
+      fullname: order.userID?.fullname || order.inforUserGuest?.fullName || 'Khách vãng lai'
     }));
 
     res.status(200).json({
       success: true,
       message: 'Lấy tất cả đơn hàng có trạng thái PENDING thành công',
-      result: formattedOrders,
+      result: formattedOrders
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -748,8 +744,7 @@ export const getPendingOrders = async (req: Request, res: Response): Promise<voi
     res.status(500).json({
       success: false,
       message: 'Internal Server Error',
-      details: errorMessage,
+      details: errorMessage
     });
   }
 };
-

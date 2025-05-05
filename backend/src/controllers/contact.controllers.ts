@@ -6,7 +6,7 @@ dotenv.config();
 export const submitContactForm = async (req: Request, res: Response): Promise<void> => {
   try {
     const { name, email, phone, message } = req.body;
-
+    console.log(email, 'email');
     if (!name || !email || !phone || !message) {
       res.status(400).json({ success: false, message: 'Vui lòng điền đầy đủ thông tin!' });
     }
@@ -25,7 +25,7 @@ export const submitContactForm = async (req: Request, res: Response): Promise<vo
     // Nội dung email
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: 'hoangthaithuan07@gmail.com', // Email nhận thông tin
+      to: 'ngocthanhnt04@gmail.com', // Email nhận thông tin
       subject: 'Liên hệ mới từ website',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
