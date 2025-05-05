@@ -45,7 +45,7 @@ interface Order {
   fullname: string;
   orderDate?: string;
   product: string;
-  status: 'PENDING' | 'PROCESSING' | 'SHIPPING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
+  status: 'PENDING' | 'PROCESSING' | 'SHIPPING' | 'DELIVERED' | 'CANCELLED';
   quantity?: number;
   price?: string;
   products?: Product[];
@@ -289,7 +289,6 @@ const OrderList: React.FC = () => {
           PENDING: { color: 'warning', text: 'Chờ xử lý' },
           PROCESSING: { color: 'processing', text: 'Đang xử lý' },
           SHIPPING: { color: 'blue', text: 'Đang vận chuyển' },
-          SHIPPED: { color: 'cyan', text: 'Đã giao hàng' },
           DELIVERED: { color: 'success', text: 'Đã giao' },
           CANCELLED: { color: 'error', text: 'Đã hủy' },
         };
@@ -351,8 +350,7 @@ const OrderList: React.FC = () => {
                   <Option value="PENDING">Chờ xử lý</Option>
                   <Option value="PROCESSING">Đang xử lý</Option>
                   <Option value="SHIPPING">Đang vận chuyển</Option>
-                  <Option value="SHIPPED">Đã giao hàng</Option>
-                  <Option value="DELIVERED">Đã giao</Option>
+                  <Option value="DELIVERED">Hoàn thành</Option>
                   <Option value="CANCELLED">Đã hủy</Option>
                 </Select>
                 <RangePicker
@@ -488,8 +486,7 @@ const OrderList: React.FC = () => {
                           <Option value="PENDING">Chờ xử lý</Option>
                           <Option value="PROCESSING">Đang xử lý</Option>
                           <Option value="SHIPPING">Đang vận chuyển</Option>
-                          <Option value="SHIPPED">Đã giao hàng</Option>
-                          <Option value="DELIVERED">Đã giao</Option>
+                          <Option value="DELIVERED">Hoàn thành</Option>
                           <Option value="CANCELLED">Đã hủy</Option>
                         </Select>
                       </Form.Item>

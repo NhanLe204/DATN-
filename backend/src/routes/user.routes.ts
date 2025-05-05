@@ -13,7 +13,8 @@ import {
   deleteUserAddress,
   changePassword,
   getNewUsers,
-  setDefaultAddress
+  setDefaultAddress,
+  getLoyalUsers
 } from '../controllers/user.controllers.js';
 import { verifyToken } from '../middlewares/verifyToken.js';
 import uploader from '../config/cloudinary.config.js';
@@ -21,6 +22,7 @@ import uploader from '../config/cloudinary.config.js';
 // http://localhost:3000/api/v1/users
 userRouter.get('/users', verifyToken, getAllUser);
 userRouter.get('/users/new', verifyToken, getNewUsers);
+userRouter.get('/users/loyal', verifyToken, getLoyalUsers);
 userRouter.patch('/users/:id', verifyToken, uploader.single('avatar'), updateUser);
 userRouter.patch('/users/self/cart', verifyToken, updateCart);
 userRouter.get('/users/:id', verifyToken, getUserById);

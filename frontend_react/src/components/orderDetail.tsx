@@ -265,7 +265,6 @@ export default function OrderDetail() {
     PENDING: "blue",
     PROCESSING: "green",
     SHIPPING: "orange",
-    SHIPPED: "orange",
     DELIVERED: "green",
     CANCELLED: "red",
   };
@@ -274,7 +273,6 @@ export default function OrderDetail() {
     PENDING: "Chưa xác nhận",
     PROCESSING: "Đã xác nhận",
     SHIPPING: "Đang vận chuyển",
-    SHIPPED: "Đã vận chuyển",
     DELIVERED: "Hoàn thành",
     CANCELLED: "Đã hủy",
   };
@@ -543,7 +541,6 @@ export default function OrderDetail() {
     { label: "Chưa xác nhận", key: "PENDING" },
     { label: "Đã xác nhận", key: "PROCESSING" },
     { label: "Đang vận chuyển", key: "SHIPPING" },
-    { label: "Đã vận chuyển", key: "SHIPPED" },
     { label: "Hoàn thành", key: "DELIVERED" },
     { label: "Đã hủy", key: "CANCELLED" },
   ];

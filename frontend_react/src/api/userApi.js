@@ -15,6 +15,15 @@ const userApi = {
       data: response.data,
     };
   },
+  getLoyalUsers: async () => {
+    const response = await api.get("/v1/users/loyal");
+    console.log(response);
+
+    return {
+      data: response.data,
+    };
+  },
+
   getUserById: async (id) => {
     const response = await api.get(`/v1/users/${id}`);
     return {

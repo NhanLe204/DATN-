@@ -724,7 +724,8 @@ export const getRecentOrder = async (req: Request, res: Response): Promise<void>
       .populate('deliveryID', 'delivery_name')
       .lean();
 
-    const formattedOrders = recentOrder.map((order) => ({
+    // Định dạng dữ liệu đầu ra
+    const formattedOrders = pendingOrders.map((order) => ({
       orderId: order._id,
       paymentType: order.payment_typeID?.payment_type_name || 'Không xác định',
       delivery: order.deliveryID?.delivery_name || 'Không xác định',
@@ -738,7 +739,7 @@ export const getRecentOrder = async (req: Request, res: Response): Promise<void>
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error(`Error fetching recent orders: ${errorMessage}`);
+    console.error(`Error fetching pending orders: ${errorMessage}`);
     res.status(500).json({
       success: false,
       message: 'Internal Server Error',
