@@ -329,7 +329,6 @@ export const getAllOrders = async (req: Request, res: Response): Promise<void> =
         }
       })
       .populate('productId', 'name price')
-      .sort({ createdAt: -1 }) // Sắp xếp theo ngày tạo giảm dần
       .lean();
 
     res.status(200).json({ success: true, result: orders });
@@ -715,14 +714,14 @@ export const cancelServiceBooking = async (req: Request, res: Response): Promise
   }
 };
 
-export const getRecentOrder = async (req: Request, res: Response): Promise<void> => {
+export const getPendingOrders = async (req: Request, res: Response): Promise<void> => {
   try {
-    const recentOrder = await orderModel
-      .find({ bookingStatus: null })
+    const pendingOrders = await orderModel
+      .find({ status: 'PENDING' })
       .sort({ createdAt: -1 })
-      .limit(4)
       .populate('payment_typeID', 'payment_type_name')
       .populate('deliveryID', 'delivery_name')
+      .populate('userID', 'fullname') // Populate fullname từ userID
       .lean();
 
     // Định dạng dữ liệu đầu ra
@@ -730,12 +729,13 @@ export const getRecentOrder = async (req: Request, res: Response): Promise<void>
       orderId: order._id,
       paymentType: order.payment_typeID?.payment_type_name || 'Không xác định',
       delivery: order.deliveryID?.delivery_name || 'Không xác định',
-      totalPrice: `${order.total_price?.toLocaleString() || 0} VNĐ`
+      totalPrice: order.total_price ? `${order.total_price.toLocaleString()} VNĐ` : '0 VNĐ',
+      fullname: order.userID?.fullname || order.inforUserGuest?.fullName || 'Khách vãng lai'
     }));
 
     res.status(200).json({
       success: true,
-      message: 'Lấy 4 đơn hàng mới nhất thành công',
+      message: 'Lấy tất cả đơn hàng có trạng thái PENDING thành công',
       result: formattedOrders
     });
   } catch (error) {

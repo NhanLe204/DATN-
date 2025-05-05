@@ -122,10 +122,6 @@ export default function OrderDetail() {
         .getItem("accountID")
         ?.replace(/"/g, "")
         .trim();
-      const accountID = localStorage
-        .getItem("accountID")
-        ?.replace(/"/g, "")
-        .trim();
 
       if (!token || !accountID) {
         setUser(null);
@@ -288,10 +284,6 @@ export default function OrderDetail() {
         orderToCancel.id,
         "CANCELLED"
       );
-      const response = await orderApi.updateOrderStatus(
-        orderToCancel.id,
-        "CANCELLED"
-      );
       if (response.success) {
         const updatedOrders = orders.map((o) =>
           o.id === orderToCancel.id ? { ...o, status: "CANCELLED" } : o
@@ -357,9 +349,15 @@ export default function OrderDetail() {
   };
 
   const paymentStatusText = {
-    PENDING: "Chưa thanh toán",
-    PAID: "Đã thanh toán",
-    CASH_ON_DELIVERY: "Thanh toán khi nhận hàng",
+      PENDING: "Chưa thanh toán",
+      PAID: "Đã thanh toán",
+      CASH_ON_DELIVERY: "Thanh toán khi nhận hàng",
+  };
+  
+  const paymentStatusColors = {
+      PENDING: "red",
+      PAID: "green",
+      CASH_ON_DELIVERY: "blue",
   };
 
   const columns = [

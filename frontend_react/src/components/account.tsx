@@ -27,8 +27,8 @@ interface User {
 
 export default function Account() {
   const [form] = Form.useForm();
-  const [user, setUser] = useState(null);
-  const [fileList, setFileList] = useState([]);
+  const [user, setUser] = useState<User | null>(null);
+  const [fileList, setFileList] = useState<{ uid: string; name: string; originFileObj: File }[]>([]);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
@@ -150,12 +150,16 @@ export default function Account() {
             setFileList([]);
         },
         beforeUpload: (file: any) => {
-            setFileList([file]);
+            setFileList([{ uid: Date.now().toString(), name: file.name, originFileObj: file }]);
             return false;
         },
         fileList,
         onChange: (info: any) => {
-            let newFileList = [...info.fileList];
+            let newFileList = info.fileList.map((file) => ({
+                uid: file.uid || Date.now().toString(),
+                name: file.name || file.originFileObj.name,
+                originFileObj: file.originFileObj,
+            }));
             newFileList = newFileList.slice(-1);
             setFileList(newFileList);
         },
