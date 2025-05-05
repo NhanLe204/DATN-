@@ -22,7 +22,7 @@ import CategoryList from "./admin/category/category";
 import OrderList from "./admin/order/order";
 import UserList from "./admin/user/user";
 import ServiceList from "./admin/service/service";
-import SystemSettings from "./admin/setting/setting";
+// import SystemSettings from "./admin/setting/setting";
 import EmployeeList from "./admin/employee/employee";
 import Payment from "./pages/payment/payment";
 import AboutUs from "./pages/about-us/about-us";
@@ -130,8 +130,7 @@ function App() {
         { path: "bookings", element: <BookingManager /> },
         { path: "services", element: <ServiceList /> },
         { path: "users", element: <UserList /> },
-        { path: "settings", element: <SystemSettings /> },
-        { path: "*", element: <NotFound /> }, // Route 404 cho admin
+        // { path: "settings", element: <SystemSettings /> },
       ],
     },
     {

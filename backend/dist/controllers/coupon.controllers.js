@@ -48,7 +48,7 @@ exports.getCouponById = getCouponById;
 const createCoupon = async (req, res) => {
     try {
         console.log('Request body:', req.body); // Kiểm tra dữ liệu gửi lên
-        const { coupon_code, discount_value, min_order_value, max_discount, start_date, end_date, usage_limit, used_count, score } = req.body;
+        const { coupon_code, discount_value, min_order_value, start_date, end_date, usage_limit, used_count, score } = req.body;
         if (!coupon_code || !discount_value || !start_date || !end_date) {
             console.log('Missing required fields');
             res.status(400).json({ success: false, message: 'Thiếu các trường bắt buộc' });
@@ -58,7 +58,6 @@ const createCoupon = async (req, res) => {
             coupon_code,
             discount_value,
             min_order_value: min_order_value || 0,
-            max_discount: max_discount || 0,
             start_date: new Date(start_date),
             end_date: new Date(end_date),
             usage_limit: usage_limit || 1,
@@ -103,7 +102,7 @@ exports.deleteCouponById = deleteCouponById;
 const updateCoupon = async (req, res) => {
     try {
         const { id } = req.params;
-        const { coupon_code, discount_value, min_order_value, max_discount, start_date, end_date, usage_limit, used_count, score } = req.body;
+        const { coupon_code, discount_value, min_order_value, start_date, end_date, usage_limit, used_count, score } = req.body;
         // Tìm coupon hiện tại để kiểm tra start_date nếu không gửi lên
         const existingCoupon = await coupon_model_js_1.default.findById(id);
         if (!existingCoupon) {
@@ -115,7 +114,6 @@ const updateCoupon = async (req, res) => {
             coupon_code,
             discount_value,
             min_order_value,
-            max_discount,
             start_date: start_date ? new Date(start_date) : existingCoupon.start_date,
             end_date: end_date ? new Date(end_date) : existingCoupon.end_date,
             usage_limit,

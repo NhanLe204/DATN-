@@ -174,12 +174,12 @@ const AdminLayout = () => {
       label: "Quản lý người dùng",
       path: "/admin/users",
     },
-    {
-      key: "13",
-      icon: <SettingOutlined />,
-      label: "Cài đặt hệ thống",
-      path: "/admin/settings",
-    },
+    // {
+    //   key: "13",
+    //   icon: <SettingOutlined />,
+    //   label: "Cài đặt hệ thống",
+    //   path: "/admin/settings",
+    // },
   ];
 
   // Danh sách menu cho employee (loại bỏ các menu nhạy cảm)

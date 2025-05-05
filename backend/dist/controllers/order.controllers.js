@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getRecentOrder = exports.cancelServiceBooking = exports.updatePaymentStatus = exports.updateOrderStatus = exports.checkAvailableSlots = exports.getOrderById = exports.getAllOrders = exports.getAvailableSlots = exports.createOrderAfterPayment = void 0;
+exports.getPendingOrders = exports.cancelServiceBooking = exports.updatePaymentStatus = exports.updateOrderStatus = exports.checkAvailableSlots = exports.getOrderById = exports.getAllOrders = exports.getAvailableSlots = exports.createOrderAfterPayment = void 0;
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const mongoose_1 = __importDefault(require("mongoose"));
 const order_model_js_1 = __importDefault(require("../models/order.model.js"));
@@ -292,7 +292,6 @@ const getAllOrders = async (req, res) => {
             }
         })
             .populate('productId', 'name price')
-            .sort({ createdAt: -1 }) // Sắp xếp theo ngày tạo giảm dần
             .lean();
         res.status(200).json({ success: true, result: orders });
     }
@@ -656,25 +655,26 @@ const cancelServiceBooking = async (req, res) => {
     }
 };
 exports.cancelServiceBooking = cancelServiceBooking;
-const getRecentOrder = async (req, res) => {
+const getPendingOrders = async (req, res) => {
     try {
-        const recentOrder = await order_model_js_1.default
-            .find({ bookingStatus: null })
+        const pendingOrders = await order_model_js_1.default
+            .find({ status: 'PENDING' })
             .sort({ createdAt: -1 })
-            .limit(4)
             .populate('payment_typeID', 'payment_type_name')
             .populate('deliveryID', 'delivery_name')
+            .populate('userID', 'fullname') // Populate fullname từ userID
             .lean();
         // Định dạng dữ liệu đầu ra
         const formattedOrders = pendingOrders.map((order) => ({
             orderId: order._id,
             paymentType: order.payment_typeID?.payment_type_name || 'Không xác định',
             delivery: order.deliveryID?.delivery_name || 'Không xác định',
-            totalPrice: `${order.total_price?.toLocaleString() || 0} VNĐ`
+            totalPrice: order.total_price ? `${order.total_price.toLocaleString()} VNĐ` : '0 VNĐ',
+            fullname: order.userID?.fullname || order.inforUserGuest?.fullName || 'Khách vãng lai'
         }));
         res.status(200).json({
             success: true,
-            message: 'Lấy 4 đơn hàng mới nhất thành công',
+            message: 'Lấy tất cả đơn hàng có trạng thái PENDING thành công',
             result: formattedOrders
         });
     }
@@ -688,5 +688,5 @@ const getRecentOrder = async (req, res) => {
         });
     }
 };
-exports.getRecentOrder = getRecentOrder;
+exports.getPendingOrders = getPendingOrders;
 //# sourceMappingURL=order.controllers.js.map
