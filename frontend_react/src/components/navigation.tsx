@@ -25,6 +25,7 @@ const adminPageNameMapping: { [key: string]: string } = {
   posts: "Quản lý bài viết",
   bookings: "Quản lí lịch hẹn",
   revenue: "Quản lí doanh thu",
+  coupon: "Quản lí mã giảm giá",
 };
 
 const publicPageNameMapping: { [key: string]: string } = {
@@ -39,6 +40,14 @@ const publicPageNameMapping: { [key: string]: string } = {
   cart: "Giỏ hàng",
   checkout: "Thanh toán",
   userprofile: "Hồ sơ người dùng",
+  account: "Tài khoản của tôi",
+  "address": "Địa chỉ của tôi",
+  order: "Đơn hàng của tôi",
+  booking: "Lịch hẹn của tôi",
+  "change-password": "Đổi mật khẩu",
+  "orders": "Đơn hàng",
+  "bookings": "Lịch hẹn",
+  
 };
 
 const Navigation: React.FC = () => {
@@ -71,7 +80,11 @@ const Navigation: React.FC = () => {
           console.log("Product API response:", response.data);
           setProduct(response.data.product);
         } catch (err: any) {
-          setError(`Không thể tải thông tin sản phẩm: ${err.message || "Lỗi không xác định"}`);
+          setError(
+            `Không thể tải thông tin sản phẩm: ${
+              err.message || "Lỗi không xác định"
+            }`
+          );
           setProduct(null);
         } finally {
           setLoading(false);
@@ -102,19 +115,27 @@ const Navigation: React.FC = () => {
           console.log("Processed blogData:", blogData);
           setBlog({
             title: blogData.title,
-            blog_category_id: blogData.blog_category_id && typeof blogData.blog_category_id === 'object'
-              ? { name: blogData.blog_category_id.name }
-              : undefined,
+            blog_category_id:
+              blogData.blog_category_id &&
+              typeof blogData.blog_category_id === "object"
+                ? { name: blogData.blog_category_id.name }
+                : undefined,
           });
           console.log("Blog state set:", {
             title: blogData.title,
-            blog_category_id: blogData.blog_category_id && typeof blogData.blog_category_id === 'object'
-              ? { name: blogData.blog_category_id.name }
-              : undefined,
+            blog_category_id:
+              blogData.blog_category_id &&
+              typeof blogData.blog_category_id === "object"
+                ? { name: blogData.blog_category_id.name }
+                : undefined,
           });
         } catch (err: any) {
           console.error("Lỗi khi tải bài viết:", err);
-          setError(`Không thể tải thông tin bài viết: ${err.message || "Lỗi không xác định"}`);
+          setError(
+            `Không thể tải thông tin bài viết: ${
+              err.message || "Lỗi không xác định"
+            }`
+          );
           setBlog(null);
         } finally {
           setLoading(false);
@@ -126,7 +147,8 @@ const Navigation: React.FC = () => {
 
   const containerStyles = {
     admin: "bg-white p-4 rounded-lg shadow-sm mb-4 overflow-x-auto",
-    public: "px-4 sm:px-6 md:px-8 lg:px-[154px] py-2 sm:py-3 md:py-4 text-sm sm:text-base overflow-x-auto",
+    public:
+      "px-4 sm:px-6 md:px-8 lg:px-[154px] py-2 sm:py-3 md:py-4 text-sm sm:text-base overflow-x-auto",
   };
 
   const breadcrumbStyles = {
@@ -160,7 +182,8 @@ const Navigation: React.FC = () => {
       ? blog.title
       : getDisplayName(pathnames[pathnames.length - 1] || "");
 
-  const linkStyles = "text-gray-500 hover:text-gray-700 transition-colors duration-200";
+  const linkStyles =
+    "text-gray-500 hover:text-gray-700 transition-colors duration-200";
   const currentPageStyles = "text-black";
 
   const adminLayout = (
@@ -279,11 +302,7 @@ const Navigation: React.FC = () => {
   }
 
   if ((isDetailPage || isBlogDetailPage) && error) {
-    return (
-      <div className="p-4 text-center text-red-500">
-        {error}
-      </div>
-    );
+    return <div className="p-4 text-center text-red-500">{error}</div>;
   }
 
   return isAdminPage ? adminLayout : publicLayout;
