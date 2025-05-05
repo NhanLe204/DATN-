@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Card, Row, Col, Table, Tag, Statistic, message } from "antd";
 import {
   UserOutlined,
-  ShoppingCartOutlined,
   ExceptionOutlined,
   CalendarOutlined,
   RightOutlined,
@@ -27,19 +26,24 @@ const Dashboard = () => {
   const [currentDate, setCurrentDate] = useState("");
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalOrders, setTotalOrders] = useState(0);
-  const [canceledOrders, setCanceledOrders] = useState([]); // Đã có state này
   const [totalAppointments, setTotalAppointments] = useState(0);
   const [canceledAppointments, setCanceledAppointments] = useState(0);
   const [currentPageOrders, setCurrentPageOrders] = useState(1);
+  const [newCustomers, setNewCustomers] = useState<Customer[]>([]);
+  const [outOfStockProducts, setOutOfStockProducts] = useState([]);
+  const [hotProducts, setHotProducts] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [currentPageHotProducts, setCurrentPageHotProducts] = useState(1);
 
   interface Customer {
     avatar?: string;
     fullname?: string;
     name?: string;
     status?: string;
+    totalQuantity?: number;
   }
 
-  // Định nghĩa interface Product và Order từ đoạn mã của OrderList
   interface Product {
     orderDetailId: string;
     productId: string | null;
@@ -53,21 +57,14 @@ const Dashboard = () => {
   interface Order {
     key: string;
     orderId: string;
+    shortId: string;
     fullname: string;
-    orderDate?: string;
-    product: string;
+    paymentType: string;
+    delivery: string;
+    total: string;
     status: "PENDING" | "PROCESSING" | "SHIPPING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
-    quantity?: number;
-    price?: string;
     products?: Product[];
   }
-
-  const [newCustomers, setNewCustomers] = useState<Customer[]>([]);
-  const [outOfStockProducts, setOutOfStockProducts] = useState([]);
-  const [hotProducts, setHotProducts] = useState([]);
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [currentPageHotProducts, setCurrentPageHotProducts] = useState(1);
 
   useEffect(() => {
     const updateTime = () => {
@@ -98,77 +95,29 @@ const Dashboard = () => {
         setTotalUsers(usersResponse.data.result?.length || 0);
 
         const loyalUsers = await userApi.getLoyalUsers();
-        console.log(loyalUsers, "user thân thiết");
-        
-        const limitedCustomers = (loyalUsers.data.result || []).slice(0, 4);
+        const limitedCustomers = (loyalUsers.data.result || []).slice(0, 4).map((customer: any) => ({
+          ...customer,
+          totalQuantity: customer.totalQuantity || 0
+        }));
         setNewCustomers(limitedCustomers);
 
         const pendingOrders = await orderApi.getPendingOrders();
-        console.log(pendingOrders, "đơn hàng chờ");
-
         const recentOrders = pendingOrders.data.result || [];
 
         const formattedOrders = recentOrders.map((order: any, index: number) => ({
           key: index.toString(),
-          id: order.orderId || "N/A",
+          orderId: order.orderId || `ORDER${index}`,
           shortId: order.orderId ? `**${order.orderId.slice(-4)}` : "N/A",
           paymentType: order.paymentType || "Không xác định",
           delivery: order.delivery || "Không xác định",
           total: order.totalPrice || "0 VNĐ",
           fullname: order.fullname || "Khách vãng lai",
+          status: order.status || "PENDING",
+          products: order.products || []
         }));
 
         setOrders(formattedOrders);
         setTotalOrders(recentOrders.length);
-
-        // Thêm logic lấy danh sách đơn hàng bị hủy từ đoạn mã của bạn
-        const response = await orderApi.getAll();
-        if (!response.data || !response.data.result) {
-          message.error("Không thể tải danh sách đơn hàng");
-          setOrders([]);
-          setCanceledOrders([]);
-          return;
-        }
-
-        const orderDetails = response.data.result;
-        const groupedOrders: { [key: string]: any } = {};
-        orderDetails.forEach((detail: any) => {
-          const orderId = detail.orderId._id;
-          if (!groupedOrders[orderId]) {
-            groupedOrders[orderId] = {
-              orderId: orderId,
-              orderDate: detail.orderId.order_date,
-              status: detail.orderId.status,
-              fullname: detail.orderId.userID?.fullname || "Không xác định",
-              total_price: detail.orderId.total_price,
-              products: [],
-            };
-          }
-          groupedOrders[orderId].products.push({
-            orderDetailId: detail._id,
-            productId: detail.productId?._id || null,
-            productName: detail.productId?.name || "Không xác định",
-            productPrice: detail.product_price || 0,
-            productImage: null,
-            quantity: detail.quantity || 0,
-            totalPrice: detail.total_price || 0,
-          });
-        });
-
-        const formattedOrders: Order[] = Object.values(groupedOrders).map((order: any, index: number) => ({
-          key: order.orderId || `order-${index}`,
-          orderId: order.orderId || `ORDER${index}`,
-          fullname: order.fullname,
-          product: order.products.map((p: Product) => p.productName).join(", ") || "Không xác định",
-          status: (order.status || "PENDING").toUpperCase() as Order["status"],
-          quantity: order.products.reduce((sum: number, p: Product) => sum + p.quantity, 0) || 0,
-          price: order.total_price?.toString() || "0",
-          orderDate: order.orderDate ? moment(order.orderDate).format("DD/MM/YYYY HH:mm") : "Không xác định",
-          products: order.products,
-        }));
-
-        const canceled = formattedOrders.filter((order) => order.status === "CANCELLED");
-        setCanceledOrders(canceled);
 
         const outOfStockResponse = await productsApi.getProductOutStock();
         const outOfStockItems = outOfStockResponse.data.result || [];
@@ -262,53 +211,10 @@ const Dashboard = () => {
       title: "",
       key: "action",
       width: 50,
-      render: (_: any, record: any) => (
-        <Link to={`/order/${record.id}`}>
+      render: (_: any, record: Order) => (
+        <Link to={`/admin/orders?orderId=${record.orderId}`}>
           <RightOutlined className="text-blue-500" />
         </Link>
-      ),
-    },
-  ];
-
-  // Sử dụng columns từ OrderList cho bảng "Đơn hàng hủy"
-  const canceledOrdersColumns = [
-    {
-      title: "Mã đơn hàng",
-      dataIndex: "orderId",
-      key: "orderId",
-      render: (text: string) => (
-        <span className="text-[14px] font-normal text-gray-700">
-          {text ? text.substring(0, 8) : "N/A"}...
-        </span>
-      ),
-    },
-    {
-      title: "Khách hàng",
-      dataIndex: "fullname",
-      key: "fullname",
-      render: (text: string) => (
-        <div className="flex items-center">
-          <div className="h-8 w-8 rounded-full bg-blue-50 flex items-center justify-center">
-            <span className="text-sm text-blue-500">{text ? text.charAt(0).toUpperCase() : "?"}</span>
-          </div>
-          <span className="ml-3 text-[14px] font-normal text-gray-700">{text || "Không xác định"}</span>
-        </div>
-      ),
-    },
-    {
-      title: "Đơn hàng",
-      dataIndex: "product",
-      key: "product",
-      render: (text: string) => <span className="text-[14px] font-normal text-gray-700">{text}</span>,
-    },
-    {
-      title: "Tình trạng",
-      dataIndex: "status",
-      key: "status",
-      render: (status: string) => (
-        <Tag color="error" className="px-3 py-0.5 text-[13px] font-normal rounded-full">
-          Đã hủy
-        </Tag>
       ),
     },
   ];
@@ -327,7 +233,7 @@ const Dashboard = () => {
       key: "image",
       width: 80,
       render: (text) => (
-        <img src={text || "https://via.placeholder.com/64"} alt="Product" className="object-cover w-16 h-16" />
+        <img src={text || "https://via.placeholder.com/64"} alt="Sản phẩm" className="object-cover w-16 h-16" />
       ),
     },
     {
@@ -377,6 +283,12 @@ const Dashboard = () => {
       key: "status",
       render: (status) => <Text className="text-sm text-blue-600">{status || "Hoạt động"}</Text>,
     },
+    {
+      title: "Đơn hoàn thành",
+      dataIndex: "totalQuantity",
+      key: "totalQuantity",
+      render: (totalQuantity: number) => <Text>{totalQuantity || 0}</Text>,
+    },
   ];
 
   return (
@@ -385,7 +297,7 @@ const Dashboard = () => {
         <Row gutter={[16, 16]} className="mb-6">
           <Col xs={24} sm={12} md={8} lg={8}>
             <motion.div whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
-              <Link to="/admin/users">
+              <a href="/admin/users">
                 <Card bordered={false} className="shadow-sm">
                   <Statistic
                     title="Tổng số người dùng"
@@ -395,12 +307,12 @@ const Dashboard = () => {
                     loading={loading}
                   />
                 </Card>
-              </Link>
+              </a>
             </motion.div>
           </Col>
           <Col xs={24} sm={12} md={8} lg={8}>
             <motion.div whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
-              <Link to="/admin/products?status=out_of_stock">
+              <a href="/admin/products?status=out_of_stock">
                 <Card bordered={false} className="shadow-sm">
                   <Statistic
                     title="Hết hàng"
@@ -410,12 +322,12 @@ const Dashboard = () => {
                     loading={loading}
                   />
                 </Card>
-              </Link>
+              </a>
             </motion.div>
           </Col>
           <Col xs={24} sm={12} md={8} lg={8}>
             <motion.div whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
-              <Link to="/admin/bookings">
+              <a href="/admin/bookings">
                 <Card bordered={false} className="shadow-sm">
                   <Statistic
                     title="Tổng lịch hẹn"
@@ -425,7 +337,7 @@ const Dashboard = () => {
                     loading={loading}
                   />
                 </Card>
-              </Link>
+              </a>
             </motion.div>
           </Col>
         </Row>
@@ -480,7 +392,6 @@ const Dashboard = () => {
             loading={loading}
           />
         </Card>
-
       </div>
     </motion.div>
   );
