@@ -22,6 +22,7 @@ interface Brand {
 interface Category {
   _id: string;
   name: string;
+  description?: string;
 }
 
 interface LeftProductListProps {
@@ -101,6 +102,7 @@ export default function LeftProductList({
     );
     return brand ? brand._id : "";
   };
+
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const categoryParam = params.get("category");
@@ -110,34 +112,42 @@ export default function LeftProductList({
 
     if (categoryParam) {
       const categoryId = getCategoryIdByName(categoryParam);
-      if (categoryId) {
+      if (categoryId && categoryId !== selectedCategory) {
         setSelectedCategory(categoryId);
+        setExpandedTagCategory(categoryId);
       }
+    } else if (selectedCategory !== "all") {
+      setSelectedCategory("all");
+      setExpandedTagCategory(null);
     }
 
     if (brandsParam.length > 0) {
       const brandIds = brandsParam
         .map((brandName) => getBrandIdByName(brandName))
         .filter(Boolean);
-      brandIds.forEach((id) => toggleBrand(id));
+      brandIds.forEach((id) => {
+        if (!selectedBrands.includes(id)) {
+          toggleBrand(id);
+        }
+      });
     }
 
     if (pricesParam.length > 0) {
-      pricesParam.forEach((price) => togglePriceRange(price));
+      pricesParam.forEach((price) => {
+        if (!priceRanges.includes(price)) {
+          togglePriceRange(price);
+        }
+      });
     }
 
     if (tagsParam.length > 0) {
-      tagsParam.forEach((tag) => toggleTag(tag));
+      tagsParam.forEach((tag) => {
+        if (!selectedTags.includes(tag)) {
+          toggleTag(tag);
+        }
+      });
     }
-  }, [
-    location.search,
-    categories,
-    getCategoryIdByName,
-    setSelectedCategory,
-    toggleBrand,
-    togglePriceRange,
-    toggleTag,
-  ]);
+  }, [location.search, categories]);
 
   const updateURL = (type: string, value: string | string[]) => {
     const params = new URLSearchParams(location.search);
@@ -262,7 +272,7 @@ export default function LeftProductList({
 
     fetchTags();
     fetchBrands();
-  }, [categories]);
+  }, []);
 
   return (
     <div className="p-2">

@@ -59,7 +59,9 @@ export default function Products() {
       try {
         setLoading(true);
 
-        const categoryResponse = await categoryApi.getCategoriesActive();        
+        const categoryResponse = await categoryApi.getCategoriesActive();    
+        console.log(categoryResponse);
+            
         const categoryData = categoryResponse.data;
         if (categoryData.result && Array.isArray(categoryData.result)) {
           setCategories(categoryData.result);
