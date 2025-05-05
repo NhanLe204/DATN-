@@ -74,7 +74,7 @@ const Dashboard: React.FC = () => {
         setTotalUsers(usersResponse.data.result?.length || 0);
 
         const loyalUsers = await userApi.getLoyalUsers();
-        console.log(loyalUsers,"user thân thiết");
+        console.log(loyalUsers, "user thân thiết");
         
         const limitedCustomers = (loyalUsers.data.result || []).slice(0, 4);
         setNewCustomers(limitedCustomers);
@@ -84,11 +84,10 @@ const Dashboard: React.FC = () => {
 
         const recentOrders = pendingOrders.data.result || [];
 
-        // Format the pending orders to match the expected table structure
         const formattedOrders = recentOrders.map((order: any, index: number) => ({
           key: index.toString(),
           id: order.orderId || "N/A",
-          shortId: order.orderId ? `**${order.orderId.slice(-4)}` : "N/A", // Thêm ** trước 4 số cuối
+          shortId: order.orderId ? `**${order.orderId.slice(-4)}` : "N/A",
           paymentType: order.paymentType || "Không xác định",
           delivery: order.delivery || "Không xác định",
           total: order.totalPrice || "0 VNĐ",
@@ -121,12 +120,13 @@ const Dashboard: React.FC = () => {
         const formattedHotProducts = hotProductsItems.map((product: any) => ({
           key: product._id,
           _id: product._id,
+          shortId: product._id ? `**${product._id.slice(-4)}` : "N/A",
           name: product.name,
           image: product.image_url?.[0] || "https://via.placeholder.com/64",
           images: product.image_url || [],
           quantity: product.quantity || 0,
-          status: product.status,
           price: product.price,
+          quantity_sold: product.quantity_sold || 0,
           category: product.category_id?.name || "Không xác định",
           brand: product.brand_id?.brand_name || "Không có thương hiệu",
           tag: product.tag_id?.tag_name || "Không có thẻ",
@@ -199,7 +199,12 @@ const Dashboard: React.FC = () => {
   ];
 
   const productColumns = [
-    { title: "Mã SP", dataIndex: "_id", key: "_id", width: 100 },
+    {
+      title: "Mã SP",
+      dataIndex: "shortId",
+      key: "shortId",
+      width: 100,
+    },
     { title: "Tên", dataIndex: "name", key: "name", width: 150 },
     {
       title: "Ảnh",
@@ -215,15 +220,11 @@ const Dashboard: React.FC = () => {
       ),
     },
     {
-      title: "Tình trạng",
-      dataIndex: "status",
-      key: "status",
+      title: "Số lượng đã bán",
+      dataIndex: "quantity_sold",
+      key: "quantity_sold",
       width: 100,
-      render: (status: string) => (
-        <Tag color={status === "out_of_stock" ? "error" : "success"}>
-          {status === "out_of_stock" ? "Hết hàng" : "Còn hàng"}
-        </Tag>
-      ),
+      render: (quantity_sold: number) => quantity_sold || 0,
     },
     {
       title: "Giá",
@@ -275,54 +276,47 @@ const Dashboard: React.FC = () => {
         <Row gutter={[16, 16]} className="mb-6">
           <Col xs={24} sm={12} md={8} lg={8}>
             <motion.div whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
-              <Card bordered={false} className="shadow-sm">
-                <Statistic
-                  title="Tổng số người dùng"
-                  value={totalUsers}
-                  prefix={<UserOutlined className="mr-2 text-xl text-cyan-500" />}
-                  suffix="tài khoản"
-                  loading={loading}
-                />
-              </Card>
+              <Link to="/admin/users">
+                <Card bordered={false} className="shadow-sm">
+                  <Statistic
+                    title="Tổng số người dùng"
+                    value={totalUsers}
+                    prefix={<UserOutlined className="mr-2 text-xl text-cyan-500" />}
+                    suffix="tài khoản"
+                    loading={loading}
+                  />
+                </Card>
+              </Link>
             </motion.div>
           </Col>
           <Col xs={24} sm={12} md={8} lg={8}>
             <motion.div whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
-              <Card bordered={false} className="shadow-sm">
-                <Statistic
-                  title="Đơn hàng mới"
-                  value={totalOrders}
-                  prefix={<ShoppingCartOutlined className="mr-2 text-xl text-yellow-500" />}
-                  suffix="đơn hàng"
-                  loading={loading}
-                />
-              </Card>
+              <Link to="/admin/products?status=out_of_stock">
+                <Card bordered={false} className="shadow-sm">
+                  <Statistic
+                    title="Hết hàng"
+                    value={outOfStockProducts.length}
+                    prefix={<ExceptionOutlined className="mr-2 text-xl text-yellow-500" />}
+                    suffix="sản phẩm"
+                    loading={loading}
+                  />
+                </Card>
+              </Link>
             </motion.div>
           </Col>
           <Col xs={24} sm={12} md={8} lg={8}>
             <motion.div whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
-              <Card bordered={false} className="shadow-sm">
-                <Statistic
-                  title="Hết hàng"
-                  value={outOfStockProducts.length}
-                  prefix={<ExceptionOutlined className="mr-2 text-xl text-yellow-500" />}
-                  suffix="sản phẩm"
-                  loading={loading}
-                />
-              </Card>
-            </motion.div>
-          </Col>
-          <Col xs={24} sm={12} md={8} lg={8}>
-            <motion.div whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
-              <Card bordered={false} className="shadow-sm">
-                <Statistic
-                  title="Tổng lịch hẹn"
-                  value={totalAppointments}
-                  prefix={<CalendarOutlined className="mr-2 text-xl text-green-500" />}
-                  suffix="lịch hẹn"
-                  loading={loading}
-                />
-              </Card>
+              <Link to="/admin/bookings">
+                <Card bordered={false} className="shadow-sm">
+                  <Statistic
+                    title="Tổng lịch hẹn"
+                    value={totalAppointments}
+                    prefix={<CalendarOutlined className="mr-2 text-xl text-green-500" />}
+                    suffix="lịch hẹn"
+                    loading={loading}
+                  />
+                </Card>
+              </Link>
             </motion.div>
           </Col>
         </Row>
