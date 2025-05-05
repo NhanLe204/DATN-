@@ -42,6 +42,7 @@ import ArticleDetail from "./pages/blogDetail/blogDetail";
 import BlogList from "./admin/blog/blog";
 import Revenue from "./admin/revenue/revenue";
 import NotFound from "./pages/404/404"; // Import trang 404
+import CouponList from "./admin/coupon/coupon";
 
 interface User {
   id: string;
@@ -117,6 +118,7 @@ function App() {
       ),
       children: [
         { path: "", element: <Dashboard /> },
+        { path: "coupon", element: <CouponList /> },
         { path: "dashboard", element: <Dashboard /> },
         { path: "revenue", element: <Revenue /> },
         { path: "employees", element: <EmployeeList /> },

@@ -103,11 +103,7 @@ export default function ListCard({ pros }) {
               {/* Product Info */}
               <div className="space-y-3 px-2 text-center">
                 {/* Rating */}
-                <div className="flex items-center justify-center gap-1">
-                  {[...Array(5)].map((_, i) => (
-                    <BsStarFill key={i} className="text-yellow-400 text-sm" />
-                  ))}
-                </div>
+               
 
                 {/* Name */}
                 <Link to={`/detail/${product._id}`}>

@@ -10,6 +10,7 @@ import {
 } from "antd";
 import {
   UserOutlined,
+  SketchOutlined,
   PieChartOutlined,
   AppstoreOutlined,
   ShoppingOutlined,
@@ -173,6 +174,12 @@ const AdminLayout = () => {
       icon: <UserOutlined />,
       label: "Quản lý người dùng",
       path: "/admin/users",
+    },
+    {
+      key: "13",
+      icon: <SketchOutlined />,
+      label: "Quản lý mã giảm giá",
+      path: "/admin/coupon",
     },
     // {
     //   key: "13",

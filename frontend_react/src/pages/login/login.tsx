@@ -373,7 +373,7 @@ export default function Login() {
         </Col>
 
         {/* Right */}
-        <Col className="flex w-full flex-col justify-between shadow-inner lg:w-[400px] overflow-auto">
+        <Col className="flex w-full flex-col justify-start shadow-inner lg:w-[400px] overflow-auto">
           <div>
             <div className="mb-3 flex h-10 sm:h-12">
               <button className="h-full w-1/2 rounded-none border-[#22A6DF] bg-[#22A6DF] text-sm text-white sm:text-base">
