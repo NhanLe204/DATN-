@@ -388,7 +388,7 @@ export default function OrderDetail() {
                   className="w-16 h-16 object-cover rounded-lg border border-gray-200"
                 />
                 <div>
-                  <p className="font-medium text-gray-800">{item.name}</p>
+                  <p className="font-medium text-gray-800">{item.name.slice(0, 20) + "..."}</p>
                   <p className="text-gray-500">Số lượng: {item.quantity}</p>
                 </div>
               </div>
