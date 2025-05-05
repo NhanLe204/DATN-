@@ -3,20 +3,19 @@ import { Card, Row, Col, Table, Tag, Statistic, message } from "antd";
 import {
   UserOutlined,
   ShoppingCartOutlined,
-  FileTextOutlined,
   ExceptionOutlined,
   CalendarOutlined,
-  CloseCircleOutlined,
+  RightOutlined,
 } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { Typography } from "antd";
+import { Link } from "react-router-dom";
 import userApi from "../../api/userApi";
 import productsApi from "../../api/productsApi";
 import orderApi from "../../api/orderApi";
 import orderDetailApi from "../../api/orderDetailApi";
 
 const tableContainerStyle = {
-  height: "250px",
   overflowY: "auto",
 } as React.CSSProperties;
 
@@ -30,6 +29,7 @@ const Dashboard: React.FC = () => {
   const [canceledOrders, setCanceledOrders] = useState(0);
   const [totalAppointments, setTotalAppointments] = useState(0);
   const [canceledAppointments, setCanceledAppointments] = useState(0);
+  const [currentPageOrders, setCurrentPageOrders] = useState(1);
 
   interface Customer {
     avatar?: string;
@@ -73,28 +73,35 @@ const Dashboard: React.FC = () => {
         const usersResponse = await userApi.getAllUsers();
         setTotalUsers(usersResponse.data.result?.length || 0);
 
-        const newUserResponse = await userApi.getNewUsers();
-        const limitedCustomers = (newUserResponse.data.result || []).slice(0, 4);
+        const loyalUsers = await userApi.getLoyalUsers();
+        console.log(loyalUsers,"user thân thiết");
+        
+        const limitedCustomers = (loyalUsers.data.result || []).slice(0, 4);
         setNewCustomers(limitedCustomers);
 
-        const recentOrdersResponse = await orderApi.get4New();
-        const recentOrders = recentOrdersResponse.data.result || [];
+        const pendingOrders = await orderApi.getPendingOrders();
+        console.log(pendingOrders, "đơn hàng chờ");
 
-        setOrders(
-          recentOrders.map((order, index) => ({
-            key: index.toString(),
-            id: order.orderId || "N/A",
-            paymentType: order.paymentType || "Không xác định",
-            delivery: order.delivery || "Không xác định",
-            total: order.totalPrice || "0 VNĐ",
-          }))
-        );
+        const recentOrders = pendingOrders.data.result || [];
+
+        // Format the pending orders to match the expected table structure
+        const formattedOrders = recentOrders.map((order: any, index: number) => ({
+          key: index.toString(),
+          id: order.orderId || "N/A",
+          shortId: order.orderId ? `**${order.orderId.slice(-4)}` : "N/A", // Thêm ** trước 4 số cuối
+          paymentType: order.paymentType || "Không xác định",
+          delivery: order.delivery || "Không xác định",
+          total: order.totalPrice || "0 VNĐ",
+          fullname: order.fullname || "Khách vãng lai",
+        }));
+
+        setOrders(formattedOrders);
         setTotalOrders(recentOrders.length);
         setCanceledOrders(0);
 
         const outOfStockResponse = await productsApi.getProductOutStock();
         const outOfStockItems = outOfStockResponse.data.result || [];
-        const formattedOutOfStockItems = outOfStockItems.map((product) => ({
+        const formattedOutOfStockItems = outOfStockItems.map((product: any) => ({
           key: product._id,
           _id: product._id,
           name: product.name,
@@ -111,7 +118,7 @@ const Dashboard: React.FC = () => {
 
         const hotProductsResponse = await productsApi.getHotproducts();
         const hotProductsItems = hotProductsResponse.data.result || [];
-        const formattedHotProducts = hotProductsItems.map((product) => ({
+        const formattedHotProducts = hotProductsItems.map((product: any) => ({
           key: product._id,
           _id: product._id,
           name: product.name,
@@ -139,6 +146,7 @@ const Dashboard: React.FC = () => {
         }
       } catch (error) {
         console.error("Lỗi khi lấy dữ liệu dashboard:", error);
+        message.error("Lỗi khi tải dữ liệu dashboard");
       } finally {
         setLoading(false);
       }
@@ -148,10 +156,46 @@ const Dashboard: React.FC = () => {
   }, []);
 
   const ordersColumns = [
-    { title: "ID đơn hàng", dataIndex: "id", key: "id", width: 100 },
-    { title: "Thanh toán", dataIndex: "paymentType", key: "paymentType", width: 200 },
-    { title: "Giao hàng", dataIndex: "delivery", key: "delivery", width: 200 },
-    { title: "Tổng tiền", dataIndex: "total", key: "total", width: 100 },
+    {
+      title: "ID đơn hàng",
+      dataIndex: "shortId",
+      key: "shortId",
+      width: 80,
+    },
+    {
+      title: "Khách hàng",
+      dataIndex: "fullname",
+      key: "fullname",
+      width: 150,
+    },
+    {
+      title: "Thanh toán",
+      dataIndex: "paymentType",
+      key: "paymentType",
+      width: 200,
+    },
+    {
+      title: "Giao hàng",
+      dataIndex: "delivery",
+      key: "delivery",
+      width: 200,
+    },
+    {
+      title: "Tổng tiền",
+      dataIndex: "total",
+      key: "total",
+      width: 100,
+    },
+    {
+      title: "",
+      key: "action",
+      width: 50,
+      render: (_: any, record: any) => (
+        <Link to={`/order/${record.id}`}>
+          <RightOutlined className="text-blue-500" />
+        </Link>
+      ),
+    },
   ];
 
   const productColumns = [
@@ -272,19 +316,6 @@ const Dashboard: React.FC = () => {
             <motion.div whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
               <Card bordered={false} className="shadow-sm">
                 <Statistic
-                  title="Đơn hàng hủy"
-                  value={canceledOrders}
-                  prefix={<FileTextOutlined className="mr-2 text-xl text-red-500" />}
-                  suffix="đơn hàng"
-                  loading={loading}
-                />
-              </Card>
-            </motion.div>
-          </Col>
-          <Col xs={24} sm={12} md={8} lg={8}>
-            <motion.div whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
-              <Card bordered={false} className="shadow-sm">
-                <Statistic
                   title="Tổng lịch hẹn"
                   value={totalAppointments}
                   prefix={<CalendarOutlined className="mr-2 text-xl text-green-500" />}
@@ -294,29 +325,21 @@ const Dashboard: React.FC = () => {
               </Card>
             </motion.div>
           </Col>
-          <Col xs={24} sm={12} md={8} lg={8}>
-            <motion.div whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
-              <Card bordered={false} className="shadow-sm">
-                <Statistic
-                  title="Lịch đã hủy"
-                  value={canceledAppointments}
-                  prefix={<CloseCircleOutlined className="mr-2 text-xl text-red-500" />}
-                  suffix="lịch hẹn"
-                  loading={loading}
-                />
-              </Card>
-            </motion.div>
-          </Col>
         </Row>
 
         <Row gutter={[16, 16]} className="mb-6">
-          <Col xs={24} lg={16}> 
-            <Card title="TỔNG ĐƠN HÀNG" bordered={false} className="shadow-sm">
+          <Col xs={24} lg={16}>
+            <Card title="ĐƠN HÀNG ĐANG CHỜ" bordered={false} className="shadow-sm">
               <div style={tableContainerStyle}>
                 <Table
                   columns={ordersColumns}
                   dataSource={orders}
-                  pagination={false} 
+                  pagination={{
+                    current: currentPageOrders,
+                    pageSize: 4,
+                    onChange: (page) => setCurrentPageOrders(page),
+                    total: orders.length,
+                  }}
                   className="overflow-x-auto"
                   loading={loading}
                   size="small"
@@ -324,8 +347,8 @@ const Dashboard: React.FC = () => {
               </div>
             </Card>
           </Col>
-          <Col xs={24} lg={8}> 
-            <Card title="KHÁCH HÀNG MỚI" bordered={false} className="shadow-sm">
+          <Col xs={24} lg={8}>
+            <Card title="KHÁCH HÀNG THÂN THIẾT" bordered={false} className="shadow-sm">
               <div style={tableContainerStyle}>
                 <Table
                   columns={customerColumns}
