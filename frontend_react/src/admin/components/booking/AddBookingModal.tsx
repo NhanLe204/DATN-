@@ -107,7 +107,7 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
       open={visible}
       onOk={onOk}
       onCancel={onCancel}
-      okText="Thêm"
+      okText="Thêm mới"
       cancelText="Hủy bỏ"
       width="90%"
       className="max-w-2xl mx-auto"
@@ -119,7 +119,7 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
             <div>
               <Form.Item
                 label="Người đặt"
-                name="username"
+                name="fullname"
                 rules={[{ required: true, message: 'Vui lòng nhập tên người đặt!' }]}
               >
                 <Input />

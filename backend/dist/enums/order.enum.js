@@ -12,7 +12,6 @@ var OrderStatus;
     OrderStatus["PENDING"] = "PENDING";
     OrderStatus["PROCESSING"] = "PROCESSING";
     OrderStatus["SHIPPING"] = "SHIPPING";
-    OrderStatus["SHIPPED"] = "SHIPPED";
     OrderStatus["DELIVERED"] = "DELIVERED";
     OrderStatus["CANCELLED"] = "CANCELLED"; // Đã hủy
 })(OrderStatus || (exports.OrderStatus = OrderStatus = {}));

@@ -39,17 +39,8 @@ export const getCouponById = async (req: Request, res: Response): Promise<void> 
 export const createCoupon = async (req: Request, res: Response): Promise<void> => {
   try {
     console.log('Request body:', req.body); // Kiểm tra dữ liệu gửi lên
-    const {
-      coupon_code,
-      discount_value,
-      min_order_value,
-      max_discount,
-      start_date,
-      end_date,
-      usage_limit,
-      used_count,
-      score
-    } = req.body;
+    const { coupon_code, discount_value, min_order_value, start_date, end_date, usage_limit, used_count, score } =
+      req.body;
 
     if (!coupon_code || !discount_value || !start_date || !end_date) {
       console.log('Missing required fields');
@@ -61,7 +52,6 @@ export const createCoupon = async (req: Request, res: Response): Promise<void> =
       coupon_code,
       discount_value,
       min_order_value: min_order_value || 0,
-      max_discount: max_discount || 0,
       start_date: new Date(start_date),
       end_date: new Date(end_date),
       usage_limit: usage_limit || 1,
@@ -107,17 +97,8 @@ export const deleteCouponById = async (req: Request, res: Response): Promise<voi
 export const updateCoupon = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const {
-      coupon_code,
-      discount_value,
-      min_order_value,
-      max_discount,
-      start_date,
-      end_date,
-      usage_limit,
-      used_count,
-      score
-    } = req.body;
+    const { coupon_code, discount_value, min_order_value, start_date, end_date, usage_limit, used_count, score } =
+      req.body;
 
     // Tìm coupon hiện tại để kiểm tra start_date nếu không gửi lên
     const existingCoupon = await couponModel.findById(id);
@@ -131,7 +112,6 @@ export const updateCoupon = async (req: Request, res: Response): Promise<void> =
       coupon_code,
       discount_value,
       min_order_value,
-      max_discount,
       start_date: start_date ? new Date(start_date) : existingCoupon.start_date,
       end_date: end_date ? new Date(end_date) : existingCoupon.end_date,
       usage_limit,

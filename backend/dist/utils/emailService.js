@@ -38,6 +38,11 @@ const sendBookingCompletionEmail = async (orderDetail, order, user) => {
                 timeStyle: 'short'
             }).format(booking_date)
             : 'N/A';
+        const petTypeMap = {
+            cat: 'Mèo',
+            dog: 'Chó'
+        };
+        const petTypeInVietnamese = petTypeMap[petType?.toLowerCase()] || petType || 'N/A';
         const mailOptions = {
             from: process.env.EMAIL_USER,
             to: email,
@@ -62,7 +67,7 @@ const sendBookingCompletionEmail = async (orderDetail, order, user) => {
             </tr>
             <tr>
               <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Thú cưng:</td>
-              <td style="padding: 10px; border: 1px solid #e0e0e0;">${petName || 'N/A'} (${petType || 'N/A'})</td>
+              <td style="padding: 10px; border: 1px solid #e0e0e0;">${petName || 'N/A'} (${petTypeInVietnamese || 'N/A'})</td>
             </tr>
             <tr>
               <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Giá thực tế:</td>

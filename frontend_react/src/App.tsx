@@ -41,6 +41,7 @@ import ChatbotController from "./components/ChatbotController";
 import ArticleDetail from "./pages/blogDetail/blogDetail";
 import BlogList from "./admin/blog/blog";
 import Revenue from "./admin/revenue/revenue";
+import NotFound from "./pages/404/404"; // Import trang 404
 
 interface User {
   id: string;
@@ -60,7 +61,7 @@ const EMPLOYEE_ALLOWED_PAGES = [
   "/admin/services",
   "/admin/brands",
   "/admin/tags",
-  "/admin/Revenue"
+  "/admin/Revenue",
 ];
 
 const ProtectedRoute = ({
@@ -134,12 +135,7 @@ function App() {
     },
     {
       path: "",
-      element: (
-        <>
-          <PageLayout />
-          {/* <ChatbotController /> */}
-        </>
-      ),
+      element: <PageLayout />,
       children: [
         {
           path: "/",
@@ -246,7 +242,7 @@ function App() {
           ),
         },
         {
-          path: "/userprofile/*",
+          path: "/userprofile/*", // Route con cho userprofile
           element: (
             <ProtectedRoute>
               <UserProfile />
@@ -269,7 +265,12 @@ function App() {
             </PublicRoute>
           ),
         },
+        { path: "*", element: <NotFound /> }, // Route 404 cho các trang con
       ],
+    },
+    {
+      path: "*", // Route mặc định cho các đường dẫn không tồn tại
+      element: <NotFound />, // Hiển thị trang 404
     },
   ]);
 

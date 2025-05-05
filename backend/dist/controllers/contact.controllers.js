@@ -15,23 +15,13 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -43,6 +33,7 @@ dotenv_1.default.config();
 const submitContactForm = async (req, res) => {
     try {
         const { name, email, phone, message } = req.body;
+        console.log(email, 'email');
         if (!name || !email || !phone || !message) {
             res.status(400).json({ success: false, message: 'Vui lòng điền đầy đủ thông tin!' });
         }
@@ -59,7 +50,7 @@ const submitContactForm = async (req, res) => {
         // Nội dung email
         const mailOptions = {
             from: process.env.EMAIL_USER,
-            to: 'hoangthaithuan07@gmail.com', // Email nhận thông tin
+            to: 'ngocthanhnt04@gmail.com', // Email nhận thông tin
             subject: 'Liên hệ mới từ website',
             html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">

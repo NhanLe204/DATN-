@@ -3,10 +3,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.setDefaultAddress = exports.getNewUsers = exports.changePassword = exports.deleteUserAddress = exports.updateUserAddress = exports.addUserAddress = exports.updateCart = exports.updateUser = exports.getUserById = exports.getAllUser = void 0;
+exports.getLoyalUsers = exports.setDefaultAddress = exports.getNewUsers = exports.changePassword = exports.deleteUserAddress = exports.updateUserAddress = exports.addUserAddress = exports.updateCart = exports.updateUser = exports.getUserById = exports.getAllUser = void 0;
 const user_model_js_1 = __importDefault(require("../models/user.model.js"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
+const order_model_js_1 = __importDefault(require("@/models/order.model.js"));
 // lấy hết nè má
 const getAllUser = async (req, res) => {
     try {
@@ -375,8 +376,14 @@ const getNewUsers = async (req, res) => {
     try {
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        // Truy vấn người dùng mới trong 30 ngày qua
         const newUsers = await user_model_js_1.default
-            .find({ createdAt: { $gte: thirtyDaysAgo } })
+            .find({
+            $or: [
+                { createdAt: { $gte: thirtyDaysAgo } }, // Người dùng mới tạo
+                { googleId: { $exists: true } } // Người dùng đăng nhập qua Google
+            ]
+        })
             .select('-password')
             .sort({ createdAt: -1 })
             .limit(4);
@@ -450,4 +457,74 @@ const setDefaultAddress = async (req, res) => {
     }
 };
 exports.setDefaultAddress = setDefaultAddress;
+// người dùng thân thiết
+const getLoyalUsers = async (req, res) => {
+    try {
+        const loyalUsers = await order_model_js_1.default.aggregate([
+            {
+                $match: {
+                    status: 'DELIVERED',
+                    userID: { $ne: null }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'orderdetails',
+                    localField: '_id',
+                    foreignField: 'orderId',
+                    as: 'orderDetails'
+                }
+            },
+            {
+                $unwind: '$orderDetails'
+            },
+            {
+                $group: {
+                    _id: '$userID',
+                    totalQuantity: { $sum: '$orderDetails.quantity' },
+                    fullname: { $first: '$inforUserGuest.fullName' }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'userInfo'
+                }
+            },
+            {
+                $unwind: '$userInfo'
+            },
+            {
+                $project: {
+                    _id: 0, // Loại bỏ _id của group
+                    userId: '$_id',
+                    fullname: { $ifNull: ['$userInfo.fullname', '$fullname', 'Khách vãng lai'] },
+                    totalQuantity: 1,
+                    email: '$userInfo.email',
+                    createdAt: '$userInfo.createdAt'
+                    // Không cần khai báo password: 0 vì nó sẽ tự động bị loại bỏ
+                }
+            },
+            {
+                $sort: { totalQuantity: -1 }
+            },
+            {
+                $limit: 4
+            }
+        ]);
+        res.status(200).json({ success: true, result: loyalUsers });
+    }
+    catch (error) {
+        if (error instanceof Error) {
+            console.error(`Error fetching loyal users: ${error.message}`);
+        }
+        else {
+            console.error('Error fetching loyal users:', error);
+        }
+        res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+};
+exports.getLoyalUsers = getLoyalUsers;
 //# sourceMappingURL=user.controllers.js.map

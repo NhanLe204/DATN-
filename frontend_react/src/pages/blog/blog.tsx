@@ -11,7 +11,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import BlogApi from "../../api/blogApi";
 import parse from "html-react-parser";
-import Loader from "../../components/loader";
+import Loader from "../../components/LoaderPayment";
 import blogCategoryApi from "../../api/blogCategoryApi";
 
 interface Blog {
@@ -64,7 +64,8 @@ export default function Blog() {
   useEffect(() => {
     const fetchBlogCategorys = async () => {
       try {
-        const blogCategoryResponse = await blogCategoryApi.getCategoriesActive();
+        const blogCategoryResponse =
+          await blogCategoryApi.getCategoriesActive();
         const blogCategoryData = blogCategoryResponse.data.result;
 
         setBlogsCategory(blogCategoryData || []);
@@ -113,18 +114,16 @@ export default function Blog() {
     })
     .filter((post) => {
       // Lọc bài viết dựa trên từ khóa tìm kiếm
-      return (
-        post.title.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      return post.title.toLowerCase().includes(searchTerm.toLowerCase());
     });
-    
-    const formatDate = (dateString: string) => {
-      return new Date(dateString).toLocaleDateString("vi-VN", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-    };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("vi-VN", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -145,7 +144,9 @@ export default function Blog() {
                 KỸ NĂNG CẮM TRẠI
               </span>
               <br />
-              <span className="text-lg sm:text-xl md:text-2xl text-gray-700">DÀNH CHO CHÓ</span>
+              <span className="text-lg sm:text-xl md:text-2xl text-gray-700">
+                DÀNH CHO CHÓ
+              </span>
             </motion.h1>
           </div>
         </nav>
@@ -162,14 +163,18 @@ export default function Blog() {
           </div>
 
           {/* Sidebar - Modified for responsive */}
-          <div className={`
+          <div
+            className={`
             lg:w-64 lg:flex-shrink-0
-            ${isMobileMenuOpen ? 'block' : 'hidden'} 
+            ${isMobileMenuOpen ? "block" : "hidden"} 
             lg:block
             transition-all duration-300 ease-in-out
-            ${isMobileMenuOpen ? 'absolute top-[200px] left-4 right-4 z-50' : ''}
+            ${
+              isMobileMenuOpen ? "absolute top-[200px] left-4 right-4 z-50" : ""
+            }
             lg:relative lg:top-0 lg:left-0
-          `}>
+          `}
+          >
             <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 sticky top-8">
               <h2 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6 flex items-center gap-2">
                 <BookOutlined className="text-green-500" />
@@ -182,10 +187,11 @@ export default function Blog() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   href="#"
-                  className={`block p-2 sm:p-3 rounded-xl transition-all duration-200 ${activeCategory === "TẤT CẢ"
+                  className={`block p-2 sm:p-3 rounded-xl transition-all duration-200 ${
+                    activeCategory === "TẤT CẢ"
                       ? "bg-gradient-to-r from-[#22A6DF] to-[#1890ff] text-white shadow-lg"
                       : "bg-gray-50 text-gray-700 hover:bg-gray-100"
-                    }`}
+                  }`}
                   onClick={() => {
                     setActiveCategory("TẤT CẢ");
                     setIsMobileMenuOpen(false);
@@ -204,18 +210,22 @@ export default function Blog() {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     href="#"
-                    className={`block p-2 sm:p-3 rounded-xl transition-all duration-200 ${activeCategory === category.name
+                    className={`block p-2 sm:p-3 rounded-xl transition-all duration-200 ${
+                      activeCategory === category.name
                         ? "bg-gradient-to-r from-[#22A6DF] to-[#1890ff] text-white shadow-lg"
                         : "bg-gray-50 text-gray-700 hover:bg-gray-100"
-                      }`}
+                    }`}
                     onClick={() => {
                       setActiveCategory(category.name);
                       setIsMobileMenuOpen(false);
                     }}
                   >
                     <div className="flex items-center gap-3">
-                      <CompassOutlined /> {/* Có thể thay đổi icon tùy theo danh mục */}
-                      <span className="text-sm font-medium">{category.name}</span>
+                      <CompassOutlined />{" "}
+                      {/* Có thể thay đổi icon tùy theo danh mục */}
+                      <span className="text-sm font-medium">
+                        {category.name}
+                      </span>
                     </div>
                   </motion.a>
                 ))}
@@ -241,7 +251,10 @@ export default function Blog() {
                   className="mt-2 sm:mt-3 text-gray-500 flex items-center gap-2 text-sm sm:text-base"
                 >
                   <Badge status="processing" />
-                  <span className="font-medium">{filteredBlogs.length}</span> kết quả phù hợp
+                  <span className="font-medium">
+                    {filteredBlogs.length}
+                  </span>{" "}
+                  kết quả phù hợp
                 </motion.div>
               </div>
             </div>

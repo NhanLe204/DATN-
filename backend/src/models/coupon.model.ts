@@ -21,11 +21,6 @@ const couponSchema: Schema<ICoupon> = new Schema<ICoupon>({
     required: [true, 'Giá trị đơn hàng tối thiểu là bắt buộc'],
     min: [0, 'Giá trị đơn hàng tối thiểu không được âm']
   },
-  max_discount: {
-    type: Number,
-    required: [true, 'Giá trị giảm giá tối đa là bắt buộc'],
-    min: [0, 'Giá trị giảm giá tối đa không được âm']
-  },
   start_date: {
     type: Date,
     required: [true, 'Ngày bắt đầu là bắt buộc']

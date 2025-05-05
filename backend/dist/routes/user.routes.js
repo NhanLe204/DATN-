@@ -11,6 +11,7 @@ const cloudinary_config_js_1 = __importDefault(require("../config/cloudinary.con
 // http://localhost:3000/api/v1/users
 userRouter.get('/users', verifyToken_js_1.verifyToken, user_controllers_js_1.getAllUser);
 userRouter.get('/users/new', verifyToken_js_1.verifyToken, user_controllers_js_1.getNewUsers);
+userRouter.get('/users/loyal', verifyToken_js_1.verifyToken, user_controllers_js_1.getLoyalUsers);
 userRouter.patch('/users/:id', verifyToken_js_1.verifyToken, cloudinary_config_js_1.default.single('avatar'), user_controllers_js_1.updateUser);
 userRouter.patch('/users/self/cart', verifyToken_js_1.verifyToken, user_controllers_js_1.updateCart);
 userRouter.get('/users/:id', verifyToken_js_1.verifyToken, user_controllers_js_1.getUserById);

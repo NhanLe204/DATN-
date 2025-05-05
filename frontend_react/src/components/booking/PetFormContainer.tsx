@@ -39,7 +39,20 @@ const PetFormContainer: React.FC<PetFormContainerProps> = ({
   onViewPriceClick,
 }) => {
   const addPetForm = () => {
-    if (petForms.length < 2) {
+    if (petForms.length < 5) {
+      // Kiểm tra xem có slot khả dụng cho ít nhất một ngày trong tương lai
+      const hasAvailableSlots = Object.values(slotAvailability).some(
+        (slots) =>
+          Object.values(slots).some((count) => count > petForms.length)
+      );
+
+      if (!hasAvailableSlots && petForms.length > 0) {
+        message.warning(
+          "Không còn khung giờ nào đủ slot để thêm thú cưng mới!"
+        );
+        return;
+      }
+
       setPetForms([...petForms, petForms.length]);
       setPetFormData([
         ...petFormData,
@@ -47,7 +60,7 @@ const PetFormContainer: React.FC<PetFormContainerProps> = ({
       ]);
       setSelectedDates([...selectedDates, null]);
     } else {
-      message.warning("Pet Heaven chỉ nhận tối đa 2 thú cưng cho 1 lịch hẹn!");
+      message.warning("Pet Heaven chỉ nhận tối đa 5 thú cưng cho 1 lịch hẹn!");
     }
   };
 
@@ -96,8 +109,8 @@ const PetFormContainer: React.FC<PetFormContainerProps> = ({
           handleServiceChange={handleServiceChange}
           handleDateChange={handleDateChange}
           handleTimeChange={handleTimeChange}
-          removePetForm={index === 1 ? removePetForm : undefined}
-          isRemovable={petForms.length > 1 && index === 1}
+          removePetForm={petForms.length > 1 && index > 0 ? removePetForm : undefined}
+          isRemovable={petForms.length > 1 && index > 0}
           onViewPriceClick={onViewPriceClick}
         />
       ))}

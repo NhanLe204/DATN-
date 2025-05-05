@@ -5,7 +5,7 @@ const verifyToken_js_1 = require("../middlewares/verifyToken.js");
 const order_controllers_js_1 = require("../controllers/order.controllers.js");
 const orderRouter = (0, express_1.Router)();
 orderRouter.get('/orders', verifyToken_js_1.verifyToken, order_controllers_js_1.getAllOrders);
-orderRouter.get('/recentOrders', verifyToken_js_1.verifyToken, order_controllers_js_1.getRecentOrder);
+orderRouter.get('/pendingOrders', verifyToken_js_1.verifyToken, order_controllers_js_1.getPendingOrders);
 orderRouter.post('/orders', order_controllers_js_1.createOrderAfterPayment);
 orderRouter.get('/orders/check/available-slots', order_controllers_js_1.getAvailableSlots);
 orderRouter.get('/orders/:id', verifyToken_js_1.verifyToken, order_controllers_js_1.getOrderById);

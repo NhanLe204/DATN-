@@ -66,7 +66,7 @@ const ContactPage: React.FC = () => {
     {
       icon: <MailOutlined className="text-2xl text-blue-500" />,
       title: "Email",
-      content: "hoangthaithuan07@gmail.com",
+      content: `petheaven73@gmail.com`,
     },
     {
       icon: <ClockCircleOutlined className="text-2xl text-blue-500" />,
@@ -123,9 +123,14 @@ const ContactPage: React.FC = () => {
               >
                 <Form.Item
                   name="name"
-                  rules={[{ required: true, message: "Vui lòng nhập tên của bạn!" }]}
+                  rules={[
+                    { required: true, message: "Vui lòng nhập tên của bạn!" },
+                  ]}
                 >
-                  <Input placeholder="Tên của bạn" className="h-12 rounded-lg" />
+                  <Input
+                    placeholder="Tên của bạn"
+                    className="h-12 rounded-lg"
+                  />
                 </Form.Item>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -136,23 +141,37 @@ const ContactPage: React.FC = () => {
                       { type: "email", message: "Email không hợp lệ!" },
                     ]}
                   >
-                    <Input placeholder="Email của bạn" className="h-12 rounded-lg" />
+                    <Input
+                      placeholder="Email của bạn"
+                      className="h-12 rounded-lg"
+                    />
                   </Form.Item>
 
                   <Form.Item
                     name="phone"
                     rules={[
-                      { required: true, message: "Vui lòng nhập số điện thoại!" },
-                      { pattern: /^[0-9]{10}$/, message: "Số điện thoại không hợp lệ!" },
+                      {
+                        required: true,
+                        message: "Vui lòng nhập số điện thoại!",
+                      },
+                      {
+                        pattern: /^[0-9]{10}$/,
+                        message: "Số điện thoại không hợp lệ!",
+                      },
                     ]}
                   >
-                    <Input placeholder="Số điện thoại" className="h-12 rounded-lg" />
+                    <Input
+                      placeholder="Số điện thoại"
+                      className="h-12 rounded-lg"
+                    />
                   </Form.Item>
                 </div>
 
                 <Form.Item
                   name="message"
-                  rules={[{ required: true, message: "Vui lòng nhập nội dung!" }]}
+                  rules={[
+                    { required: true, message: "Vui lòng nhập nội dung!" },
+                  ]}
                 >
                   <Input.TextArea
                     placeholder="Nội dung tin nhắn"

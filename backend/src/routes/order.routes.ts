@@ -9,13 +9,13 @@ import {
   updateOrderStatus,
   updatePaymentStatus,
   cancelServiceBooking,
-  getRecentOrder
+  getPendingOrders
 } from '../controllers/order.controllers.js';
 
 const orderRouter = Router();
 
 orderRouter.get('/orders', verifyToken, getAllOrders);
-orderRouter.get('/recentOrders', verifyToken, getRecentOrder);
+orderRouter.get('/pendingOrders', verifyToken, getPendingOrders);
 orderRouter.post('/orders', createOrderAfterPayment);
 orderRouter.get('/orders/check/available-slots', getAvailableSlots);
 orderRouter.get('/orders/:id', verifyToken, getOrderById);
