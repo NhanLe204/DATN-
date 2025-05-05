@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Input, Badge } from "antd";
+import { Input, Badge, Button } from "antd";
 import {
   SearchOutlined,
   BookOutlined,
   CompassOutlined,
   ThunderboltOutlined,
+  MenuOutlined,
 } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
@@ -38,7 +39,7 @@ export default function Blog() {
   const [visiblePosts, setVisiblePosts] = useState<number>(4);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedBlog, setSelectedBlog] = useState<Blog | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const fetchBlogs = async () => {
@@ -82,15 +83,7 @@ export default function Blog() {
   }, []);
 
   const handleLoadMore = () => {
-    setVisiblePosts((prev) => prev + 4);
-  };
-
-  const handleBlogClick = (blog: Blog) => {
-    setSelectedBlog(blog);
-  };
-
-  const handleBack = () => {
-    setSelectedBlog(null);
+    setVisiblePosts((prev) => prev + 2);
   };
 
   if (loading) {
@@ -121,23 +114,30 @@ export default function Blog() {
     .filter((post) => {
       // Lọc bài viết dựa trên từ khóa tìm kiếm
       return (
-        post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        post.content.toLowerCase().includes(searchTerm.toLowerCase())
+        post.title.toLowerCase().includes(searchTerm.toLowerCase())
       );
     });
+    
+    const formatDate = (dateString: string) => {
+      return new Date(dateString).toLocaleDateString("vi-VN", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Main Content */}
-      <main className="mx-auto px-[154px] py-12">
+      <main className="mx-auto px-4 sm:px-6 md:px-8 lg:px-[154px] py-6 sm:py-8 md:py-12">
         {/* Header */}
-        <nav className=" relative overflow-hidden">
+        <nav className="relative overflow-hidden">
           <div className="absolute inset-0 opacity-50"></div>
-          <div className="max-w-7xl mx-auto px-4 py-8 relative">
+          <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6 md:py-8 relative">
             <motion.h1
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-3xl font-bold text-gray-900 text-center leading-tight"
+              className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 text-center leading-tight"
             >
               KINH NGHIỆM LỰA CHỌN ĐỒ DÃ NGOẠI &
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-blue-600">
@@ -145,30 +145,51 @@ export default function Blog() {
                 KỸ NĂNG CẮM TRẠI
               </span>
               <br />
-              <span className="text-2xl text-gray-700">DÀNH CHO CHÓ</span>
+              <span className="text-lg sm:text-xl md:text-2xl text-gray-700">DÀNH CHO CHÓ</span>
             </motion.h1>
           </div>
         </nav>
-        <div className="flex flex-col lg:flex-row gap-12">
-          {/* Sidebar */}
-          <div className="w-full lg:w-64 flex-shrink-0">
-            <div className="bg-white rounded-2xl shadow-xl p-6 sticky top-8">
-              <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
+
+        <div className="flex flex-col lg:flex-row gap-6 md:gap-8 lg:gap-12">
+          {/* Mobile Menu Button */}
+          <div className="lg:hidden flex justify-start mb-4">
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 rounded-lg bg-white shadow-md text-gray-600 hover:bg-gray-50"
+            >
+              <MenuOutlined className="text-xl" />
+            </button>
+          </div>
+
+          {/* Sidebar - Modified for responsive */}
+          <div className={`
+            lg:w-64 lg:flex-shrink-0
+            ${isMobileMenuOpen ? 'block' : 'hidden'} 
+            lg:block
+            transition-all duration-300 ease-in-out
+            ${isMobileMenuOpen ? 'absolute top-[200px] left-4 right-4 z-50' : ''}
+            lg:relative lg:top-0 lg:left-0
+          `}>
+            <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 sticky top-8">
+              <h2 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6 flex items-center gap-2">
                 <BookOutlined className="text-green-500" />
                 Danh mục
               </h2>
-              <nav className="space-y-3">
-                {/* Mục "TẤT CẢ" */}
+              <nav className="space-y-2 sm:space-y-3">
+                {/* Your existing category buttons with added responsive classes */}
                 <motion.a
                   key="TẤT CẢ"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   href="#"
-                  className={`block p-3 rounded-xl transition-all duration-200 ${activeCategory === "TẤT CẢ"
-                    ? "bg-gradient-to-r from-[#22A6DF] to-[#1890ff] text-white shadow-lg"
-                    : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                  className={`block p-2 sm:p-3 rounded-xl transition-all duration-200 ${activeCategory === "TẤT CẢ"
+                      ? "bg-gradient-to-r from-[#22A6DF] to-[#1890ff] text-white shadow-lg"
+                      : "bg-gray-50 text-gray-700 hover:bg-gray-100"
                     }`}
-                  onClick={() => setActiveCategory("TẤT CẢ")}
+                  onClick={() => {
+                    setActiveCategory("TẤT CẢ");
+                    setIsMobileMenuOpen(false);
+                  }}
                 >
                   <div className="flex items-center gap-3">
                     <BookOutlined />
@@ -183,11 +204,14 @@ export default function Blog() {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     href="#"
-                    className={`block p-3 rounded-xl transition-all duration-200 ${activeCategory === category.name
-                      ? "bg-gradient-to-r from-[#22A6DF] to-[#1890ff] text-white shadow-lg"
-                      : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                    className={`block p-2 sm:p-3 rounded-xl transition-all duration-200 ${activeCategory === category.name
+                        ? "bg-gradient-to-r from-[#22A6DF] to-[#1890ff] text-white shadow-lg"
+                        : "bg-gray-50 text-gray-700 hover:bg-gray-100"
                       }`}
-                    onClick={() => setActiveCategory(category.name)}
+                    onClick={() => {
+                      setActiveCategory(category.name);
+                      setIsMobileMenuOpen(false);
+                    }}
                   >
                     <div className="flex items-center gap-3">
                       <CompassOutlined /> {/* Có thể thay đổi icon tùy theo danh mục */}
@@ -201,7 +225,8 @@ export default function Blog() {
 
           {/* Content */}
           <div className="flex-1">
-            <div className="mb-8">
+            {/* Search Bar - Made responsive */}
+            <div className="mb-4 sm:mb-6 md:mb-8">
               <div className="relative">
                 <Input
                   size="large"
@@ -213,26 +238,26 @@ export default function Blog() {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="mt-3 text-gray-500 flex items-center gap-2"
+                  className="mt-2 sm:mt-3 text-gray-500 flex items-center gap-2 text-sm sm:text-base"
                 >
                   <Badge status="processing" />
-                  <span className="font-medium">110</span> kết quả phù hợp
+                  <span className="font-medium">{filteredBlogs.length}</span> kết quả phù hợp
                 </motion.div>
               </div>
             </div>
 
             {/* Articles */}
-            <div className="space-y-8">
+            <div className="space-y-4 sm:space-y-6 md:space-y-8">
               {filteredBlogs.slice(0, visiblePosts).map((post, index) => (
                 <motion.article
                   key={post._id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row"
+                  className="bg-white rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl overflow-hidden flex flex-col md:flex-row"
                 >
                   {/* Image Section */}
-                  <div className="w-full md:w-1/3 relative h-72 md:h-auto">
+                  <div className="w-full md:w-1/3 relative h-48 sm:h-60 md:h-auto">
                     <img
                       src={post.image_url}
                       alt={post.title}
@@ -244,24 +269,24 @@ export default function Blog() {
                   {/* Content Section */}
                   <Link
                     to={`/blogs/${post._id}`}
-                    className="w-full md:w-2/3 p-6 flex flex-col justify-between"
+                    className="w-full md:w-2/3 p-4 sm:p-6 flex flex-col justify-between"
                   >
                     <div>
-                      <h2 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2">
+                      <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 sm:mb-3 line-clamp-2">
                         {post.title}
                       </h2>
-                      <p className="text-gray-600 text-sm line-clamp-3">
+                      <p className="text-gray-600 text-xs sm:text-sm line-clamp-3">
                         {parse(post.content)}
                       </p>
                     </div>
 
-                    <div className="mt-4">
-                      <div className="flex items-center gap-3 text-sm text-gray-500 mb-4">
-                        <span>{post.createdAt}</span>
+                    <div className="mt-3 sm:mt-4">
+                      <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">
+                        <span>{formatDate(post.createdAt)}</span>
                         <span>•</span>
                         <span>{post.author}</span>
                       </div>
-                      <div className="mt-4 text-right">
+                      <div className="mt-2 sm:mt-4 text-right">
                         <motion.a
                           whileHover={{ x: 5 }}
                           whileTap={{ x: -2 }}
@@ -275,6 +300,17 @@ export default function Blog() {
                   </Link>
                 </motion.article>
               ))}
+              {filteredBlogs.length > visiblePosts && (
+                <div className="text-center mt-6">
+                  <Button
+                    type="primary"
+                    className="bg-[#22A6DF] hover:bg-[#1890ff]"
+                    onClick={handleLoadMore}
+                  >
+                    Tải thêm bài viết
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>

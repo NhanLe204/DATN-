@@ -22,6 +22,7 @@
     "aos": "^2.3.4",
     "axios": "^1.8.3",
     "chart.js": "^4.4.8",
+    "dompurify": "^3.2.5",
     "dotenv": "^16.4.7",
     "file-saver": "^2.0.5",
     "framer-motion": "^12.4.1",

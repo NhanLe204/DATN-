@@ -20,14 +20,14 @@ import {
   Plus,
   Edit3,
 } from "lucide-react";
-import { Form, Input, message, Modal, Select } from "antd";
+import { Button, Form, Input, message, Modal, Select } from "antd";
 import orderApi from "../../api/orderApi";
 import userApi from "../../api/userApi";
 import deliveryApi from "../../api/deliveryApi";
 import paymentTypeApi from "../../api/paymentTypeApi";
 import couponApi from "../../api/couponApi";
 import paymentApi from "../../api/paymentApi";
-import { clearProduct } from "../../redux/slices/cartslice";
+import { clearProduct, removeProduct } from "../../redux/slices/cartslice";
 import ENV_VARS from "../../../config";
 const { Item } = Form;
 
@@ -665,8 +665,8 @@ const Payment = () => {
       message.destroy();
       message.error(
         error.response?.data?.message ||
-          error.message ||
-          "Có lỗi xảy ra khi xử lý đơn hàng. Vui lòng thử lại!"
+        error.message ||
+        "Có lỗi xảy ra khi xử lý đơn hàng. Vui lòng thử lại!"
       );
     }
   };
@@ -676,26 +676,32 @@ const Payment = () => {
     0
   );
 
+  const handleRemove = (id: string, name: string) => {
+    if (!userId || userId === "guest") {
+      Modal.warning({
+        title: "Yêu cầu đăng nhập",
+        content: "Vui lòng đăng nhập để thực hiện thao tác này!",
+        onOk: () => navigate("/login"),
+      });
+      return;
+    }
+    Modal.confirm({
+      title: "Xác nhận xóa sản phẩm",
+      content: `Bạn có chắc muốn xóa "${name}" khỏi đơn hàng không?`,
+      okText: "Xóa",
+      okType: "danger",
+      cancelText: "Hủy",
+      onOk() {
+        dispatch(removeProduct({ id }));
+        message.success(`Đã xóa "${name}" khỏi đơn hàng!`);
+      },
+    });
+  };
+
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-gray-800">
         <div className="container mx-auto px-4 sm:px-6 lg:px-[154px] py-6 sm:py-10">
-          {/* Breadcrumb */}
-          <motion.nav
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6 sm:mb-8 rounded-2xl p-4 sm:p-5 bg-white shadow-lg hover:shadow-xl transition-shadow duration-300"
-          >
-            <div className="flex items-center gap-2 text-sm sm:text-base">
-              <span className="text-gray-600 hover:text-[#22a6df] transition-colors duration-200 cursor-pointer">
-                Trang chủ
-              </span>
-              <ChevronRight size={16} className="text-gray-400" />
-              <span className="text-[#22a6df] font-medium">
-                Thông tin giao hàng
-              </span>
-            </div>
-          </motion.nav>
 
           {/* Reorder Notice */}
           {isReorder && (
@@ -965,13 +971,12 @@ const Payment = () => {
                           onClick={() =>
                             !isDisabled && setSelectedShippingMethod(method)
                           }
-                          className={`flex flex-col sm:flex-row sm:justify-between items-start sm:items-center rounded-xl p-4 sm:p-5 transition-all duration-200 ${
-                            selectedShippingMethod?._id === method._id
+                          className={`flex flex-col sm:flex-row sm:justify-between items-start sm:items-center rounded-xl p-4 sm:p-5 transition-all duration-200 ${selectedShippingMethod?._id === method._id
                               ? "border-2 border-[#22a6df] bg-[#22a6df]/5"
                               : isDisabled
-                              ? "bg-gray-100 opacity-60 cursor-not-allowed"
-                              : "bg-gray-50 hover:bg-gray-100 border border-gray-200"
-                          }`}
+                                ? "bg-gray-100 opacity-60 cursor-not-allowed"
+                                : "bg-gray-50 hover:bg-gray-100 border border-gray-200"
+                            }`}
                         >
                           <div className="flex items-center mb-3 sm:mb-0">
                             <div className="mr-4 rounded-full p-2.5 bg-white shadow-sm">
@@ -1030,11 +1035,10 @@ const Payment = () => {
                         whileHover={{ scale: 1.01 }}
                         key={method._id}
                         onClick={() => setSelectedPayment(method._id)}
-                        className={`flex flex-row sm:flex-row items-center sm:items-center sm:justify-between cursor-pointer rounded-xl p-4 sm:p-5 transition-all duration-200 ${
-                          selectedPayment === method._id
+                        className={`flex flex-row sm:flex-row items-center sm:items-center sm:justify-between cursor-pointer rounded-xl p-4 sm:p-5 transition-all duration-200 ${selectedPayment === method._id
                             ? "border-2 border-[#22a6df] bg-[#22a6df]/5"
                             : "bg-gray-50 hover:bg-gray-100 border border-gray-200"
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center mb-3 sm:mb-0">
                           <div className="mr-4 rounded-full p-2.5 bg-white shadow-sm">
@@ -1095,24 +1099,36 @@ const Payment = () => {
                   ) : (
                     <>
                       {cartItems.map((item) => (
-                        <div key={item.id} className="flex gap-3 sm:gap-4 mb-4">
+                        <div key={item.id} className="flex gap-3 sm:gap-4 mb-4 items-start">
                           <div className="relative h-20 w-20 sm:h-24 sm:w-24 flex-shrink-0 overflow-hidden rounded-xl">
                             <img
                               src={item.image}
-                              alt={item.name}
+                              alt={`Hình ảnh sản phẩm ${item.name}`}
                               className="h-full w-full object-cover"
                             />
                           </div>
-                          <div>
-                            <h3 className="font-medium text-sm sm:text-base">
-                              {item.name}
-                            </h3>
-                            <p className="text-sm sm:text-base">
-                              Số lượng: {item.quantity}
-                            </p>
-                            <p className="mt-2 font-semibold text-blue-500 text-sm sm:text-base">
-                              {formatPrice(item.price * item.quantity)}
-                            </p>
+                          <div className="flex-1">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h3 className="font-medium text-sm sm:text-base">
+                                  {item.name}
+                                </h3>
+                                <p className="text-sm sm:text-base">
+                                  Số lượng: {item.quantity}
+                                </p>
+                                <p className="mt-2 font-semibold text-blue-500 text-sm sm:text-base">
+                                  {formatPrice(item.price * item.quantity)}
+                                </p>
+                              </div>
+                              <Button
+                                type="text"
+                                danger
+                                onClick={() => handleRemove(item.id.toString(), item.name)}
+                                aria-label={`Xóa sản phẩm ${item.name} khỏi đơn hàng`}
+                              >
+                                Xóa
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       ))}

@@ -1,11 +1,36 @@
 import React, { useState, useEffect } from "react";
-import { Button, Card, Badge } from "antd";
+import { Button, Card, Badge, message } from "antd";
 import { BsHandbag, BsHeart, BsStarFill } from "react-icons/bs";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useDispatch } from "react-redux";
+import { addToCart } from "../redux/slices/cartslice";
 
 export default function ListCard({ pros }) {
   const [imageStates, setImageStates] = useState({});
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const handleBuyNow = (product: any) => {
+    const quantity = 1;
+    const stockQuantity = product.quantity || Infinity;
+
+    if (quantity > stockQuantity) {
+      message.error(`Sản phẩm ${product.name} đã hết hàng!`);
+      return;
+    }
+
+    const item = {
+      id: product._id,
+      name: product.name,
+      price: Number(product.price * (1 - product.discount / 100)),
+      image: product.image_url[0] || "/placeholder-image.jpg",
+      stockQuantity: product.quantity || 0,
+    };
+
+    dispatch(addToCart({ item, quantity }));
+    navigate("/checkout");
+  };
 
   useEffect(() => {
     setImageStates(
@@ -126,16 +151,15 @@ export default function ListCard({ pros }) {
                   className="relative overflow-hidden rounded-lg mt-auto"
                   whileHover={{ scale: 1.02 }}
                 >
-                  <Link to={`/detail/${product._id}`}>
-                    <Button
-                      className="w-full bg-transparent hover:bg-[#22A6DF] border-[#22A6DF] text-[#22A6DF] hover:text-white transition-all duration-300 uppercase font-medium"
-                    >
-                      <div className="flex items-center justify-center gap-2">
-                        <BsHandbag className="text-lg" />
-                        <span>Mua ngay</span>
-                      </div>
-                    </Button>
-                  </Link>
+                  <Button
+                    className="w-full bg-transparent hover:bg-[#22A6DF] border-[#22A6DF] text-[#22A6DF] hover:text-white transition-all duration-300 uppercase font-medium"
+                    onClick={() => handleBuyNow(product)}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <BsHandbag className="text-lg" />
+                      <span>Mua ngay</span>
+                    </div>
+                  </Button>
                 </motion.div>
               </div>
             </Card>
