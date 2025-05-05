@@ -6,6 +6,8 @@ const orderDetail_controllers_js_1 = require("../controllers/orderDetail.control
 const orderDetailRouter = (0, express_1.Router)();
 orderDetailRouter.get('/ordersDetail', verifyToken_js_1.verifyToken, orderDetail_controllers_js_1.getOrderDetails);
 orderDetailRouter.get('/cancelled-bookings', orderDetail_controllers_js_1.cancelBooking);
+orderDetailRouter.get('/getCancelled', orderDetail_controllers_js_1.getCancelledBookings);
+orderDetailRouter.get('/getDetailBooking', orderDetail_controllers_js_1.getBookingDetailsByUserId);
 orderDetailRouter.get('/ordersDetail/bookings', verifyToken_js_1.verifyToken, orderDetail_controllers_js_1.getBookingsByUserId);
 orderDetailRouter.get('/ordersDetail/allBookings', verifyToken_js_1.verifyToken, orderDetail_controllers_js_1.getAllBookings);
 orderDetailRouter.get('/ordersDetail/:id', verifyToken_js_1.verifyToken, orderDetail_controllers_js_1.getOrderDetailsByOrderId);
