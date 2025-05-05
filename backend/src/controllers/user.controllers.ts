@@ -405,6 +405,7 @@ export const getNewUsers = async (req: Request, res: Response): Promise<void> =>
     const newUsers = await userModel
       .find({ createdAt: { $gte: thirtyDaysAgo } })
       .select('-password')
+      .sort({ createdAt: -1 })
       .limit(4);
 
     res.status(200).json({ success: true, result: newUsers });
