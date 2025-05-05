@@ -19,6 +19,7 @@ import moment from 'moment-timezone';
 import request from 'request';
 import { log } from 'console';
 
+
 export const createOrderAfterPayment = async (req: Request, res: Response): Promise<void> => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -419,48 +420,83 @@ export const checkAvailableSlots = async (req: Request, res: Response): Promise<
 };
 
 export const updateOrderStatus = async (req: Request, res: Response): Promise<void> => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const { id } = req.params;
     const { status } = req.body;
-    console.log('status', status);
 
-    // Kiểm tra xem ID có hợp lệ không
+    // Kiểm tra ID hợp lệ
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      res.status(400).json({
-        success: false,
-        message: 'ID không hợp lệ'
-      });
+      res.status(400).json({ success: false, message: 'ID không hợp lệ' });
       return;
     }
 
-    // Kiểm tra xem trạng thái có hợp lệ không
+    // Kiểm tra trạng thái hợp lệ
     if (!Object.values(OrderStatus).includes(status as OrderStatus)) {
       res.status(400).json({ success: false, message: 'Trạng thái đơn hàng không hợp lệ' });
       return;
     }
 
-    // Cập nhật trạng thái đơn hàng
-    const updatedOrder = await orderModel.findByIdAndUpdate(id, { status }, { new: true, runValidators: true });
-
-    if (!updatedOrder) {
+    // Tìm đơn hàng
+    const order = await orderModel.findById(id).session(session);
+    if (!order) {
       res.status(404).json({ success: false, message: 'Đơn hàng không tồn tại' });
       return;
     }
 
-    res
-      .status(200)
-      .json({ success: true, message: 'Trạng thái đơn hàng được cập nhật thành công', order: updatedOrder });
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error updating order status: ${error.message}`);
-      res.status(500).json({ success: false, message: 'Lỗi máy chủ' });
-    } else {
-      console.error('Lỗi không xác định khi cập nhật trạng thái đơn hàng:', error);
-      res.status(500).json({ success: false, message: 'Lỗi máy chủ' });
+    // Tìm chi tiết đơn hàng
+    const orderDetails = await orderDetailModel.find({ orderId: id }).session(session);
+
+    // Xử lý thay đổi số lượng sản phẩm
+    for (const detail of orderDetails) {
+      if (detail.productId) {
+        const product = await productModel.findById(detail.productId).session(session);
+        if (!product) {
+          throw new Error(`Sản phẩm ${detail.productId} không tồn tại`);
+        }
+
+        // Khi chuyển sang PROCESSING từ trạng thái khác
+        if (status === OrderStatus.PROCESSING && order.status !== OrderStatus.PROCESSING) {
+          if (product.quantity < detail.quantity) {
+            throw new Error(`Không đủ hàng cho sản phẩm ${product.name}`);
+          }
+          product.quantity -= detail.quantity;
+          product.quantity_sold = (product.quantity_sold || 0) + detail.quantity;
+        }
+        // Khi chuyển từ PROCESSING sang CANCELLED
+        else if (
+          status === OrderStatus.CANCELLED &&
+          order.status === OrderStatus.PROCESSING
+        ) {
+          product.quantity += detail.quantity;
+          product.quantity_sold = Math.max(0, (product.quantity_sold || 0) - detail.quantity);
+        }
+
+        await product.save({ session });
+      }
     }
+
+    // Cập nhật trạng thái đơn hàng
+    order.status = status;
+    await order.save({ session });
+
+    await session.commitTransaction();
+    res.status(200).json({
+      success: true,
+      message: 'Trạng thái đơn hàng được cập nhật thành công',
+      order,
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    const errorMessage = error instanceof Error ? error.message : 'Lỗi không xác định';
+    console.error('Error updating order status:', errorMessage);
+    res.status(500).json({ success: false, message: 'Lỗi máy chủ', details: errorMessage });
+  } finally {
+    session.endSession();
   }
 };
-
 export const updatePaymentStatus = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -690,3 +726,5 @@ export const getRecentOrder = async (req:Request, res: Response): Promise<void> 
     
   }
 }
+
+

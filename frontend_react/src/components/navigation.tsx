@@ -3,10 +3,11 @@ import { Breadcrumb } from "antd";
 import { useLocation, Link, useParams } from "react-router-dom";
 import { Typography } from "antd";
 import productsApi from "../api/productsApi";
+import blogApi from "../api/blogApi";
 
 const { Title } = Typography;
 
-// Your existing mappings remain the same
+// Existing mappings remain the same
 const adminPageNameMapping: { [key: string]: string } = {
   admin: "Admin",
   dashboard: "Dashboard",
@@ -23,21 +24,22 @@ const adminPageNameMapping: { [key: string]: string } = {
   settings: "Cài đặt hệ thống",
   posts: "Quản lý bài viết",
   bookings: "Quản lí lịch hẹn",
-  revenue:"Quản lí doanh thu"
-  };
-  const publicPageNameMapping: { [key: string]: string } = {
-    "": "Trang chủ",
-    product: "Sản phẩm",
-    contact: "Liên hệ",
-    detail: "Chi tiết sản phẩm",
-    info: "Dịch vụ Spa",
-    blogs: "Bài viết",
-    "about-us": "Về chúng tôi",
-    service: "Đặt lịch Spa",
-    cart: "Giỏ hàng",
-    checkout: "Thanh toán",
-    userprofile: "Hồ sơ người dùng",
-    };
+  revenue: "Quản lí doanh thu",
+};
+
+const publicPageNameMapping: { [key: string]: string } = {
+  "": "Trang chủ",
+  product: "Sản phẩm",
+  contact: "Liên hệ",
+  detail: "Chi tiết sản phẩm",
+  info: "Dịch vụ Spa",
+  blogs: "Bài viết",
+  "about-us": "Về chúng tôi",
+  service: "Đặt lịch Spa",
+  cart: "Giỏ hàng",
+  checkout: "Thanh toán",
+  userprofile: "Hồ sơ người dùng",
+};
 
 const Navigation: React.FC = () => {
   const location = useLocation();
@@ -45,48 +47,97 @@ const Navigation: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const isAdminPage = location.pathname.startsWith("/admin");
   const isDetailPage = location.pathname.startsWith("/detail");
+  const isBlogDetailPage = location.pathname.startsWith("/blogs");
 
   const [product, setProduct] = useState<{
     name: string;
     category_id: { name: string };
   } | null>(null);
+  const [blog, setBlog] = useState<{
+    title: string;
+    blog_category_id?: { name: string };
+  } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Fetch product details for /detail/:id
     if (isDetailPage && id) {
       const fetchProduct = async () => {
         try {
           setLoading(true);
           setError(null);
-          const response = await productsApi.getProductByID(id); // Gọi API để lấy thông tin sản phẩm
-          setProduct(response.data.product); // Đảm bảo đúng cấu trúc dữ liệu trả về
-        } catch (err) {
-          setError("Không thể tải thông tin sản phẩm");
+          const response = await productsApi.getProductByID(id);
+          console.log("Product API response:", response.data);
+          setProduct(response.data.product);
+        } catch (err: any) {
+          setError(`Không thể tải thông tin sản phẩm: ${err.message || "Lỗi không xác định"}`);
           setProduct(null);
         } finally {
           setLoading(false);
         }
       };
-
       fetchProduct();
     }
-  }, [id, isDetailPage]);
 
-  // Responsive styles for different screen sizes
+    // Fetch blog details for /blogs/:id
+    if (isBlogDetailPage && id) {
+      const fetchBlog = async () => {
+        try {
+          setLoading(true);
+          setError(null);
+          console.log("Fetching blog with ID:", id);
+          const response = await blogApi.getBlogById(id);
+          console.log("Blog API response:", response.data);
+          // Xử lý trường hợp response.data là mảng hoặc đối tượng
+          let blogData;
+          if (Array.isArray(response.data)) {
+            blogData = response.data.find((blog: any) => blog._id === id);
+            if (!blogData) {
+              throw new Error("Không tìm thấy bài viết với ID này");
+            }
+          } else {
+            blogData = response.data.data || response.data; // Lấy response.data.data
+          }
+          console.log("Processed blogData:", blogData);
+          setBlog({
+            title: blogData.title,
+            blog_category_id: blogData.blog_category_id && typeof blogData.blog_category_id === 'object'
+              ? { name: blogData.blog_category_id.name }
+              : undefined,
+          });
+          console.log("Blog state set:", {
+            title: blogData.title,
+            blog_category_id: blogData.blog_category_id && typeof blogData.blog_category_id === 'object'
+              ? { name: blogData.blog_category_id.name }
+              : undefined,
+          });
+        } catch (err: any) {
+          console.error("Lỗi khi tải bài viết:", err);
+          setError(`Không thể tải thông tin bài viết: ${err.message || "Lỗi không xác định"}`);
+          setBlog(null);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchBlog();
+    }
+  }, [id, isDetailPage, isBlogDetailPage]);
+
   const containerStyles = {
     admin: "bg-white p-4 rounded-lg shadow-sm mb-4 overflow-x-auto",
-    public: "px-4 sm:px-6 md:px-8 lg:px-[154px] py-2 sm:py-3 md:py-4 text-sm sm:text-base overflow-x-auto"
+    public: "px-4 sm:px-6 md:px-8 lg:px-[154px] py-2 sm:py-3 md:py-4 text-sm sm:text-base overflow-x-auto",
   };
 
   const breadcrumbStyles = {
     admin: "mb-2 sm:mb-3 whitespace-nowrap",
-    public: "whitespace-nowrap"
+    public: "whitespace-nowrap",
   };
 
   const titleStyles = {
-    admin: "text-lg sm:text-xl md:text-2xl m-0 text-black truncate"
+    admin: "text-lg sm:text-xl md:text-2xl m-0 text-black truncate",
   };
+
   const getDisplayName = (name: string) => {
     if (isAdminPage) {
       return (
@@ -100,28 +151,27 @@ const Navigation: React.FC = () => {
       );
     }
   };
-  const currentPageName =
-isDetailPage && product
-? product.name
-: getDisplayName(pathnames[pathnames.length - 1] || "");
 
+  // Xác định tên trang hiện tại
+  const currentPageName =
+    isDetailPage && product
+      ? product.name
+      : isBlogDetailPage && blog
+      ? blog.title
+      : getDisplayName(pathnames[pathnames.length - 1] || "");
 
   const linkStyles = "text-gray-500 hover:text-gray-700 transition-colors duration-200";
   const currentPageStyles = "text-black";
 
-  // Modified layouts with responsive classes
   const adminLayout = (
     <div className={containerStyles.admin}>
       <Breadcrumb className={breadcrumbStyles.admin} separator=">">
         {pathnames.map((value, index) => {
           const last = index === pathnames.length - 1;
           const to = `/${pathnames.slice(0, index + 1).join("/")}`;
-          
           return last ? (
             <Breadcrumb.Item key={to}>
-              <span className={currentPageStyles}>
-                {getDisplayName(value)}
-              </span>
+              <span className={currentPageStyles}>{getDisplayName(value)}</span>
             </Breadcrumb.Item>
           ) : (
             <Breadcrumb.Item key={to}>
@@ -166,6 +216,25 @@ isDetailPage && product
               <span className={currentPageStyles}>Chi tiết sản phẩm</span>
             </Breadcrumb.Item>
           )
+        ) : isBlogDetailPage ? (
+          blog ? (
+            <>
+              <Breadcrumb.Item>
+                <Link to="/blogs" className={linkStyles}>
+                  {blog.blog_category_id?.name || "Bài viết"}
+                </Link>
+              </Breadcrumb.Item>
+              <Breadcrumb.Item>
+                <span className="text-black max-w-[150px] sm:max-w-none truncate inline-block align-bottom">
+                  {blog.title}
+                </span>
+              </Breadcrumb.Item>
+            </>
+          ) : (
+            <Breadcrumb.Item>
+              <span className={currentPageStyles}>Chi tiết bài viết</span>
+            </Breadcrumb.Item>
+          )
         ) : (
           pathnames.map((value, index) => {
             const last = index === pathnames.length - 1;
@@ -191,7 +260,7 @@ isDetailPage && product
     </div>
   );
 
-  // Don't show navigation on specific routes
+  // Không hiển thị navigation trên các route cụ thể
   if (
     location.pathname === "/admin" ||
     location.pathname === "/admin/dashboard" ||
@@ -200,16 +269,16 @@ isDetailPage && product
     return null;
   }
 
-  // Show loading or error states
-  if (isDetailPage && loading) {
+  // Hiển thị trạng thái loading hoặc lỗi
+  if ((isDetailPage || isBlogDetailPage) && loading) {
     return (
       <div className="p-4 text-center text-gray-600">
         <div className="animate-pulse">Đang tải...</div>
       </div>
     );
   }
-  
-  if (isDetailPage && error) {
+
+  if ((isDetailPage || isBlogDetailPage) && error) {
     return (
       <div className="p-4 text-center text-red-500">
         {error}

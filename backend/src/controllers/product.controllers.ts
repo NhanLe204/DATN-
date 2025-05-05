@@ -8,6 +8,8 @@ import categoryModel from '../models/category.model.js';
 import tagModel from '../models/tag.model.js';
 import { IProduct } from '../interfaces/product.interface.js';
 import brandModel from '../models/brand.model.js';
+import orderModel from '@/models/order.model.js';
+import { OrderStatus } from '@/enums/order.enum.js';
 
 const removeVietnameseTones = (str: string): string => {
   str = str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -669,3 +671,9 @@ export const deleteProduct = async (req: Request, res: Response): Promise<void> 
     res.status(500).json({ message: 'Error getting product', error });
   }
 };
+
+
+// quản lí số lượng sản phẩm
+
+
+
