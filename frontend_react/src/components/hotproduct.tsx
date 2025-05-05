@@ -1,11 +1,13 @@
 import React from "react";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
-import { Button, Card } from "antd";
+import { Button, Card, message } from "antd";
 import Slider from "react-slick";
 import { useState, useEffect, useRef } from "react";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { addToCart } from "../redux/slices/cartslice";
 
 interface Product {
   _id: string;
@@ -13,11 +15,35 @@ interface Product {
   price: number;
   image_url: string[];
   discount: number;
+  quantity: number;
 }
 
 export default function HotProduct({ data }: { data: Product[] }) {
   const [windowWidth, setWindowWidth] = useState(0);
   const sliderRef = useRef<any>(null);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const handleBuyNow = (product: Product) => {
+    const quantity = 1;
+    const stockQuantity = product.quantity || Infinity;
+
+    if (quantity > stockQuantity) {
+      message.error(`Sản phẩm ${product.name} đã hết hàng!`);
+      return;
+    }
+
+    const item = {
+      id: product._id,
+      name: product.name,
+      price: Number(product.price * (1 - product.discount / 100)),
+      image: product.image_url[0] || "/placeholder-image.jpg",
+      stockQuantity: product.quantity || 0,
+    };
+
+    dispatch(addToCart({ item, quantity }));
+    navigate("/checkout");
+  };
 
   // Hàm điều hướng
   const handlePrevSlide = () => {
@@ -153,6 +179,7 @@ export default function HotProduct({ data }: { data: Product[] }) {
                   </div>
                   <Button
                     className="mt-2 w-[90px] bg-[#22A6DF] hover:bg-[#1890ff] hover:border-[#22A6DF] rounded-lg text-white text-xs sm:w-[120px] sm:text-sm"
+                    onClick={() => handleBuyNow(product)}
                   >
                     Mua ngay
                   </Button>
