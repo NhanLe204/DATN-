@@ -308,11 +308,6 @@ export default function DetailProduct() {
                     maskClassName: "custom-preview-mask",
                   }}
                 />
-                {(product.discount ?? 0) > 0 && (
-                  <div className="absolute top-4 left-4 bg-[#FF0000] text-white text-sm lg:text-lg font-medium px-2 lg:px-3 py-1 rounded-sm">
-                    -{product.discount}%
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -659,14 +654,6 @@ export default function DetailProduct() {
                   className="h-full"
                 >
                   <div className="group relative h-full overflow-hidden rounded-xl border border-gray-100 bg-white p-3 shadow-sm transition-all duration-300 hover:shadow-xl">
-                    {/* Wishlist Button */}
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      className="absolute top-2 left-2 z-10 rounded-full bg-white p-2 shadow-md transition-all hover:bg-gray-50"
-                    >
-                      <BsHeart className="text-gray-600 hover:text-red-500" />
-                    </motion.button>
 
                     {/* Image Container */}
                     <div
@@ -702,7 +689,7 @@ export default function DetailProduct() {
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        className="absolute top-2 right-2"
+                        className="absolute top-2 left-10"
                       >
                         <Badge.Ribbon
                           text={`-${product.discount}%`}

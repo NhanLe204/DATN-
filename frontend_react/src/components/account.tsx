@@ -22,7 +22,6 @@ interface User {
     fullname: string;
     password: string;
     phone_number: string;
-    //   address: Address[];
     role: string;
     avatar: string;
     reset_password_token: string | null;
@@ -32,11 +31,6 @@ interface User {
     createdAt: string;
     updatedAt: string;
     __v: number;
-}
-
-interface AccountProps {
-    isEditing: boolean;
-    setIsEditing: (isEditing: boolean) => void;
 }
 
 export default function Account() {
@@ -111,7 +105,6 @@ export default function Account() {
         formData.append("phone_number", values.phone || "");
         formData.append("dateOfBirth", values.birthDate?.format("YYYY-MM-DD") || "");
 
-        // Nếu có file ảnh, thêm vào FormData
         if (fileList.length > 0) {
             const file = fileList[0].originFileObj;
             if (!file) {
@@ -119,20 +112,18 @@ export default function Account() {
                 return;
             }
 
-            // Kiểm tra kích thước file (1MB = 1024 * 1024 bytes)
             if (file.size > 1024 * 1024) {
                 message.error("Dung lượng file tối đa là 1MB!");
                 return;
             }
 
-            // Kiểm tra định dạng file
             const allowedTypes = ["image/jpeg", "image/png"];
             if (!allowedTypes.includes(file.type)) {
                 message.error("Chỉ hỗ trợ định dạng JPG, PNG!");
                 return;
             }
 
-            formData.append("avatar", file); // Thêm file vào FormData
+            formData.append("avatar", file);
         }
 
         setUploading(true);
@@ -160,7 +151,7 @@ export default function Account() {
     };
 
     const validatePhoneNumber = (_: any, value: string) => {
-        const phoneRegex = /^(03|05|07|08|09)[0-9]{8}$/; // Bắt đầu bằng 03, 05, 07, 08, 09 và đủ 10 số
+        const phoneRegex = /^(03|05|07|08|09)[0-9]{8}$/;
         if (value && !phoneRegex.test(value)) {
             return Promise.reject(new Error('Số điện thoại không hợp lệ! Phải bắt đầu bằng 03, 05, 07, 08, 09 và đủ 10 số.'));
         }
@@ -172,14 +163,12 @@ export default function Account() {
             setFileList([]);
         },
         beforeUpload: (file: any) => {
-            setFileList([file]); // Lưu file vào fileList
-            return false; // Ngăn upload tự động
+            setFileList([file]);
+            return false;
         },
         fileList,
         onChange: (info: any) => {
-            // Cập nhật fileList khi có thay đổi
             let newFileList = [...info.fileList];
-            // Giới hạn chỉ cho phép 1 file
             newFileList = newFileList.slice(-1);
             setFileList(newFileList);
         },

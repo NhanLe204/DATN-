@@ -6,7 +6,6 @@ export interface ICoupon {
   coupon_code: string;
   discount_value: number;
   min_order_value: number;
-  max_discount: number;
   start_date: Date;
   end_date: Date;
   usage_limit: number;

@@ -1,21 +1,12 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import {
-    Avatar,
     Button,
-    Card,
     Form,
     Input,
-    Modal,
-    Select,
-    Upload,
     message,
 } from "antd";
-import { DatePicker } from "antd";
-import { FaUser, FaMoneyCheckAlt, FaEdit } from "react-icons/fa"; // Xóa FaTrash vì không sử dụng
-import { UploadOutlined } from "@ant-design/icons";
 import { useParams } from "react-router-dom";
-import dayjs from "dayjs";
 import userApi from "../api/userApi";
 
 const { Item } = Form;
@@ -26,7 +17,6 @@ interface User {
     fullname: string;
     password: string;
     phone_number: string;
-    //   address: Address[];
     role: string;
     avatar: string;
     reset_password_token: string | null;
@@ -39,12 +29,9 @@ interface User {
 }
 
 export default function ChangePassword() {
-    const params = useParams();
-    const type = params["*"] || "account";
     const [form] = Form.useForm();
     const [user, setUser] = useState<User | null>(null);
 
-    // Fetch thông tin người dùng
     useEffect(() => {
         const fetchUserData = async () => {
             const token = localStorage.getItem("accessToken");
@@ -71,7 +58,7 @@ export default function ChangePassword() {
         };
 
         fetchUserData();
-    }, []);// Fetch thông tin người dùng
+    }, []);
     useEffect(() => {
         const fetchUserData = async () => {
             const token = localStorage.getItem("accessToken");
@@ -100,7 +87,6 @@ export default function ChangePassword() {
         fetchUserData();
     }, []);
 
-    // Xử lý đổi mật khẩu
     const handleChangePassword = async (values: any) => {
         const accountID = localStorage.getItem("accountID")?.replace(/"/g, "").trim();
         if (!accountID || !user) {
@@ -110,14 +96,12 @@ export default function ChangePassword() {
 
         const { currentPassword, newPassword, confirmPassword } = values;
 
-        // Kiểm tra mật khẩu xác nhận
         if (newPassword !== confirmPassword) {
             message.error("Mật khẩu xác nhận không khớp!");
             return;
         }
 
         try {
-            // Gọi API để đổi mật khẩu
             await userApi.changePassword(accountID, currentPassword, newPassword);
             message.success("Đổi mật khẩu thành công!");
             form.resetFields(); // Reset form sau khi thành công
