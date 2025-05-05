@@ -46,17 +46,35 @@ export const sendBookingCompletionEmail = async (
       to: email,
       subject: `Dịch vụ của bạn đã hoàn thành - Mã đơn hàng: ${orderId}`,
       html: `
-        <p>Kính gửi <strong>${name || 'Khách hàng'}</strong>,</p>
-        <p>Chúng tôi xin thông báo rằng dịch vụ của bạn đã được hoàn thành thành công!</p>
-        <ul>
-          <li><strong>Mã đơn hàng:</strong> ${orderId}</li>
-          <li><strong>Dịch vụ:</strong> ${service?.service_name || 'Không xác định'}</li>
-          <li><strong>Thời gian:</strong> ${formattedBookingDate}</li>
-          <li><strong>Thú cưng:</strong> ${petName || 'N/A'} (${petType || 'N/A'})</li>
-          <li><strong>Giá thực tế:</strong> ${realPrice ? realPrice.toLocaleString('vi-VN') + ' VND' : 'N/A'}</li>
-        </ul>
-        <p>Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!</p>
-        <p>Trân trọng,<br><strong>Pet Heaven</strong></p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+          <h2 style="color: #333; text-align: center;">Xác nhận hoàn thành dịch vụ</h2>
+          <p style="color: #555; line-height: 1.6;">Kính gửi <strong>${name || 'Khách hàng'}</strong>,</p>
+          <p style="color: #555; line-height: 1.6;">Chúng tôi xin thông báo rằng dịch vụ của bạn đã được hoàn thành thành công. Dưới đây là thông tin chi tiết:</p>
+          <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            <tr>
+              <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold; width: 30%;">Mã đơn hàng:</td>
+              <td style="padding: 10px; border: 1px solid #e0e0e0;">${orderId}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Dịch vụ:</td>
+              <td style="padding: 10px; border: 1px solid #e0e0e0;">${service?.service_name || 'Không xác định'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Thời gian:</td>
+              <td style="padding: 10px; border: 1px solid #e0e0e0;">${formattedBookingDate}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Thú cưng:</td>
+              <td style="padding: 10px; border: 1px solid #e0e0e0;">${petName || 'N/A'} (${petType || 'N/A'})</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Giá thực tế:</td>
+              <td style="padding: 10px; border: 1px solid #e0e0e0;">${realPrice ? realPrice.toLocaleString('vi-VN') + ' VND' : 'N/A'}</td>
+            </tr>
+          </table>
+          <p style="color: #555; text-align: center;">Cảm ơn bạn đã tin tưởng và sử dụng dịch vụ của chúng tôi!</p>
+          <p style="color: #555; text-align: center;">Trân trọng,<br><strong>Pet Heaven</strong></p>
+        </div>
       `
     };
 
