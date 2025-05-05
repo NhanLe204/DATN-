@@ -375,8 +375,14 @@ const getNewUsers = async (req, res) => {
     try {
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        // Truy vấn người dùng mới trong 30 ngày qua
         const newUsers = await user_model_js_1.default
-            .find({ createdAt: { $gte: thirtyDaysAgo } })
+            .find({
+            $or: [
+                { createdAt: { $gte: thirtyDaysAgo } }, // Người dùng mới tạo
+                { googleId: { $exists: true } } // Người dùng đăng nhập qua Google
+            ]
+        })
             .select('-password')
             .limit(4);
         res.status(200).json({ success: true, result: newUsers });

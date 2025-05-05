@@ -137,7 +137,7 @@ function App() {
       element: (
         <>
           <PageLayout />
-          {/* <ChatbotController /> */}
+          <ChatbotController />
         </>
       ),
       children: [

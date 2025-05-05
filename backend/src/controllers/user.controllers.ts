@@ -402,8 +402,14 @@ export const getNewUsers = async (req: Request, res: Response): Promise<void> =>
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+    // Truy vấn người dùng mới trong 30 ngày qua
     const newUsers = await userModel
-      .find({ createdAt: { $gte: thirtyDaysAgo } })
+      .find({
+        $or: [
+          { createdAt: { $gte: thirtyDaysAgo } }, // Người dùng mới tạo
+          { googleId: { $exists: true } } // Người dùng đăng nhập qua Google
+        ]
+      })
       .select('-password')
       .limit(4);
 
