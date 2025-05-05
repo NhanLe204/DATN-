@@ -329,6 +329,7 @@ export const getAllOrders = async (req: Request, res: Response): Promise<void> =
         }
       })
       .populate('productId', 'name price')
+      .sort({ createdAt: -1 }) // Sắp xếp theo ngày tạo giảm dần
       .lean();
 
     res.status(200).json({ success: true, result: orders });

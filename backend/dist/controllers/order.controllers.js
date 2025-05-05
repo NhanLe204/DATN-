@@ -292,6 +292,7 @@ const getAllOrders = async (req, res) => {
             }
         })
             .populate('productId', 'name price')
+            .sort({ createdAt: -1 }) // Sắp xếp theo ngày tạo giảm dần
             .lean();
         res.status(200).json({ success: true, result: orders });
     }
@@ -664,7 +665,8 @@ const getRecentOrder = async (req, res) => {
             .populate('payment_typeID', 'payment_type_name')
             .populate('deliveryID', 'delivery_name')
             .lean();
-        const formattedOrders = recentOrder.map((order) => ({
+        // Định dạng dữ liệu đầu ra
+        const formattedOrders = pendingOrders.map((order) => ({
             orderId: order._id,
             paymentType: order.payment_typeID?.payment_type_name || 'Không xác định',
             delivery: order.deliveryID?.delivery_name || 'Không xác định',
@@ -678,7 +680,7 @@ const getRecentOrder = async (req, res) => {
     }
     catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        console.error(`Error fetching recent orders: ${errorMessage}`);
+        console.error(`Error fetching pending orders: ${errorMessage}`);
         res.status(500).json({
             success: false,
             message: 'Internal Server Error',

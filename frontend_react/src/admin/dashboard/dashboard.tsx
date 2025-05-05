@@ -56,7 +56,13 @@ const Dashboard = () => {
     fullname: string;
     orderDate?: string;
     product: string;
-    status: "PENDING" | "PROCESSING" | "SHIPPING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+    status:
+      | "PENDING"
+      | "PROCESSING"
+      | "SHIPPING"
+      | "SHIPPED"
+      | "DELIVERED"
+      | "CANCELLED";
     quantity?: number;
     price?: string;
     products?: Product[];
@@ -72,7 +78,15 @@ const Dashboard = () => {
   useEffect(() => {
     const updateTime = () => {
       const today = new Date();
-      const weekday = ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
+      const weekday = [
+        "Chủ Nhật",
+        "Thứ Hai",
+        "Thứ Ba",
+        "Thứ Tư",
+        "Thứ Năm",
+        "Thứ Sáu",
+        "Thứ Bảy",
+      ];
       const day = weekday[today.getDay()];
       let dd = today.getDate().toString().padStart(2, "0");
       let mm = (today.getMonth() + 1).toString().padStart(2, "0");
@@ -99,7 +113,7 @@ const Dashboard = () => {
 
         const loyalUsers = await userApi.getLoyalUsers();
         console.log(loyalUsers, "user thân thiết");
-        
+
         const limitedCustomers = (loyalUsers.data.result || []).slice(0, 4);
         setNewCustomers(limitedCustomers);
 
@@ -108,15 +122,17 @@ const Dashboard = () => {
 
         const recentOrders = pendingOrders.data.result || [];
 
-        const formattedOrders = recentOrders.map((order: any, index: number) => ({
-          key: index.toString(),
-          id: order.orderId || "N/A",
-          shortId: order.orderId ? `**${order.orderId.slice(-4)}` : "N/A",
-          paymentType: order.paymentType || "Không xác định",
-          delivery: order.delivery || "Không xác định",
-          total: order.totalPrice || "0 VNĐ",
-          fullname: order.fullname || "Khách vãng lai",
-        }));
+        const formattedOrders = recentOrders.map(
+          (order: any, index: number) => ({
+            key: index.toString(),
+            id: order.orderId || "N/A",
+            shortId: order.orderId ? `**${order.orderId.slice(-4)}` : "N/A",
+            paymentType: order.paymentType || "Không xác định",
+            delivery: order.delivery || "Không xác định",
+            total: order.totalPrice || "0 VNĐ",
+            fullname: order.fullname || "Khách vãng lai",
+          })
+        );
 
         setOrders(formattedOrders);
         setTotalOrders(recentOrders.length);
@@ -155,36 +171,28 @@ const Dashboard = () => {
           });
         });
 
-        const formattedOrders: Order[] = Object.values(groupedOrders).map((order: any, index: number) => ({
-          key: order.orderId || `order-${index}`,
-          orderId: order.orderId || `ORDER${index}`,
-          fullname: order.fullname,
-          product: order.products.map((p: Product) => p.productName).join(", ") || "Không xác định",
-          status: (order.status || "PENDING").toUpperCase() as Order["status"],
-          quantity: order.products.reduce((sum: number, p: Product) => sum + p.quantity, 0) || 0,
-          price: order.total_price?.toString() || "0",
-          orderDate: order.orderDate ? moment(order.orderDate).format("DD/MM/YYYY HH:mm") : "Không xác định",
-          products: order.products,
-        }));
-
-        const canceled = formattedOrders.filter((order) => order.status === "CANCELLED");
+        const canceled = formattedOrders.filter(
+          (order) => order.status === "CANCELLED"
+        );
         setCanceledOrders(canceled);
 
         const outOfStockResponse = await productsApi.getProductOutStock();
         const outOfStockItems = outOfStockResponse.data.result || [];
-        const formattedOutOfStockItems = outOfStockItems.map((product: any) => ({
-          key: product._id,
-          _id: product._id,
-          name: product.name,
-          image: product.image_url?.[0] || "https://via.placeholder.com/64",
-          images: product.image_url || [],
-          quantity: product.quantity || 0,
-          status: product.status,
-          price: product.price,
-          category: product.category_id?.name || "Không xác định",
-          brand: product.brand_id?.brand_name || "Không có thương hiệu",
-          tag: product.tag_id?.tag_name || "Không có thẻ",
-        }));
+        const formattedOutOfStockItems = outOfStockItems.map(
+          (product: any) => ({
+            key: product._id,
+            _id: product._id,
+            name: product.name,
+            image: product.image_url?.[0] || "https://via.placeholder.com/64",
+            images: product.image_url || [],
+            quantity: product.quantity || 0,
+            status: product.status,
+            price: product.price,
+            category: product.category_id?.name || "Không xác định",
+            brand: product.brand_id?.brand_name || "Không có thương hiệu",
+            tag: product.tag_id?.tag_name || "Không có thẻ",
+          })
+        );
         setOutOfStockProducts(formattedOutOfStockItems);
 
         const hotProductsResponse = await productsApi.getHotproducts();
@@ -289,9 +297,13 @@ const Dashboard = () => {
       render: (text: string) => (
         <div className="flex items-center">
           <div className="h-8 w-8 rounded-full bg-blue-50 flex items-center justify-center">
-            <span className="text-sm text-blue-500">{text ? text.charAt(0).toUpperCase() : "?"}</span>
+            <span className="text-sm text-blue-500">
+              {text ? text.charAt(0).toUpperCase() : "?"}
+            </span>
           </div>
-          <span className="ml-3 text-[14px] font-normal text-gray-700">{text || "Không xác định"}</span>
+          <span className="ml-3 text-[14px] font-normal text-gray-700">
+            {text || "Không xác định"}
+          </span>
         </div>
       ),
     },
@@ -299,14 +311,19 @@ const Dashboard = () => {
       title: "Đơn hàng",
       dataIndex: "product",
       key: "product",
-      render: (text: string) => <span className="text-[14px] font-normal text-gray-700">{text}</span>,
+      render: (text: string) => (
+        <span className="text-[14px] font-normal text-gray-700">{text}</span>
+      ),
     },
     {
       title: "Tình trạng",
       dataIndex: "status",
       key: "status",
       render: (status: string) => (
-        <Tag color="error" className="px-3 py-0.5 text-[13px] font-normal rounded-full">
+        <Tag
+          color="error"
+          className="px-3 py-0.5 text-[13px] font-normal rounded-full"
+        >
           Đã hủy
         </Tag>
       ),
@@ -327,7 +344,11 @@ const Dashboard = () => {
       key: "image",
       width: 80,
       render: (text) => (
-        <img src={text || "https://via.placeholder.com/64"} alt="Product" className="object-cover w-16 h-16" />
+        <img
+          src={text || "https://via.placeholder.com/64"}
+          alt="Product"
+          className="object-cover w-16 h-16"
+        />
       ),
     },
     {
@@ -363,7 +384,10 @@ const Dashboard = () => {
       render: (_: any, record: Customer) => (
         <div className="flex items-center space-x-2">
           <img
-            src={record.avatar || "https://img.lovepik.com/png/20231127/young-businessman-3d-cartoon-avatar-portrait-character-digital_708913_wh860.png"}
+            src={
+              record.avatar ||
+              "https://img.lovepik.com/png/20231127/young-businessman-3d-cartoon-avatar-portrait-character-digital_708913_wh860.png"
+            }
             alt="avatar"
             className="rounded-full w-8 h-8"
           />
@@ -375,22 +399,33 @@ const Dashboard = () => {
       title: "Trạng thái",
       dataIndex: "status",
       key: "status",
-      render: (status) => <Text className="text-sm text-blue-600">{status || "Hoạt động"}</Text>,
+      render: (status) => (
+        <Text className="text-sm text-blue-600">{status || "Hoạt động"}</Text>
+      ),
     },
   ];
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       <div className="mb-6">
         <Row gutter={[16, 16]} className="mb-6">
           <Col xs={24} sm={12} md={8} lg={8}>
-            <motion.div whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+            >
               <Link to="/admin/users">
                 <Card bordered={false} className="shadow-sm">
                   <Statistic
                     title="Tổng số người dùng"
                     value={totalUsers}
-                    prefix={<UserOutlined className="mr-2 text-xl text-cyan-500" />}
+                    prefix={
+                      <UserOutlined className="mr-2 text-xl text-cyan-500" />
+                    }
                     suffix="tài khoản"
                     loading={loading}
                   />
@@ -399,13 +434,18 @@ const Dashboard = () => {
             </motion.div>
           </Col>
           <Col xs={24} sm={12} md={8} lg={8}>
-            <motion.div whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+            >
               <Link to="/admin/products?status=out_of_stock">
                 <Card bordered={false} className="shadow-sm">
                   <Statistic
                     title="Hết hàng"
                     value={outOfStockProducts.length}
-                    prefix={<ExceptionOutlined className="mr-2 text-xl text-yellow-500" />}
+                    prefix={
+                      <ExceptionOutlined className="mr-2 text-xl text-yellow-500" />
+                    }
                     suffix="sản phẩm"
                     loading={loading}
                   />
@@ -414,13 +454,18 @@ const Dashboard = () => {
             </motion.div>
           </Col>
           <Col xs={24} sm={12} md={8} lg={8}>
-            <motion.div whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+            >
               <Link to="/admin/bookings">
                 <Card bordered={false} className="shadow-sm">
                   <Statistic
                     title="Tổng lịch hẹn"
                     value={totalAppointments}
-                    prefix={<CalendarOutlined className="mr-2 text-xl text-green-500" />}
+                    prefix={
+                      <CalendarOutlined className="mr-2 text-xl text-green-500" />
+                    }
                     suffix="lịch hẹn"
                     loading={loading}
                   />
@@ -432,7 +477,11 @@ const Dashboard = () => {
 
         <Row gutter={[16, 16]} className="mb-6">
           <Col xs={24} lg={16}>
-            <Card title="ĐƠN HÀNG ĐANG CHỜ" bordered={false} className="shadow-sm">
+            <Card
+              title="ĐƠN HÀNG ĐANG CHỜ"
+              bordered={false}
+              className="shadow-sm"
+            >
               <div style={tableContainerStyle}>
                 <Table
                   columns={ordersColumns}
@@ -451,7 +500,11 @@ const Dashboard = () => {
             </Card>
           </Col>
           <Col xs={24} lg={8}>
-            <Card title="KHÁCH HÀNG THÂN THIẾT" bordered={false} className="shadow-sm">
+            <Card
+              title="KHÁCH HÀNG THÂN THIẾT"
+              bordered={false}
+              className="shadow-sm"
+            >
               <div style={tableContainerStyle}>
                 <Table
                   columns={customerColumns}
@@ -466,7 +519,11 @@ const Dashboard = () => {
           </Col>
         </Row>
 
-        <Card title="SẢN PHẨM BÁN CHẠY" bordered={false} className="mb-6 shadow-sm">
+        <Card
+          title="SẢN PHẨM BÁN CHẠY"
+          bordered={false}
+          className="mb-6 shadow-sm"
+        >
           <Table
             columns={productColumns}
             dataSource={hotProducts}
@@ -480,7 +537,6 @@ const Dashboard = () => {
             loading={loading}
           />
         </Card>
-
       </div>
     </motion.div>
   );

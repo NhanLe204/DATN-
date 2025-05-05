@@ -1,7 +1,10 @@
 import React from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 const NotFound = () => {
+  const navigate = useNavigate(); // Correctly initialize useNavigate here
+  
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
       <div className="text-center">
@@ -139,7 +142,10 @@ const NotFound = () => {
           Quay lại cửa hàng để chọn đồ chơi cho boss mèo nhà bạn nhé!
         </p>
 
-        <button className="mt-8 px-6 py-3 bg-[#22A6DF] text-white rounded-lg hover:bg-[#4ab7e6] transition-colors duration-200 shadow-lg hover:shadow-xl">
+        <button
+          onClick={() => navigate("/")} // Use navigate to go to the home page
+          className="mt-8 px-6 py-3 bg-[#22A6DF] text-white rounded-lg hover:bg-[#4ab7e6] transition-colors duration-200 shadow-lg hover:shadow-xl"
+        >
           Về cửa hàng
         </button>
       </div>

@@ -488,7 +488,6 @@ export const setDefaultAddress = async (req: Request, res: Response): Promise<vo
   }
 };
 
-
 // người dùng thân thiết
 export const getLoyalUsers = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -496,37 +495,37 @@ export const getLoyalUsers = async (req: Request, res: Response): Promise<void> 
       {
         $match: {
           status: 'DELIVERED',
-          userID: { $ne: null },
-        },
+          userID: { $ne: null }
+        }
       },
       {
         $lookup: {
           from: 'orderdetails',
           localField: '_id',
           foreignField: 'orderId',
-          as: 'orderDetails',
-        },
+          as: 'orderDetails'
+        }
       },
       {
-        $unwind: '$orderDetails',
+        $unwind: '$orderDetails'
       },
       {
         $group: {
           _id: '$userID',
           totalQuantity: { $sum: '$orderDetails.quantity' },
-          fullname: { $first: '$inforUserGuest.fullName' },
-        },
+          fullname: { $first: '$inforUserGuest.fullName' }
+        }
       },
       {
         $lookup: {
           from: 'users',
           localField: '_id',
           foreignField: '_id',
-          as: 'userInfo',
-        },
+          as: 'userInfo'
+        }
       },
       {
-        $unwind: '$userInfo',
+        $unwind: '$userInfo'
       },
       {
         $project: {
@@ -535,16 +534,16 @@ export const getLoyalUsers = async (req: Request, res: Response): Promise<void> 
           fullname: { $ifNull: ['$userInfo.fullname', '$fullname', 'Khách vãng lai'] },
           totalQuantity: 1,
           email: '$userInfo.email',
-          createdAt: '$userInfo.createdAt',
+          createdAt: '$userInfo.createdAt'
           // Không cần khai báo password: 0 vì nó sẽ tự động bị loại bỏ
-        },
+        }
       },
       {
-        $sort: { totalQuantity: -1 },
+        $sort: { totalQuantity: -1 }
       },
       {
-        $limit: 4,
-      },
+        $limit: 4
+      }
     ]);
 
     res.status(200).json({ success: true, result: loyalUsers });
