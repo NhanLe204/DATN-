@@ -24,7 +24,7 @@ const sendBookingEmail = async ({
   orderId,
   isCancellation = false,
   subject: customSubject,
-  html: customHtml,
+  html: customHtml
 }: BookingEmailData & { subject?: string; html?: string }): Promise<void> => {
   console.log('Input data:', { recipientEmail, customerName, orderDetails, orderId, isCancellation });
 
@@ -52,7 +52,7 @@ const sendBookingEmail = async ({
 
   const servicePromises = orderDetails.map(async (detail) => {
     let serviceName = 'Không xác định';
-    let servicePrice: number | string = 'Không xác định';
+    let servicePrice: number | string = 'Chờ xác nhận';
     let duration: number | string = 'Không xác định';
 
     try {
@@ -73,7 +73,7 @@ const sendBookingEmail = async ({
       service_name: serviceName,
       service_price: servicePrice,
       duration: duration,
-      customerName: finalCustomerName,
+      customerName: finalCustomerName
     };
   });
 
@@ -88,7 +88,7 @@ const sendBookingEmail = async ({
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-      timeZone: 'Asia/Ho_Chi_Minh',
+      timeZone: 'Asia/Ho_Chi_Minh'
     }).format(date);
   };
 
@@ -123,29 +123,56 @@ Pet Heaven
 Hotline: ${ENV_VARS.HOTLINE}
 Email: ${ENV_VARS.EMAIL_USER}`;
 
-  const html = customHtml || `
-    <p>Kính gửi <strong>${finalCustomerName}</strong>,</p>
-    <p>${isCancellation ? 'Lịch đặt dịch vụ của bạn đã được hủy thành công' : 'Cảm ơn bạn đã đặt lịch với chúng tôi! Dưới đây là thông tin chi tiết về lịch hẹn của bạn'}:</p>
-    <ul>
-      ${enrichedOrderDetails
-        .map(
-          (detail) => `
-            <li>
-              <strong>Dịch vụ:</strong> ${detail.service_name}<br>
-              <strong>Thời gian:</strong> ${formatDateTime(detail.booking_date)}<br>
-              <strong>Thú cưng:</strong> ${detail.petName || 'N/A'} (${detail.petType || 'N/A'})<br>
-              <strong>Thời gian dự kiến:</strong> ${detail.duration} phút
-            </li>
-          `
-        )
-        .join('')}
-    </ul>
-    <p>
-      <strong>Địa điểm:</strong> ${ENV_VARS.ADDRESS}<br>
-      <strong>Mã đặt lịch:</strong> ${finalOrderId}
-    </p>
-    <p>Nếu bạn cần thêm thông tin hoặc hỗ trợ, vui lòng liên hệ với chúng tôi qua hotline <strong>${ENV_VARS.HOTLINE}</strong> hoặc email <strong>${ENV_VARS.EMAIL_USER}</strong>.</p>
-    <p>Trân trọng,<br><strong>Pet Heaven</strong></p>
+  const html =
+    customHtml ||
+    `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+      <h2 style="color: #333; text-align: center;">${isCancellation ? 'Thông báo hủy lịch đặt dịch vụ' : 'Xác nhận đặt lịch thành công'}</h2>
+      <p style="color: #555; line-height: 1.6;">Kính gửi <strong>${finalCustomerName}</strong>,</p>
+      <p style="color: #555; line-height: 1.6;">
+        ${isCancellation ? 'Lịch đặt dịch vụ của bạn đã được hủy thành công.' : 'Cảm ơn bạn đã đặt lịch với chúng tôi! Dưới đây là thông tin chi tiết về lịch hẹn của bạn:'}
+      </p>
+      <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+        ${enrichedOrderDetails
+          .map(
+            (detail) => `
+              <tr>
+                <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold; width: 30%;">Dịch vụ:</td>
+                <td style="padding: 10px; border: 1px solid #e0e0e0;">${detail.service_name}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Thời gian:</td>
+                <td style="padding: 10px; border: 1px solid #e0e0e0;">${formatDateTime(detail.booking_date)}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Thú cưng:</td>
+                <td style="padding: 10px; border: 1px solid #e0e0e0;">${detail.petName || 'N/A'} (${detail.petType || 'N/A'})</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Thời gian dự kiến:</td>
+                <td style="padding: 10px; border: 1px solid #e0e0e0;">${detail.duration} phút</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Giá dịch vụ:</td>
+                <td style="padding: 10px; border: 1px solid #e0e0e0;">${formatPrice(detail.service_price)}</td>
+              </tr>
+            `
+          )
+          .join('')}
+        <tr>
+          <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Địa điểm:</td>
+          <td style="padding: 10px; border: 1px solid #e0e0e0;">${ENV_VARS.ADDRESS}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Mã đặt lịch:</td>
+          <td style="padding: 10px; border: 1px solid #e0e0e0;">${finalOrderId}</td>
+        </tr>
+      </table>
+      <p style="color: #555; line-height: 1.6;">
+        Nếu bạn cần thêm thông tin hoặc hỗ trợ, vui lòng liên hệ với chúng tôi qua hotline <strong>${ENV_VARS.HOTLINE}</strong> hoặc email <strong>${ENV_VARS.EMAIL_USER}</strong>.
+      </p>
+      <p style="color: #555; text-align: center;">Trân trọng,<br><strong>Pet Heaven</strong></p>
+    </div>
   `;
 
   try {

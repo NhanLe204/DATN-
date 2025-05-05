@@ -27,7 +27,31 @@ export const submitContactForm = async (req: Request, res: Response): Promise<vo
       from: process.env.EMAIL_USER,
       to: 'hoangthaithuan07@gmail.com', // Email nhận thông tin
       subject: 'Liên hệ mới từ website',
-      text: `Bạn có một liên hệ mới từ website:\n\nTên: ${name}\nEmail: ${email}\nSĐT: ${phone}\nTin nhắn:\n${message}`
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+          <h2 style="color: #333; text-align: center;">Liên hệ mới từ website</h2>
+          <p style="color: #555; line-height: 1.6;">Bạn đã nhận được một tin nhắn liên hệ mới với thông tin chi tiết như sau:</p>
+          <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            <tr>
+              <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold; width: 30%;">Họ và tên:</td>
+              <td style="padding: 10px; border: 1px solid #e0e0e0;">${name}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Email:</td>
+              <td style="padding: 10px; border: 1px solid #e0e0e0;">${email}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Số điện thoại:</td>
+              <td style="padding: 10px; border: 1px solid #e0e0e0;">${phone}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Tin nhắn:</td>
+              <td style="padding: 10px; border: 1px solid #e0e0e0;">${message}</td>
+            </tr>
+          </table>
+          <p style="color: #555; text-align: center;">Vui lòng liên hệ lại với khách hàng sớm nhất có thể!</p>
+        </div>
+      `
     };
 
     // Gửi email

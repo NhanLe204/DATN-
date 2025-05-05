@@ -10,7 +10,7 @@ interface BookingEmailData {
     orderId: string;
     isCancellation?: boolean;
 }
-declare const sendBookingEmail: ({ recipientEmail, customerName, orderDetails, orderId, isCancellation, subject: customSubject, html: customHtml, }: BookingEmailData & {
+declare const sendBookingEmail: ({ recipientEmail, customerName, orderDetails, orderId, isCancellation, subject: customSubject, html: customHtml }: BookingEmailData & {
     subject?: string;
     html?: string;
 }) => Promise<void>;
