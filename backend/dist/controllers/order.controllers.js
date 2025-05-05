@@ -417,8 +417,7 @@ const updateOrderStatus = async (req, res) => {
                     product.quantity_sold = (product.quantity_sold || 0) + detail.quantity;
                 }
                 // Khi chuyển từ PROCESSING sang CANCELLED
-                else if (status === order_enum_js_1.OrderStatus.CANCELLED &&
-                    order.status === order_enum_js_1.OrderStatus.PROCESSING) {
+                else if (status === order_enum_js_1.OrderStatus.CANCELLED && order.status === order_enum_js_1.OrderStatus.PROCESSING) {
                     product.quantity += detail.quantity;
                     product.quantity_sold = Math.max(0, (product.quantity_sold || 0) - detail.quantity);
                 }
@@ -432,7 +431,7 @@ const updateOrderStatus = async (req, res) => {
         res.status(200).json({
             success: true,
             message: 'Trạng thái đơn hàng được cập nhật thành công',
-            order,
+            order
         });
     }
     catch (error) {
@@ -669,12 +668,12 @@ const getRecentOrder = async (req, res) => {
             orderId: order._id,
             paymentType: order.payment_typeID?.payment_type_name || 'Không xác định',
             delivery: order.deliveryID?.delivery_name || 'Không xác định',
-            totalPrice: `${order.total_price?.toLocaleString() || 0} VNĐ`,
+            totalPrice: `${order.total_price?.toLocaleString() || 0} VNĐ`
         }));
         res.status(200).json({
             success: true,
             message: 'Lấy 4 đơn hàng mới nhất thành công',
-            result: formattedOrders,
+            result: formattedOrders
         });
     }
     catch (error) {
@@ -683,7 +682,7 @@ const getRecentOrder = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Internal Server Error',
-            details: errorMessage,
+            details: errorMessage
         });
     }
 };

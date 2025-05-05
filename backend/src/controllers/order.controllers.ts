@@ -19,7 +19,6 @@ import moment from 'moment-timezone';
 import request from 'request';
 import { log } from 'console';
 
-
 export const createOrderAfterPayment = async (req: Request, res: Response): Promise<void> => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -466,10 +465,7 @@ export const updateOrderStatus = async (req: Request, res: Response): Promise<vo
           product.quantity_sold = (product.quantity_sold || 0) + detail.quantity;
         }
         // Khi chuyển từ PROCESSING sang CANCELLED
-        else if (
-          status === OrderStatus.CANCELLED &&
-          order.status === OrderStatus.PROCESSING
-        ) {
+        else if (status === OrderStatus.CANCELLED && order.status === OrderStatus.PROCESSING) {
           product.quantity += detail.quantity;
           product.quantity_sold = Math.max(0, (product.quantity_sold || 0) - detail.quantity);
         }
@@ -486,7 +482,7 @@ export const updateOrderStatus = async (req: Request, res: Response): Promise<vo
     res.status(200).json({
       success: true,
       message: 'Trạng thái đơn hàng được cập nhật thành công',
-      order,
+      order
     });
   } catch (error) {
     await session.abortTransaction();
@@ -718,28 +714,27 @@ export const cancelServiceBooking = async (req: Request, res: Response): Promise
   }
 };
 
-
-export const getRecentOrder = async (req:Request, res: Response): Promise<void> =>{
+export const getRecentOrder = async (req: Request, res: Response): Promise<void> => {
   try {
     const recentOrder = await orderModel
-    .find({ bookingStatus: null})
-    .sort({createdAt: -1})
-    .limit(4)
-    .populate('payment_typeID', 'payment_type_name')
-    .populate('deliveryID', 'delivery_name')
-    .lean();
+      .find({ bookingStatus: null })
+      .sort({ createdAt: -1 })
+      .limit(4)
+      .populate('payment_typeID', 'payment_type_name')
+      .populate('deliveryID', 'delivery_name')
+      .lean();
 
     const formattedOrders = recentOrder.map((order) => ({
       orderId: order._id,
       paymentType: order.payment_typeID?.payment_type_name || 'Không xác định',
       delivery: order.deliveryID?.delivery_name || 'Không xác định',
-      totalPrice: `${order.total_price?.toLocaleString() || 0} VNĐ`,
+      totalPrice: `${order.total_price?.toLocaleString() || 0} VNĐ`
     }));
 
     res.status(200).json({
       success: true,
       message: 'Lấy 4 đơn hàng mới nhất thành công',
-      result: formattedOrders,
+      result: formattedOrders
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -747,10 +742,7 @@ export const getRecentOrder = async (req:Request, res: Response): Promise<void> 
     res.status(500).json({
       success: false,
       message: 'Internal Server Error',
-      details: errorMessage,
+      details: errorMessage
     });
-    
   }
-}
-
-
+};

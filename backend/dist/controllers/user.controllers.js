@@ -384,6 +384,7 @@ const getNewUsers = async (req, res) => {
             ]
         })
             .select('-password')
+            .sort({ createdAt: -1 })
             .limit(4);
         res.status(200).json({ success: true, result: newUsers });
     }
