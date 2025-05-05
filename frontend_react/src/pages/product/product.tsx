@@ -59,7 +59,7 @@ export default function Products() {
       try {
         setLoading(true);
 
-        const categoryResponse = await categoryApi.getCategoriesActive();
+        const categoryResponse = await categoryApi.getCategoriesActive();        
         const categoryData = categoryResponse.data;
         if (categoryData.result && Array.isArray(categoryData.result)) {
           setCategories(categoryData.result);
@@ -186,16 +186,6 @@ export default function Products() {
         itemTags.length > 0 &&
         itemTags.some((tag) => selectedTags.includes(tag));
     }
-
-    console.log("Filtering item:", {
-      name: item.name,
-      matchPrice,
-      matchBrand,
-      matchCategory,
-      matchTags,
-      brandId,
-      categoryId,
-    });
 
     return matchPrice && matchBrand && matchCategory && matchTags;
   });
