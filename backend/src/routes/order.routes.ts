@@ -9,7 +9,7 @@ import {
   updateOrderStatus,
   updatePaymentStatus,
   cancelServiceBooking,
-  getRecentOrder,
+  getRecentOrder
 } from '../controllers/order.controllers.js';
 
 const orderRouter = Router();

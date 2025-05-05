@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { Helmet } from 'react-helmet';
-import { BookOutlined, CompassOutlined, MenuOutlined } from '@ant-design/icons';
-import { motion } from 'framer-motion';
-import BlogApi from '../../api/blogApi';
-import { useParams } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { Helmet } from "react-helmet";
+import { BookOutlined, CompassOutlined, MenuOutlined } from "@ant-design/icons";
+import { motion } from "framer-motion";
+import BlogApi from "../../api/blogApi";
+import { useParams } from "react-router-dom";
 import parse from "html-react-parser";
-import blogCategoryApi from '../../api/blogCategoryApi';
-import DOMPurify from 'dompurify';
+import blogCategoryApi from "../../api/blogCategoryApi";
+import DOMPurify from "dompurify";
 
 interface Blog {
   _id: string;
@@ -44,9 +44,11 @@ export default function ArticleDetail() {
 
   // Tạo share links
   const shareUrl = encodeURIComponent(window.location.href);
-  const shareTitle = encodeURIComponent(blogDetail?.title || 'Check out this article!');
+  const shareTitle = encodeURIComponent(
+    blogDetail?.title || "Check out this article!"
+  );
   const shareLinks = {
-    facebook: `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`,
   };
 
   useEffect(() => {
@@ -63,7 +65,9 @@ export default function ArticleDetail() {
         setLoading(false);
       } catch (error: any) {
         console.error("Error fetching blog data:", error);
-        setError(error.message || "Không thể tải bài viết. Vui lòng thử lại sau.");
+        setError(
+          error.message || "Không thể tải bài viết. Vui lòng thử lại sau."
+        );
         setLoading(false);
       }
     };
@@ -73,7 +77,8 @@ export default function ArticleDetail() {
   useEffect(() => {
     const fetchBlogCategorys = async () => {
       try {
-        const blogCategoryResponse = await blogCategoryApi.getCategoriesActive();
+        const blogCategoryResponse =
+          await blogCategoryApi.getCategoriesActive();
         const blogCategoryData = blogCategoryResponse.data.result;
         setBlogsCategory(blogCategoryData || []);
       } catch (err: any) {
@@ -87,16 +92,19 @@ export default function ArticleDetail() {
 
   // Tạo mô tả ngắn từ content
   const getDescription = (content: string) => {
-    const div = document.createElement('div');
+    const div = document.createElement("div");
     div.innerHTML = DOMPurify.sanitize(content);
-    return div.textContent?.slice(0, 160) || 'Đọc bài viết thú vị này!';
+    return div.textContent?.slice(0, 160) || "Đọc bài viết thú vị này!";
   };
 
   // Đảm bảo image_url là URL tuyệt đối
   const getAbsoluteImageUrl = (imageUrl: string) => {
-    if (!imageUrl) return 'https://via.placeholder.com/1200x630.png?text=Pet+Heaven+Article';
-    if (imageUrl.startsWith('http')) return imageUrl;
-    return `https://fe-pet-heaven.vercel.app${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
+    if (!imageUrl)
+      return "https://via.placeholder.com/1200x630.png?text=Pet+Heaven+Article";
+    if (imageUrl.startsWith("http")) return imageUrl;
+    return `https://fe-pet-heaven.vercel.app${
+      imageUrl.startsWith("/") ? "" : "/"
+    }${imageUrl}`;
   };
 
   // Format nội dung thành các đoạn văn
@@ -105,7 +113,7 @@ export default function ArticleDetail() {
     // Nếu không có thẻ <p>, tự động chia đoạn dựa trên ký tự xuống dòng
     if (!sanitizedContent.match(/<p>/i)) {
       return sanitizedContent
-        .split('\n')
+        .split("\n")
         .filter((paragraph) => paragraph.trim().length > 0)
         .map((paragraph, index) => (
           <p key={index} className="mb-4">
@@ -135,8 +143,14 @@ export default function ArticleDetail() {
         <title>{blogDetail.title}</title>
         <meta name="description" content={getDescription(blogDetail.content)} />
         <meta property="og:title" content={blogDetail.title} />
-        <meta property="og:description" content={getDescription(blogDetail.content)} />
-        <meta property="og:image" content={getAbsoluteImageUrl(blogDetail.image_url)} />
+        <meta
+          property="og:description"
+          content={getDescription(blogDetail.content)}
+        />
+        <meta
+          property="og:image"
+          content={getAbsoluteImageUrl(blogDetail.image_url)}
+        />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta property="og:url" content={window.location.href} />
@@ -154,21 +168,29 @@ export default function ArticleDetail() {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="p-2 rounded-lg bg-white shadow-md text-gray-600 hover:bg-gray-50"
-                aria-label={isMobileMenuOpen ? "Đóng menu danh mục" : "Mở menu danh mục"}
+                aria-label={
+                  isMobileMenuOpen ? "Đóng menu danh mục" : "Mở menu danh mục"
+                }
               >
                 <MenuOutlined className="text-xl" />
               </motion.button>
             </div>
 
             {/* Sidebar */}
-            <div className={`
-              ${isMobileMenuOpen ? 'block' : 'hidden'} 
+            <div
+              className={`
+              ${isMobileMenuOpen ? "block" : "hidden"} 
               lg:block
               w-full lg:w-64 flex-shrink-0
               transition-all duration-300 ease-in-out
-              ${isMobileMenuOpen ? 'absolute top-[100px] left-4 right-4 z-50' : ''}
+              ${
+                isMobileMenuOpen
+                  ? "absolute top-[100px] left-4 right-4 z-50"
+                  : ""
+              }
               lg:relative lg:top-0 lg:left-0
-            `}>
+            `}
+            >
               <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 sticky top-8">
                 <h2 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6 flex items-center gap-2">
                   <BookOutlined className="text-green-500" />
@@ -214,7 +236,9 @@ export default function ArticleDetail() {
                     >
                       <div className="flex items-center gap-3">
                         <CompassOutlined />
-                        <span className="text-sm font-medium">{category.name}</span>
+                        <span className="text-sm font-medium">
+                          {category.name}
+                        </span>
                       </div>
                     </motion.a>
                   ))}
@@ -230,11 +254,11 @@ export default function ArticleDetail() {
                     <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-3 uppercase">
                       {blogDetail.title}
                     </h1>
-                    
+
                     {/* Meta Information */}
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs sm:text-sm text-gray-500 mb-4 sm:mb-6 gap-3">
                       <span>{formatDate(blogDetail.createdAt)}</span>
-                      
+
                       {/* Share Buttons */}
                       <div className="flex items-center gap-2 justify-start sm:justify-end">
                         <span className="text-sm text-gray-500">Chia sẻ:</span>

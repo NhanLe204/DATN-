@@ -652,4 +652,5 @@ const deleteProduct = async (req, res) => {
     }
 };
 exports.deleteProduct = deleteProduct;
+// quản lí số lượng sản phẩm
 //# sourceMappingURL=product.controllers.js.map

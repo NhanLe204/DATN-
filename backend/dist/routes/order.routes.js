@@ -12,9 +12,5 @@ orderRouter.get('/orders/:id', verifyToken_js_1.verifyToken, order_controllers_j
 orderRouter.patch('/orders/status/:id', verifyToken_js_1.verifyToken, order_controllers_js_1.updateOrderStatus);
 orderRouter.patch('/orders/payment-status/:id', order_controllers_js_1.updatePaymentStatus);
 orderRouter.post('/orders/cancel-booking', verifyToken_js_1.verifyToken, order_controllers_js_1.cancelServiceBooking);
-// orderRouter.delete('/ratings/:id', deleteRating);
-// brandRouter.post('/brands', verifyToken, requireAdmin, insertBrand);
-// brandRouter.patch('/brands/:id', verifyToken, requireAdmin, updateBrand);
-// categoryRouter.delete('/categories/:id', protectRoute, requireAdmin, toggleCategory);
 exports.default = orderRouter;
 //# sourceMappingURL=order.routes.js.map

@@ -378,6 +378,7 @@ const getNewUsers = async (req, res) => {
         const newUsers = await user_model_js_1.default
             .find({ createdAt: { $gte: thirtyDaysAgo } })
             .select('-password')
+            .sort({ createdAt: -1 })
             .limit(4);
         res.status(200).json({ success: true, result: newUsers });
     }

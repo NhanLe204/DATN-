@@ -2,9 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Table, DatePicker, Select, Typography, Space, Button, message, Spin, Divider, Form } from 'antd';
 import dayjs from 'dayjs';
 import revenueApi from '../../api/revenueAPI';
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import debounce from 'lodash/debounce';
-import { Color } from 'antd/es/color-picker';
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -21,23 +20,25 @@ const RevenuePage: React.FC = () => {
   const [data, setData] = useState<RevenueItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
-  const [chartLimit, setChartLimit] = useState(7); // Số ngày hoặc tháng hiển thị
+  const [chartLimit, setChartLimit] = useState(3); // Default to 3 months
 
-  // Giá trị mặc định cho RangePicker: 7 ngày gần nhất
-  const defaultRange: [dayjs.Dayjs, dayjs.Dayjs] = [dayjs().subtract(7, 'days'), dayjs()];
-
-  // Trạng thái ban đầu của bộ lọc
-  const initialFilters = {
-    type: 'daily',
-    range: defaultRange,
-    chartLimit: 7,
+  // Calculate default range based on chartLimit
+  const getDefaultRange = (limit: number): [dayjs.Dayjs, dayjs.Dayjs] => {
+    return [dayjs().subtract(limit, 'months').startOf('month'), dayjs()];
   };
 
-  // Hàm gọi API với debounce
+  // Initial filter state
+  const initialFilters = {
+    type: 'monthly',
+    range: getDefaultRange(3),
+    chartLimit: 3,
+  };
+
+  // Debounced API call
   const fetchRevenue = debounce(async (filters: any) => {
     setLoading(true);
     try {
-      const params: any = { type: filters.type };
+      const params: any = { type: 'monthly' }; // Force monthly type
       if (filters.range) {
         params.from = filters.range[0].format('YYYY-MM-DD');
         params.to = filters.range[1].format('YYYY-MM-DD');
@@ -51,52 +52,61 @@ const RevenuePage: React.FC = () => {
     }
   }, 500);
 
-  // Gọi API khi nhấn "Áp dụng"
+  // Handle form submission
   const onFinish = (values: any) => {
+    const [start, end] = values.range || [];
+    if (start && end) {
+      // Validate date range
+      if (end.isAfter(dayjs(), 'day')) {
+        message.error('Ngày kết thúc không thể ở tương lai');
+        return;
+      }
+      if (start.isBefore(dayjs().subtract(2, 'years'), 'day')) {
+        message.error('Chỉ hỗ trợ dữ liệu trong vòng 2 năm gần nhất');
+        return;
+      }
+      if (end.diff(start, 'month') < 1) {
+        message.error('Vui lòng chọn khoảng thời gian ít nhất 1 tháng');
+        return;
+      }
+    }
     fetchRevenue(values);
     setChartLimit(values.chartLimit);
   };
 
-  // Đặt lại bộ lọc
+  // Reset filters
   const onReset = () => {
-    form.setFieldsValue(initialFilters);
-    fetchRevenue(initialFilters);
+    const resetFilters = {
+      ...initialFilters,
+      range: getDefaultRange(initialFilters.chartLimit),
+    };
+    form.setFieldsValue(resetFilters);
+    fetchRevenue(resetFilters);
     setChartLimit(initialFilters.chartLimit);
   };
 
-  // Điều chỉnh chartLimit khi type thay đổi
+  // Update range when chartLimit changes
   useEffect(() => {
-    const type = form.getFieldValue('type');
-    if (type === 'monthly') {
-      // Nếu chuyển sang monthly, đặt lại chartLimit về giá trị phù hợp với tháng
-      const monthlyOptions = [6, 12, 24];
-      const newLimit = monthlyOptions.includes(chartLimit) ? chartLimit : 6; // Mặc định 6 tháng nếu giá trị hiện tại không phù hợp
-      setChartLimit(newLimit);
-      form.setFieldsValue({ chartLimit: newLimit });
-    } else if (type === 'daily') {
-      // Nếu chuyển sang daily, đặt lại chartLimit về giá trị phù hợp với ngày
-      const dailyOptions = [7, 14, 30];
-      const newLimit = dailyOptions.includes(chartLimit) ? chartLimit : 7; // Mặc định 7 ngày nếu giá trị hiện tại không phù hợp
-      setChartLimit(newLimit);
-      form.setFieldsValue({ chartLimit: newLimit });
+    const currentRange = form.getFieldValue('range');
+    const newRange = getDefaultRange(chartLimit);
+    if (!currentRange || currentRange[1].isSame(dayjs(), 'day')) {
+      form.setFieldsValue({ range: newRange });
+      fetchRevenue({ ...form.getFieldsValue(), range: newRange });
     }
-  }, [form.getFieldValue('type')]);
+  }, [chartLimit, form]);
 
+  // Initialize form and fetch data
   useEffect(() => {
-    // Gọi API lần đầu với giá trị mặc định
     form.setFieldsValue(initialFilters);
     fetchRevenue(initialFilters);
   }, []);
 
   const columns = [
     {
-      title: form.getFieldValue('type') === 'monthly' ? 'Tháng' : 'Ngày',
+      title: 'Tháng',
       dataIndex: 'date',
       key: 'date',
-      render: (date: string) =>
-        form.getFieldValue('type') === 'monthly'
-          ? dayjs(date).format('MM/YYYY')
-          : dayjs(date).format('DD/MM/YYYY'),
+      render: (date: string) => dayjs(date).format('MM/YYYY'),
     },
     {
       title: 'Doanh thu bán hàng',
@@ -128,39 +138,25 @@ const RevenuePage: React.FC = () => {
       totalRevenue: item.totalRevenue,
     }));
 
-    const type = form.getFieldValue('type');
-
     return (
       <ResponsiveContainer width="100%" height={400}>
-        <LineChart data={chartData}>
+        <BarChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis
             dataKey="date"
-            tickFormatter={(date) =>
-              type === 'monthly' ? dayjs(date).format('MM/YYYY') : dayjs(date).format('DD/MM')
-            }
-						tick={{ fill: '#1E90FF' }}
+            tickFormatter={(date) => dayjs(date).format('MM/YYYY')}
+            tick={{ fill: '#1E90FF' }}
           />
           <YAxis tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M ₫`} />
           <Tooltip
             formatter={(value: number) => `${value.toLocaleString()}₫`}
-            labelFormatter={(label) =>
-              type === 'monthly'
-                ? dayjs(label).format('MM/YYYY')
-                : dayjs(label).format('DD/MM/YYYY')
-            }
+            labelFormatter={(label) => dayjs(label).format('MM/YYYY')}
           />
           <Legend />
-          <Line
-            type="monotone"
-            name="Doanh thu bán hàng"
-            dataKey="salesRevenue"
-            stroke="#8884d8"
-            activeDot={{ r: 8 }}
-          />
-          <Line type="monotone" name="Doanh thu dịch vụ" dataKey="serviceRevenue" stroke="#82ca9d" />
-          <Line type="monotone" name="Tổng doanh thu" dataKey="totalRevenue" stroke="#ffc658" />
-        </LineChart>
+          <Bar name="Doanh thu bán hàng" dataKey="salesRevenue" fill="#8884d8" />
+          <Bar name="Doanh thu dịch vụ" dataKey="serviceRevenue" fill="#82ca9d" />
+          <Bar name="Tổng doanh thu" dataKey="totalRevenue" fill="#ffc658" />
+        </BarChart>
       </ResponsiveContainer>
     );
   };
@@ -177,34 +173,23 @@ const RevenuePage: React.FC = () => {
         className="mb-4"
       >
         <Space size="middle" wrap>
-          <Form.Item label="Kiểu hiển thị" name="type">
-            <Select style={{ width: 150 }}>
-              <Option value="daily">Theo ngày</Option>
-              <Option value="monthly">Theo tháng</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item label="Khoảng thời gian" name="range">
-            <RangePicker />
-          </Form.Item>
-
           <Form.Item
-            label={form.getFieldValue('type') === 'monthly' ? 'Số tháng hiển thị' : 'Số ngày hiển thị'}
-            name="chartLimit"
+            label="Khoảng thời gian"
+            name="range"
+            rules={[{ required: true, message: 'Vui lòng chọn khoảng thời gian' }]}
           >
-            <Select style={{ width: 120 }}>
-              {form.getFieldValue('type') === 'monthly' ? (
-                <>
-                  <Option value={6}>6 tháng</Option>
-                  <Option value={12}>12 tháng</Option>
-                </>
-              ) : (
-                <>
-                  <Option value={7}>7 ngày</Option>
-                  <Option value={14}>14 ngày</Option>
-                  <Option value={30}>30 ngày</Option>
-                </>
-              )}
+            <RangePicker
+              format="DD/MM/YYYY"
+              disabledDate={(current) =>
+                current && (current > dayjs().endOf('day') || current < dayjs().subtract(2, 'years').startOf('day'))
+              }
+            />
+          </Form.Item>
+
+          <Form.Item label="Số tháng hiển thị" name="chartLimit">
+            <Select style={{ width: 120 }} onChange={(value) => setChartLimit(value)}>
+              <Option value={3}>3 tháng</Option>
+              <Option value={6}>6 tháng</Option>
             </Select>
           </Form.Item>
 

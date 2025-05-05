@@ -19,7 +19,7 @@ productRouter.get('/outproducts', product_controllers_js_1.getProductOutStock);
 productRouter.post('/products', verifyToken_js_1.verifyToken, protectRoute_js_1.requireAdmin, cloudinary_config_js_1.default.array('images_url', 12), product_controllers_js_1.insertProduct);
 productRouter.patch('/products/:id', verifyToken_js_1.verifyToken, protectRoute_js_1.requireAdmin, cloudinary_config_js_1.default.array('images_url', 12), product_controllers_js_1.updateProduct);
 productRouter.patch('/products/status/:id', verifyToken_js_1.verifyToken, protectRoute_js_1.requireAdmin, product_controllers_js_1.toggleProduct);
-productRouter.patch('/products/toggle-status/:id', verifyToken_js_1.verifyToken, protectRoute_js_1.requireAdmin, product_controllers_js_1.toggleProductStatus); // Thêm route mới
+productRouter.patch('/products/toggle-status/:id', verifyToken_js_1.verifyToken, protectRoute_js_1.requireAdmin, product_controllers_js_1.toggleProductStatus);
 productRouter.patch('/products/uploadimage/:id', verifyToken_js_1.verifyToken, protectRoute_js_1.requireAdmin, cloudinary_config_js_1.default.array('images_url', 12), product_controllers_js_1.uploadProductImage);
 productRouter.get('/products/cate/:id', product_controllers_js_1.getProductByCategoryID);
 productRouter.get('/products/status/active', product_controllers_js_1.getProductActive);
