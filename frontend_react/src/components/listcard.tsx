@@ -60,14 +60,6 @@ export default function ListCard({ pros }) {
               className="group relative h-full overflow-hidden rounded-xl border border-gray-100 bg-white p-3 shadow-sm transition-all duration-300 hover:shadow-xl"
               bodyStyle={{ padding: 0 }}
             >
-              {/* Wishlist Button */}
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                className="absolute top-2 left-2 z-10 rounded-full bg-white p-2 shadow-md transition-all hover:bg-gray-50"
-              >
-                <BsHeart className="text-gray-600 hover:text-red-500" />
-              </motion.button>
 
               {/* Image Container */}
               <Link to={`/detail/${product._id}`}>
@@ -98,7 +90,7 @@ export default function ListCard({ pros }) {
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="absolute top-2 right-2"
+                  className="absolute top-2 left-10"
                 >
                   <Badge.Ribbon
                     text={`-${product.discount}%`}
