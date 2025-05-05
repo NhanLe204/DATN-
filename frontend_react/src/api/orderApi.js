@@ -6,8 +6,8 @@ const orderApi = {
       data: response.data,
     };
   },
-  get4New: async () => {
-    const response = await api.get("/v1/recentOrders");
+  getPendingOrders: async () => {
+    const response = await api.get("/v1/pendingOrders");
     return {
       data: response.data,
     };

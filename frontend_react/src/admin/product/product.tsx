@@ -17,6 +17,7 @@ import brandApi from "../../api/brandApi";
 import tagApi from "../../api/tagApi";
 import ProductModal from "../components/productModal";
 import { Image } from "antd";
+import { useLocation } from "react-router-dom";
 
 const { Option } = Select;
 
@@ -52,7 +53,6 @@ interface Tag {
   tag_name: string;
 }
 
-// Hàm loại bỏ dấu tiếng Việt
 const removeAccents = (str: string) => {
   return str
     .normalize("NFD")
@@ -62,6 +62,7 @@ const removeAccents = (str: string) => {
 };
 
 const ProductList: React.FC = () => {
+  const location = useLocation();
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
@@ -70,9 +71,10 @@ const ProductList: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchText, setSearchText] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string | undefined>(
-    undefined
-  );
+  const [filterStatus, setFilterStatus] = useState<string | undefined>(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get("status") || undefined;
+  });
   const [filterBrand, setFilterBrand] = useState<string | undefined>(undefined);
   const [filterTag, setFilterTag] = useState<string | undefined>(undefined);
   const [currentPage, setCurrentPage] = useState(1);
@@ -175,7 +177,6 @@ const ProductList: React.FC = () => {
   const filterProducts = () => {
     let result = [...allProducts];
 
-    // Lọc theo searchText (hỗ trợ không dấu)
     if (searchText) {
       const searchNoAccents = removeAccents(searchText.toLowerCase());
       result = result.filter((product) =>
@@ -183,12 +184,10 @@ const ProductList: React.FC = () => {
       );
     }
 
-    // Lọc theo status
     if (filterStatus) {
       result = result.filter((product) => product.status === filterStatus);
     }
 
-    // Lọc theo brand
     if (filterBrand) {
       result = result.filter((product) =>
         product.brand_id && typeof product.brand_id === "object"
@@ -197,7 +196,6 @@ const ProductList: React.FC = () => {
       );
     }
 
-    // Lọc theo tag
     if (filterTag) {
       result = result.filter((product) =>
         product.tag_id && typeof product.tag_id === "object"
@@ -273,25 +271,6 @@ const ProductList: React.FC = () => {
         <Image src={text} alt="Product" className="object-cover w-24 h-24" />
       ),
     },
-    // {
-    //   title: "Tình trạng",
-    //   dataIndex: "status",
-    //   key: "status",
-    //   width: 150,
-    //   render: (status: string, record: Product) => (
-    //     <Select
-    //       value={status}
-    //       style={{ width: 120 }}
-    //       onChange={(value) => handleStatusChange(record._id, value)}
-    //     >
-    //       {statusOptions.map((opt) => (
-    //         <Option key={opt.value} value={opt.value}>
-    //           {opt.label}
-    //         </Option>
-    //       ))}
-    //     </Select>
-    //   ),
-    // },
     {
       title: "Giá tiền",
       dataIndex: "price",

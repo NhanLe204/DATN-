@@ -34,7 +34,6 @@ const CustomerInfoForm: React.FC<CustomerInfoFormProps> = ({
   const isProgrammaticUpdate = useRef(false);
 
   useEffect(() => {
-    // Điền dữ liệu ban đầu từ initialData (userData hoặc guestUserInfo)
     if (initialData && !form.getFieldValue("fullName")) {
       isProgrammaticUpdate.current = true;
       form.setFieldsValue({
