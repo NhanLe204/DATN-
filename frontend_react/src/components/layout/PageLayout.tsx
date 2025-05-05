@@ -7,6 +7,7 @@ import Header from "../header";
 import { Outlet } from "react-router-dom";
 import Footer from "../footer";
 import Navigation from "../navigation";
+import ScrollToTop from "../ScrollToTop";
 function PageLayout() {
   return (
     <>
@@ -15,6 +16,7 @@ function PageLayout() {
         <Navigation></Navigation>
         <Outlet />
         <Footer />
+        <ScrollToTop />
       </SearchProvider>
     </>
   );

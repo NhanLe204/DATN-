@@ -101,10 +101,12 @@ export default function OrderDetail() {
   const [isCancelModalVisible, setIsCancelModalVisible] = useState(false);
   const [orderToCancel, setOrderToCancel] = useState<Order | null>(null);
   const [isReviewModalVisible, setIsReviewModalVisible] = useState(false);
+  // Trong OrderDetail function, dưới các state hiện có
   const [isSelectProductModalVisible, setIsSelectProductModalVisible] =
     useState(false);
   const [selectedOrderForReview, setSelectedOrderForReview] =
     useState<Order | null>(null);
+  // Rating
   const [selectedProductForReview, setSelectedProductForReview] =
     useState<OrderItem | null>(null);
   const [orderDetailId, setOrderDetailId] = useState<string | null>(null);
@@ -310,7 +312,6 @@ export default function OrderDetail() {
     PENDING: "blue",
     PROCESSING: "green",
     SHIPPING: "orange",
-    SHIPPED: "orange",
     DELIVERED: "green",
     CANCELLED: "red",
   };
@@ -319,7 +320,6 @@ export default function OrderDetail() {
     PENDING: "Chưa xác nhận",
     PROCESSING: "Đã xác nhận",
     SHIPPING: "Đang vận chuyển",
-    SHIPPED: "Đã vận chuyển",
     DELIVERED: "Hoàn thành",
     CANCELLED: "Đã hủy",
   };
@@ -349,57 +349,47 @@ export default function OrderDetail() {
   };
 
   const paymentStatusText = {
-      PENDING: "Chưa thanh toán",
-      PAID: "Đã thanh toán",
-      CASH_ON_DELIVERY: "Thanh toán khi nhận hàng",
+    PENDING: "Chưa thanh toán",
+    PAID: "Đã thanh toán",
+    CASH_ON_DELIVERY: "Thanh toán khi nhận hàng",
   };
-  
+
   const paymentStatusColors = {
-      PENDING: "red",
-      PAID: "green",
-      CASH_ON_DELIVERY: "blue",
-  };
+    PENDING: "red",
+    PAID: "green",
+    CASH_ON_DELIVERY: "blue",
+};
 
   const columns = [
     {
       title: "STT",
       key: "index",
-      width: "8%",
       render: (_: any, __: any, index: number) => (
-        <span className="font-semibold text-gray-900 text-[10px] sm:text-xs transition-colors duration-200 hover:text-blue-600">
-          {index + 1}
-        </span>
+        <span className="font-medium text-gray-800">{index + 1}</span>
       ),
     },
     {
       title: "Sản phẩm",
       dataIndex: "items",
       key: "items",
-      width: "35%",
+      width: "30%",
       render: (items: OrderItem[], record: Order) => {
         const maxItemsToShow = 2;
         const displayedItems = items.slice(0, maxItemsToShow);
         const remainingItems = items.length - maxItemsToShow;
 
         return (
-          <div className="flex flex-col space-y-1 sm:space-y-2">
+          <div className="flex flex-col space-y-2">
             {displayedItems.map((item, index) => (
-              <div
-                key={index}
-                className="flex items-center space-x-1 sm:space-x-2"
-              >
+              <div key={index} className="flex items-center space-x-4">
                 <img
                   src={`${item.image_url[0]}`}
                   alt={item.name}
-                  className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 object-cover rounded-md border border-gray-200 shadow-sm transition-transform duration-200 hover:scale-105"
+                  className="w-16 h-16 object-cover rounded-lg border border-gray-200"
                 />
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900 text-[10px] sm:text-xs md:text-sm break-words line-clamp-2 leading-tight">
-                    {item.name}
-                  </p>
-                  <p className="text-gray-600 text-[10px] sm:text-xs mt-0.5 sm:mt-1">
-                    SL: {item.quantity}
-                  </p>
+                <div>
+                  <p className="font-medium text-gray-800">{item.name}</p>
+                  <p className="text-gray-500">Số lượng: {item.quantity}</p>
                 </div>
               </div>
             ))}
@@ -407,7 +397,7 @@ export default function OrderDetail() {
               <Button
                 type="link"
                 onClick={() => handleViewDetails(record)}
-                className="text-blue-600 p-0 text-[10px] sm:text-xs font-medium hover:text-blue-800 transition-colors duration-200"
+                className="text-blue-500 p-0"
               >
                 Xem thêm {remainingItems} sản phẩm
               </Button>
@@ -420,9 +410,8 @@ export default function OrderDetail() {
       title: "Ngày đặt",
       dataIndex: "date",
       key: "date",
-      width: "12%",
       render: (date: string) => (
-        <span className="text-gray-700 text-[10px] sm:text-xs md:text-sm whitespace-nowrap font-medium">
+        <span className="text-gray-600">
           {new Date(date).toLocaleDateString("vi-VN")}
         </span>
       ),
@@ -431,9 +420,8 @@ export default function OrderDetail() {
       title: "Tổng tiền",
       dataIndex: "total",
       key: "total",
-      width: "12%",
       render: (total: number) => (
-        <span className="text-blue-600 font-semibold text-[10px] sm:text-xs md:text-sm whitespace-nowrap">
+        <span className="text-blue-500 font-medium">
           {total.toLocaleString()}đ
         </span>
       ),
@@ -474,56 +462,53 @@ export default function OrderDetail() {
     {
       title: "Thao tác",
       key: "action",
-      width: "15%",
-      render: (_: any, record: Order) => (
-        <div className="flex flex-col space-y-1 sm:space-y-2">
-          <Button
-            type="primary"
-            onClick={() => handleViewDetails(record)}
-            className="bg-green-600 hover:bg-green-700 flex items-center justify-center text-[10px] sm:text-xs w-full py-1 sm:py-2 rounded-md shadow-sm transition-all duration-200 hover:shadow-md"
-            icon={<FaEye className="mr-0.5 sm:mr-1 text-xs sm:text-sm" />}
-          >
-            Xem
-          </Button>
-          {record.status === "DELIVERED" && (
-            <>
-              <Button
-                type="primary"
-                onClick={() => handleReorder(record)}
-                className="bg-blue-600 hover:bg-blue-700 flex items-center justify-center text-[10px] sm:text-xs w-full py-1 sm:py-2 rounded-md shadow-sm transition-all duration-200 hover:shadow-md"
-                icon={
-                  <FaShoppingBag className="mr-0.5 sm:mr-1 text-xs sm:text-sm" />
-                }
-              >
-                Mua lại
-              </Button>
-              <Button
-                type="primary"
-                onClick={() => {
-                  setSelectedOrderForReview(record);
-                  setIsSelectProductModalVisible(true);
-                }}
-                className="bg-purple-600 hover:bg-purple-700 flex items-center justify-center text-[10px] sm:text-xs w-full py-1 sm:py-2 rounded-md shadow-sm transition-all duration-200 hover:shadow-md"
-                icon={
-                  <FaStar className="mr-0.5 sm:mr-1 text-yellow-400 text-xs sm:text-sm" />
-                }
-              >
-                Đánh giá
-              </Button>
-            </>
-          )}
-          {record.status === "PENDING" && (
+      render: (_: any, record: Order) => {
+        return (
+          <div className="flex flex-col space-y-2">
             <Button
-              danger
-              onClick={() => showCancelConfirm(record)}
-              className="bg-red-600 hover:bg-red-700 flex items-center justify-center text-[10px] sm:text-xs w-full py-1 sm:py-2 rounded-md shadow-sm transition-all duration-200 hover:shadow-md"
-              icon={<MdCancel className="mr-0.5 sm:mr-1 text-xs sm:text-sm" />}
+              type="primary"
+              onClick={() => handleViewDetails(record)}
+              className="bg-green-500 hover:bg-green-600 flex items-center"
+              icon={<FaEye className="mr-2" />}
             >
-              Hủy
+              Xem chi tiết
             </Button>
-          )}
-        </div>
-      ),
+            {record.status === "DELIVERED" && (
+              <>
+                <Button
+                  type="primary"
+                  onClick={() => handleReorder(record)}
+                  className="bg-blue-500 hover:bg-blue-600 flex items-center"
+                  icon={<FaShoppingBag className="mr-2" />}
+                >
+                  Mua lại
+                </Button>
+                <Button
+                  type="primary"
+                  onClick={() => {
+                    setSelectedOrderForReview(record);
+                    setIsSelectProductModalVisible(true);
+                  }}
+                  className="bg-purple-500 hover:bg-purple-600 flex items-center"
+                  icon={<FaStar className="mr-2 text-yellow-400" />}
+                >
+                  Đánh giá
+                </Button>
+              </>
+            )}
+            {record.status === "PENDING" && (
+              <Button
+                danger
+                onClick={() => showCancelConfirm(record)}
+                className="flex items-center"
+                icon={<MdCancel className="mr-2" />}
+              >
+                Huỷ
+              </Button>
+            )}
+          </div>
+        );
+      },
     },
   ];
 
@@ -532,12 +517,11 @@ export default function OrderDetail() {
       title: "Hình ảnh",
       dataIndex: "image_url",
       key: "image_url",
-      width: "12%",
       render: (image_url: string[]) => (
         <img
           src={image_url[0]}
           alt="Sản phẩm"
-          className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 object-cover rounded-lg border border-gray-200"
+          className="w-12 h-12 object-cover rounded-lg border border-gray-200"
         />
       ),
     },
@@ -545,42 +529,21 @@ export default function OrderDetail() {
       title: "Tên sản phẩm",
       dataIndex: "name",
       key: "name",
-      width: "33%",
       render: (text: string) => (
-        <span className="font-medium text-gray-800 text-[10px] sm:text-xs md:text-sm break-words line-clamp-1">
-          {text}
-        </span>
+        <span className="font-medium text-gray-800">{text}</span>
       ),
     },
     {
       title: "Số lượng",
       dataIndex: "quantity",
       key: "quantity",
-      width: "15%",
-      render: (quantity: number) => (
-        <span className="text-[10px] sm:text-xs md:text-sm">{quantity}</span>
-      ),
+      render: (quantity: number) => <span>{quantity}</span>,
     },
     {
       title: "Giá",
       dataIndex: "price",
       key: "price",
-      width: "15%",
-      render: (price: number) => (
-        <span className="text-[10px] sm:text-xs md:text-sm whitespace-nowrap">
-          {price.toLocaleString()}đ
-        </span>
-      ),
-    },
-    {
-      title: "Tổng cộng",
-      key: "total",
-      width: "15%",
-      render: (record: OrderItem) => (
-        <span className="text-[10px] sm:text-xs md:text-sm whitespace-nowrap">
-          {(record.quantity * record.price).toLocaleString()}đ
-        </span>
-      ),
+      render: (price: number) => <span>{price.toLocaleString()}đ</span>,
     },
   ];
 
@@ -589,7 +552,6 @@ export default function OrderDetail() {
     { label: "Chưa xác nhận", key: "PENDING" },
     { label: "Đã xác nhận", key: "PROCESSING" },
     { label: "Đang vận chuyển", key: "SHIPPING" },
-    { label: "Đã vận chuyển", key: "SHIPPED" },
     { label: "Hoàn thành", key: "DELIVERED" },
     { label: "Đã hủy", key: "CANCELLED" },
   ];
@@ -612,27 +574,19 @@ export default function OrderDetail() {
   };
 
   return (
-    <div className="w-full px-2 sm:px-4 lg:px-6 max-w-[100vw] overflow-x-hidden">
-      <div className="mb-2 sm:mb-4">
-        <h2 className="text-base sm:text-lg lg:text-xl font-bold text-gray-800 mb-1 sm:mb-2">
+    <div className="w-full p-4">
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">
           Đơn mua sản phẩm
         </h2>
-        <p className="text-gray-600 text-[10px] sm:text-xs lg:text-sm">
-          Quản lý các đơn hàng sản phẩm của bạn
-        </p>
+        <p className="text-gray-600">Quản lý các đơn hàng sản phẩm của bạn</p>
       </div>
 
       <Tabs
         activeKey={activeTab}
         onChange={setActiveTab}
         items={items}
-        className="mb-2 sm:mb-4"
-        tabBarStyle={{
-          overflowX: "auto",
-          whiteSpace: "nowrap",
-          fontSize: "10px sm:12px lg:14px",
-          paddingBottom: "4px",
-        }}
+        className="mb-4 custom-tabs"
       />
 
       <Table
@@ -664,23 +618,13 @@ export default function OrderDetail() {
         confirmLoading={loading}
         okText="Xác nhận"
         cancelText="Hủy"
-        width="90%"
-        style={{ maxWidth: "280px sm:320px" }}
       >
-        <p className="text-[10px] sm:text-xs">
-          Bạn có chắc chắn muốn đặt lại đơn hàng này?
-        </p>
+        <p>Bạn có chắc chắn muốn đặt lại đơn hàng này?</p>
         {selectedOrder && (
-          <div className="mt-1 sm:mt-2 p-1 sm:p-2 bg-gray-50 rounded-lg">
-            <p className="font-medium text-[10px] sm:text-xs">
-              Chi tiết đơn hàng:
-            </p>
-            <p className="text-[10px] sm:text-xs">
-              Mã đơn hàng: {selectedOrder.orderNumber}
-            </p>
-            <p className="text-[10px] sm:text-xs">
-              Tổng tiền: {selectedOrder.total.toLocaleString()}đ
-            </p>
+          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+            <p className="font-medium">Chi tiết đơn hàng:</p>
+            <p>Mã đơn hàng: {selectedOrder.orderNumber}</p>
+            <p>Tổng tiền: {selectedOrder.total.toLocaleString()}đ</p>
           </div>
         )}
       </Modal>
@@ -694,23 +638,13 @@ export default function OrderDetail() {
         okText="Xác nhận"
         cancelText="Hủy bỏ"
         okButtonProps={{ danger: true }}
-        width="90%"
-        style={{ maxWidth: "280px sm:320px" }}
       >
-        <p className="text-[10px] sm:text-xs">
-          Bạn có chắc chắn muốn hủy đơn hàng này không?
-        </p>
+        <p>Bạn có chắc chắn muốn hủy đơn hàng này không?</p>
         {orderToCancel && (
-          <div className="mt-1 sm:mt-2 p-1 sm:p-2 bg-gray-50 rounded-lg">
-            <p className="font-medium text-[10px] sm:text-xs">
-              Chi tiết đơn hàng:
-            </p>
-            <p className="text-[10px] sm:text-xs">
-              Mã đơn hàng: {orderToCancel.orderNumber}
-            </p>
-            <p className="text-[10px] sm:text-xs">
-              Tổng tiền: {orderToCancel.total.toLocaleString()}đ
-            </p>
+          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+            <p className="font-medium">Chi tiết đơn hàng:</p>
+            <p>Mã đơn hàng: {orderToCancel.orderNumber}</p>
+            <p>Tổng tiền: {orderToCancel.total.toLocaleString()}đ</p>
           </div>
         )}
       </Modal>
@@ -719,62 +653,64 @@ export default function OrderDetail() {
         title="Chi tiết đơn hàng"
         open={isDetailModalVisible}
         onCancel={() => setIsDetailModalVisible(false)}
-        footer={[]}
-        width="90%"
-        style={{ maxWidth: "500px sm:600px" }}
+        footer={null}
+        width={800}
       >
         {selectedOrder && (
-          <div className="p-2 sm:p-3 md:p-4">
-            <div className="space-y-3 sm:space-y-4">
-              {/* Order Information */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px] sm:text-xs md:text-sm">
-                <div>
-                  <p className="font-semibold">Mã đơn hàng:</p>
-                  <p>{selectedOrder.orderNumber}</p>
-                </div>
-                <div>
-                  <p className="font-semibold">Địa chỉ giao hàng:</p>
-                  <p className="break-words">{selectedOrder.shippingAddress}</p>
-                </div>
-                <div>
-                  <p className="font-semibold">Phương thức thanh toán:</p>
-                  <p>{selectedOrder.paymentMethod}</p>
-                </div>
-                <div>
-                  <p className="font-semibold">Tổng tiền sản phẩm:</p>
-                  <p>{subTotal(selectedOrder.items).toLocaleString()}đ</p>
-                </div>
-                <div>
-                  <p className="font-semibold">Phí vận chuyển:</p>
+          <div className="p-4">
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <p>
+                  <strong>Mã đơn hàng:</strong> {selectedOrder.orderNumber}
+                </p>
+                <p>
+                  <strong>Phương thức thanh toán:</strong>{" "}
+                  {selectedOrder.paymentMethod}
+                </p>
+                <p>
+                  <strong>Tổng tiền sản phẩm:</strong>{" "}
+                  {subTotal(selectedOrder.items).toLocaleString()}đ
+                </p>
+                <p>
+                  <strong>Phí vận chuyển:</strong>{" "}
+                  {selectedOrder.deliveryFee === 0
+                    ? "Miễn phí"
+                    : `${selectedOrder.deliveryFee.toLocaleString()}đ`}
+                </p>
+                {selectedOrder.discountValue > 0 && (
                   <p>
-                    {selectedOrder.deliveryFee === 0
-                      ? "Miễn phí"
-                      : `${selectedOrder.deliveryFee.toLocaleString()}đ`}
+                    <strong>
+                      Voucher ({selectedOrder.couponCode}: giảm{" "}
+                      {selectedOrder.discountValue}%):
+                    </strong>{" "}
+                    -{calculateDiscount(selectedOrder).toLocaleString()}đ
                   </p>
-                </div>
-                <div>
-                  <p className="font-semibold">Ngày đặt:</p>
-                  <p>
-                    {new Date(selectedOrder.date).toLocaleDateString("vi-VN")}
-                  </p>
-                </div>
-                <div>
-                  <p className="font-semibold">Trạng thái:</p>
-                  <p>{statusText[selectedOrder.status]}</p>
-                </div>
-                <div>
-                  <p className="font-semibold">Tổng tiền:</p>
-                  <p className="text-blue-500 font-semibold">
-                    {selectedOrder.total.toLocaleString()}đ
-                  </p>
-                </div>
+                )}
               </div>
-
-              {/* Product List */}
-              <div className="mt-3 sm:mt-4">
-                <h3 className="font-medium text-sm sm:text-base mb-1 sm:mb-2">
-                  Sản phẩm trong đơn hàng:
-                </h3>
+              <div>
+                <p>
+                  <strong>Địa chỉ giao hàng:</strong>{" "}
+                  {selectedOrder.shippingAddress}
+                </p>
+                <p>
+                  <strong>Ngày đặt:</strong>{" "}
+                  {new Date(selectedOrder.date).toLocaleDateString("vi-VN")}
+                </p>
+                <p>
+                  <strong>Trạng thái:</strong>{" "}
+                  {statusText[selectedOrder.status]}
+                </p>
+                <p>
+                  <strong>Tổng tiền:</strong>{" "}
+                  {selectedOrder.total.toLocaleString()}đ
+                </p>
+              </div>
+            </div>
+            <div className="mt-4">
+              <h3 className="font-medium text-lg mb-2">
+                Sản phẩm trong đơn hàng:
+              </h3>
+              <div style={{ maxHeight: "400px", overflowY: "auto" }}>
                 <Table
                   columns={itemColumns}
                   dataSource={selectedOrder.items}
@@ -792,38 +728,35 @@ export default function OrderDetail() {
         open={isReviewModalVisible}
         onCancel={() => setIsReviewModalVisible(false)}
         footer={null}
-        width="90%"
-        style={{ maxWidth: "300px sm:340px" }}
+        width={600}
       >
         {selectedProductForReview && (
-          <div className="p-1 sm:p-2">
-            <div className="flex flex-col sm:flex-row items-center space-x-0 sm:space-x-2 mb-1 sm:mb-2">
+          <div className="p-4">
+            <div className="flex items-center space-x-4 mb-6">
               <img
                 src={selectedProductForReview.image_url[0]}
                 alt={selectedProductForReview.name}
-                className="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg border border-gray-200 mb-1 sm:mb-0"
+                className="w-24 h-24 object-cover rounded-lg border border-gray-200"
               />
-              <div className="text-center sm:text-left">
-                <h3 className="font-medium text-[10px] sm:text-xs md:text-sm break-words line-clamp-1">
+              <div>
+                <h3 className="font-medium text-lg">
                   {selectedProductForReview.name}
                 </h3>
-                <p className="text-gray-500 text-[10px] sm:text-xs">
+                <p className="text-gray-500">
                   Giá: {selectedProductForReview.price.toLocaleString()}đ
                 </p>
               </div>
             </div>
 
-            <div className="mb-1 sm:mb-2">
-              <p className="font-medium mb-0.5 sm:mb-1 text-[10px] sm:text-xs">
-                Đánh giá của bạn
-              </p>
-              <div className="flex space-x-0.5 sm:space-x-1">
+            <div className="mb-6">
+              <p className="font-medium mb-2">Đánh giá của bạn</p>
+              <div className="flex space-x-2">
                 {Array.from({ length: 5 }, (_, index) => index + 1).map(
                   (star) => (
                     <button
                       key={star}
                       onClick={() => setRating(star)}
-                      className={`text-base sm:text-lg focus:outline-none transition-colors ${
+                      className={`text-2xl focus:outline-none transition-colors ${
                         star <= rating ? "text-yellow-400" : "text-gray-300"
                       }`}
                     >
@@ -834,33 +767,26 @@ export default function OrderDetail() {
               </div>
             </div>
 
-            <div className="mb-1 sm:mb-2">
-              <p className="font-medium mb-0.5 sm:mb-1 text-[10px] sm:text-xs">
-                Nhận xét của bạn
-              </p>
+            <div className="mb-6">
+              <p className="font-medium mb-2">Nhận xét của bạn</p>
               <textarea
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                className="w-full p-1 sm:p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-[10px] sm:text-xs"
-                rows={3}
-                placeholder="Chia sẻ trải nghiệm của bạn..."
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                rows={4}
+                placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm..."
               />
             </div>
 
-            <div className="flex justify-end space-x-1 sm:space-x-2">
-              <Button
-                onClick={() => setIsReviewModalVisible(false)}
-                size="small"
-                className="text-[10px] sm:text-xs"
-              >
+            <div className="flex justify-end space-x-3">
+              <Button onClick={() => setIsReviewModalVisible(false)}>
                 Hủy
               </Button>
               <Button
                 type="primary"
                 onClick={confirmSubmitReview}
                 loading={reviewLoading}
-                className="bg-purple-500 hover:bg-purple-600 text-[10px] sm:text-xs"
-                size="small"
+                className="bg-purple-500 hover:bg-purple-600"
               >
                 Gửi đánh giá
               </Button>
@@ -874,15 +800,12 @@ export default function OrderDetail() {
         open={isSelectProductModalVisible}
         onCancel={() => setIsSelectProductModalVisible(false)}
         footer={null}
-        width="90%"
-        style={{ maxWidth: "300px sm:340px" }}
+        width={600}
       >
         {selectedOrderForReview && (
-          <div className="p-1 sm:p-2">
+          <div className="p-4">
             {selectedOrderForReview.items.length === 0 ? (
-              <p className="text-[10px] sm:text-xs">
-                Không có sản phẩm nào để đánh giá.
-              </p>
+              <p>Không có sản phẩm nào để đánh giá.</p>
             ) : (
               <div className="space-y-4">
                 {selectedOrderForReview.items.map((item) => (
@@ -894,26 +817,22 @@ export default function OrderDetail() {
                       <img
                         src={item.image_url[0]}
                         alt={item.name}
-                        className="w-8 h-8 sm:w-10 sm:h-10 object-cover rounded-lg border border-gray-200 mb-1 sm:mb-0"
+                        className="w-16 h-16 object-cover rounded-lg border border-gray-200"
                       />
-                      <div className="flex-1 text-center sm:text-left">
-                        <p className="font-medium text-gray-800 text-[10px] sm:text-xs break-words line-clamp-1">
-                          {item.name}
-                        </p>
-                        <p className="text-gray-500 text-[10px] sm:text-xs">
+                      <div>
+                        <p className="font-medium text-gray-800">{item.name}</p>
+                        <p className="text-gray-500">
                           Giá: {item.price.toLocaleString()}đ
                         </p>
                         {item.isRated && (
-                          <div className="flex justify-center sm:justify-start items-center space-x-0.5 sm:space-x-1 mt-0.5 sm:mt-1">
-                            <p className="text-gray-400 text-[10px] sm:text-xs">
-                              Đã đánh giá
-                            </p>
+                          <div className="flex items-center space-x-2">
+                            <p className="text-gray-400 text-sm">Đã đánh giá</p>
                             <Button
                               type="link"
                               onClick={() =>
                                 navigate(`/detail/${item.productId}#reviews`)
                               }
-                              className="text-blue-500 p-0 text-[10px] sm:text-xs"
+                              className="text-blue-500 p-0"
                             >
                               Xem đánh giá
                             </Button>
@@ -930,8 +849,7 @@ export default function OrderDetail() {
                           setIsSelectProductModalVisible(false);
                           setIsReviewModalVisible(true);
                         }}
-                        className="bg-purple-500 hover:bg-purple-600 mt-1 sm:mt-0 w-full sm:w-auto text-[10px] sm:text-xs"
-                        size="small"
+                        className="bg-purple-500 hover:bg-purple-600"
                       >
                         Chọn
                       </Button>
