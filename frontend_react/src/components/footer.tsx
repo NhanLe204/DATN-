@@ -281,8 +281,8 @@ export default function Footer() {
                 </Space>
                 <Space>
                   <MdEmail />
-                  <a href="mailto:contact@petheaven.vn" className="underline">
-                    contact@petheaven.vn
+                  <a href="mailto:petheaven73@gmail.com" className="underline">
+                    petheaven73@gmail.com
                   </a>
                 </Space>
                 <Space>
