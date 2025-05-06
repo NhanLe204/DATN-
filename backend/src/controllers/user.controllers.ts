@@ -4,7 +4,7 @@ import userModel from '../models/user.model.js';
 import mongoose from 'mongoose';
 import bcryptjs from 'bcryptjs';
 import { IAddress, IUser } from '../interfaces/user.interface.js';
-import orderModel from '@/models/order.model.js';
+import orderModel from '../models/order.model.js';
 
 interface AuthenticatedRequest extends Request {
   user?: IUser;

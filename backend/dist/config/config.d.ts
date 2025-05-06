@@ -5,6 +5,7 @@ declare const ENV_VARS: {
     NODE_ENV: string | undefined;
     TMDB_API_KEY: string | undefined;
     FE_URL: string | undefined;
+    FE_URL_PRODUCTION: string | undefined;
     EMAIL_USER: string | undefined;
     EMAIL_PASS: string | undefined;
     VNP_TMNCODE: string | undefined;

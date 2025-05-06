@@ -227,19 +227,26 @@ const CouponList: React.FC = () => {
               max={100}
               style={{ width: "100%" }}
               formatter={(value) => `${value}%`} // Hiển thị giá trị với ký hiệu %
-              parser={(value) => value?.replace('%', '')} // Loại bỏ ký hiệu % khi gửi lên
+              parser={(value) =>
+                value ? parseFloat(value.replace("%", "")) : 0
+              } // Loại bỏ ký hiệu % khi gửi lên
             />
           </Form.Item>
           <Form.Item
             label="Giá trị đơn hàng tối thiểu (VNĐ)"
             name="min_order_value"
-            rules={[{ required: true, message: "Vui lòng nhập giá trị đơn hàng tối thiểu!" }]}
+            rules={[
+              {
+                required: true,
+                message: "Vui lòng nhập giá trị đơn hàng tối thiểu!",
+              },
+            ]}
           >
             <InputNumber
               min={0}
               style={{ width: "100%" }}
               formatter={(value) => `${value} VNĐ`} // Hiển thị giá trị với đơn vị VNĐ
-              parser={(value) => value?.replace(' VNĐ', '').replace(/\./g, '')} // Loại bỏ đơn vị VNĐ khi gửi lên
+              parser={(value) => value?.replace(" VNĐ", "").replace(/\./g, "")} // Loại bỏ đơn vị VNĐ khi gửi lên
             />
           </Form.Item>
           <Form.Item
@@ -286,7 +293,15 @@ export const createCoupon = async (
       usage_limit,
       used_count,
       score,
-    } = req.body;
+    } = req.body as {
+      coupon_code: string;
+      discount_value: number;
+      date_range: [string, string];
+      min_order_value?: number;
+      usage_limit?: number;
+      used_count?: number;
+      score?: number;
+    };
 
     // Kiểm tra các trường bắt buộc
     if (

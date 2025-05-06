@@ -102,7 +102,7 @@ export default function ArticleDetail() {
     if (!imageUrl)
       return "https://via.placeholder.com/1200x630.png?text=Pet+Heaven+Article";
     if (imageUrl.startsWith("http")) return imageUrl;
-    return `https://fe-pet-heaven.vercel.app${
+    return `https://petheaven.io.vn${
       imageUrl.startsWith("/") ? "" : "/"
     }${imageUrl}`;
   };
