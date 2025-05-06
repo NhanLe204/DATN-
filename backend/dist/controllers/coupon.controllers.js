@@ -48,21 +48,24 @@ exports.getCouponById = getCouponById;
 const createCoupon = async (req, res) => {
     try {
         console.log('Request body:', req.body); // Kiểm tra dữ liệu gửi lên
-        const { coupon_code, discount_value, min_order_value, start_date, end_date, usage_limit, used_count, score } = req.body;
-        if (!coupon_code || !discount_value || !start_date || !end_date) {
+        const { coupon_code, discount_value, date_range, min_order_value, usage_limit, used_count, score } = req.body;
+        // Kiểm tra các trường bắt buộc
+        if (!coupon_code || !discount_value || !date_range || date_range.length !== 2) {
             console.log('Missing required fields');
-            res.status(400).json({ success: false, message: 'Thiếu các trường bắt buộc' });
+            res.status(400).json({ success: false, message: 'Thiếu các trường bắt buộc hoặc date_range không hợp lệ' });
             return;
         }
+        const [start_date, end_date] = date_range; // Lấy giá trị start_date và end_date từ date_range
+        // Tạo mã giảm giá mới với các trường không bắt buộc
         const newCoupon = await coupon_model_js_1.default.create({
             coupon_code,
             discount_value,
-            min_order_value: min_order_value || 0,
+            min_order_value: min_order_value || 0, // Giá trị mặc định là 0
             start_date: new Date(start_date),
             end_date: new Date(end_date),
-            usage_limit: usage_limit || 1,
-            used_count: used_count || 0,
-            score: score || 0
+            usage_limit: usage_limit || 1, // Giá trị mặc định là 1
+            used_count: used_count || 0, // Giá trị mặc định là 0
+            score: score || 0 // Giá trị mặc định là 0
         });
         console.log('New coupon created:', newCoupon); // Kiểm tra coupon vừa tạo
         res.status(201).json({ success: true, message: 'Tạo mã giảm giá thành công', coupon: newCoupon });

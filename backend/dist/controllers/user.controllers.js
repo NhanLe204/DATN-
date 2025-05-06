@@ -7,7 +7,7 @@ exports.getLoyalUsers = exports.setDefaultAddress = exports.getNewUsers = export
 const user_model_js_1 = __importDefault(require("../models/user.model.js"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
-const order_model_js_1 = __importDefault(require("@/models/order.model.js"));
+const order_model_js_1 = __importDefault(require("../models/order.model.js"));
 // lấy hết nè má
 const getAllUser = async (req, res) => {
     try {
