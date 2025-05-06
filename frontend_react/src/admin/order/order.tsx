@@ -21,7 +21,6 @@ import {
   DownloadOutlined,
 } from '@ant-design/icons';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useSearchParams, useNavigate } from 'react-router-dom';
 import orderApi from '../../api/orderApi';
 import moment from 'moment';
 import 'moment/locale/vi';
@@ -44,9 +43,11 @@ interface Order {
   key: string;
   orderId: string;
   fullname: string;
+  phone?: string;
   orderDate?: string;
   product: string;
   status: 'PENDING' | 'PROCESSING' | 'SHIPPING' | 'DELIVERED' | 'CANCELLED';
+  paymentStatus: 'UNPAID' | 'PAID' | 'FAILED' | 'CASH_ON_DELIVERY';
   quantity?: number;
   price?: string;
   products?: Product[];
@@ -54,13 +55,12 @@ interface Order {
 
 interface FilterParams {
   status?: string;
+  paymentStatus?: string;
   dateRange?: [moment.Moment, moment.Moment] | null;
-  search?: string;
+  search?:	stats
 }
 
 const OrderList: React.FC = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
@@ -88,6 +88,7 @@ const OrderList: React.FC = () => {
 
       const orderDetails = response.data.result;
 
+      // Group order details by orderId
       const groupedOrders: { [key: string]: any } = {};
 
       orderDetails.forEach((detail: any) => {
@@ -97,7 +98,9 @@ const OrderList: React.FC = () => {
             orderId: orderId,
             orderDate: detail.orderId.order_date,
             status: detail.orderId.status,
+            paymentStatus: detail.orderId.payment_status || 'UNPAID',
             fullname: detail.orderId.userID?.fullname || 'Không xác định',
+            phone: detail.orderId.userID?.phone || 'Chưa nhập số điện thoại',
             total_price: detail.orderId.total_price,
             products: [],
           };
@@ -114,35 +117,29 @@ const OrderList: React.FC = () => {
         });
       });
 
-      const formattedOrders: Order[] = Object.values(groupedOrders).map((order: any, index: number) => ({
+      let formattedOrders: Order[] = Object.values(groupedOrders).map((order: any, index: number) => ({
         key: order.orderId || `order-${index}`,
         orderId: order.orderId || `ORDER${index}`,
         fullname: order.fullname,
+        phone: order.phone,
         product: order.products.map((p: Product) => p.productName).join(', ') || 'Không xác định',
         status: (order.status || 'PENDING').toUpperCase() as Order['status'],
+        paymentStatus: (order.paymentStatus || 'UNPAID').toUpperCase() as Order['paymentStatus'],
         quantity: order.products.reduce((sum: number, p: Product) => sum + p.quantity, 0) || 0,
         price: order.total_price?.toString() || '0',
         orderDate: order.orderDate ? moment(order.orderDate).format('DD/MM/YYYY HH:mm') : 'Không xác định',
         products: order.products,
       }));
 
+      // Sort orders by orderDate in descending order (most recent first)
+      formattedOrders = formattedOrders.sort((a, b) => {
+        const dateA = a.orderDate !== 'Không xác định' ? moment(a.orderDate, 'DD/MM/YYYY HH:mm') : moment(0);
+        const dateB = b.orderDate !== 'Không xác định' ? moment(b.orderDate, 'DD/MM/YYYY HH:mm') : moment(0);
+        return dateB.valueOf() - dateA.valueOf();
+      });
+
       const filteredOrders = applyFilters(formattedOrders);
       setOrders(filteredOrders);
-
-      // Kiểm tra orderId từ query string và mở modal nếu có
-      const orderIdFromQuery = searchParams.get('orderId');
-      if (orderIdFromQuery) {
-        const orderToView = filteredOrders.find((order) => order.orderId === orderIdFromQuery);
-        if (orderToView) {
-          setSelectedOrder(orderToView);
-          form.setFieldsValue({ status: orderToView.status });
-          setIsModalVisible(true);
-          // Xóa query string sau khi mở modal để tránh lặp lại
-          setSearchParams({}, { replace: true });
-        } else {
-          message.error('Không tìm thấy đơn hàng với ID này');
-        }
-      }
     } catch (error) {
       console.error('Error fetching orders:', error.response?.data || error.message);
       message.error(
@@ -162,6 +159,10 @@ const OrderList: React.FC = () => {
 
       if (filters.status) {
         matches = matches && order.status === filters.status;
+      }
+
+      if (filters.paymentStatus) {
+        matches = matches && order.paymentStatus === filters.paymentStatus;
       }
 
       if (filters.dateRange) {
@@ -187,6 +188,10 @@ const OrderList: React.FC = () => {
 
   const handleStatusFilter = (status: string) => {
     setFilters((prev) => ({ ...prev, status: status || undefined }));
+  };
+
+  const handlePaymentStatusFilter = (paymentStatus: string) => {
+    setFilters((prev) => ({ ...prev, paymentStatus: paymentStatus || undefined }));
   };
 
   const handleDateRangeFilter = (dates: any) => {
@@ -229,18 +234,14 @@ const OrderList: React.FC = () => {
       const values = await form.validateFields();
       if (selectedOrder) {
         await orderApi.updateOrderStatus(selectedOrder.orderId, values.status);
-        message.success('Cập nhật trạng thái thành công');
+        message.success('Cập nhật trạng thái đơn hàng thành công');
         await fetchOrders();
         setIsModalVisible(false);
       }
     } catch (error) {
       console.error('Error updating order status:', error.response?.data || error.message);
-      message.error('Cập nhật trạng thái thất bại');
+      message.error('Cập nhật trạng thái đơn hàng thất bại');
     }
-  };
-
-  const handleModalCancel = () => {
-    setIsModalVisible(false);
   };
 
   const columns = [
@@ -309,6 +310,7 @@ const OrderList: React.FC = () => {
           PENDING: { color: 'warning', text: 'Chờ xử lý' },
           PROCESSING: { color: 'processing', text: 'Đang xử lý' },
           SHIPPING: { color: 'blue', text: 'Đang vận chuyển' },
+          SHIPPED: { color: 'cyan', text: 'Đã giao hàng' },
           DELIVERED: { color: 'success', text: 'Đã giao' },
           CANCELLED: { color: 'error', text: 'Đã hủy' },
         };
@@ -318,6 +320,27 @@ const OrderList: React.FC = () => {
             className="px-3 py-0.5 text-[13px] font-normal rounded-full"
           >
             {statusConfig[status]?.text || status}
+          </Tag>
+        );
+      },
+    },
+    {
+      title: 'Trạng thái thanh toán',
+      dataIndex: 'paymentStatus',
+      key: 'paymentStatus',
+      render: (paymentStatus: string) => {
+        const paymentStatusConfig = {
+          UNPAID: { color: 'error', text: 'Chưa thanh toán' },
+          PAID: { color: 'success', text: 'Đã thanh toán' },
+          FAILED: { color: 'warning', text: 'Thanh toán thất bại' },
+          CASH_ON_DELIVERY: { color: 'blue', text: 'Thanh toán khi nhận hàng' },
+        };
+        return (
+          <Tag
+            color={paymentStatusConfig[paymentStatus]?.color}
+            className="px-3 py-0.5 text-[13px] font-normal rounded-full"
+          >
+            {paymentStatusConfig[paymentStatus]?.text || paymentStatus}
           </Tag>
         );
       },
@@ -370,8 +393,21 @@ const OrderList: React.FC = () => {
                   <Option value="PENDING">Chờ xử lý</Option>
                   <Option value="PROCESSING">Đang xử lý</Option>
                   <Option value="SHIPPING">Đang vận chuyển</Option>
-                  <Option value="DELIVERED">Hoàn thành</Option>
+                  <Option value="SHIPPED">Đã giao hàng</Option>
+                  <Option value="DELIVERED">Đã giao</Option>
                   <Option value="CANCELLED">Đã hủy</Option>
+                </Select>
+                <Select
+                  placeholder="Lọc trạng thái thanh toán"
+                  allowClear
+                  style={{ width: 180 }}
+                  onChange={handlePaymentStatusFilter}
+                  className="text-[14px]"
+                >
+                  <Option value="UNPAID">Chưa thanh toán</Option>
+                  <Option value="PAID">Đã thanh toán</Option>
+                  <Option value="FAILED">Thanh toán thất bại</Option>
+                  <Option value="CASH_ON_DELIVERY">Thanh toán khi nhận hàng</Option>
                 </Select>
                 <RangePicker
                   onChange={handleDateRangeFilter}
@@ -432,7 +468,7 @@ const OrderList: React.FC = () => {
           }
           open={isModalVisible}
           onOk={handleModalOk}
-          onCancel={handleModalCancel}
+          onCancel={() => setIsModalVisible(false)}
           okText="Lưu thay đổi"
           cancelText="Hủy bỏ"
           width={600}
@@ -458,6 +494,24 @@ const OrderList: React.FC = () => {
                         <div>
                           <p className="text-[13px] text-gray-500">Ngày đặt</p>
                           <p className="text-[14px] font-normal text-gray-700">{selectedOrder.orderDate}</p>
+                        </div>
+                        <div>
+                          <p className="text-[13px] text-gray-500">Khách hàng</p>
+                          <p className="text-[14px] font-normal text-gray-700">{selectedOrder.fullname}</p>
+                        </div>
+                        {/* <div>
+                          <p className="text-[13px] text-gray-500">Số điện thoại</p>
+                          <p className="text-[14px] font-normal text-gray-700">{selectedOrder.phone || 'Chưa nhập số điện thoại'}</p>
+                        </div> */}
+                        <div>
+                          <p className="text-[13px] text-gray-500">Trạng thái thanh toán</p>
+                          <p className="text-[14px] font-normal text-gray-700">
+                            {selectedOrder.paymentStatus === 'PAID' ? 'Đã thanh toán' :
+                             selectedOrder.paymentStatus === 'UNPAID' ? 'Chưa thanh toán' :
+                             selectedOrder.paymentStatus === 'FAILED' ? 'Thanh toán thất bại' :
+                             selectedOrder.paymentStatus === 'CASH_ON_DELIVERY' ? 'Thanh toán khi nhận hàng' :
+                             'Không xác định'}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -498,7 +552,7 @@ const OrderList: React.FC = () => {
                   <div className="col-span-2">
                     <Form form={form} layout="vertical">
                       <Form.Item
-                        label="Cập nhật trạng thái"
+                        label="Cập nhật trạng thái đơn hàng"
                         name="status"
                         rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
                       >
@@ -506,7 +560,8 @@ const OrderList: React.FC = () => {
                           <Option value="PENDING">Chờ xử lý</Option>
                           <Option value="PROCESSING">Đang xử lý</Option>
                           <Option value="SHIPPING">Đang vận chuyển</Option>
-                          <Option value="DELIVERED">Hoàn thành</Option>
+                          <Option value="SHIPPED">Đã giao hàng</Option>
+                          <Option value="DELIVERED">Đã giao</Option>
                           <Option value="CANCELLED">Đã hủy</Option>
                         </Select>
                       </Form.Item>
