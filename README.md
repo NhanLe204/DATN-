@@ -14,7 +14,9 @@ Trước tiên, bạn cần cài đặt một số thứ cơ bản trên máy:
 
 Clone dự án về máy của bạn và di chuyển vào thư mục dự án:
 
-Hãy thay `<repository-url>` bằng link thật của dự án, và `<project-folder>` bằng tên thư mục dự án của bạn.
+Hãy thay **https://github.com/ngocthanhnt00/pet-heaven.git** bằng link thật của dự án, và `<project-folder>` bằng tên thư mục dự án của bạn.
+
+- git clone <clone nhánh cụ thể -b + (tên nhánh) > **https://github.com/ngocthanhnt00/pet-heaven.git** (**default**: main or master )
 
 ### Bước 2: Cài đặt và chạy Backend
 
@@ -26,7 +28,7 @@ Backend sẽ chạy trên một cổng mặc định (thường là `http://loca
 
 Di chuyển vào thư mục frontend, cài đặt các gói và chạy giao diện:
 
-Frontend thường chạy ở `http://localhost:5173`. Mở link này trong trình duyệt để xem ứng dụng.
+Frontend thường chạy ở `http://localhost:3000`. Mở link này trong trình duyệt để xem ứng dụng.
 
 ## Dùng ứng dụng
 
