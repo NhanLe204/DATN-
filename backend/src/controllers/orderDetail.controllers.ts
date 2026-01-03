@@ -53,12 +53,14 @@ export const createOrderDetail = async (req: Request, res: Response) => {
 
     // Relax validation for bookings
     if (!orderId || (!productId && !serviceId) || !quantity) {
-      return res.status(400).json({ success: false, message: 'Missing required fields' });
+      res.status(400).json({ success: false, message: 'Missing required fields' });
+      return;
     }
 
     // Validate product_price only for product orders
     if (productId && (!product_price || product_price <= 0)) {
-      return res.status(400).json({ success: false, message: 'product_price is required for product orders' });
+      res.status(400).json({ success: false, message: 'product_price is required for product orders' });
+      return;
     }
 
     // Standardize booking_date to UTC for services
@@ -90,7 +92,8 @@ export const updateOrderDetail = async (req: Request, res: Response) => {
     const updatedOrderDetail = await orderDetailModel.findByIdAndUpdate(req.params.id, req.body, { new: true });
 
     if (!updatedOrderDetail) {
-      return res.status(404).json({ success: false, message: 'Order detail not found' });
+      res.status(404).json({ success: false, message: 'Order detail not found' });
+      return;
     }
 
     res.status(200).json({ success: true, message: 'Order detail updated successfully', data: updatedOrderDetail });
@@ -104,7 +107,8 @@ export const deleteOrderDetail = async (req: Request, res: Response) => {
   try {
     const deletedOrderDetail = await orderDetailModel.findByIdAndDelete(req.params.id);
     if (!deletedOrderDetail) {
-      return res.status(404).json({ success: false, message: 'Order detail not found' });
+      res.status(404).json({ success: false, message: 'Order detail not found' });
+      return;
     }
     res.status(200).json({ success: true, message: 'Order detail deleted successfully' });
   } catch (error) {

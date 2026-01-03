@@ -50,6 +50,7 @@ export const insertCategory = async (req: Request, res: Response): Promise<void>
         success: false,
         message: 'Please provide an name and description product'
       });
+      return;
     }
     const existingNameCategory = await categoryModel.findOne({ name });
     if (existingNameCategory) {
@@ -57,6 +58,7 @@ export const insertCategory = async (req: Request, res: Response): Promise<void>
         success: false,
         message: 'Category with this name already exists'
       });
+      return;
     }
     const newCategory = new categoryModel({
       name,
@@ -133,7 +135,7 @@ export const updateCategory = async (req: Request, res: Response): Promise<void>
   }
 };
 
-export const toggleCategory = async (req: AuthenticatedRequest, res: Response) => {
+export const toggleCategory = async (req: AuthenticatedRequest, res: Response):Promise<void> => {
   try {
     const { id } = req.params;
     const { status } = req.query;
@@ -194,30 +196,33 @@ export const deleteCategory = async (req: Request, res: Response) => {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ success: false, message: 'ID không hợp lệ' });
+      res.status(400).json({ success: false, message: 'ID không hợp lệ' });
+      return;
     }
 
     const category = await categoryModel.findById(id);
     if (!category) {
-      return res.status(404).json({ success: false, message: 'Không tìm thấy danh mục' });
+      res.status(404).json({ success: false, message: 'Không tìm thấy danh mục' });
+      return;
     }
 
     const hasProducts = await productModel.exists({
-      category_id: id,           
-      status: "available"        
+      category_id: id,
+      status: "available"
     });
 
     if (hasProducts) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Không thể ẩn danh mục vì vẫn còn sản phẩm đang bán!',
       });
+      return;
     }
 
     category.status = 'inactive';
     await category.save();
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       message: 'Đã ẩn danh mục thành công',
       category: {
@@ -229,6 +234,6 @@ export const deleteCategory = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error hiding category:', error);
-    return res.status(500).json({ success: false, message: 'Lỗi server' });
+    res.status(500).json({ success: false, message: 'Lỗi server' });
   }
 };
