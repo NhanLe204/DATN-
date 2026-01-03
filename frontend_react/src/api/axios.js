@@ -3,7 +3,7 @@ import ENV_VARS from "../../config";
 import loginApi from "./login"; // Import API login để gọi refreshToken
 
 const api = axios.create({
-  baseURL: ENV_VARS.VITE_API_URL,
+  baseURL: ENV_VARS.VITE_API_URL || 'https://datn-fvga.onrender.com/api/v1',
   headers: {
     "Content-Type": "application/json",
   },
