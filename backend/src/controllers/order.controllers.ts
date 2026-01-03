@@ -18,6 +18,8 @@ import sendEmail from '../utils/sendEmail.js';
 import moment from 'moment-timezone';
 import request from 'request';
 import { log } from 'console';
+import { generateOrderCode } from '@/controllers/orderCode.controller.js';
+import { checkBookingAvailability } from "../utils/checkBookingAvailability"
 
 export const createOrderAfterPayment = async (req: Request, res: Response): Promise<void> => {
   const session = await mongoose.startSession();
@@ -116,8 +118,61 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       }
 
       // Chuẩn hóa booking_date sang UTC
-      const standardizedBookingDate =
-        serviceId && booking_date ? moment.tz(booking_date, 'Asia/Ho_Chi_Minh').utc().toDate() : null;
+      // const standardizedBookingDate =
+      //   serviceId && booking_date ? moment.tz(booking_date, 'Asia/Ho_Chi_Minh').utc().toDate() : null;
+      // return {
+      //   productId,
+      //   serviceId,
+      //   quantity,
+      //   product_price: isOrder ? product_price : null,
+      //   total_price: isOrder ? detailTotalPrice : null,
+      //   booking_date: standardizedBookingDate,
+      //   petName: serviceId ? petName : null,
+      //   petType: serviceId ? petType : null
+      // };
+
+      let booking_start = null;
+      let booking_end = null;
+      let standardizedBookingDate = null;
+
+      // if (serviceId && booking_date) {
+      //   const start = moment.tz(booking_date, 'Asia/Ho_Chi_Minh');
+
+      //   const duration = serviceId?.duration || 60;
+      //   const end = start.clone().add(duration, 'minutes');
+
+      //   booking_start = start.utc().toDate();
+      //   booking_end = end.utc().toDate();
+      //   standardizedBookingDate = booking_start;
+      // }
+
+      if (serviceId && booking_date) {
+        const now = moment().tz('Asia/Ho_Chi_Minh');
+        const startLocal = moment.tz(booking_date, 'Asia/Ho_Chi_Minh');
+
+        const service = await serviceModel.findById(serviceId).session(session);
+        if (!service) throw new Error('Dịch vụ không tồn tại');
+
+        const duration = service.duration || 60;
+        const endLocal = startLocal.clone().add(duration, 'minutes');
+
+        booking_start = startLocal.utc().toDate();
+        booking_end = endLocal.utc().toDate();
+        standardizedBookingDate = booking_start;
+
+        // Check overlap (giữ nguyên, đã rất tốt)
+        const overlappingCount = await orderDetailModel.countDocuments({
+          $or: [
+            { booking_start: { $lt: booking_end }, booking_end: { $gt: booking_start } }
+          ],
+          'order.bookingStatus': { $nin: ['CANCELLED', 'COMPLETED'] }
+        }).session(session);
+
+        if (overlappingCount >= 5) {
+          throw new Error('Khung giờ này đã hết chỗ (tối đa 5 bé cùng lúc)');
+        }
+      }
+
 
       return {
         productId,
@@ -125,13 +180,23 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
         quantity,
         product_price: isOrder ? product_price : null,
         total_price: isOrder ? detailTotalPrice : null,
+
         booking_date: standardizedBookingDate,
+        booking_start,
+        booking_end,
+
         petName: serviceId ? petName : null,
         petType: serviceId ? petType : null
       };
+
     });
 
-    const validatedOrderDetails = await Promise.all(orderDetailsPromises);
+    // const validatedOrderDetails = await Promise.all(orderDetailsPromises);
+    const validatedOrderDetails = [];
+    for (const promise of orderDetailsPromises) {
+      const detail = await promise;
+      validatedOrderDetails.push(detail);
+    }
     const subtotal = isOrder ? calculatedTotalPrice : 0;
 
     // Xử lý giảm giá
@@ -164,8 +229,11 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
     // Chuẩn hóa order_date sang UTC
     const standardizedOrderDate = orderdate ? moment.tz(orderdate, 'Asia/Ho_Chi_Minh').utc().toDate() : new Date();
 
+    // order Code
+    const orderCode = await generateOrderCode();
     // Tạo và lưu đơn hàng
     const order = new orderModel({
+      orderCode,
       userID: userID ? userID : null,
       fullname: infoUserGuest?.fullName || null,
       phone: infoUserGuest?.phone || null,
@@ -188,6 +256,17 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
 
     // Tạo và lưu chi tiết đơn hàng
     const orderDetailDocs = validatedOrderDetails.map((detail: any) => {
+      // return new orderDetailModel({
+      //   orderId: savedOrder._id,
+      //   productId: detail.productId || null,
+      //   serviceId: detail.serviceId || null,
+      //   quantity: detail.quantity,
+      //   product_price: isOrder ? detail.product_price : null,
+      //   total_price: isOrder ? detail.total_price : null,
+      //   booking_date: detail.booking_date,
+      //   petName: detail.petName,
+      //   petType: detail.petType
+      // });
       return new orderDetailModel({
         orderId: savedOrder._id,
         productId: detail.productId || null,
@@ -195,13 +274,21 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
         quantity: detail.quantity,
         product_price: isOrder ? detail.product_price : null,
         total_price: isOrder ? detail.total_price : null,
+
         booking_date: detail.booking_date,
+        booking_start: detail.booking_start,
+        booking_end: detail.booking_end,
+
         petName: detail.petName,
         petType: detail.petType
       });
+
     });
 
-    await Promise.all(orderDetailDocs.map((detail: any) => detail.save({ session })));
+    // await Promise.all(orderDetailDocs.map((detail: any) => detail.save({ session })));
+    for (const detail of orderDetailDocs) {
+      await detail.save({ session });
+    }
 
     // Commit transaction
     await session.commitTransaction();
@@ -228,7 +315,6 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
           })),
           orderId: savedOrder._id.toString()
         });
-        console.log('Đã gửi email xác nhận đặt dịch vụ đến:', recipientEmail);
       } catch (emailError) {
         console.error('Gửi email xác nhận thất bại:', emailError);
       }
@@ -259,63 +345,6 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
   }
 };
 
-export const getAvailableSlots = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { date } = req.query; // Ngày cần kiểm tra, ví dụ: "2025-03-29"
-    console.log(date, 'Đặt lịch');
-    if (!date) throw new Error('Date is required');
-
-    const maxSlots = 5;
-    const availableTimeSlots = ['8h', '9h', '10h', '11h', '13h', '14h', '15h', '16h', '17h'];
-
-    const startOfDay = new Date(`${date}T00:00:00+07:00`);
-    const endOfDay = new Date(`${date}T23:59:59.999+07:00`);
-
-    // Lấy tất cả booking trong ngày
-    const bookings = await orderDetailModel
-      .find({
-        booking_date: { $gte: startOfDay, $lte: endOfDay }
-      })
-      .populate('serviceId');
-
-    // Tính số slot bị chiếm cho từng khung giờ
-    const slotOccupancy: { [key: string]: number } = {};
-    availableTimeSlots.forEach((time) => (slotOccupancy[time] = 0));
-
-    bookings.forEach((booking) => {
-      const bookingDate = new Date(booking.booking_date);
-      console.log(bookingDate, 'bookingDate');
-      const hour = bookingDate.getHours();
-      console.log(hour, 'HOUR');
-      const serviceDuration = booking.serviceId?.duration || 60;
-      const affectedSlots = Math.ceil(serviceDuration / 60);
-
-      for (let i = 0; i < affectedSlots; i++) {
-        const slotHour = hour + i;
-        const time = `${slotHour}h`;
-        if (availableTimeSlots.includes(time)) {
-          slotOccupancy[time] += 1;
-        }
-      }
-    });
-
-    // Tính slot còn lại
-    const slotAvailability: { [key: string]: number } = {};
-    availableTimeSlots.forEach((time) => {
-      slotAvailability[time] = maxSlots - slotOccupancy[time];
-    });
-
-    res.status(200).json({
-      success: true,
-      data: slotAvailability
-    });
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error instanceof Error ? error.message : 'Unknown error'
-    });
-  }
-};
 
 export const getAllOrders = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -360,63 +389,57 @@ export const getOrderById = async (req: Request, res: Response): Promise<void> =
   }
 };
 
-export const checkAvailableSlots = async (req: Request, res: Response): Promise<void> => {
-  const { date, time } = req.query;
-  const maxSlots = 5;
-
+export const getAvailableSlots = async (req: Request, res: Response): Promise<void> => {
   try {
-    // Kiểm tra đầu vào
-    if (!date || !time || typeof date !== 'string' || typeof time !== 'string') {
-      res.status(400).json({ message: 'Invalid date or time parameters' });
-      return;
-    }
-    // Chuyển time từ dạng "9h" sang số giờ (9)
-    const hourMatch = time.match(/^(\d+)h$/);
-    if (!hourMatch) {
-      res.status(400).json({ message: 'Invalid time format. Expected format: "Xh" (e.g., "9h")' });
-      return;
-    }
-    const hour = parseInt(hourMatch[1], 10);
+    const { date } = req.query;
+    if (!date || typeof date !== 'string') throw new Error('Date is required');
 
-    // Kiểm tra giờ hợp lệ (từ 0 đến 23)
-    if (isNaN(hour) || hour < 0 || hour > 23) {
-      res.status(400).json({ message: 'Invalid hour value' });
-      return;
-    }
+    const maxSlots = 5;
+    const openHours = [8, 9, 10, 11, 13, 14, 15, 16, 17]; // Giờ mở cửa, skip 12h
 
-    // Tạo khoảng thời gian theo giờ Việt Nam (UTC+07:00)
-    const startDate = new Date(`${date}T${hour.toString().padStart(2, '0')}:00:00+07:00`);
-    const endDate = new Date(startDate);
-    endDate.setHours(endDate.getHours() + 1);
+    const result: { [key: string]: number } = {};
 
-    // Kiểm tra xem startDate có hợp lệ không
-    if (isNaN(startDate.getTime())) {
-      res.status(400).json({ message: 'Invalid date format. Expected format: "YYYY-MM-DD"' });
-      return;
-    }
+    // Duyệt từng giờ mở cửa
+    for (const hour of openHours) {
+      // Tạo các khung 00, 15, 30, 45 trong giờ đó
+      for (const minute of [0, 15, 30, 45]) {
+        const slotStartLocal = moment.tz(`${date} ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`, 'YYYY-MM-DD HH:mm', 'Asia/Ho_Chi_Minh');
+        
+        // Nếu slot bắt đầu sau 17:00 thì bỏ qua (an toàn)
+        if (slotStartLocal.hour() >= 18) continue;
 
-    // Đếm số lượng pet đã đặt trong khung giờ
-    const bookedPets = await orderDetailModel.countDocuments({
-      booking_date: {
-        $gte: startDate,
-        $lt: endDate
+        const duration = 60; // phút, có thể lấy từ service sau
+        const slotEndLocal = slotStartLocal.clone().add(duration, 'minutes');
+
+        const slotStart = slotStartLocal.toDate();
+        const slotEnd = slotEndLocal.toDate();
+
+        // Query đúng (đã bỏ $or sai)
+        const booked = await orderDetailModel.countDocuments({
+          booking_start: { $lt: slotEnd },
+          booking_end: { $gt: slotStart },
+          'order.bookingStatus': { $nin: ['CANCELLED', 'COMPLETED'] }
+        });
+
+        // Key giống frontend: "8h", "9h", ...
+        const timeKey = `${hour}h`;
+
+        // Với mỗi giờ, lấy số slot ít nhất trong 4 khung (00,15,30,45) → conservative
+        if (!result[timeKey]) {
+          result[timeKey] = Math.max(0, maxSlots - booked);
+        } else {
+          result[timeKey] = Math.min(result[timeKey], Math.max(0, maxSlots - booked));
+        }
       }
-    });
+    }
 
-    // Tính số slot còn lại
-    const remainingSlots = maxSlots - bookedPets;
-
-    // Trả về kết quả
-    res.status(200).json({
-      date,
-      time,
-      remainingSlots: remainingSlots >= 0 ? remainingSlots : 0
-    });
+    res.status(200).json({ success: true, data: result });
   } catch (error) {
-    console.error('Error checking slots:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    console.error('Error in getAvailableSlots:', error); // Thêm log lỗi server
+    res.status(400).json({ success: false, message: error instanceof Error ? error.message : 'Lỗi' });
   }
 };
+
 
 export const updateOrderStatus = async (req: Request, res: Response): Promise<void> => {
   const session = await mongoose.startSession();
@@ -595,7 +618,6 @@ export const cancelServiceBooking = async (req: Request, res: Response): Promise
     // 5. Cập nhật trạng thái
     order.bookingStatus = BookingStatus.CANCELLED;
     await order.save();
-    console.log('Order updated with status:', order.bookingStatus);
 
     // 6. Gửi email thông báo hủy dịch vụ
     let recipientEmail: string | null = null;
@@ -684,7 +706,6 @@ export const cancelServiceBooking = async (req: Request, res: Response): Promise
 
       try {
         await sendEmail(recipientEmail, subject, text, html);
-        console.log('Cancellation email sent to:', recipientEmail);
       } catch (emailError) {
         console.error('Failed to send cancellation email:', emailError);
       }
@@ -748,3 +769,55 @@ export const getPendingOrders = async (req: Request, res: Response): Promise<voi
     });
   }
 };
+
+export const checkRealtimeSlot = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { serviceId, booking_start } = req.body;
+
+    if (!serviceId || !booking_start) {
+      res.status(400).json({
+        message: 'serviceId và booking_start là bắt buộc',
+      });
+      return;
+    }
+
+    const service = await serviceModel.findById(serviceId);
+    if (!service) {
+      res.status(404).json({ message: 'Service không tồn tại' });
+      return;
+    }
+
+    const duration = service.duration || 60;
+
+    const bookingStart = new Date(booking_start);
+    if (isNaN(bookingStart.getTime())) {
+      res.status(400).json({ message: 'booking_start không hợp lệ' });
+      return;
+    }
+
+    const bookingEnd = new Date(
+      bookingStart.getTime() + duration * 60 * 1000
+    );
+
+    const MAX_SLOTS = 5;
+
+    const overlapped = await orderDetailModel.countDocuments({
+      booking_start: { $lt: bookingEnd },
+      booking_end: { $gt: bookingStart },
+      'order.bookingStatus': { $nin: ['CANCELLED', 'COMPLETED'] }
+    });
+
+    const remainingSlots = Math.max(0, MAX_SLOTS - overlapped);
+
+    res.status(200).json({
+      canBook: remainingSlots > 0,
+      remainingSlots,
+      booking_start: bookingStart,
+      booking_end: bookingEnd,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+

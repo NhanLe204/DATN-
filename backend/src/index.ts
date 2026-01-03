@@ -27,8 +27,8 @@ import blogRouter from './routes/blog.routes.js';
 import blogCategoryRouter from './routes/blogCategory.routes.js';
 
 dotenv.config(); // Đọc file .env
-console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID);
-console.log('JWT_SECRET:', process.env.JWT_SECRET);
+// console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID);
+// console.log('JWT_SECRET:', process.env.JWT_SECRET);
 
 const app = express();
 const PORT = ENV_VARS.PORT;

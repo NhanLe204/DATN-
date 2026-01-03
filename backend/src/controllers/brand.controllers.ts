@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import brandModel from '../models/brand.model.js';
 import { IBrand } from '../interfaces/brand.interface.js';
-
+import productModel from '@/models/product.model.js';
 interface AuthenticatedRequest extends Request {
   brand?: IBrand;
 }
@@ -79,20 +79,56 @@ export const insertBrand = async (req: Request, res: Response): Promise<void> =>
 export const deleteBrand = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const result = await brandModel.findByIdAndDelete(id);
-    if (!result) {
-      res.status(404).json({ message: 'Brand not found' });
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json({
+        success: false,
+        message: 'ID không hợp lệ'
+      });
       return;
     }
-    res.status(200).json({ message: 'Brand deleted successfully' });
-  } catch (error) {
-    if (error instanceof Error) {
-      res.status(500).json({ message: 'Server error', error: error.message });
-    } else {
-      res.status(500).json({ message: 'Server error', error });
+
+    const brand = await brandModel.findById(id);
+    if (!brand) {
+      res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy brand'
+      });
+      return;
     }
+
+    const hasProducts = await productModel.exists({
+      brand_id: id,
+      status: "available"
+    });
+
+    if (hasProducts) {
+      res.status(400).json({
+        success: false,
+        message: 'Không thể xóa brand vì đang có sản phẩm sử dụng!'
+      });
+      return;
+    }
+
+    await brandModel.findByIdAndDelete(id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Đã xóa brand thành công'
+    });
+    return;
+
+  } catch (error) {
+    console.error("Error deleting brand:", error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server'
+    });
+    return;
   }
 };
+
+
 export const updateBrand = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;

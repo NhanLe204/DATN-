@@ -1,7 +1,8 @@
 import React from 'react';
 import { Table, Button, Space } from 'antd';
 import { EditOutlined } from '@ant-design/icons';
-import { Booking, BookingStatus } from '../../booking/booking';
+// import { Booking, BookingStatus } from '../../booking/booking';
+import { Booking, BookingStatus } from '../../booking/bookingTypes';
 
 interface BookingTableProps {
   bookings: Booking[];
@@ -13,25 +14,12 @@ interface BookingTableProps {
 const BookingTable: React.FC<BookingTableProps> = ({ bookings, onEdit, onStart, onComplete }) => {
   const columns = [
     {
-      title: 'Order ID',
-      dataIndex: 'orderId',
-      key: 'orderId',
-      width: 50,
+      title: 'Mã lịch hẹn',
+      dataIndex: 'orderCode',
+      key: 'orderCode',
+      width: 150,
+      render: (text: string) => <span>{text}</span>,
       align: 'left' as const,
-      render: (text: string) => (
-        <div
-          style={{
-            width: '50px',
-            wordBreak: 'break-all',
-            overflowWrap: 'break-word',
-            whiteSpace: 'normal',
-            lineHeight: '1.2',
-          }}
-          title={text}
-        >
-          {text}
-        </div>
-      ),
     },
     {
       title: 'Người đặt',
@@ -72,8 +60,8 @@ const BookingTable: React.FC<BookingTableProps> = ({ bookings, onEdit, onStart, 
     },
     {
       title: 'Giờ đặt',
-      dataIndex: 'bookingTime',
-      key: 'bookingTime',
+      dataIndex: 'bookingStart',
+      key: 'bookingStart',
       width: 100,
       align: 'left' as const,
     },
@@ -89,24 +77,42 @@ const BookingTable: React.FC<BookingTableProps> = ({ bookings, onEdit, onStart, 
       dataIndex: 'bookingStatus',
       key: 'bookingStatus',
       width: 120,
-      render: (bookingStatus: string) => (
-        <span
-          style={{
-            color:
-              bookingStatus === BookingStatus.PENDING
-                ? '#fa8c16'
-                : bookingStatus === BookingStatus.CONFIRMED
-                ? '#52c41a'
-                : bookingStatus === BookingStatus.IN_PROGRESS
-                ? '#722ed1'
-                : bookingStatus === BookingStatus.COMPLETED
-                ? '#1890ff'
-                : '#ff4d4f',
-          }}
-        >
-          {bookingStatus}
-        </span>
-      ),
+      render: (bookingStatus: string) => {
+        const getStatusText = (status: string) => {
+          switch (status) {
+            case BookingStatus.PENDING:
+              return 'Chờ xác nhận';
+            case BookingStatus.CONFIRMED:
+              return 'Đã xác nhận';
+            case BookingStatus.IN_PROGRESS:
+              return 'Đang thực hiện';
+            case BookingStatus.COMPLETED:
+              return 'Hoàn thành';
+            case BookingStatus.CANCELLED: 
+              return 'Đã hủy';
+            default:
+              return status; 
+          }
+        };
+
+        const getStatusColor = (status: string) => {
+          return status === BookingStatus.PENDING
+            ? '#fa8c16'   
+            : status === BookingStatus.CONFIRMED
+              ? '#52c41a' 
+              : status === BookingStatus.IN_PROGRESS
+                ? '#722ed1' 
+                : status === BookingStatus.COMPLETED
+                  ? '#1890ff' 
+                  : '#ff4d4f'; 
+        };
+
+        return (
+          <span style={{ color: getStatusColor(bookingStatus) }}>
+            {getStatusText(bookingStatus)}
+          </span>
+        );
+      },
       align: 'left' as const,
     },
     {
@@ -117,7 +123,7 @@ const BookingTable: React.FC<BookingTableProps> = ({ bookings, onEdit, onStart, 
       render: (realPrice: number | undefined, record: Booking) => (
         <span>
           {record.bookingStatus === BookingStatus.IN_PROGRESS ||
-          record.bookingStatus === BookingStatus.COMPLETED
+            record.bookingStatus === BookingStatus.COMPLETED
             ? realPrice
               ? `${realPrice.toLocaleString('vi-VN')} VND`
               : 'Chưa tính'

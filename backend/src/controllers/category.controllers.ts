@@ -3,6 +3,7 @@ import { IUser } from '../interfaces/user.interface.js';
 import categoryModel from '../models/category.model.js';
 import { CategoryStatus } from '../enums/category.enum.js';
 import mongoose from 'mongoose';
+import productModel from '@/models/product.model.js';
 
 interface AuthenticatedRequest extends Request {
   user?: IUser;
@@ -188,24 +189,46 @@ export const getCategoriesActive = async (req: Request, res: Response) => {
 };
 
 // Xóa category
-export const deleteCategory = async (req: Request, res: Response): Promise<void> => {
+export const deleteCategory = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const category = await categoryModel.findById(id);
-    if (!category) {
-      res.status(404).json({ message: 'Không tìm thấy danh mục' });
-      return;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: 'ID không hợp lệ' });
     }
 
-    await categoryModel.findByIdAndDelete(id);
-    res.status(200).json({ message: 'Xóa danh mục thành công' });
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error category up: ${error.message}`);
-      return;
-    } else {
-      console.error('Error category up:', error);
-      return;
+    const category = await categoryModel.findById(id);
+    if (!category) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy danh mục' });
     }
+
+    const hasProducts = await productModel.exists({
+      category_id: id,           
+      status: "available"        
+    });
+
+    if (hasProducts) {
+      return res.status(400).json({
+        success: false,
+        message: 'Không thể ẩn danh mục vì vẫn còn sản phẩm đang bán!',
+      });
+    }
+
+    category.status = 'inactive';
+    await category.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Đã ẩn danh mục thành công',
+      category: {
+        _id: category._id,
+        name: category.name,
+        description: category.description,
+        status: category.status,
+      },
+    });
+  } catch (error) {
+    console.error('Error hiding category:', error);
+    return res.status(500).json({ success: false, message: 'Lỗi server' });
   }
 };

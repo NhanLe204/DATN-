@@ -14,6 +14,7 @@ const orderSchema: Schema<IOrder> = new Schema<IOrder>(
     fullname: { type: String, required: false },
     phone: { type: String, required: false },
     email: { type: String, required: false },
+    orderCode: { type: String, required: true, unique: true },
     paymentOrderCode: { type: Number, required: false },
     payment_typeID: { type: Schema.Types.ObjectId, ref: paymentType, default: null },
     deliveryID: { type: Schema.Types.ObjectId, ref: delivery, default: null },

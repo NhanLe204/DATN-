@@ -11,6 +11,7 @@ import utc from 'dayjs/plugin/utc';
 import userModel from '../models/user.model.js';
 import sendBookingEmail from '../utils/sendBookingEmail.js';
 import ServiceModel from '../models/service.model.js';
+import serviceModel from '../models/service.model.js';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 // Lấy danh sách tất cả order details
@@ -164,7 +165,10 @@ export const getAllBookings = async (req: Request, res: Response): Promise<void>
       .lean();
 
     if (!allOrders.length) {
-      res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng nào' });
+      res.status(200).json({
+        success: true,
+        data: []
+      })
       return;
     }
 
@@ -204,6 +208,7 @@ export const getAllBookings = async (req: Request, res: Response): Promise<void>
       {
         $project: {
           orderId: '$order._id',
+          orderCode: '$order.orderCode',
           fullname: {
             $ifNull: ['$order.fullname', '$order.inforUserGuest.fullName', 'Khách vãng lai']
           },
@@ -225,7 +230,9 @@ export const getAllBookings = async (req: Request, res: Response): Promise<void>
           petName: '$petName',
           petType: '$petType',
           petWeight: '$petWeight',
-          realPrice: '$realPrice'
+          realPrice: '$realPrice',
+          booking_start: '$booking_start',
+          booking_end: '$booking_end'
         }
       }
     ]);
@@ -508,15 +515,14 @@ export const changeBookingStatus = async (req: Request, res: Response): Promise<
     </tr>
     <tr>
       <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Thời gian:</td>
-      <td style="padding: 10px; border: 1px solid #e0e0e0;">${
-        orderDetail.booking_date
-          ? new Intl.DateTimeFormat('vi-VN', {
-              timeZone: 'Asia/Ho_Chi_Minh',
-              dateStyle: 'short',
-              timeStyle: 'short'
-            }).format(orderDetail.booking_date)
-          : 'N/A'
-      }</td>
+      <td style="padding: 10px; border: 1px solid #e0e0e0;">${orderDetail.booking_date
+                  ? new Intl.DateTimeFormat('vi-VN', {
+                    timeZone: 'Asia/Ho_Chi_Minh',
+                    dateStyle: 'short',
+                    timeStyle: 'short'
+                  }).format(orderDetail.booking_date)
+                  : 'N/A'
+                }</td>
 			</tr>
 			<tr>
 				<td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Thú cưng:</td>
@@ -524,9 +530,8 @@ export const changeBookingStatus = async (req: Request, res: Response): Promise<
 			</tr>
 			<tr>
 				<td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Giá thực tế:</td>
-				<td style="padding: 10px; border: 1px solid #e0e0e0;">${
-					orderDetail.realPrice ? orderDetail.realPrice.toLocaleString('vi-VN') + ' VND' : 'N/A'
-				}</td>
+				<td style="padding: 10px; border: 1px solid #e0e0e0;">${orderDetail.realPrice ? orderDetail.realPrice.toLocaleString('vi-VN') + ' VND' : 'N/A'
+                }</td>
 			</tr>
 		</table>
 		<p style="color: #555; text-align: center;">Cảm ơn bạn đã tin tưởng và sử dụng dịch vụ của chúng tôi!</p>
@@ -797,162 +802,154 @@ export const updateRealPrice = async (req: Request, res: Response): Promise<void
 
 // update
 export const updateBooking = async (req: Request, res: Response): Promise<void> => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
-    const { orderId, bookingDate, serviceId, petName, petType, fullname, bookingStatus } = req.body;
+    const {
+      orderId,
+      bookingStatus,
+      fullname,
+      phone,
+      email,
+      pets = []
+    } = req.body;
 
-    // Validate orderId
-    if (!orderId || typeof orderId !== 'string' || !mongoose.Types.ObjectId.isValid(orderId)) {
-      console.error('Invalid orderId:', orderId);
-      res.status(400).json({
-        success: false,
-        message: 'orderId không hợp lệ'
-      });
+    if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) {
+      await session.abortTransaction();
+      res.status(400).json({ success: false, message: 'orderId không hợp lệ' });
       return;
     }
 
-    // Find order and orderDetail
-    const order = await orderModel.findById(orderId);
-    const orderDetail = await orderDetailModel.findOne({ orderId });
-
+    const order = await orderModel.findById(orderId).session(session);
     if (!order) {
-      console.error('Order not found for orderId:', orderId);
-      res.status(404).json({
-        success: false,
-        message: 'Không tìm thấy đơn hàng'
-      });
-      return;
-    }
-    if (!orderDetail) {
-      console.error('OrderDetail not found for orderId:', orderId);
-      res.status(404).json({
-        success: false,
-        message: 'Không tìm thấy chi tiết đơn hàng'
-      });
+      await session.abortTransaction();
+      res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng' });
       return;
     }
 
-    // Prepare update fields
-    const updateOrderFields: any = {};
-    const updateOrderDetailFields: any = {};
-
-    // Handle bookingDate
-    if (bookingDate) {
-      const parsedBookingDate = dayjs(bookingDate, 'YYYY-MM-DD HH:mm:ss', true);
-      if (!parsedBookingDate.isValid()) {
-        console.error('Invalid bookingDate:', bookingDate);
-        res.status(400).json({
-          success: false,
-          message: 'bookingDate phải có định dạng YYYY-MM-DD HH:mm:ss'
-        });
-        return;
-      }
-      updateOrderDetailFields.booking_date = parsedBookingDate.tz('Asia/Ho_Chi_Minh').toDate();
-      console.log('Setting booking_date to:', updateOrderDetailFields.booking_date);
-    }
-
-    // Handle serviceId
-    if (serviceId && mongoose.Types.ObjectId.isValid(serviceId)) {
-      updateOrderDetailFields.serviceId = serviceId;
-      console.log('Setting serviceId to:', serviceId);
-    }
-
-    // Handle petName
-    if (petName && typeof petName === 'string' && petName.trim().length > 0) {
-      updateOrderDetailFields.petName = petName.trim();
-      console.log('Setting petName to:', petName);
-    }
-
-    // Handle petType
-    if (petType && typeof petType === 'string' && petType.trim().length > 0) {
-      updateOrderDetailFields.petType = petType.trim();
-      console.log('Setting petType to:', petType);
-    }
-
-    // Handle fullname
-    if (fullname && typeof fullname === 'string' && fullname.trim().length > 0) {
-      updateOrderFields.fullname = fullname.trim();
-      console.log('Setting fullname to:', fullname.trim());
-    } else {
-      console.warn('No valid fullname provided for fullname update');
-    }
-
-    // Handle bookingStatus
+    // Cập nhật thông tin chung của order
+    const orderUpdate: any = {};
+    if (fullname !== undefined) orderUpdate.fullname = fullname?.trim();
+    if (phone !== undefined) orderUpdate.phone = phone?.trim();
+    if (email !== undefined) orderUpdate.email = email?.trim();
     if (bookingStatus && Object.values(BookingStatus).includes(bookingStatus)) {
-      updateOrderFields.bookingStatus = bookingStatus;
-      updateOrderFields.status =
-        bookingStatus === BookingStatus.PENDING
-          ? 'pending'
-          : bookingStatus === BookingStatus.CONFIRMED
-            ? 'confirmed'
-            : bookingStatus === BookingStatus.IN_PROGRESS
-              ? 'processing'
-              : bookingStatus === BookingStatus.COMPLETED
-                ? 'completed'
-                : 'cancelled';
-      console.log('Setting bookingStatus to:', bookingStatus);
+      orderUpdate.bookingStatus = bookingStatus;
+      const statusMap: Record<BookingStatus, string> = {
+        [BookingStatus.PENDING]: 'pending',
+        [BookingStatus.CONFIRMED]: 'confirmed',
+        [BookingStatus.IN_PROGRESS]: 'processing',
+        [BookingStatus.COMPLETED]: 'completed',
+        [BookingStatus.CANCELLED]: 'cancelled',
+      };
+      orderUpdate.status = statusMap[bookingStatus as BookingStatus];
     }
 
-    // Update order if there are changes
-    let updatedOrder = order;
-    if (Object.keys(updateOrderFields).length > 0) {
-      console.log('Updating order with fields:', updateOrderFields);
-      updatedOrder = await orderModel.findByIdAndUpdate(orderId, { $set: updateOrderFields }, { new: true });
-      if (!updatedOrder) {
-        console.error('Failed to update order for orderId:', orderId);
-        res.status(500).json({
-          success: false,
-          message: 'Không thể cập nhật đơn hàng'
-        });
-        return;
-      }
-      console.log('Updated order:', updatedOrder);
+    if (Object.keys(orderUpdate).length > 0) {
+      await orderModel.findByIdAndUpdate(orderId, orderUpdate, { session });
     }
 
-    // Update orderDetail if there are changes
-    let updatedOrderDetail = orderDetail;
-    if (Object.keys(updateOrderDetailFields).length > 0) {
-      console.log('Updating orderDetail with fields:', updateOrderDetailFields);
-      updatedOrderDetail = await orderDetailModel.findOneAndUpdate(
-        { orderId },
-        { $set: updateOrderDetailFields },
-        { new: true }
+    // Lấy tất cả orderDetail hiện tại
+    const existingDetails = await orderDetailModel.find({ orderId }).session(session);
+
+    // Xóa các pet không còn trong danh sách gửi lên
+    const incomingIds = pets
+      .filter((p: any) => p.orderDetailId && mongoose.Types.ObjectId.isValid(p.orderDetailId))
+      .map((p: any) => p.orderDetailId.toString());
+
+    const toDelete = existingDetails.filter(d => !incomingIds.includes(d._id.toString()));
+    if (toDelete.length > 0) {
+      await orderDetailModel.deleteMany(
+        { _id: { $in: toDelete.map(d => d._id) } },
+        { session }
       );
-      if (!updatedOrderDetail) {
-        console.error('Failed to update orderDetail for orderId:', orderId);
-        res.status(500).json({
-          success: false,
-          message: 'Không thể cập nhật chi tiết đơn hàng'
-        });
-        return;
-      }
-      console.log('Updated orderDetail:', updatedOrderDetail);
     }
 
-    // Return response
+    // Xử lý từng pet
+    for (const pet of pets) {
+      const { orderDetailId, serviceId, petName, petType, date, hour, minute } = pet;
+
+      if (!serviceId || !petName?.trim() || !petType?.trim()) {
+        continue; // Bỏ qua nếu thiếu dữ liệu cơ bản
+      }
+
+      // Tính booking time từ date + hour + minute (nếu có)
+      let bookingDateTime: Date | null = null;
+      if (date && hour !== undefined && minute !== undefined) {
+        const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`;
+        const fullDateTime = `${dayjs(date).format('YYYY-MM-DD')} ${timeString}`;
+        bookingDateTime = dayjs.tz(fullDateTime, 'Asia/Ho_Chi_Minh').toDate();
+      }
+
+      const service = await serviceModel.findById(serviceId).session(session);
+      if (!service) continue;
+
+      const duration = service.duration || 60;
+      const bookingEnd = bookingDateTime
+        ? new Date(bookingDateTime.getTime() + duration * 60 * 1000)
+        : null;
+
+      if (orderDetailId && mongoose.Types.ObjectId.isValid(orderDetailId)) {
+        // CẬP NHẬT PET CŨ – BÂY GIỜ CÓ CẬP NHẬT THỜI GIAN
+        const updateFields: any = {
+          serviceId,
+          productId: null,
+          petName: petName.trim(),
+          petType: petType.trim(),
+        };
+
+        if (bookingDateTime) {
+          updateFields.booking_date = bookingDateTime;
+          updateFields.booking_start = bookingDateTime;
+          updateFields.booking_end = bookingEnd;
+        }
+
+        await orderDetailModel.findByIdAndUpdate(
+          orderDetailId,
+          { $set: updateFields },
+          { session, new: true }
+        );
+      } else {
+        // THÊM PET MỚI
+        const finalBookingTime = bookingDateTime || new Date();
+        const finalBookingEnd = new Date(finalBookingTime.getTime() + duration * 60 * 1000);
+
+        const newDetail = new orderDetailModel({
+          orderId,
+          serviceId,
+          productId: null,
+          quantity: 1,
+          petName: petName.trim(),
+          petType: petType.trim(),
+          booking_date: finalBookingTime,
+          booking_start: finalBookingTime,
+          booking_end: finalBookingEnd,
+        });
+
+        await newDetail.save({ session });
+      }
+    }
+
+    await session.commitTransaction();
+
     res.status(200).json({
       success: true,
-      message: 'Cập nhật thông tin booking thành công',
-      data: {
-        orderId,
-        bookingDate: updatedOrderDetail.booking_date,
-        serviceId: updatedOrderDetail.serviceId,
-        petName: updatedOrderDetail.petName,
-        petType: updatedOrderDetail.petType,
-        fullname: updatedOrder.fullname, // Sửa từ username
-        bookingStatus: updatedOrder.bookingStatus,
-        email: updatedOrder.email,
-        phone: updatedOrder.phone
-      }
+      message: 'Cập nhật lịch hẹn thành công',
+      data: { orderId, petCount: pets.length },
     });
   } catch (error) {
+    await session.abortTransaction();
     console.error('Error updating booking:', error);
     res.status(500).json({
       success: false,
-      message: 'Lỗi khi cập nhật booking',
-      error: error instanceof Error ? error.message : 'Lỗi không xác định'
+      message: 'Lỗi khi cập nhật lịch hẹn',
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
+  } finally {
+    session.endSession();
   }
 };
+
 export const getOrderById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -1009,70 +1006,6 @@ export const getOrderById = async (req: Request, res: Response): Promise<void> =
     res.status(500).json({ success: false, message: 'Internal Server Error', details: errorMessage });
   }
 };
-// Hàm mới: Tự động hủy các đặt lịch quá hạn
-export const cancelOverdueBookings = () => {
-  schedule.scheduleJob('*/1 * * * *', async () => {
-    try {
-      console.log('Checking for overdue bookings...');
-      const now = dayjs().tz('Asia/Ho_Chi_Minh');
-
-      // Find bookings with serviceId and booking_date
-      const overdueBookings = await orderDetailModel
-        .find({
-          serviceId: { $ne: null },
-          booking_date: { $ne: null }
-        })
-        .populate('orderId');
-
-      for (const booking of overdueBookings) {
-        const order = booking.orderId;
-        if (!order || !order.bookingStatus) {
-          console.warn(`Skipping booking with missing order or bookingStatus: ${booking._id}`);
-          continue;
-        }
-
-        // Skip if already CANCELLED, IN_PROGRESS, or COMPLETED
-        if (
-          order.bookingStatus === BookingStatus.CANCELLED ||
-          order.bookingStatus === BookingStatus.IN_PROGRESS ||
-          order.bookingStatus === BookingStatus.COMPLETED
-        ) {
-          continue;
-        }
-
-        // Parse booking_date as the full date-time
-        const bookingDateTime = dayjs(booking.booking_date).tz('Asia/Ho_Chi_Minh');
-
-        if (!bookingDateTime.isValid()) {
-          console.warn(`Invalid booking date for order ${order._id}: ${booking.booking_date}`);
-          continue;
-        }
-
-        // Check if more than 15 minutes have passed since the booking time
-        const fifteenMinutesAfter = bookingDateTime.add(15, 'minute');
-        if (now.isAfter(fifteenMinutesAfter)) {
-          // Update order to CANCELLED
-          await orderModel.findByIdAndUpdate(
-            order._id,
-            {
-              $set: {
-                bookingStatus: BookingStatus.CANCELLED,
-                status: 'cancelled'
-              }
-            },
-            { new: true }
-          );
-          console.log(`Cancelled overdue booking: ${order._id}`);
-        }
-      }
-    } catch (error) {
-      console.error('Error in cancelOverdueBookings job:', error);
-    }
-  });
-};
-
-// Khởi động công việc tự động hủy khi file được load
-cancelOverdueBookings();
 
 // tìm số lương lịch hủy
 export const getCancelledBookings = async (req: Request, res: Response): Promise<void> => {

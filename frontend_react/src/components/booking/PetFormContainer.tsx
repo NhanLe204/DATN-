@@ -39,30 +39,35 @@ const PetFormContainer: React.FC<PetFormContainerProps> = ({
   onViewPriceClick,
 }) => {
   const addPetForm = () => {
-    if (petForms.length < 5) {
-      // Kiểm tra xem có slot khả dụng cho ít nhất một ngày trong tương lai
+    if (petForms.length >= 5) {
+      message.warning("Pet Heaven chỉ nhận tối đa 5 thú cưng cho 1 lịch hẹn!");
+      return;
+    }
+
+    const hasPickedDate = selectedDates.some((date) => date !== null);
+
+    if (hasPickedDate) {
       const hasAvailableSlots = Object.values(slotAvailability).some(
         (slots) =>
           Object.values(slots).some((count) => count > petForms.length)
       );
 
-      if (!hasAvailableSlots && petForms.length > 0) {
+      if (!hasAvailableSlots) {
         message.warning(
           "Không còn khung giờ nào đủ slot để thêm thú cưng mới!"
         );
         return;
       }
-
-      setPetForms([...petForms, petForms.length]);
-      setPetFormData([
-        ...petFormData,
-        { estimatedPrice: undefined, estimatedDuration: undefined },
-      ]);
-      setSelectedDates([...selectedDates, null]);
-    } else {
-      message.warning("Pet Heaven chỉ nhận tối đa 5 thú cưng cho 1 lịch hẹn!");
     }
+
+    setPetForms([...petForms, petForms.length]);
+    setPetFormData([
+      ...petFormData,
+      { estimatedPrice: undefined, estimatedDuration: undefined },
+    ]);
+    setSelectedDates([...selectedDates, null]);
   };
+
 
   const removePetForm = (indexToRemove: number) => {
     if (petForms.length > 1) {
@@ -82,9 +87,9 @@ const PetFormContainer: React.FC<PetFormContainerProps> = ({
             index === indexToRemove
               ? { name: ["pets", index], value: undefined }
               : {
-                  name: ["pets", index],
-                  value: form.getFieldValue(["pets", index]),
-                }
+                name: ["pets", index],
+                value: form.getFieldValue(["pets", index]),
+              }
           )
           .filter((field) => field.value !== undefined)
       );

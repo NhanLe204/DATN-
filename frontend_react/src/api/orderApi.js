@@ -17,7 +17,7 @@ const orderApi = {
       const response = await api.get(
         `/v1/orders/check/available-slots?date=${date}`
       );
-      console.log("API getAvailableSlots response:", response.data);
+      // console.log("API getAvailableSlots response:", response.data);
       return response.data;
     } catch (error) {
       console.error(
@@ -44,15 +44,34 @@ const orderApi = {
     return response.data;
   },
   updateOrderStatus: async (id, status) => {
-    const response = await api.patch(`/v1/orders/status/${id}`, {status} );
+    const response = await api.patch(`/v1/orders/status/${id}`, { status });
     return response.data;
   },
   cancelBooking: async (orderId, orderDetailId) => {
-      const response = await api.post("/v1/orders/cancel-booking", {
-        orderId,
-        orderDetailId,
-      });
-      return response.data;
+    const response = await api.post("/v1/orders/cancel-booking", {
+      orderId,
+      orderDetailId,
+    });
+    return response.data;
   },
+  checkRealtimeSlot: async (serviceId, bookingStart) => {
+    try {
+      const response = await api.post(
+        '/v1/orders/check-realtime-slot',
+        {
+          serviceId,
+          booking_start: bookingStart, 
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error(
+        'API checkRealtimeSlot error:',
+        error.response?.data || error
+      );
+      throw error;
+    }
+  }
+
 };
 export default orderApi;

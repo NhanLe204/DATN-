@@ -143,28 +143,42 @@ const CategoryList: React.FC = () => {
 
   const handleDelete = (record: Category) => {
     Modal.confirm({
-      title: 'Xác nhận',
-      content: `Bạn có chắc chắn muốn xóa danh mục "${record.name}"?`,
-      okText: 'Đồng ý',
-      cancelText: 'Hủy bỏ',
+      title: 'Ẩn danh mục',
+      content: (
+        <div>
+          Bạn có chắc muốn <strong>ẨN</strong> danh mục "<strong>{record.name}</strong>" không?<br />
+          <small>Danh mục sẽ không hiển thị cho khách hàng nhưng vẫn được lưu trong hệ thống.</small>
+        </div>
+      ),
+      okText: 'Ẩn ngay',
+      okButtonProps: { danger: true },
+      cancelText: 'Hủy',
+
       onOk: async () => {
         try {
-          await categoryApi.delete(record._id);
-          const updatedCategories = categories.filter(category => category._id !== record._id);
-          setCategories(updatedCategories);
-          setFilteredCategories(updatedCategories);
-          notification.success({
-            message: "Thành công",
-            description: "Danh mục đã được xóa thành công!",
-            placement: "topRight",
-          });
+          const res = await categoryApi.delete(record._id);
+
+          if (res.success) {
+            const updated = categories.map((cat) =>
+              cat._id === record._id
+                ? { ...cat, status: 'Bị khóa' } 
+                : cat
+            );
+            setCategories(updated);
+            setFilteredCategories(updated);
+
+            notification.success({
+              message: 'Thành công',
+              description: res.message || 'Danh mục đã được ẩn',
+            });
+          }
         } catch (error: any) {
-          console.error("Error deleting category:", error);
-          const errorMessage = error.response?.data?.message || "Không thể xóa danh mục!";
+          const msg =
+            error.response?.data?.message ||
+            'Không thể ẩn danh mục (có thể còn sản phẩm đang bán)';
           notification.error({
-            message: "Lỗi",
-            description: errorMessage,
-            placement: "topRight",
+            message: 'Thất bại',
+            description: msg,
           });
         }
       },

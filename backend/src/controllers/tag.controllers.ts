@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import tagModel from '../models/tag.model.js';
+import productModel from '@/models/product.model.js';
 
 export const getAllTags = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -73,20 +74,38 @@ export const insertTag = async (req: Request, res: Response): Promise<void> => {
 export const deleteTag = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const result = await tagModel.findByIdAndDelete(id);
-    if (!result) {
-      res.status(404).json({ message: 'Tag not found' });
+
+    const tag = await tagModel.findById(id);
+    if (!tag) {
+      res.status(404).json({ message: "Tag not found" });
       return;
     }
-    res.status(200).json({ message: 'Tag deleted successfully' });
-  } catch (error) {
-    if (error instanceof Error) {
-      res.status(500).json({ message: 'Server error', error: error.message });
-    } else {
-      res.status(500).json({ message: 'Server error', error });
+
+    const hasProducts = await productModel.exists({
+      tag_id: id,
+      status: "available"  
+    });
+
+    if (hasProducts) {
+      res.status(400).json({
+        message: "Không thể xóa Tag vì vẫn còn sản phẩm đang sử dụng!"
+      });
+      return;
     }
+
+    await tagModel.findByIdAndDelete(id);
+
+    res.status(200).json({ message: "Tag deleted successfully" });
+  
+  } catch (error) {
+    console.error("Error deleting tag:", error);
+    res.status(500).json({
+      message: "Server error",
+      error: error instanceof Error ? error.message : error
+    });
   }
 };
+
 export const updateTag = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;

@@ -11,7 +11,11 @@ const orderDetailSchema = new Schema(
     quantity: { type: Number, required: true },
     product_price: { type: Number, required: false },
     total_price: { type: Number, required: false },
+    // booking time
+    booking_start: { type: Date, required: false },
+    booking_end: { type: Date, required: false },
     booking_date: { type: Date, required: false, default: '' },
+    // 
     petName: { type: String, required: false, default: '' },
     petType: {
       type: String,

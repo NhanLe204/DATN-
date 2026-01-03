@@ -7,17 +7,24 @@ import { Provider } from "react-redux";
 import { store } from "./redux/store";
 import ENV_VARS from "../config";
 
+import viVN from 'antd/locale/vi_VN';
+import dayjs from 'dayjs';
+import 'dayjs/locale/vi';
+dayjs.locale('vi');
+import { ConfigProvider } from 'antd';
 
 const rootElement = document.getElementById("root");
 
 if (rootElement) {
   createRoot(rootElement).render(
     // <StrictMode>
-      <Provider store={store}>
-        <GoogleOAuthProvider clientId={ENV_VARS.VITE_GOOGLE_CLIENT_ID}>
+    <Provider store={store}>
+      <GoogleOAuthProvider clientId={ENV_VARS.VITE_GOOGLE_CLIENT_ID}>
+        <ConfigProvider locale={viVN}>
           <App />
-        </GoogleOAuthProvider>
-      </Provider>
+        </ConfigProvider>
+      </GoogleOAuthProvider>
+    </Provider>
     // </StrictMode>
   );
 } else {

@@ -203,55 +203,84 @@ const SpaBookingForm: React.FC = () => {
   };
 
   const onFinish = async (values: any) => {
-    // Kiểm tra validation
-    if (!values.fullName) {
+    // Kiểm tra thông tin khách hàng
+    if (!values.fullName?.trim()) {
       message.error("Vui lòng nhập họ và tên!");
       return;
     }
-    if (!values.phone) {
+    if (!values.phone?.trim()) {
       message.error("Vui lòng nhập số điện thoại!");
       return;
     }
-    if (!values.email) {
+    if (!values.email?.trim()) {
       message.error("Vui lòng nhập email!");
       return;
     }
 
-    // Kiểm tra slot availability (giữ nguyên logic hiện tại)
-    const slotUsage: { [key: string]: number } = {};
+    // Kiểm tra từng pet: phải có ngày, giờ, phút, dịch vụ
     for (let index = 0; index < spaBooking.petForms.length; index++) {
-      const selectedDate = spaBooking.selectedDates[index]
-        ? moment(spaBooking.selectedDates[index])
-        : null;
-      const selectedTime = values.pets?.[index]?.time;
+      const pet = values.pets?.[index];
 
-      if (!selectedDate || !selectedTime) {
-        message.error(`Vui lòng chọn ngày và giờ hẹn cho pet ${index + 1}!`);
+      if (!pet) {
+        message.error(`Thiếu thông tin thú cưng ${index + 1}!`);
         return;
       }
 
-      const selectedServiceId = values.pets?.[index]?.service;
-      const selectedService = services.find((s) => s._id === selectedServiceId);
-      const duration = selectedService?.duration
-        ? parseInt(selectedService.duration)
-        : 60;
-      const slotsNeeded = Math.ceil(duration / 60);
-      const hour = parseInt(selectedTime.replace("h", ""), 10);
+      if (!pet.date) {
+        message.error(`Vui lòng chọn ngày hẹn cho thú cưng ${index + 1}!`);
+        return;
+      }
+
+      if (pet.hour === undefined || pet.hour === null) {
+        message.error(`Vui lòng chọn giờ hẹn cho thú cưng ${index + 1}!`);
+        return;
+      }
+
+      if (pet.minute === undefined || pet.minute === null) {
+        message.error(`Vui lòng chọn phút cho thú cưng ${index + 1}!`);
+        return;
+      }
+
+      if (!pet.service) {
+        message.error(`Vui lòng chọn dịch vụ cho thú cưng ${index + 1}!`);
+        return;
+      }
+    }
+
+    // === KIỂM TRA SLOT CÓ CÒN TRỐNG KHÔNG (nếu cần) ===
+    // (Bạn có thể bỏ qua nếu không muốn check kỹ, vì backend đã check rồi)
+    // Nhưng nếu muốn giữ, sửa lại như sau:
+
+    for (let index = 0; index < spaBooking.petForms.length; index++) {
+      const pet = values.pets[index];
+      const selectedDate = moment(pet.date); // đã là moment từ DatePicker
+      const hour = pet.hour; // số: 8,9,14,...
+      const minute = pet.minute || 0;
+
+      const selectedService = services.find(s => s._id === pet.service);
+      const duration = selectedService?.duration ? parseInt(selectedService.duration) : 60;
+      const slotsNeeded = Math.ceil(duration / 60); // thường là 1
+
       const dateStr = selectedDate.format("YYYY-MM-DD");
 
       for (let i = 0; i < slotsNeeded; i++) {
         const checkHour = hour + i;
-        const checkTime = `${checkHour}h`;
-        const slotKey = `${dateStr}-${checkTime}`;
-        slotUsage[slotKey] = (slotUsage[slotKey] || 0) + 1;
+        const checkTimeKey = `${checkHour}h`;
 
-        const slotsAvailable = slotAvailability[index]?.[checkTime] || 0;
-        if (slotUsage[slotKey] > slotsAvailable) {
-          message.error(
-            `Không đủ slot cho khung giờ ${checkTime} ngày ${selectedDate.format(
-              "DD/MM/YYYY"
-            )}!`
-          );
+        const availableInThisHour = slotAvailability[index]?.[checkTimeKey] ?? 0;
+
+        // Đếm số pet đang cố book vào cùng giờ này
+        let bookedByCurrentBooking = 0;
+        for (let j = 0; j < spaBooking.petForms.length; j++) {
+          const otherPet = values.pets[j];
+          const otherHour = otherPet.hour;
+          if (moment(otherPet.date).isSame(selectedDate, 'day') && (otherHour + Math.floor((otherPet.minute || 0) / 60)) === (hour + i)) {
+            bookedByCurrentBooking++;
+          }
+        }
+
+        if (bookedByCurrentBooking > availableInThisHour) {
+          message.error(`Khung giờ ${checkHour}h ngày ${selectedDate.format("DD/MM/YYYY")} đã hết chỗ!`);
           return;
         }
       }
@@ -260,37 +289,34 @@ const SpaBookingForm: React.FC = () => {
     setLoading(true);
 
     try {
-      // Lưu guestInfo từ form, ngay cả khi đã đăng nhập
       const guestInfo = {
-        fullName: values.fullName,
-        phone: values.phone,
-        email: values.email,
+        fullName: values.fullName.trim(),
+        phone: values.phone.trim(),
+        email: values.email.trim(),
         note: values.note || "",
       };
       dispatch(setGuestUserInfo(guestInfo));
 
-      const orderDetails = spaBooking.petForms.map((index) => {
-        const selectedDate = moment(spaBooking.selectedDates[index]);
-        const selectedTime = values.pets[index].time;
-        const hour = parseInt(selectedTime.replace("h", ""), 10);
-        const serviceTime = selectedDate.clone().set({
-          hour,
-          minute: 0,
+      const orderDetails = spaBooking.petForms.map((_, index) => {
+        const pet = values.pets[index];
+        const selectedDate = moment(pet.date);
+        const startLocal = selectedDate.clone().set({
+          hour: pet.hour,
+          minute: pet.minute || 0,
           second: 0,
-          millisecond: 0,
+          millisecond: 0
         });
-        const serviceTimeString = serviceTime
-          .tz("Asia/Ho_Chi_Minh")
-          .utc()
-          .format("YYYY-MM-DDTHH:00:00.000Z");
+
+        const booking_date = startLocal.tz("Asia/Ho_Chi_Minh").utc().toDate().toISOString();
+
         return {
           productID: null,
-          serviceID: values.pets[index].service,
+          serviceID: pet.service,
           quantity: 1,
-          product_price: spaBooking.petFormData[index].estimatedPrice || 0,
-          booking_date: serviceTimeString,
-          petName: values.pets[index].petName || "",
-          petType: values.pets[index].petType || "",
+          product_price: spaBooking.petFormData[index]?.estimatedPrice || 0,
+          booking_date: booking_date,
+          petName: pet.petName?.trim() || "",
+          petType: pet.petType || "",
         };
       });
 
@@ -299,42 +325,35 @@ const SpaBookingForm: React.FC = () => {
         payment_typeID: null,
         deliveryID: null,
         couponID: null,
-        orderdate: moment()
-          .tz("Asia/Ho_Chi_Minh")
-          .format("YYYY-MM-DD HH:mm:ss"),
+        orderdate: moment().tz("Asia/Ho_Chi_Minh").format("YYYY-MM-DD HH:mm:ss"),
         shipping_address: null,
         orderDetails,
-        phone: values.phone,
         infoUserGuest: guestInfo,
-        note: values.note || "",
-        // Thêm trường fullname để backend lưu trực tiếp vào order
-        fullname: values.fullName,
+        fullname: values.fullName.trim(), // backend dùng cái này
       };
 
-      console.log("SpaBookingForm - Order data before sending:", orderData);
+      console.log("Sending order data:", orderData);
 
       const response = await orderApi.create(orderData);
-      console.log("SpaBookingForm - Order response:", response);
+      console.log("Booking success:", response);
 
-      // Cập nhật userData trong localStorage nếu đã đăng nhập
+      message.success("Đặt lịch thành công! Chúng tôi sẽ gửi email xác nhận ngay.");
+
       if (userId) {
-        const updatedUserData = {
+        localStorage.setItem("userData", JSON.stringify({
           ...userData,
-          fullname: values.fullName,
-        };
-        localStorage.setItem("userData", JSON.stringify(updatedUserData));
-        setUserData(updatedUserData);
+          fullname: values.fullName.trim(),
+        }));
       }
 
-      message.success("Đặt lịch thành công!");
       form.resetFields();
       dispatch(resetForm());
       navigate(userId ? "/userprofile/bookings" : "/success-booking");
-    } catch (error) {
-      console.error("SpaBookingForm - API Error Details:", error);
-      const errorMessage =
-        error.response?.data?.message || "Có lỗi xảy ra khi đặt lịch!";
-      message.error(errorMessage);
+
+    } catch (error: any) {
+      console.error("Booking failed:", error);
+      const msg = error.response?.data?.message || "Đặt lịch thất bại, vui lòng thử lại!";
+      message.error(msg);
     } finally {
       setLoading(false);
     }
@@ -496,7 +515,7 @@ const SpaBookingForm: React.FC = () => {
                 userData?.fullname || spaBooking.guestUserInfo.fullName || "",
               phone:
                 userData?.phone_number &&
-                /^(0|\+84)[3|5|7|8|9][0-9]{8}$/.test(userData.phone_number)
+                  /^(0|\+84)[3|5|7|8|9][0-9]{8}$/.test(userData.phone_number)
                   ? userData.phone_number
                   : spaBooking.guestUserInfo.phone || "",
               email: userData?.email || spaBooking.guestUserInfo.email || "",
