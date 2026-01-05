@@ -1,6 +1,6 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
-import cors from 'cors';
+import cors, { CorsOptions } from 'cors';
 import logger from 'morgan';
 import dotenv from 'dotenv';
 import ENV_VARS from './config/config.js';
@@ -37,12 +37,14 @@ const PORT = ENV_VARS.PORT;
 //   origin: `${ENV_VARS.FE_URL}`,
 //   credentials: true
 // };
-const corsOptions: cors.CorsOptions = {
-  origin: [
-    ENV_VARS.FE_URL,
-    ENV_VARS.FE_URL_PRODUCTION
-  ].filter(Boolean) as string[],
-  credentials: true
+const allowedOrigins = [
+  ENV_VARS.FE_URL,
+  ENV_VARS.FE_URL_PRODUCTION
+].filter((v): v is string => Boolean(v));
+
+const corsOptions: CorsOptions = {
+  origin: allowedOrigins,
+  credentials: true,
 };
 
 
