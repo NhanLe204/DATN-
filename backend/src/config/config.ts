@@ -16,7 +16,6 @@ const ENV_VARS = {
   VNP_URL: process.env.VNP_HASHSECRET,
   HOTLINE: process.env.HOTLINE,
   ADDRESS: process.env.ADDRESS,
-  FE_URL_PRODUCTION = process.env.FE_URL_PRODUCTION,
 };
 
 export default ENV_VARS;
