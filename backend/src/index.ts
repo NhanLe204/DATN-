@@ -37,15 +37,24 @@ const PORT = ENV_VARS.PORT;
 //   origin: `${ENV_VARS.FE_URL}`,
 //   credentials: true
 // };
-const allowedOrigins = [
-  ENV_VARS.FE_URL,
-  ENV_VARS.FE_URL_PRODUCTION
-].filter((v): v is string => Boolean(v));
-
 const corsOptions: CorsOptions = {
-  origin: allowedOrigins,
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+
+    if (
+      origin === ENV_VARS.FE_URL ||
+      origin === ENV_VARS.FE_URL_PRODUCTION ||
+      origin.endsWith('.vercel.app')
+    ) {
+      return callback(null, true);
+    }
+
+    console.log('Blocked by CORS:', origin);
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
 };
+
 
 
 app.use(cors(corsOptions));
