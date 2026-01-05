@@ -33,17 +33,18 @@ dotenv.config(); // Đọc file .env
 const app = express();
 const PORT = ENV_VARS.PORT;
 
-const corsOptions = {
-  origin: `${ENV_VARS.FE_URL}`,
-  credentials: true
-};
 // const corsOptions = {
-//   origin: [
-//     ENV_VARS.FE_URL,
-//     ENV_VARS.FE_URL_PRODUCTION
-//   ].filter(Boolean) as string[],
+//   origin: `${ENV_VARS.FE_URL}`,
 //   credentials: true
 // };
+const corsOptions = {
+  origin: [
+    ENV_VARS.FE_URL,              
+    ENV_VARS.FE_URL_PRODUCTION    
+  ].filter(Boolean),
+  credentials: true
+};
+
 
 app.use(cors(corsOptions));
 app.use(express.json()); 
