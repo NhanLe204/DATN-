@@ -3,7 +3,7 @@ import ENV_VARS from "../../config";
 import loginApi from "./login"; // Import API login để gọi refreshToken
 
 const api = axios.create({
-  baseURL: ENV_VARS.VITE_API_URL || VITE_BE_URL,
+  baseURL: ENV_VARS.VITE_API_URL || ENV_VARS.VITE_BE_URL,
   headers: {
     "Content-Type": "application/json",
   },
