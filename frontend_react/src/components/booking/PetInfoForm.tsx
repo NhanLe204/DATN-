@@ -92,11 +92,25 @@ const PetInfoForm: React.FC<PetInfoFormProps> = ({
       return Promise.resolve();
     }
 
-    const selected = moment(date)
-      .hour(hour)
-      .minute(minute);
+    const selectedInTZ = moment.tz(
+      {
+        year: date.year(),
+        month: date.month(),
+        date: date.date(),
+        hour: hour,
+        minute: minute,
+        second: 0,
+        millisecond: 0,
+      },
+      'Asia/Ho_Chi_Minh'
+    );
 
-    if (selected.isBefore(safeNow)) {
+    if (selectedInTZ.isBefore(safeNow)) {
+      if (selectedInTZ.isSame(safeNow, 'day')) {
+        return Promise.reject(
+          new Error(`Chỉ có thể đặt sau ${safeNow.format('HH:mm')} trở đi`)
+        );
+      }
       return Promise.reject(
         new Error("Không thể đặt thời gian trong quá khứ")
       );

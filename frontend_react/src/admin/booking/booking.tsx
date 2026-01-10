@@ -72,7 +72,7 @@ const BookingManager: React.FC = () => {
         <BookingFormModal
           visible={isAddModalVisible}
           isAddMode={true}
-          isEditMode={false} 
+          isEditMode={false}
           services={services}
           petTypes={petTypesDefault}
           form={addForm}
@@ -110,7 +110,7 @@ const BookingManager: React.FC = () => {
               setIsEditModalVisible(false);
               setIsEditMode(false);
             }
-            return success; 
+            return success;
           }}
           onCancel={() => {
             handleModalCancel();
@@ -125,9 +125,16 @@ const BookingManager: React.FC = () => {
           visible={isStartModalVisible}
           booking={selectedBooking}
           form={startForm}
-          onOk={handleStartModalOk}
-          onCancel={() => { handleModalCancel(); setIsStartModalVisible(false); }}
+          onOk={async () => {
+            await handleStartModalOk();
+            setIsStartModalVisible(false);
+          }}
+          onCancel={() => {
+            handleModalCancel();
+            setIsStartModalVisible(false);
+          }}
         />
+
 
 
       </Spin>

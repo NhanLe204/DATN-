@@ -10,6 +10,7 @@ import {
   Avatar,
   Drawer,
   Button,
+  notification,
 } from "antd";
 import {
   FaTruck,
@@ -220,7 +221,11 @@ export default function Header() {
           clearLocalStorageExceptCarts();
           setUser(null);
           dispatch(setUserId(null));
-          navigate("/login");
+          notification.info({
+            message: "Phiên đăng nhập đã hết hạn",
+            description: "Bạn có thể đăng nhập lại khi cần",
+            placement: "topRight",
+          });
         }
       });
   }, [dispatch, navigate]);
@@ -228,14 +233,26 @@ export default function Header() {
   const handleLogout = async () => {
     try {
       await loginApi.logout();
+
+      clearLocalStorageExceptCarts();
+
       localStorage.setItem("logoutEvent", Date.now().toString());
-      localStorage.clear();
+
       setUser(null);
       dispatch(setUserId(null));
       setIsUserLoaded(false);
-      navigate("/login");
+
+      notification.success({
+        message: "Đăng xuất thành công!",
+        placement: "topRight",
+        duration: 3,
+      });
+
     } catch (error) {
-      console.error("Logout failed:", error);
+      notification.error({
+        message: "Đăng xuất thất bại",
+        description: "Có lỗi xảy ra, vui lòng thử lại.",
+      });
     }
   };
 
@@ -244,18 +261,18 @@ export default function Header() {
       {(user?.role === "admin" || user?.role === "employee") && (
         <Menu.Item key="1">
           <a href="/admin">
-            <i className="fas fa-cog mr-2"></i>Quản lý website
+            <i className="mr-2 fas fa-cog"></i>Quản lý website
           </a>
         </Menu.Item>
       )}
       <Menu.Item key="2">
         <a href={`/userprofile/account`}>
-          <i className="fas fa-user mr-2"></i>Tài khoản
+          <i className="mr-2 fas fa-user"></i>Tài khoản
         </a>
       </Menu.Item>
       <Menu.Item key="3" onClick={handleLogout}>
         <a href="#">
-          <i className="fas fa-sign-out-alt mr-2"></i>Đăng xuất
+          <i className="mr-2 fas fa-sign-out-alt"></i>Đăng xuất
         </a>
       </Menu.Item>
     </Menu>
@@ -275,7 +292,7 @@ export default function Header() {
     >
       <div className="p-4">
         <div className="mb-4">
-          <div className="flex justify-between items-center mb-2">
+          <div className="flex items-center justify-between mb-2">
             <h3 className="text-lg font-bold">TÌM KIẾM GẦN ĐÂY</h3>
             <Button
               type="link"
@@ -291,8 +308,8 @@ export default function Header() {
               {searchHistory.map((item, index) => (
                 <button
                   key={index}
-                  className="rounded-full bg-gray-100 px-4 py-2 hover:bg-gray-200"
-                  onClick={() => handleSearchSubmit(item)} // Sửa để gọi handleSearchSubmit
+                  className="px-4 py-2 bg-gray-100 rounded-full hover:bg-gray-200"
+                  onClick={() => handleSearchSubmit(item)}
                 >
                   {item}
                 </button>
@@ -309,7 +326,7 @@ export default function Header() {
               {searchResults.map((product) => (
                 <div
                   key={product._id}
-                  className="rounded bg-gray-50 p-4 shadow-md cursor-pointer hover:bg-gray-100"
+                  className="p-4 rounded shadow-md cursor-pointer bg-gray-50 hover:bg-gray-100"
                   onClick={() => {
                     console.log("Navigating to:", `/detail/${product._id}`);
                     navigate(`/detail/${product._id}`);
@@ -319,7 +336,7 @@ export default function Header() {
                   <img
                     src={`${product.image_url[0]}`}
                     alt={product.name}
-                    className="w-full h-32 object-cover mb-2"
+                    className="object-cover w-full h-32 mb-2"
                   />
                   <p className="text-sm font-medium">{product.name}</p>
                   <p className="text-[#22A6DF] font-bold">
@@ -351,7 +368,7 @@ export default function Header() {
         onChange={(e) => handleSearchChange(e.target.value)}
       />
       <div className="mb-4">
-        <div className="flex justify-between items-center mb-2">
+        <div className="flex items-center justify-between mb-2">
           <h3 className="text-lg font-bold">TÌM KIẾM GẦN ĐÂY</h3>
           <Button
             type="link"
@@ -367,7 +384,7 @@ export default function Header() {
             {searchHistory.map((item, index) => (
               <button
                 key={index}
-                className="rounded-full bg-gray-100 px-4 py-2 hover:bg-gray-200"
+                className="px-4 py-2 bg-gray-100 rounded-full hover:bg-gray-200"
                 onClick={() => handleSearchSubmit(item)} // Sửa để gọi handleSearchSubmit
               >
                 {item}
@@ -385,7 +402,7 @@ export default function Header() {
             {searchResults.map((product) => (
               <div
                 key={product._id}
-                className="rounded bg-gray-50 p-4 cursor-pointer hover:bg-gray-100"
+                className="p-4 rounded cursor-pointer bg-gray-50 hover:bg-gray-100"
                 onClick={() => {
                   console.log("Navigating to:", `/detail/${product._id}`);
                   navigate(`/detail/${product._id}`);
@@ -395,7 +412,7 @@ export default function Header() {
                 <img
                   src={`${product.image_url[0]}`}
                   alt={product.name}
-                  className="w-full h-32 object-cover mb-2"
+                  className="object-cover w-full h-32 mb-2"
                 />
                 <p className="text-sm font-medium">{product.name}</p>
                 <p className="text-[#22A6DF] font-bold">
@@ -433,7 +450,7 @@ export default function Header() {
       <header className="w-full">
         <div className="flex h-[34px] items-center justify-center bg-[#22A6DF] px-4 text-[10px] text-white sm:h-[34px] sm:px-[40px] sm:text-xs lg:px-[154px] lg:text-sm">
           <div className="flex items-center gap-1 text-xs sm:text-xs">
-            <div className="flex items-center rounded-xl bg-black px-2 py-1 font-semibold">
+            <div className="flex items-center px-2 py-1 font-semibold bg-black rounded-xl">
               %15 Off
             </div>{" "}
             khi mua tại cửa hàng
@@ -477,7 +494,7 @@ export default function Header() {
                   <FaSearch className="text-white" />
                 </button>
               }
-              className="custom-search hidden w-1/3 rounded-full md:flex"
+              className="hidden w-1/3 rounded-full custom-search md:flex"
               onSearch={handleSearchSubmit}
               value={keyword}
               onChange={(e) => handleSearchChange(e.target.value)}
@@ -522,10 +539,10 @@ export default function Header() {
 
           <Space size={50} className="flex items-center xl:hidden">
             <button
-              className="rounded-full p-2 hover:bg-gray-100 md:hidden"
+              className="p-2 rounded-full hover:bg-gray-100 md:hidden"
               onClick={showSearchMobile}
             >
-              <Search className="h-6 w-6" />
+              <Search className="w-6 h-6" />
             </button>
             <a href="/cart">
               <Badge count={cartCount}>
@@ -554,18 +571,18 @@ export default function Header() {
         <nav className="flex items-center justify-between bg-white px-4 text-black sm:px-[40px] lg:px-[154px]">
           <Space className="hidden items-center justify-between py-3 md:flex md:gap-[20px] lg:gap-[27px] xl:gap-[50px]">
             {menuItems.map((item) => (
-              <a key={item.path} href={item.path} className="group relative">
+              <a key={item.path} href={item.path} className="relative group">
                 <Typography.Text
                   className={`text-sm font-bold transition-colors duration-300 lg:text-sm xl:text-lg relative z-10 ${currentPath === item.path
-                      ? "text-[#22A6DF]"
-                      : "text-black group-hover:text-[#22A6DF]"
+                    ? "text-[#22A6DF]"
+                    : "text-black group-hover:text-[#22A6DF]"
                     }`}
                 >
                   {item.label}
                   <span
                     className={`absolute bottom-0 left-0 h-[2px] bg-[#22A6DF] transition-all duration-300 ${currentPath === item.path
-                        ? "w-full"
-                        : "w-0 group-hover:w-full"
+                      ? "w-full"
+                      : "w-0 group-hover:w-full"
                       }`}
                   ></span>
                 </Typography.Text>
@@ -575,7 +592,7 @@ export default function Header() {
 
           <FaBars className="cursor-pointer md:hidden" onClick={showDrawer} />
 
-          <Space className="whitespace-nowrap text-sm font-bold sm:text-xs lg:text-sm xl:text-base">
+          <Space className="text-sm font-bold whitespace-nowrap sm:text-xs lg:text-sm xl:text-base">
             <FaPhoneAlt className="mr-1" />
             24/7 Hỗ trợ: <span className="ml-1 text-[#22A6DF]">0393153129</span>
           </Space>

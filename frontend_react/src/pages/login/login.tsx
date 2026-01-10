@@ -58,41 +58,34 @@ export default function Login() {
   useEffect(() => {
     const userData = localStorage.getItem("userData");
     const token = localStorage.getItem("accessToken");
-    if (userData && token) {
-      const parsedUser = JSON.parse(userData) as User;
-      loginApi
-        .authCheck(token)
-        .then((response) => {
-          if (response.data.success) {
-            setUser(parsedUser);
-            if (parsedUser.status !== "active") {
-              notification.error({
-                message: "Truy cập bị từ chối!",
-                description: "Tài khoản của bạn không hoạt động.",
-                placement: "topRight",
-                duration: 2,
-              });
-              clearLocalStorageExceptCarts();
-              setUser(null);
-              navigate("/login");
-            } else {
-              navigate("/");
-            }
-          } else {
-            clearLocalStorageExceptCarts();
-            setUser(null);
-            navigate("/login");
-          }
-        })
-        .catch(() => {
-          clearLocalStorageExceptCarts();
-          setUser(null);
-          navigate("/login");
-        });
-    } else {
-      // localStorage.clear();
-      navigate("/login");
+
+    if (!userData || !token) {
+      return;
     }
+
+    const parsedUser = JSON.parse(userData) as User;
+
+    loginApi
+      .authCheck(token)
+      .then((response) => {
+        if (response.data.success) {
+          if (parsedUser.status !== "active") {
+            notification.error({
+              message: "Truy cập bị từ chối!",
+              description: "Tài khoản của bạn không hoạt động.",
+            });
+            clearLocalStorageExceptCarts();
+          } else {
+            setUser(parsedUser);
+            navigate("/");
+          }
+        } else {
+          clearLocalStorageExceptCarts();
+        }
+      })
+      .catch(() => {
+        clearLocalStorageExceptCarts();
+      });
   }, [navigate]);
 
   const handleLogin = async () => {
@@ -158,7 +151,7 @@ export default function Login() {
       } else {
         throw new Error(data.message || "Đăng nhập thất bại");
       }
-    } catch (error) {
+    } catch (error: any) {
       const errorMessage =
         error.message || "Có lỗi xảy ra trong quá trình đăng nhập.";
       if (errorMessage.includes("Vui lòng xác thực email bằng OTP")) {
@@ -259,7 +252,7 @@ export default function Login() {
       } else {
         throw new Error(data.message || "Không thể đặt lại mật khẩu!");
       }
-    } catch (error) {
+    } catch (error:any) {
       notification.error({
         message: "Lỗi!",
         description: error.message,
@@ -317,7 +310,7 @@ export default function Login() {
   return (
     <div className="px-2 py-4 sm:px-5 sm:py-6">
       {/* Title */}
-      <div className="mx-auto pb-4 text-center sm:pb-7">
+      <div className="pb-4 mx-auto text-center sm:pb-7">
         <Title level={4} className="text-xl sm:text-2xl">
           Đăng Nhập
         </Title>
@@ -353,7 +346,7 @@ export default function Login() {
             <Title level={5} className="text-sm sm:text-base">
               Quyền lợi thành viên
             </Title>
-            <ul className="list-disc space-y-2 pl-4 sm:space-y-4">
+            <ul className="pl-4 space-y-2 list-disc sm:space-y-4">
               <li className="flex items-center gap-2">
                 <FaCheckDouble className="h-3 w-3 shrink-0 text-[#22A6DF] sm:h-4 sm:w-4" />
                 <span>Mua hàng nhanh chóng, dễ dàng</span>
@@ -375,7 +368,7 @@ export default function Login() {
         {/* Right */}
         <Col className="flex w-full flex-col justify-start shadow-inner lg:w-[400px] overflow-auto">
           <div>
-            <div className="mb-3 flex h-10 sm:h-12">
+            <div className="flex h-10 mb-3 sm:h-12">
               <button className="h-full w-1/2 rounded-none border-[#22A6DF] bg-[#22A6DF] text-sm text-white sm:text-base">
                 Đăng Nhập
               </button>
@@ -387,7 +380,7 @@ export default function Login() {
               </button>
             </div>
             <div className="p-3 sm:p-4">
-              <div className="mb-2 pb-2 text-sm sm:text-base">
+              <div className="pb-2 mb-2 text-sm sm:text-base">
                 <label htmlFor="email" className="font-bold uppercase">
                   Email <span className="text-red-600">*</span>
                 </label>
@@ -395,12 +388,12 @@ export default function Login() {
                   type="email"
                   id="email"
                   placeholder="Nhập email của bạn"
-                  className="mt-2 h-9 text-sm sm:h-10 sm:text-base"
+                  className="mt-2 text-sm h-9 sm:h-10 sm:text-base"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
-              <div className="mb-2 pb-2 text-sm sm:text-base">
+              <div className="pb-2 mb-2 text-sm sm:text-base">
                 <label htmlFor="password" className="font-bold uppercase">
                   Mật khẩu <span className="text-red-600">*</span>
                 </label>
@@ -408,7 +401,7 @@ export default function Login() {
                   type={showPassword ? "text" : "password"}
                   id="password"
                   placeholder="Nhập mật khẩu của bạn"
-                  className="mt-2 h-9 text-sm sm:h-10 sm:text-base"
+                  className="mt-2 text-sm h-9 sm:h-10 sm:text-base"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   suffix={
@@ -427,7 +420,7 @@ export default function Login() {
               </div>
               <div className="mb-3">
                 <a
-                  className="cursor-pointer text-sm sm:text-base"
+                  className="text-sm cursor-pointer sm:text-base"
                   onClick={() => setIsForgotPasswordModalOpen(true)}
                 >
                   Quên mật khẩu?
@@ -436,7 +429,7 @@ export default function Login() {
             </div>
           </div>
 
-          <div className="flex flex-col items-center px-2 sm:px-4 mb-4">
+          <div className="flex flex-col items-center px-2 mb-4 sm:px-4">
             <Flex
               justify="space-between"
               className="w-full max-w-[380px] items-center"
@@ -450,7 +443,7 @@ export default function Login() {
               >
                 {loading ? "Đang đăng nhập..." : "Đăng nhập"}
               </Button>
-              <span className="my-auto px-1 text-sm sm:text-base">Hoặc</span>
+              <span className="px-1 my-auto text-sm sm:text-base">Hoặc</span>
               <GoogleOAuthProvider clientId={ENV_VARS.VITE_GOOGLE_CLIENT_ID}>
                 <GoogleLogin
                   onSuccess={handleGoogleLogin}

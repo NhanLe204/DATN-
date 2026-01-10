@@ -429,7 +429,13 @@ export const useBookingLogic = () => {
         const updated = bookings.map(b => b.orderId === selectedBooking!.orderId ? { ...b, bookingStatus: BookingStatus.IN_PROGRESS, petWeight, realPrice: realPriceResponse.data.realPrice } : b);
         setBookings(updated);
         setFilteredBookings(updated);
-        notification.success({ message: 'Thành công', description: `Đã bắt đầu dịch vụ! Giá thực tế: ${realPriceResponse.data.realPrice.toLocaleString('vi-VN')} VND` });
+        notification.success({
+          message: 'Thành công',
+          description: `Đã bắt đầu dịch vụ! Giá thực tế: ${realPriceResponse.data.realPrice.toLocaleString('vi-VN')} VND`
+        });
+        setSelectedBooking(null);
+        startForm.resetFields();
+
         return true;
       } catch (error: any) {
         notification.error({ message: 'Lỗi', description: error.message || 'Không thể bắt đầu dịch vụ!' });
