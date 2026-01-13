@@ -10,7 +10,7 @@ export const connectDB = async () => {
     mongoose.set('strictQuery', false); // Thêm dòng này để tắt cảnh báo
 
     const conn = await mongoose.connect(ENV_VARS.MONGODB_URI);
-    console.log(`Kết nối thành công: ${conn.connection.host}`);
+    // console.log(`Kết nối thành công: ${conn.connection.host}`);
   } catch (error) {
     if (error instanceof Error) {
       console.error(`Error connecting to MongoDB: ${error.message}`);

@@ -77,7 +77,7 @@ const OrderList: React.FC = () => {
     try {
       setLoading(true);
       const response = await orderApi.getAll();
-      console.log('Full API response:', response);
+      // console.log('Full API response:', response);
 
       if (!response.data || !response.data.result) {
         console.error('API response is missing data or result:', response);
@@ -286,7 +286,7 @@ const OrderList: React.FC = () => {
       key: 'fullname',
       render: (text: string) => (
         <div className="flex items-center">
-          <div className="h-8 w-8 rounded-full bg-blue-50 flex items-center justify-center">
+          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-50">
             <span className="text-sm text-blue-500">{text ? text.charAt(0).toUpperCase() : '?'}</span>
           </div>
           <span className="ml-3 text-[14px] font-normal text-gray-700">{text || 'Không xác định'}</span>
@@ -354,7 +354,7 @@ const OrderList: React.FC = () => {
           icon={<EyeOutlined />}
           onClick={() => handleView(record)}
           size="small"
-          className="bg-blue-400 hover:bg-blue-500 rounded-md"
+          className="bg-blue-400 rounded-md hover:bg-blue-500"
         />
       ),
     },
@@ -365,14 +365,14 @@ const OrderList: React.FC = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="p-6 bg-gray-50 min-h-screen"
+      className="min-h-screen p-6 bg-gray-50"
     >
-      <div className="max-w-7xl mx-auto">
+      <div className="mx-auto max-w-7xl">
         <Card
           bordered={false}
-          className="shadow-sm bg-white rounded-lg"
+          className="bg-white rounded-lg shadow-sm"
           title={
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="flex-1 max-w-md">
                 <Input.Search
                   placeholder="Tìm kiếm đơn hàng..."
@@ -484,7 +484,7 @@ const OrderList: React.FC = () => {
               >
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
-                    <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="p-4 rounded-lg bg-gray-50">
                       <h3 className="font-medium text-gray-800 mb-4 text-[15px]">Thông tin đơn hàng</h3>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -519,7 +519,7 @@ const OrderList: React.FC = () => {
 
                   <div className="col-span-2">
                     {selectedOrder?.products && selectedOrder.products.length > 0 ? (
-                      <div className="p-4 bg-gray-50 rounded-lg max-h-60 overflow-y-auto">
+                      <div className="p-4 overflow-y-auto rounded-lg bg-gray-50 max-h-60">
                         <h3 className="font-medium text-gray-800 mb-4 text-[15px]">Danh sách sản phẩm</h3>
                         {selectedOrder.products.map((product: Product, index: number) => (
                           <div key={index} className="grid grid-cols-2 gap-4 mb-4">
@@ -543,7 +543,7 @@ const OrderList: React.FC = () => {
                         ))}
                       </div>
                     ) : (
-                      <div className="p-4 bg-gray-50 rounded-lg">
+                      <div className="p-4 rounded-lg bg-gray-50">
                         <p className="text-[14px] text-gray-500">Không có sản phẩm trong đơn hàng</p>
                       </div>
                     )}

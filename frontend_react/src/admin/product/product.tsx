@@ -82,7 +82,7 @@ const ProductList: React.FC = () => {
   const pageSize = 10;
 
   const showModal = (product?: Product) => {
-    console.log("Product passed to modal:", product);
+    // console.log("Product passed to modal:", product);
     setEditingProduct(product || null);
     setIsModalVisible(true);
   };

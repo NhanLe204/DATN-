@@ -390,7 +390,7 @@ const Payment = () => {
             error.message ||
             "Lỗi không xác định";
           message.error(`Thêm địa chỉ thất bại: ${errorMessage}`);
-          console.log("Dữ liệu gửi lên API:", newAddress);
+          // console.log("Dữ liệu gửi lên API:", newAddress);
           console.error("Lỗi từ server:", error);
         }
       })
@@ -448,7 +448,7 @@ const Payment = () => {
             error.message ||
             "Lỗi không xác định";
           message.error(`Cập nhật địa chỉ thất bại: ${errorMessage}`);
-          console.log("Dữ liệu gửi lên API:", updatedAddress);
+          // console.log("Dữ liệu gửi lên API:", updatedAddress);
           console.error("Lỗi từ server:", error);
         }
       })
@@ -589,7 +589,7 @@ const Payment = () => {
       const orderResponse = await orderApi.create(orderData);
       const createdOrder = orderResponse.data;
       const order = createdOrder.order;
-      console.log("Order created:", order);
+      // console.log("Order created:", order);
 
       if (selectedPayment === "67d67442aeb5082f01074c28") {
         // Thanh toán khi nhận hàng
@@ -619,7 +619,7 @@ const Payment = () => {
       const response = await paymentApi.create({
         ...paymentData,
       });
-      console.log(response, "Tahnh nef ");
+      // console.log(response, "Tahnh nef ");
       const checkoutUrl = response.url;
       window.location.href = checkoutUrl;
     } catch (error) {
@@ -700,7 +700,7 @@ const Payment = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-gray-800">
+      <div className="min-h-screen text-gray-800 bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="container mx-auto px-4 sm:px-6 lg:px-[154px] py-6 sm:py-10">
 
           {/* Reorder Notice */}
@@ -708,13 +708,13 @@ const Payment = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-6 sm:mb-8 rounded-2xl p-4 sm:p-5 bg-green-50 border border-green-200 shadow-sm"
+              className="p-4 mb-6 border border-green-200 shadow-sm sm:mb-8 rounded-2xl sm:p-5 bg-green-50"
             >
               <div className="flex items-center gap-3">
-                <div className="rounded-full p-2 bg-green-100">
+                <div className="p-2 bg-green-100 rounded-full">
                   <AlertCircle size={20} className="text-green-500" />
                 </div>
-                <span className="text-sm sm:text-base text-green-600">
+                <span className="text-sm text-green-600 sm:text-base">
                   Đây là đơn hàng được tái tạo từ đơn cũ. Vui lòng kiểm tra
                   thông tin trước khi đặt lại!
                 </span>
@@ -727,10 +727,10 @@ const Payment = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-6 sm:mb-8 rounded-2xl p-4 sm:p-5 bg-blue-50 border border-blue-200 shadow-sm"
+              className="p-4 mb-6 border border-blue-200 shadow-sm sm:mb-8 rounded-2xl sm:p-5 bg-blue-50"
             >
               <div className="flex items-center gap-3">
-                <div className="rounded-full p-2 bg-blue-100">
+                <div className="p-2 bg-blue-100 rounded-full">
                   <User size={20} className="text-[#22a6df]" />
                 </div>
                 <span className="text-sm sm:text-base">
@@ -758,13 +758,13 @@ const Payment = () => {
                 className="w-full max-w-2xl rounded-3xl p-8 bg-white/95 text-gray-800 shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-sm border border-gray-100"
               >
                 {/* Header */}
-                <div className="flex justify-between items-center mb-8">
+                <div className="flex items-center justify-between mb-8">
                   <h3 className="text-2xl font-bold text-[#22a6df]">
                     Chọn địa chỉ giao hàng
                   </h3>
                   <button
                     onClick={() => setIsModalOpen(false)}
-                    className="p-2 rounded-full hover:bg-gray-100 transition-colors group"
+                    className="p-2 transition-colors rounded-full hover:bg-gray-100 group"
                   >
                     <X
                       size={24}
@@ -798,8 +798,8 @@ const Payment = () => {
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3 flex-wrap">
-                                <p className="font-semibold text-lg text-gray-800">
+                              <div className="flex flex-wrap items-center gap-3">
+                                <p className="text-lg font-semibold text-gray-800">
                                   {address.name}
                                 </p>
                                 <p className="text-gray-500">
@@ -837,7 +837,7 @@ const Payment = () => {
                                 Sửa
                               </motion.button>
                             </div>
-                            <p className="text-gray-600 mt-2">
+                            <p className="mt-2 text-gray-600">
                               {address.address}
                             </p>
                           </div>
@@ -845,7 +845,7 @@ const Payment = () => {
                       </motion.div>
                     ))
                   ) : (
-                    <div className="text-center py-10 bg-gray-50 rounded-2xl">
+                    <div className="py-10 text-center bg-gray-50 rounded-2xl">
                       <p className="text-gray-500">
                         Chưa có địa chỉ nào. Hãy thêm địa chỉ mới!
                       </p>
@@ -854,7 +854,7 @@ const Payment = () => {
                 </div>
 
                 {/* Footer */}
-                <div className="flex justify-end gap-4 mt-8 pt-6 border-t border-gray-100">
+                <div className="flex justify-end gap-4 pt-6 mt-8 border-t border-gray-100">
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -879,16 +879,16 @@ const Payment = () => {
             </div>
           )}
           {/* Main Content */}
-          <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
+          <div className="flex flex-col gap-8 lg:flex-row lg:gap-12">
             {/* Left Column */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="w-full lg:w-3/5 space-y-8"
+              className="w-full space-y-8 lg:w-3/5"
             >
               {/* Shipping Information */}
               <div className="rounded-2xl p-6 sm:p-8 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.05)] backdrop-blur-sm border border-gray-100">
-                <h2 className="mb-6 sm:mb-8 text-xl sm:text-2xl font-semibold flex items-center gap-3 text-gray-800">
+                <h2 className="flex items-center gap-3 mb-6 text-xl font-semibold text-gray-800 sm:mb-8 sm:text-2xl">
                   <div className="p-2 rounded-xl bg-[#22a6df]/10">
                     <MapPin className="text-[#22a6df]" size={24} />
                   </div>
@@ -897,10 +897,10 @@ const Payment = () => {
 
                 {isLoggedIn && selectedAddress ? (
                   <div className="relative">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-100 pb-6">
+                    <div className="flex flex-col items-start justify-between pb-6 border-b border-gray-100 sm:flex-row sm:items-center">
                       <div className="flex-1 mb-4 sm:mb-0">
                         <div className="flex flex-wrap items-center gap-3">
-                          <p className="font-semibold text-lg text-gray-800">
+                          <p className="text-lg font-semibold text-gray-800">
                             {selectedAddress.name}
                           </p>
                           <p className="text-gray-600">
@@ -912,7 +912,7 @@ const Payment = () => {
                             </span>
                           )}
                         </div>
-                        <p className="text-gray-600 mt-2">
+                        <p className="mt-2 text-gray-600">
                           {selectedAddress.address}
                         </p>
                       </div>
@@ -928,9 +928,9 @@ const Payment = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                    <MapPin size={32} className="mx-auto text-gray-400 mb-3" />
-                    <p className="text-gray-500 mb-4">
+                  <div className="py-10 text-center border border-gray-200 border-dashed bg-gray-50 rounded-xl">
+                    <MapPin size={32} className="mx-auto mb-3 text-gray-400" />
+                    <p className="mb-4 text-gray-500">
                       {isLoggedIn
                         ? "Chưa có địa chỉ nào. Vui lòng thêm địa chỉ."
                         : "Vui lòng đăng nhập để xem địa chỉ."}
@@ -952,7 +952,7 @@ const Payment = () => {
 
               {/* Shipping Method */}
               <div className="rounded-2xl p-6 sm:p-8 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.05)] backdrop-blur-sm border border-gray-100">
-                <h2 className="mb-6 sm:mb-8 text-xl sm:text-2xl font-semibold flex items-center gap-3">
+                <h2 className="flex items-center gap-3 mb-6 text-xl font-semibold sm:mb-8 sm:text-2xl">
                   <div className="p-2 rounded-xl bg-[#22a6df]/10">
                     <Truck className="text-[#22a6df]" size={24} />
                   </div>
@@ -1010,8 +1010,8 @@ const Payment = () => {
                     })}
                   </div>
                 ) : (
-                  <div className="flex h-40 flex-col items-center justify-center rounded-xl bg-gray-50 border border-dashed border-gray-200">
-                    <Package size={32} className="text-gray-400 mb-3" />
+                  <div className="flex flex-col items-center justify-center h-40 border border-gray-200 border-dashed rounded-xl bg-gray-50">
+                    <Package size={32} className="mb-3 text-gray-400" />
                     <p className="text-sm text-gray-500">
                       Không có phương thức vận chuyển khả dụng.
                     </p>
@@ -1021,7 +1021,7 @@ const Payment = () => {
 
               {/* Payment Method */}
               <div className="rounded-2xl p-6 sm:p-8 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.05)] backdrop-blur-sm border border-gray-100">
-                <h2 className="mb-6 sm:mb-8 text-xl sm:text-2xl font-semibold flex items-center gap-3">
+                <h2 className="flex items-center gap-3 mb-6 text-xl font-semibold sm:mb-8 sm:text-2xl">
                   <div className="p-2 rounded-xl bg-[#22a6df]/10">
                     <CreditCard className="text-[#22a6df]" size={24} />
                   </div>
@@ -1068,8 +1068,8 @@ const Payment = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="flex h-40 flex-col items-center justify-center rounded-xl bg-gray-50 border border-dashed border-gray-200">
-                    <CreditCard size={32} className="text-gray-400 mb-3" />
+                  <div className="flex flex-col items-center justify-center h-40 border border-gray-200 border-dashed rounded-xl bg-gray-50">
+                    <CreditCard size={32} className="mb-3 text-gray-400" />
                     <p className="text-sm text-gray-500">
                       Không có phương thức thanh toán khả dụng.
                     </p>
@@ -1085,38 +1085,38 @@ const Payment = () => {
               className="w-full lg:w-2/5"
             >
               <div className="sticky top-8 rounded-2xl p-6 sm:p-8 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.05)] backdrop-blur-sm border border-gray-100">
-                <h2 className="mb-6 text-xl sm:text-2xl font-semibold flex items-center gap-3">
+                <h2 className="flex items-center gap-3 mb-6 text-xl font-semibold sm:text-2xl">
                   <div className="p-2 rounded-xl bg-[#22a6df]/10">
                     <ShoppingBag className="text-[#22a6df]" size={24} />
                   </div>
                   Đơn hàng của bạn
                 </h2>
-                <div className="mb-6 border-b pb-6">
+                <div className="pb-6 mb-6 border-b">
                   {cartItems.length === 0 ? (
-                    <p className="text-center text-sm sm:text-base text-gray-500">
+                    <p className="text-sm text-center text-gray-500 sm:text-base">
                       Giỏ hàng trống
                     </p>
                   ) : (
                     <>
                       {cartItems.map((item) => (
-                        <div key={item.id} className="flex gap-3 sm:gap-4 mb-4 items-start">
-                          <div className="relative h-20 w-20 sm:h-24 sm:w-24 flex-shrink-0 overflow-hidden rounded-xl">
+                        <div key={item.id} className="flex items-start gap-3 mb-4 sm:gap-4">
+                          <div className="relative flex-shrink-0 w-20 h-20 overflow-hidden sm:h-24 sm:w-24 rounded-xl">
                             <img
                               src={item.image}
                               alt={`Hình ảnh sản phẩm ${item.name}`}
-                              className="h-full w-full object-cover"
+                              className="object-cover w-full h-full"
                             />
                           </div>
                           <div className="flex-1">
-                            <div className="flex justify-between items-start">
+                            <div className="flex items-start justify-between">
                               <div>
-                                <h3 className="font-medium text-sm sm:text-base">
+                                <h3 className="text-sm font-medium sm:text-base">
                                   {item.name}
                                 </h3>
                                 <p className="text-sm sm:text-base">
                                   Số lượng: {item.quantity}
                                 </p>
-                                <p className="mt-2 font-semibold text-blue-500 text-sm sm:text-base">
+                                <p className="mt-2 text-sm font-semibold text-blue-500 sm:text-base">
                                   {formatPrice(item.price * item.quantity)}
                                 </p>
                               </div>
@@ -1143,7 +1143,7 @@ const Payment = () => {
                               "Đã xóa đơn hàng cũ. Bạn có thể chọn sản phẩm mới!"
                             );
                           }}
-                          className="mt-4 w-full rounded-xl bg-red-500 py-2 text-sm sm:text-base font-medium text-white hover:bg-red-600"
+                          className="w-full py-2 mt-4 text-sm font-medium text-white bg-red-500 rounded-xl sm:text-base hover:bg-red-600"
                         >
                           Xóa và chọn lại
                         </motion.button>
@@ -1152,13 +1152,13 @@ const Payment = () => {
                   )}
                 </div>
                 <div className="mb-6">
-                  <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="flex flex-col gap-2 sm:flex-row">
                     <input
                       type="text"
                       placeholder="Nhập mã giảm giá"
                       value={couponCode}
                       onChange={(e) => setCouponCode(e.target.value)}
-                      className="flex-grow rounded-xl border p-2 sm:p-3 text-sm sm:text-base border-gray-300 bg-gray-50 text-gray-800"
+                      className="flex-grow p-2 text-sm text-gray-800 border border-gray-300 rounded-xl sm:p-3 sm:text-base bg-gray-50"
                     />
                     <motion.button
                       whileHover={{ scale: 1.02 }}
@@ -1170,7 +1170,7 @@ const Payment = () => {
                     </motion.button>
                   </div>
                   {appliedCoupon && (
-                    <p className="mt-2 text-xs sm:text-sm text-green-500">
+                    <p className="mt-2 text-xs text-green-500 sm:text-sm">
                       Đã áp dụng mã {appliedCoupon.coupon_code}: Giảm{" "}
                       {formatPrice(discount)}
                     </p>
@@ -1178,7 +1178,7 @@ const Payment = () => {
                 </div>
 
                 {/* Order Summary Details */}
-                <div className="mb-6 space-y-3 border-b pb-6">
+                <div className="pb-6 mb-6 space-y-3 border-b">
                   <div className="flex justify-between text-sm sm:text-base">
                     <span className="text-gray-600">Tạm tính</span>
                     <span className="font-medium">
@@ -1304,7 +1304,7 @@ const Payment = () => {
             >
               <Select
                 placeholder="Chọn tỉnh/thành phố"
-                className="w-full rounded-lg h-12"
+                className="w-full h-12 rounded-lg"
                 showSearch
                 optionFilterProp="children"
                 onChange={(value) => setSelectedProvince(value)}
@@ -1328,7 +1328,7 @@ const Payment = () => {
             >
               <Select
                 placeholder="Chọn quận/huyện"
-                className="w-full rounded-lg h-12"
+                className="w-full h-12 rounded-lg"
                 showSearch
                 optionFilterProp="children"
                 disabled={!selectedProvince}
@@ -1355,7 +1355,7 @@ const Payment = () => {
             >
               <Select
                 placeholder="Chọn phường/xã"
-                className="w-full rounded-lg h-12"
+                className="w-full h-12 rounded-lg"
                 showSearch
                 optionFilterProp="children"
                 disabled={!selectedDistrict}
@@ -1460,7 +1460,7 @@ const Payment = () => {
             >
               <Select
                 placeholder="Chọn tỉnh/thành phố"
-                className="rounded-lg h-12"
+                className="h-12 rounded-lg"
                 showSearch
                 optionFilterProp="children"
                 onChange={(value) => setSelectedProvince(value)}
@@ -1484,7 +1484,7 @@ const Payment = () => {
             >
               <Select
                 placeholder="Chọn quận/huyện"
-                className="rounded-lg h-12"
+                className="h-12 rounded-lg"
                 showSearch
                 optionFilterProp="children"
                 onChange={(value) => setSelectedDistrict(value)}
@@ -1510,7 +1510,7 @@ const Payment = () => {
             >
               <Select
                 placeholder="Chọn phường/xã"
-                className="rounded-lg h-12"
+                className="h-12 rounded-lg"
                 showSearch
                 optionFilterProp="children"
                 dropdownStyle={{ borderRadius: "8px" }}

@@ -170,7 +170,7 @@ export default function Address() {
         } catch (error) {
           const errorMessage = error.response?.data?.message || error.message || "Lỗi không xác định";
           message.error(`Thêm địa chỉ thất bại: ${errorMessage}`);
-          console.log("Dữ liệu gửi lên API:", newAddress);
+          // console.log("Dữ liệu gửi lên API:", newAddress);
           console.error("Lỗi từ server:", error);
         }
       })
@@ -215,7 +215,7 @@ export default function Address() {
         } catch (error) {
           const errorMessage = error.response?.data?.message || error.message || "Lỗi không xác định";
           message.error(`Cập nhật địa chỉ thất bại: ${errorMessage}`);
-          console.log("Dữ liệu gửi lên API:", updatedAddress);
+          // console.log("Dữ liệu gửi lên API:", updatedAddress);
           console.error("Lỗi từ server:", error);
         }
       })
@@ -355,9 +355,9 @@ export default function Address() {
 
   return (
     <>
-      <div className="bg-white rounded-2xl shadow-sm p-6">
+      <div className="p-6 bg-white shadow-sm rounded-2xl">
       {/* Header Section */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <h3 className="text-xl font-bold text-gray-800">Địa chỉ của tôi</h3>
         </div>
@@ -384,19 +384,19 @@ export default function Address() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="group relative bg-gray-50 rounded-xl p-6 hover:bg-gray-100 transition-all duration-200"
+                className="relative p-6 transition-all duration-200 group bg-gray-50 rounded-xl hover:bg-gray-100"
               >
                 {addr.isDefault && (
                   <div className="absolute -top-2 -right-2">
                     <Tooltip title="Địa chỉ mặc định">
-                      <div className="bg-orange-500 text-white p-2 rounded-full shadow-lg">
+                      <div className="p-2 text-white bg-orange-500 rounded-full shadow-lg">
                         <StarFilled />
                       </div>
                     </Tooltip>
                   </div>
                 )}
 
-                <div className="flex justify-between items-start">
+                <div className="flex items-start justify-between">
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
                       <h4 className="text-lg font-semibold text-gray-800">{addr.name}</h4>
@@ -408,10 +408,10 @@ export default function Address() {
                         </span>
                       )}
                     </div>
-                    <p className="text-gray-600 max-w-2xl">{addr.address}</p>
+                    <p className="max-w-2xl text-gray-600">{addr.address}</p>
                   </div>
 
-                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <div className="flex items-center gap-2 transition-opacity duration-200 opacity-0 group-hover:opacity-100">
                     <Tooltip title="Chỉnh sửa">
                       <Button
                         icon={<EditOutlined />}
@@ -424,7 +424,7 @@ export default function Address() {
                     <Tooltip title="Xóa">
                       <Button
                         icon={<DeleteOutlined />}
-                        className="flex items-center justify-center w-9 h-9 text-red-600 border-red-600 hover:bg-red-50"
+                        className="flex items-center justify-center text-red-600 border-red-600 w-9 h-9 hover:bg-red-50"
                         shape="circle"
                         onClick={() => handleDeleteAddress(index)}
                       />
@@ -434,7 +434,7 @@ export default function Address() {
                       <Tooltip title="Đặt làm mặc định">
                         <Button
                           icon={<StarOutlined />}
-                          className="flex items-center justify-center w-9 h-9 text-green-600 border-green-600 hover:bg-green-50"
+                          className="flex items-center justify-center text-green-600 border-green-600 w-9 h-9 hover:bg-green-50"
                           shape="circle"
                           onClick={() => handleSetDefaultAddress(index)}
                         />
@@ -516,7 +516,7 @@ export default function Address() {
             >
               <Select
                 placeholder="Chọn tỉnh/thành phố"
-                className="w-full rounded-lg h-12"
+                className="w-full h-12 rounded-lg"
                 showSearch
                 optionFilterProp="children"
                 onChange={(value) => setSelectedProvince(value)}
@@ -536,7 +536,7 @@ export default function Address() {
             >
               <Select
                 placeholder="Chọn quận/huyện"
-                className="w-full rounded-lg h-12"
+                className="w-full h-12 rounded-lg"
                 showSearch
                 optionFilterProp="children"
                 disabled={!selectedProvince}
@@ -559,7 +559,7 @@ export default function Address() {
             >
               <Select
                 placeholder="Chọn phường/xã"
-                className="w-full rounded-lg h-12"
+                className="w-full h-12 rounded-lg"
                 showSearch
                 optionFilterProp="children"
                 disabled={!selectedDistrict}
@@ -642,7 +642,7 @@ export default function Address() {
             >
               <Select
                 placeholder="Chọn tỉnh/thành phố"
-                className="rounded-lg h-12"
+                className="h-12 rounded-lg"
                 showSearch
                 optionFilterProp="children"
                 onChange={(value) => setSelectedProvince(value)}
@@ -662,7 +662,7 @@ export default function Address() {
             >
               <Select
                 placeholder="Chọn quận/huyện"
-                className="rounded-lg h-12"
+                className="h-12 rounded-lg"
                 showSearch
                 optionFilterProp="children"
                 onChange={(value) => setSelectedDistrict(value)}
@@ -684,7 +684,7 @@ export default function Address() {
             >
               <Select
                 placeholder="Chọn phường/xã"
-                className="rounded-lg h-12"
+                className="h-12 rounded-lg"
                 showSearch
                 optionFilterProp="children"
                 dropdownStyle={{ borderRadius: "8px" }}

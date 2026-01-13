@@ -193,7 +193,7 @@ const BrandManager: React.FC = () => {
         const response = await brandApi.create({
           brand_name: values.brand_name,
         });
-        console.log("API Response:", response);
+        // console.log("API Response:", response);
 
         const brandId =
           response?.data?._id ||

@@ -283,7 +283,7 @@ export const createCoupon = async (
   res: Response
 ): Promise<void> => {
   try {
-    console.log("Request body:", req.body);
+    // console.log("Request body:", req.body);
 
     const {
       coupon_code,

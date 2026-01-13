@@ -100,8 +100,8 @@ const ProductModal: React.FC<ProductModalProps> = ({
 
   useEffect(() => {
     if (product && visible) {
-      console.log("Product data received:", product);
-      console.log("Product images:", product.images);
+      // console.log("Product data received:", product);
+      // console.log("Product images:", product.images);
 
       form.setFieldsValue({
         name: product.name,
@@ -128,7 +128,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
         })
       );
 
-      console.log("Formatted images:", formattedImages);
+      // console.log("Formatted images:", formattedImages);
       setImageFileList(formattedImages);
     } else {
       form.resetFields();
@@ -217,8 +217,8 @@ const ProductModal: React.FC<ProductModalProps> = ({
         newImages.forEach((img) => formData.append("images_url", img.file));
       }
 
-      console.log("existingImages:", existingImages);
-      console.log("newImages:", newImages);
+      // console.log("existingImages:", existingImages);
+      // console.log("newImages:", newImages);
 
       if (product) {
         await productsApi.update(product._id, formData);

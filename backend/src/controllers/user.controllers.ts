@@ -49,7 +49,7 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
 export const updateUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    console.log(id, 'ID');
+    // console.log(id, 'ID');
     const { email, fullname, phone_number, address, role, avatar, status, dateOfBirth } = req.body;
 
     // Không bắt buộc tất cả trường, chỉ cần ít nhất một trường để cập nhật
@@ -116,8 +116,8 @@ export const updateCart = async (req: AuthenticatedRequest, res: Response) => {
       return;
     }
 
-    console.log(typeof productId, productId, 'productId từ req.body');
-    console.log(user.cart, 'Giỏ hàng từ database');
+    // console.log(typeof productId, productId, 'productId từ req.body');
+    // console.log(user.cart, 'Giỏ hàng từ database');
 
     // Ép productId từ string sang ObjectId
     const productObjectId = new mongoose.Types.ObjectId(productId);
@@ -127,15 +127,15 @@ export const updateCart = async (req: AuthenticatedRequest, res: Response) => {
       item.product.equals(productObjectId)
     );
 
-    console.log(alreadyProduct, 'alreadyProduct');
+    // console.log(alreadyProduct, 'alreadyProduct');
 
     if (alreadyProduct) {
-      console.log('Đã tìm thấy sản phẩm trong giỏ hàng, cập nhật số lượng');
+      // console.log('Đã tìm thấy sản phẩm trong giỏ hàng, cập nhật số lượng');
       alreadyProduct.quantity += quantity;
       await user.save();
       res.status(200).json({ message: 'Cập nhật giỏ hàng thành công', user });
     } else {
-      console.log('Sản phẩm chưa có trong giỏ hàng, thêm mới');
+      // console.log('Sản phẩm chưa có trong giỏ hàng, thêm mới');
       const response = await userModel.findByIdAndUpdate(
         _id,
         { $push: { cart: { product: productObjectId, quantity } } },

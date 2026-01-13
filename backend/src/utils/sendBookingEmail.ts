@@ -75,7 +75,7 @@ const sendBookingEmail = async ({
   );
 
   await sendEmail(recipientEmail, subject, text, html);
-  console.log(`Email ${isCancellation ? 'hủy' : 'xác nhận'} gửi thành công đến: ${recipientEmail}`);
+  // console.log(`Email ${isCancellation ? 'hủy' : 'xác nhận'} gửi thành công đến: ${recipientEmail}`);
 };
 
 export default sendBookingEmail;

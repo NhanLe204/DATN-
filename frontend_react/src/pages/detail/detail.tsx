@@ -100,7 +100,7 @@ export default function DetailProduct() {
         const reviewsResponse = await ratingApi.getRatingsByProductId(
           params.id
         );
-        console.log("Fetched comments (raw):", reviewsResponse.data);
+        // console.log("Fetched comments (raw):", reviewsResponse.data);
         const fetchedComments = reviewsResponse.data || [];
 
         const formattedComments = fetchedComments.map((comment) => ({
@@ -114,11 +114,11 @@ export default function DetailProduct() {
           likedBy: comment.likedBy || [],
         }));
         setComments(formattedComments);
-        console.log("Fetched comments:", formattedComments);
+        // console.log("Fetched comments:", formattedComments);
 
         // Initialize likes
         const userId = localStorage.getItem("accountID") || "";
-        console.log("User ID:", userId);
+        // console.log("User ID:", userId);
 
         const initialLikes = {};
         fetchedComments.forEach((comment: any) => {
@@ -203,7 +203,7 @@ export default function DetailProduct() {
       image: product.image_url[0],
       stockQuantity: productsDetail?.quantity || 0, // Đảm bảo lưu stockQuantity
     };
-    console.log("Adding to cart:", item); // Kiểm tra dữ liệu trước khi dispatch
+    // console.log("Adding to cart:", item); // Kiểm tra dữ liệu trước khi dispatch
     dispatch(addToCart({ item, quantity }));
     message.success("Đã thêm vào giỏ hàng!");
   };
@@ -278,12 +278,12 @@ export default function DetailProduct() {
     <div className="text-black">
       <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 xl:px-[154px] py-6 lg:py-10">
         {/* Main Product Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Image Section */}
           <div className="lg:sticky lg:top-0 h-fit">
-            <div className="flex flex-col-reverse lg:flex-row items-center lg:items-start gap-4 lg:gap-6">
+            <div className="flex flex-col-reverse items-center gap-4 lg:flex-row lg:items-start lg:gap-6">
               {/* Thumbnail Images */}
-              <div className="flex lg:flex-col gap-4 overflow-x-auto lg:overflow-x-visible w-full lg:w-auto">
+              <div className="flex w-full gap-4 overflow-x-auto lg:flex-col lg:overflow-x-visible lg:w-auto">
                 {product.image_url.map((image, index) => (
                   <img
                     key={index}
@@ -316,7 +316,7 @@ export default function DetailProduct() {
 
           {/* Product Info Section */}
           <div className="flex flex-col space-y-4">
-            <h1 className="text-2xl lg:text-3xl font-bold text-gray-800">
+            <h1 className="text-2xl font-bold text-gray-800 lg:text-3xl">
               {product.name}
             </h1>
 
@@ -333,13 +333,13 @@ export default function DetailProduct() {
                   />
                 ))}
               </div>
-              <span className="ml-2 text-xs lg:text-sm text-gray-600">
+              <span className="ml-2 text-xs text-gray-600 lg:text-sm">
                 ({totalReviews} đánh giá)
               </span>
             </div>
 
             {/* Product Details */}
-            <div className="text-xs lg:text-sm text-gray-600 space-y-1">
+            <div className="space-y-1 text-xs text-gray-600 lg:text-sm">
               <p>
                 <span className="font-semibold">Thương hiệu:</span>{" "}
                 {product.brand}
@@ -354,7 +354,7 @@ export default function DetailProduct() {
             </div>
 
             {/* Price Section */}
-            <div className="flex items-center flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="text-xl lg:text-2xl font-bold text-[#FF0000]">
                 {new Intl.NumberFormat("vi-VN", {
                   style: "currency",
@@ -380,22 +380,22 @@ export default function DetailProduct() {
 
             {/* Quantity Selector */}
             <div className="flex items-center gap-4">
-              <span className="font-semibold text-sm lg:text-base">
+              <span className="text-sm font-semibold lg:text-base">
                 Số lượng:
               </span>
               <div className="flex items-center border rounded-lg">
-                <Button onClick={handleDecrement} className="px-3 lg:px-4 py-2">
+                <Button onClick={handleDecrement} className="px-3 py-2 lg:px-4">
                   -
                 </Button>
                 <input
                   min={1}
                   value={quantity}
                   onChange={handleChange}
-                  className="w-8 lg:w-12 text-center border-none"
+                  className="w-8 text-center border-none lg:w-12"
                 />
                 <Button
                   onClick={handleIncrement}
-                  className="px-3 lg:px-4 py-2"
+                  className="px-3 py-2 lg:px-4"
                   disabled={quantity >= (productsDetail?.quantity || 1)} // Vô hiệu hóa nút tăng nếu đạt tối đa
                 >
                   +
@@ -407,7 +407,7 @@ export default function DetailProduct() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <Button
                 className="w-full sm:w-auto rounded-lg bg-[#22A6DF] px-4 lg:px-6 py-3 lg:py-5 text-white text-sm lg:text-base"
                 onClick={handleAddToCart}
@@ -424,13 +424,13 @@ export default function DetailProduct() {
 
             {/* Product Description */}
             <div className="mt-6">
-              <h2 className="text-lg lg:text-xl font-bold text-gray-800 mb-3">
+              <h2 className="mb-3 text-lg font-bold text-gray-800 lg:text-xl">
                 Thông tin sản phẩm
               </h2>
-              <div className="text-sm lg:text-base text-gray-600">
+              <div className="text-sm text-gray-600 lg:text-base">
                 {parse(product.description || "")}
               </div>
-              <ul className="pl-6 mt-3 text-sm lg:text-base text-gray-600 list-disc">
+              <ul className="pl-6 mt-3 text-sm text-gray-600 list-disc lg:text-base">
                 {product.details?.map((detail, index) => (
                   <li key={index}>{detail}</li>
                 ))}
@@ -442,18 +442,18 @@ export default function DetailProduct() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-2xl shadow-lg p-8 mb-8"
+          className="p-8 mb-8 bg-white shadow-lg rounded-2xl"
           id="reviews"
         >
-          <h2 className="text-2xl font-bold text-gray-800 mb-8 flex items-center gap-3">
+          <h2 className="flex items-center gap-3 mb-8 text-2xl font-bold text-gray-800">
             <MessageCircle className="w-6 h-6 text-blue-600" />
             Đánh giá từ khách hàng
           </h2>
 
           {/* Rating Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-10">
+          <div className="grid grid-cols-1 gap-8 mb-10 md:grid-cols-2 lg:grid-cols-3">
             {/* Average Rating Card */}
-            <div className="bg-gradient-to-br from-blue-50 to-white p-6 rounded-xl shadow-sm">
+            <div className="p-6 shadow-sm bg-gradient-to-br from-blue-50 to-white rounded-xl">
               <div className="text-4xl font-bold text-[#22A6DF] mb-2">
                 {comments.length > 0
                   ? (
@@ -462,7 +462,7 @@ export default function DetailProduct() {
                     ).toFixed(1)
                   : "0.0"}
               </div>
-              <div className="flex text-yellow-400 mb-2">
+              <div className="flex mb-2 text-yellow-400">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star
                     key={star}
@@ -491,9 +491,9 @@ export default function DetailProduct() {
                       <span className="text-sm font-medium text-gray-700">
                         {num}
                       </span>
-                      <Star className="w-4 h-4 text-yellow-400 ml-1" />
+                      <Star className="w-4 h-4 ml-1 text-yellow-400" />
                     </div>
-                    <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="flex-1 h-2 overflow-hidden bg-gray-100 rounded-full">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${percentage}%` }}
@@ -501,7 +501,7 @@ export default function DetailProduct() {
                         className="h-full bg-[#22A6DF] rounded-full"
                       />
                     </div>
-                    <span className="text-sm text-gray-500 w-12">{count}</span>
+                    <span className="w-12 text-sm text-gray-500">{count}</span>
                   </div>
                 );
               })}
@@ -541,7 +541,7 @@ export default function DetailProduct() {
                   ease: "easeOut",
                 }}
                 whileHover={{ scale: 1.02 }}
-                className="bg-white rounded-xl p-6 border border-gray-100 hover:shadow-lg transition-shadow"
+                className="p-6 transition-shadow bg-white border border-gray-100 rounded-xl hover:shadow-lg"
               >
                 <div className="flex gap-4">
                   <div className="flex-shrink-0">
@@ -553,13 +553,13 @@ export default function DetailProduct() {
                     />
                   </div>
                   <div className="flex-grow">
-                    <div className="flex justify-between items-start mb-3">
+                    <div className="flex items-start justify-between mb-3">
                       <motion.div
                         initial={{ x: -20, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
                         transition={{ duration: 0.5, ease: "easeOut" }}
                       >
-                        <h4 className="font-semibold text-gray-800 mb-1">
+                        <h4 className="mb-1 font-semibold text-gray-800">
                           {review.userName}
                         </h4>
                         <div className="flex items-center gap-3">
@@ -592,7 +592,7 @@ export default function DetailProduct() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.2, duration: 0.5 }}
-                      className="text-gray-700 leading-relaxed mb-4"
+                      className="mb-4 leading-relaxed text-gray-700"
                     >
                       {review.content}
                     </motion.p>
@@ -630,8 +630,8 @@ export default function DetailProduct() {
           </div>
 
           {comments.length === 0 && (
-            <div className="text-center py-10">
-              <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <div className="py-10 text-center">
+              <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
               <p className="text-gray-500">
                 Chưa có đánh giá nào cho sản phẩm này
               </p>
@@ -641,7 +641,7 @@ export default function DetailProduct() {
 
         {/* Related Products */}
         <div className="mt-8">
-          <h3 className="text-lg lg:text-xl font-bold mb-4">
+          <h3 className="mb-4 text-lg font-bold lg:text-xl">
             SẢN PHẨM LIÊN QUAN
           </h3>
           {relatedProducts.length > 0 ? (
@@ -655,7 +655,7 @@ export default function DetailProduct() {
                   transition={{ duration: 0.3 }}
                   className="h-full"
                 >
-                  <div className="group relative h-full overflow-hidden rounded-xl border border-gray-100 bg-white p-3 shadow-sm transition-all duration-300 hover:shadow-xl">
+                  <div className="relative h-full p-3 overflow-hidden transition-all duration-300 bg-white border border-gray-100 shadow-sm group rounded-xl hover:shadow-xl">
                     {/* Image Container */}
                     <div
                       onClick={() => handleNavigateToProduct(product._id)} // Điều hướng khi nhấn vào sản phẩm
@@ -672,13 +672,13 @@ export default function DetailProduct() {
                               product.image_url?.[0] || "/placeholder-image.jpg"
                             }
                             alt={product.name}
-                            className="h-full w-full object-contain transition-all duration-500"
+                            className="object-contain w-full h-full transition-all duration-500"
                           />
                           {product.image_url?.[1] && (
                             <img
                               src={product.image_url[1]}
                               alt={product.name}
-                              className="absolute inset-0 h-full w-full object-contain opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                              className="absolute inset-0 object-contain w-full h-full transition-opacity duration-300 opacity-0 group-hover:opacity-100"
                             />
                           )}
                         </motion.div>
@@ -701,7 +701,7 @@ export default function DetailProduct() {
                     )}
 
                     {/* Product Info */}
-                    <div className="space-y-3 px-2 text-center">
+                    <div className="px-2 space-y-3 text-center">
                       {/* Name */}
                       <h3
                         onClick={() => handleNavigateToProduct(product._id)} // Điều hướng khi nhấn vào tên sản phẩm
@@ -740,7 +740,7 @@ export default function DetailProduct() {
               ))}
             </Slider>
           ) : (
-            <p className="text-gray-500 text-center">
+            <p className="text-center text-gray-500">
               Không có sản phẩm liên quan.
             </p>
           )}

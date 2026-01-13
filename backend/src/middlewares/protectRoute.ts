@@ -12,7 +12,7 @@ interface AuthenticatedRequest extends Request {
 export const protectRoute = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const token = req.cookies?.token;
-    console.log('Token:', token);
+    // console.log('Token:', token);
 
     if (!token) {
       res.status(401).json({ message: 'You are not authorized to access this route' });
@@ -32,7 +32,7 @@ export const protectRoute = async (req: AuthenticatedRequest, res: Response, nex
     }
 
     const user = await userModel.findById(decoded.userId).select('-password');
-    console.log('User:', user);
+    // console.log('User:', user);
 
     if (!user) {
       res.status(404).json({ message: 'User not found' });
