@@ -172,7 +172,6 @@ export const insertProduct = async (req: Request, res: Response): Promise<void> 
         images.push(file?.path);
       });
     }
-    console.log(fileData);
     const { name, description, price, category_id, tag_id, brand_id, status } = req.body;
     if (!mongoose.Types.ObjectId.isValid(category_id)) {
       res.status(400).json({ message: 'Required field' });
@@ -201,7 +200,6 @@ export const insertProduct = async (req: Request, res: Response): Promise<void> 
 export const updateProduct = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    console.log(id, 'ID');
     const {
       name,
       description,
@@ -271,7 +269,6 @@ export const updateProduct = async (req: Request, res: Response): Promise<void> 
       images_url = keptImages;
     }
 
-    console.log('Final images_url:', images_url);
 
     if (!Object.values(ProductStatus).includes(status as ProductStatus)) {
       res.status(400).json({ success: false, message: 'Trạng thái sản phẩm không hợp lệ' });
@@ -372,7 +369,6 @@ export const getProductByCategoryID = async (req: Request, res: Response): Promi
 
   try {
     const { id } = req.params;
-    console.log('Received category ID:', id); // Log để kiểm tra
 
     // Kiểm tra id có tồn tại không
     if (!id) {
@@ -394,7 +390,6 @@ export const getProductByCategoryID = async (req: Request, res: Response): Promi
 
     // Parse id thành ObjectId
     const categoryId = new ObjectId(id);
-    console.log('Parsed ObjectId:', categoryId); // Log để kiểm tra
 
     // Lấy thông tin category để lấy name
     const category = await categoryModel.findById(categoryId);
@@ -407,11 +402,9 @@ export const getProductByCategoryID = async (req: Request, res: Response): Promi
     }
 
     categoryName = category.name || 'category'; // Lấy name của category, mặc định là 'category' nếu không có
-    console.log('Category name:', categoryName); // Log để kiểm tra
 
     // Query sản phẩm
     const result = await productModel.find({ category_id: categoryId });
-    console.log('Query result:', result); // Log để kiểm tra
 
     // Kiểm tra kết quả
     if (!result || result.length === 0) {
@@ -437,7 +430,6 @@ export const getProductByCategoryID = async (req: Request, res: Response): Promi
 };
 
 export const uploadProductImage = async (req: Request, res: Response): Promise<void> => {
-  console.log('Received files:', req.files); // Debug
   if (!req.files) {
     res.status(400).json({ message: 'No file uploaded' });
     return;
@@ -459,7 +451,6 @@ export const getProductByTagId = async (req: Request, res: Response): Promise<vo
   let tagName = 'tag';
   try {
     const { id } = req.params;
-    console.log('Received tag_id ID:', id);
 
     // Kiểm tra id có tồn tại không
     if (!id) {
@@ -481,7 +472,6 @@ export const getProductByTagId = async (req: Request, res: Response): Promise<vo
 
     // Parse id thành ObjectId
     const tagId = new ObjectId(id);
-    console.log('Parsed ObjectId:', tagId); // Log để kiểm tra
 
     // Lấy thông tin category để lấy name
     const tag = await tagModel.findById(tagId);
@@ -494,11 +484,9 @@ export const getProductByTagId = async (req: Request, res: Response): Promise<vo
     }
 
     tagName = tag.tag_name || 'TAG';
-    console.log('Category name:', tagName); // Log để kiểm tra
 
     // Query sản phẩm
     const result = await productModel.find({ tag_id: tagId });
-    console.log('Query result:', result); // Log để kiểm tra
 
     // Kiểm tra kết quả
     if (!result || result.length === 0) {
@@ -536,9 +524,6 @@ export const getProductRelated = async (req: Request, res: Response): Promise<vo
 
     // Kiểm tra các trường cần thiết
     const { category_id, tag_id } = product;
-    console.log(category_id, 'category_id');
-    console.log(tag_id, 'tag_id');
-
     // Nếu không có tiêu chí nào để tìm sản phẩm liên quan
     if (!category_id && !tag_id) {
       res.status(200).json([]); // Trả về mảng rỗng
@@ -549,7 +534,6 @@ export const getProductRelated = async (req: Request, res: Response): Promise<vo
     const queryConditions: any[] = [];
     if (category_id) queryConditions.push({ category_id: new Types.ObjectId(category_id) });
     if (tag_id) queryConditions.push({ tag_id: new Types.ObjectId(tag_id) });
-    console.log(queryConditions, 'SSS1111111111111');
     // Tìm sản phẩm liên quan
     const relatedProducts = await productModel
       .find({
@@ -570,9 +554,6 @@ export const toggleProduct = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { status } = req.query;
-
-    console.log('ID Product:', id);
-    console.log('Status Product:', status);
 
     if (!id) {
       res.status(400).json({ message: 'Vui lòng cung cấp ID sản phẩm' });
@@ -611,9 +592,6 @@ export const toggleProductStatus = async (req: Request, res: Response): Promise<
   try {
     const { id } = req.params;
     const { status } = req.body;
-
-    console.log('ID Product:', id);
-    console.log('New Status:', status);
 
     if (!id) {
       res.status(400).json({ message: 'Vui lòng cung cấp ID sản phẩm' });

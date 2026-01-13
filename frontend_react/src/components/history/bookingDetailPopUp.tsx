@@ -10,6 +10,7 @@ dayjs.extend(timezone);
 
 interface BookingDetail {
   orderId: string;
+  orderCode: string;
   orderDetailId: string;
   fullname: string;
   email: string | null;
@@ -27,8 +28,8 @@ interface BookingDetail {
   petType: string | null;
   petWeight: number | null;
   realPrice: number | null;
-}
 
+}
 interface BookingDetailPopupProps {
   visible: boolean;
   onCancel: () => void;
@@ -55,41 +56,39 @@ const statusText = {
 const BookingDetailPopup: React.FC<BookingDetailPopupProps> = ({ visible, onCancel, userId, orderId }) => {
   const [loading, setLoading] = useState(false);
   const [bookingDetails, setBookingDetails] = useState<BookingDetail[]>([]);
-
   const getDetailBooking = async (userId: string) => {
-    const response = await orderDetailApi.getDetailBooking(userId); // Chỉ truyền userId
+    const response = await orderDetailApi.getDetailBooking(userId);
     return { data: response.data };
   };
 
   useEffect(() => {
     const fetchBookingDetails = async () => {
-        if (!visible || !userId || !orderId) return;
-    
-        if (!userId || typeof userId !== 'string') {
-            message.error('userId không hợp lệ!');
-            return;
+      if (!visible || !userId || !orderId) return;
+
+      if (!userId || typeof userId !== 'string') {
+        message.error('userId không hợp lệ!');
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const response = await getDetailBooking(userId);
+        if (!response.data.success) {
+          throw new Error(response.data.message || 'Lỗi khi lấy dữ liệu lịch hẹn');
         }
-    
-        setLoading(true);
-        try {
-            console.log('userId:', userId); // Log để kiểm tra
-            const response = await getDetailBooking(userId);
-            if (!response.data.success) {
-                throw new Error(response.data.message || 'Lỗi khi lấy dữ liệu lịch hẹn');
-            }
-            const details = response.data.data || [];
-            const filteredDetails = details.filter((detail: BookingDetail) => detail.orderId === orderId);
-            if (filteredDetails.length === 0) {
-                message.warning('Không tìm thấy lịch hẹn cho orderId này!');
-            }
-            setBookingDetails(filteredDetails);
-        } catch (error) {
-            console.error('Lỗi khi lấy chi tiết booking:', error);
-            message.error(error.message || 'Không thể tải chi tiết lịch hẹn!');
-            setBookingDetails([]);
-        } finally {
-            setLoading(false);
+        const details = response.data.data || [];
+        const filteredDetails = details.filter((detail: BookingDetail) => detail.orderId === orderId);
+        if (filteredDetails.length === 0) {
+          message.warning('Không tìm thấy lịch hẹn cho orderId này!');
         }
+        setBookingDetails(filteredDetails);
+      } catch (error: any) {
+        console.error('Lỗi khi lấy chi tiết booking:', error);
+        message.error(error.message || 'Không thể tải chi tiết lịch hẹn!');
+        setBookingDetails([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchBookingDetails();
@@ -118,7 +117,9 @@ const BookingDetailPopup: React.FC<BookingDetailPopupProps> = ({ visible, onCanc
             size="small"
             style={{ marginBottom: '16px' }}
           >
-            <Descriptions.Item label="Mã đơn hàng">{detail.orderId || 'Không xác định'}</Descriptions.Item>
+            <Descriptions.Item label="Mã đơn hàng">
+              {detail.orderCode || detail.orderId?.slice(-8) || 'Không xác định'}
+            </Descriptions.Item>
             <Descriptions.Item label="Tên khách hàng">{detail.fullname || 'Khách vãng lai'}</Descriptions.Item>
             <Descriptions.Item label="Email">{detail.email || 'Không có'}</Descriptions.Item>
             <Descriptions.Item label="Số điện thoại">{detail.phone || 'Không xác định'}</Descriptions.Item>
@@ -143,23 +144,19 @@ const BookingDetailPopup: React.FC<BookingDetailPopupProps> = ({ visible, onCanc
             <Descriptions.Item label="Giá thực tế">
               {detail.realPrice != null ? `${detail.realPrice.toLocaleString()}đ` : 'Chưa tính'}
             </Descriptions.Item>
-            <Descriptions.Item label="Thời gian đặt">
-              {detail.booking_date
-                ? dayjs(detail.booking_date)
-                    .tz('Asia/Ho_Chi_Minh')
-                    .format('DD/MM/YYYY HH:mm')
+            <Descriptions.Item label="Thời gian đặt lịch">
+              {detail.order_date
+                ? dayjs(detail.order_date).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY HH:mm')
                 : 'Chưa xác định'}
             </Descriptions.Item>
-            <Descriptions.Item label="Ngày tạo đơn">
-              {detail.order_date
-                ? dayjs(detail.order_date)
-                    .tz('Asia/Ho_Chi_Minh')
-                    .format('DD/MM/YYYY HH:mm')
+            <Descriptions.Item label="Thời gian thực hiện">
+              {detail.booking_date
+                ? dayjs(detail.booking_date).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY HH:mm')
                 : 'Chưa xác định'}
             </Descriptions.Item>
             <Descriptions.Item label="Trạng thái">
-              <Tag color={statusColors[detail.bookingStatus?.toLowerCase()] || 'default'}>
-                {statusText[detail.bookingStatus?.toLowerCase()] || 'Không xác định'}
+              <Tag color={statusColors[detail.bookingStatus?.toLowerCase() as keyof typeof statusColors] || 'default'}>
+                {statusText[detail.bookingStatus?.toLowerCase() as keyof typeof statusText] || 'Không xác định'}
               </Tag>
             </Descriptions.Item>
           </Descriptions>

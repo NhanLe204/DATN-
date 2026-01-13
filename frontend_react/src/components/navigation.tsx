@@ -77,7 +77,7 @@ const Navigation: React.FC = () => {
           setLoading(true);
           setError(null);
           const response = await productsApi.getProductByID(id);
-          console.log("Product API response:", response.data);
+          // console.log("Product API response:", response.data);
           setProduct(response.data.product);
         } catch (err: any) {
           setError(
@@ -99,9 +99,9 @@ const Navigation: React.FC = () => {
         try {
           setLoading(true);
           setError(null);
-          console.log("Fetching blog with ID:", id);
+          // console.log("Fetching blog with ID:", id);
           const response = await blogApi.getBlogById(id);
-          console.log("Blog API response:", response.data);
+          // console.log("Blog API response:", response.data);
           // Xử lý trường hợp response.data là mảng hoặc đối tượng
           let blogData;
           if (Array.isArray(response.data)) {
@@ -112,7 +112,7 @@ const Navigation: React.FC = () => {
           } else {
             blogData = response.data.data || response.data; // Lấy response.data.data
           }
-          console.log("Processed blogData:", blogData);
+          // console.log("Processed blogData:", blogData);
           setBlog({
             title: blogData.title,
             blog_category_id:

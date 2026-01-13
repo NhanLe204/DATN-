@@ -7,7 +7,6 @@ export const createBlog = async (req: Request, res: Response): Promise<void> => 
     let image_url = '';
     if (req.file) {
       image_url = req.file.path; // URL từ Cloudinary
-      console.log('Image uploaded to Cloudinary:', image_url);
     } else {
       res.status(400).json({ success: false, message: 'No file uploaded' });
       return;

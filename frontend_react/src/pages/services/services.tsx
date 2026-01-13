@@ -99,7 +99,6 @@ const SpaBookingForm: React.FC = () => {
       email: allValues.email,
       note: allValues.note,
     };
-    console.log("SpaBookingForm - GuestInfo to dispatch:", guestInfo);
     debouncedSetGuestUserInfo(guestInfo);
     dispatch(setFormData(serializedValues));
   };
@@ -191,7 +190,6 @@ const SpaBookingForm: React.FC = () => {
     try {
       const dateStr = date.format("YYYY-MM-DD");
       const response = await orderApi.getAvailableSlots(dateStr);
-      console.log(`Available slots for ${dateStr}:`, response.data);
       setSlotAvailability((prev) => ({
         ...prev,
         [index]: response.data,
@@ -329,13 +327,11 @@ const SpaBookingForm: React.FC = () => {
         shipping_address: null,
         orderDetails,
         infoUserGuest: guestInfo,
-        fullname: values.fullName.trim(), // backend dùng cái này
+        fullname: values.fullName.trim(), 
       };
 
-      console.log("Sending order data:", orderData);
 
       const response = await orderApi.create(orderData);
-      console.log("Booking success:", response);
 
       message.success("Đặt lịch thành công! Chúng tôi sẽ gửi email xác nhận ngay.");
 
@@ -361,13 +357,11 @@ const SpaBookingForm: React.FC = () => {
 
   const handleServiceChange = (value: string, index: number) => {
     const selectedService = services.find((service) => service._id === value);
-    console.log("Selected Service:", selectedService);
     const updatedPetFormData = [...spaBooking.petFormData];
     updatedPetFormData[index] = {
       estimatedPrice: selectedService?.service_price || 0,
       estimatedDuration: selectedService?.duration,
     };
-    console.log("Updated PetFormData:", updatedPetFormData);
     dispatch(setPetFormData(updatedPetFormData));
     form.setFieldsValue({
       pets: {

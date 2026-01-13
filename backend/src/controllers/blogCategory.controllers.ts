@@ -82,8 +82,6 @@ export const getBlogCategoryById = async (req: Request, res: Response): Promise<
 export const updateBlogCategory = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    console.log(id, 'ID');
-
     // Kiểm tra xem ID có hợp lệ không
     if (!mongoose.Types.ObjectId.isValid(id)) {
       res.status(400).json({
@@ -172,9 +170,6 @@ export const toggleBlogCategory = async (req: AuthenticatedRequest, res: Respons
   try {
     const { id } = req.params;
     const { status } = req.query;
-
-    console.log('ID Category:', id);
-    console.log('Status Category:', status);
 
     if (!id) {
       res.status(400).json({ message: 'Vui lòng cung cấp ID danh mục bài viết' });

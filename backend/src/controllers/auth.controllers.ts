@@ -163,8 +163,6 @@ export const verifyOTPController = async (req: Request, res: Response): Promise<
 export const loginController = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
-    console.log('Email', email);
-    console.log('Password', password);
     const user = await userModel
       .findOne({ email })
       .select('-reset_password_token -reset_password_expires -refreshToken');
@@ -227,7 +225,6 @@ export const authCheckController = async (
   res: Response
 ): Promise<void> => {
   try {
-    console.log('req.user', req.user);
     res.status(200).json({ success: true, user: req.user, token: req.token });
   } catch (error) {
     if (error instanceof Error) {
@@ -242,7 +239,6 @@ export const authCheckController = async (
 export const forgotPasswordController = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email } = req.body;
-    console.log('email', email);
     if (!email) {
       res.status(400).json({ success: false, message: 'Please provide an email' });
       return;
@@ -293,7 +289,6 @@ export const resetPasswordController = async (req: Request, res: Response): Prom
 
     // Hash resetToken để so sánh với token đã lưu trong DB
     const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-    console.log(hashedToken, 'hashedToken');
     // Tìm user có token hợp lệ và chưa hết hạn
     const user = await userModel.findOne({
       reset_password_token: hashedToken,
@@ -334,12 +329,9 @@ export const refreshTokenController = async (req: Request, res: Response): Promi
       return;
     }
 
-    console.log('Received refresh token:', cookie.refreshToken);
-
     let decoded;
     try {
       decoded = jwt.verify(cookie.refreshToken, ENV_VARS.JWT_SECRET) as jwt.JwtPayload;
-      console.log('Decoded token payload:', decoded);
     } catch (error) {
       console.error('JWT Verification Error:', error);
       res.status(401).json({ success: false, message: 'Invalid refresh token' });
@@ -372,7 +364,6 @@ export const refreshTokenController = async (req: Request, res: Response): Promi
 export const googleLogin: RequestHandler = async (req: Request, res: Response): Promise<void> => {
   const { idToken } = req.body;
   try {
-    console.log('Received idToken:', idToken);
     if (!idToken) {
       res.status(400).json({ success: false, message: 'No idToken provided' });
       return;

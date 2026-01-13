@@ -61,7 +61,6 @@ const CustomerInfoForm: React.FC<CustomerInfoFormProps> = ({
         email: allValues.email || "",
         note: allValues.note || "",
       };
-      console.log("CustomerInfoForm - GuestInfo to dispatch:", guestInfo);
       debouncedSetGuestUserInfo(guestInfo);
     }
   };

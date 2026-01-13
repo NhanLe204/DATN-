@@ -85,7 +85,7 @@ interface ProductRating {
 }
 
 const ProductRatings = ({ productId }: { productId: string }) => {
-  console.log(productId, "Thanh ne ProductID");
+  // console.log(productId, "Thanh ne ProductID");
 };
 
 export default function OrderDetail() {
@@ -136,7 +136,7 @@ export default function OrderDetail() {
         setUser(userResponse.data.data);
 
         const orderResponse = await orderDetailApi.getOrderByUserId(accountID);
-        console.log("Order Response:", orderResponse);
+        // console.log("Order Response:", orderResponse);
 
         if (!orderResponse.data.success) {
           console.warn("API Error:", orderResponse.data.message);
@@ -385,7 +385,7 @@ export default function OrderDetail() {
                 <img
                   src={`${item.image_url[0]}`}
                   alt={item.name}
-                  className="w-16 h-16 object-cover rounded-lg border border-gray-200"
+                  className="object-cover w-16 h-16 border border-gray-200 rounded-lg"
                 />
                 <div>
                   <p className="font-medium text-gray-800">{item.name.slice(0, 20) + "..."}</p>
@@ -397,7 +397,7 @@ export default function OrderDetail() {
               <Button
                 type="link"
                 onClick={() => handleViewDetails(record)}
-                className="text-blue-500 p-0"
+                className="p-0 text-blue-500"
               >
                 Xem thêm {remainingItems} sản phẩm
               </Button>
@@ -421,7 +421,7 @@ export default function OrderDetail() {
       dataIndex: "total",
       key: "total",
       render: (total: number) => (
-        <span className="text-blue-500 font-medium">
+        <span className="font-medium text-blue-500">
           {total.toLocaleString()}đ
         </span>
       ),
@@ -431,7 +431,7 @@ export default function OrderDetail() {
       key: "status_payment",
       width: "18%",
       render: (_: any, record: Order) => (
-        <div className="flex flex-col space-y-1 sm:flex-row sm:space-y-0 sm:space-x-1 md:space-x-2 items-start sm:items-center">
+        <div className="flex flex-col items-start space-y-1 sm:flex-row sm:space-y-0 sm:space-x-1 md:space-x-2 sm:items-center">
           <Tag
             color={statusColors[record.status]}
             className="flex items-center w-fit px-1 sm:px-2 py-0.5 text-[10px] sm:text-xs font-medium rounded-full shadow-sm transition-all duration-200 hover:shadow-md"
@@ -468,7 +468,7 @@ export default function OrderDetail() {
             <Button
               type="primary"
               onClick={() => handleViewDetails(record)}
-              className="bg-green-500 hover:bg-green-600 flex items-center"
+              className="flex items-center bg-green-500 hover:bg-green-600"
               icon={<FaEye className="mr-2" />}
             >
               Xem chi tiết
@@ -478,7 +478,7 @@ export default function OrderDetail() {
                 <Button
                   type="primary"
                   onClick={() => handleReorder(record)}
-                  className="bg-blue-500 hover:bg-blue-600 flex items-center"
+                  className="flex items-center bg-blue-500 hover:bg-blue-600"
                   icon={<FaShoppingBag className="mr-2" />}
                 >
                   Mua lại
@@ -489,7 +489,7 @@ export default function OrderDetail() {
                     setSelectedOrderForReview(record);
                     setIsSelectProductModalVisible(true);
                   }}
-                  className="bg-purple-500 hover:bg-purple-600 flex items-center"
+                  className="flex items-center bg-purple-500 hover:bg-purple-600"
                   icon={<FaStar className="mr-2 text-yellow-400" />}
                 >
                   Đánh giá
@@ -521,7 +521,7 @@ export default function OrderDetail() {
         <img
           src={image_url[0]}
           alt="Sản phẩm"
-          className="w-12 h-12 object-cover rounded-lg border border-gray-200"
+          className="object-cover w-12 h-12 border border-gray-200 rounded-lg"
         />
       ),
     },
@@ -576,7 +576,7 @@ export default function OrderDetail() {
   return (
     <div className="w-full p-4">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">
+        <h2 className="mb-2 text-2xl font-bold text-gray-800">
           Đơn mua sản phẩm
         </h2>
         <p className="text-gray-600">Quản lý các đơn hàng sản phẩm của bạn</p>
@@ -621,7 +621,7 @@ export default function OrderDetail() {
       >
         <p>Bạn có chắc chắn muốn đặt lại đơn hàng này?</p>
         {selectedOrder && (
-          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+          <div className="p-4 mt-4 rounded-lg bg-gray-50">
             <p className="font-medium">Chi tiết đơn hàng:</p>
             <p>Mã đơn hàng: {selectedOrder.orderNumber}</p>
             <p>Tổng tiền: {selectedOrder.total.toLocaleString()}đ</p>
@@ -641,7 +641,7 @@ export default function OrderDetail() {
       >
         <p>Bạn có chắc chắn muốn hủy đơn hàng này không?</p>
         {orderToCancel && (
-          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+          <div className="p-4 mt-4 rounded-lg bg-gray-50">
             <p className="font-medium">Chi tiết đơn hàng:</p>
             <p>Mã đơn hàng: {orderToCancel.orderNumber}</p>
             <p>Tổng tiền: {orderToCancel.total.toLocaleString()}đ</p>
@@ -707,7 +707,7 @@ export default function OrderDetail() {
               </div>
             </div>
             <div className="mt-4">
-              <h3 className="font-medium text-lg mb-2">
+              <h3 className="mb-2 text-lg font-medium">
                 Sản phẩm trong đơn hàng:
               </h3>
               <div style={{ maxHeight: "400px", overflowY: "auto" }}>
@@ -732,14 +732,14 @@ export default function OrderDetail() {
       >
         {selectedProductForReview && (
           <div className="p-4">
-            <div className="flex items-center space-x-4 mb-6">
+            <div className="flex items-center mb-6 space-x-4">
               <img
                 src={selectedProductForReview.image_url[0]}
                 alt={selectedProductForReview.name}
-                className="w-24 h-24 object-cover rounded-lg border border-gray-200"
+                className="object-cover w-24 h-24 border border-gray-200 rounded-lg"
               />
               <div>
-                <h3 className="font-medium text-lg">
+                <h3 className="text-lg font-medium">
                   {selectedProductForReview.name}
                 </h3>
                 <p className="text-gray-500">
@@ -749,7 +749,7 @@ export default function OrderDetail() {
             </div>
 
             <div className="mb-6">
-              <p className="font-medium mb-2">Đánh giá của bạn</p>
+              <p className="mb-2 font-medium">Đánh giá của bạn</p>
               <div className="flex space-x-2">
                 {Array.from({ length: 5 }, (_, index) => index + 1).map(
                   (star) => (
@@ -768,7 +768,7 @@ export default function OrderDetail() {
             </div>
 
             <div className="mb-6">
-              <p className="font-medium mb-2">Nhận xét của bạn</p>
+              <p className="mb-2 font-medium">Nhận xét của bạn</p>
               <textarea
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
@@ -811,13 +811,13 @@ export default function OrderDetail() {
                 {selectedOrderForReview.items.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between p-4 border rounded-lg bg-white"
+                    className="flex items-center justify-between p-4 bg-white border rounded-lg"
                   >
                     <div className="flex items-center space-x-4">
                       <img
                         src={item.image_url[0]}
                         alt={item.name}
-                        className="w-16 h-16 object-cover rounded-lg border border-gray-200"
+                        className="object-cover w-16 h-16 border border-gray-200 rounded-lg"
                       />
                       <div>
                         <p className="font-medium text-gray-800">{item.name}</p>
@@ -826,13 +826,13 @@ export default function OrderDetail() {
                         </p>
                         {item.isRated && (
                           <div className="flex items-center space-x-2">
-                            <p className="text-gray-400 text-sm">Đã đánh giá</p>
+                            <p className="text-sm text-gray-400">Đã đánh giá</p>
                             <Button
                               type="link"
                               onClick={() =>
                                 navigate(`/detail/${item.productId}#reviews`)
                               }
-                              className="text-blue-500 p-0"
+                              className="p-0 text-blue-500"
                             >
                               Xem đánh giá
                             </Button>

@@ -35,7 +35,6 @@ export const generateBookingEmailHtml = (
     ? 'Lịch đặt dịch vụ của bạn đã được hủy thành công.'
     : 'Cảm ơn bạn đã đặt lịch với chúng tôi! Dưới đây là thông tin chi tiết về lịch hẹn của bạn:';
 
-  // Viết HTML theo kiểu return() – indent đẹp như JSX, dễ sửa vl
   return (
     `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa; border-radius: 12px;">
       <div style="background: #ffffff; border-radius: 12px; padding: 32px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">

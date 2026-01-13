@@ -18,15 +18,11 @@ export const createPayment = async (req: Request, res: Response): Promise<void> 
       : req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress || '';
 
     const tmnCode = process.env.VNP_TMNCODE as string;
-    console.log(tmnCode, 'tmnCode');
     const secretKey = process.env.VNP_HASHSECRET as string;
-    console.log('secretKey', secretKey);
     let vnpUrl = process.env.VNP_URL as string;
-    console.log('vnpUrl', vnpUrl);
     // const returnUrl = process.env.VNP_RETURN_URL as string;
     // Gửi dữ liệu lên VNPAY
     const { orderId, amount, bankCode, language, returnUrl } = req.body;
-    console.log('req.body', req.body);
     const locale = language || 'vn';
     const currCode = 'VND';
 

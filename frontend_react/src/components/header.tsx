@@ -77,11 +77,9 @@ export default function Header() {
   const closeSearchMobile = () => setSearchMobileOpen(false);
 
   const showSearchDesktop = () => setSearchDesktopOpen(true);
-  const closeSearchDesktop = () => setSearchDesktopOpen(false);
 
   useEffect(() => {
     const storedHistory = localStorage.getItem("searchHistory");
-    console.log("Loaded searchHistory from localStorage on mount:", storedHistory);
     if (storedHistory) {
       try {
         const parsedHistory = JSON.parse(storedHistory);
@@ -99,7 +97,6 @@ export default function Header() {
   }, []);
 
   const saveSearchHistory = (history: string[]) => {
-    console.log("Saving searchHistory to localStorage:", history);
     localStorage.setItem("searchHistory", JSON.stringify(history));
   };
 
@@ -183,7 +180,6 @@ export default function Header() {
     if (storedUserData) {
       try {
         const parsedUser = JSON.parse(storedUserData);
-        console.log("User data in header.js:", parsedUser);
         setUser(parsedUser);
       } catch (error) {
         console.error("Lỗi khi parse userData từ localStorage:", error);

@@ -132,7 +132,6 @@ export const deleteBrand = async (req: Request, res: Response): Promise<void> =>
 export const updateBrand = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    console.log(id, 'ID');
 
     // Kiểm tra xem ID có hợp lệ không
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -164,36 +163,3 @@ export const updateBrand = async (req: Request, res: Response): Promise<void> =>
     }
   }
 };
-// export const toggleCategory = async (req: AuthenticatedRequest, res: Response) => {
-//   try {
-//     const { id } = req.params;
-//     const { status } = req.query;
-
-//     console.log('ID Category:', id);
-//     console.log('Status Category:', Number(status));
-
-//     if (!id) {
-//       res.status(400).json({ message: 'Vui lòng cung cấp ID danh mục' });
-//     }
-
-//     // Tìm danh mục theo ID
-//     const category = await categoryModel.findById(id);
-//     if (!category) {
-//       res.status(404).json({ message: 'Danh mục không tồn tại' });
-//     }
-
-//     // Chuyển đổi status sang boolean (1 = true, 0 = false)
-//     const isHidden = Number(status) == 1;
-
-//     // Cập nhật trạng thái `isHidden`
-//     category.is_hidden = isHidden;
-//     await category.save();
-
-//     res.status(200).json({
-//       message: isHidden ? 'Danh mục đã được ẩn thành công' : 'Danh mục đã mở lại thành công',
-//       category
-//     });
-//   } catch (error) {
-//     res.status(500).json({ message: 'Lỗi khi cập nhật trạng thái danh mục', error });
-//   }
-// };

@@ -38,13 +38,10 @@ export const getCouponById = async (req: Request, res: Response): Promise<void> 
 };
 export const createCoupon = async (req: Request, res: Response): Promise<void> => {
   try {
-    console.log('Request body:', req.body); // Kiểm tra dữ liệu gửi lên
-
     const { coupon_code, discount_value, date_range, min_order_value, usage_limit, used_count, score } = req.body;
 
     // Kiểm tra các trường bắt buộc
     if (!coupon_code || !discount_value || !date_range || date_range.length !== 2) {
-      console.log('Missing required fields');
       res.status(400).json({ success: false, message: 'Thiếu các trường bắt buộc hoặc date_range không hợp lệ' });
       return;
     }
@@ -63,7 +60,6 @@ export const createCoupon = async (req: Request, res: Response): Promise<void> =
       score: score || 0 // Giá trị mặc định là 0
     });
 
-    console.log('New coupon created:', newCoupon); // Kiểm tra coupon vừa tạo
     res.status(201).json({ success: true, message: 'Tạo mã giảm giá thành công', coupon: newCoupon });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -209,14 +205,12 @@ export const applyCoupon = async (req: Request, res: Response): Promise<void> =>
 export const getActiveCoupons = async (req: Request, res: Response): Promise<void> => {
   try {
     const currentDate = new Date();
-    console.log('Fetching active coupons with date:', currentDate);
     const activeCoupons = await couponModel.find({
       status: 'active',
       start_date: { $lte: currentDate },
       end_date: { $gte: currentDate },
       $expr: { $lt: ['$used_count', '$usage_limit'] }
     });
-    console.log('Found coupons:', activeCoupons);
     res.status(200).json({ success: true, result: activeCoupons });
     return;
   } catch (error) {

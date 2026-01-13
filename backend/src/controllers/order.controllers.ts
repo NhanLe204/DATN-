@@ -117,34 +117,10 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
         calculatedTotalPrice += detailTotalPrice;
       }
 
-      // Chuẩn hóa booking_date sang UTC
-      // const standardizedBookingDate =
-      //   serviceId && booking_date ? moment.tz(booking_date, 'Asia/Ho_Chi_Minh').utc().toDate() : null;
-      // return {
-      //   productId,
-      //   serviceId,
-      //   quantity,
-      //   product_price: isOrder ? product_price : null,
-      //   total_price: isOrder ? detailTotalPrice : null,
-      //   booking_date: standardizedBookingDate,
-      //   petName: serviceId ? petName : null,
-      //   petType: serviceId ? petType : null
-      // };
-
       let booking_start = null;
       let booking_end = null;
       let standardizedBookingDate = null;
 
-      // if (serviceId && booking_date) {
-      //   const start = moment.tz(booking_date, 'Asia/Ho_Chi_Minh');
-
-      //   const duration = serviceId?.duration || 60;
-      //   const end = start.clone().add(duration, 'minutes');
-
-      //   booking_start = start.utc().toDate();
-      //   booking_end = end.utc().toDate();
-      //   standardizedBookingDate = booking_start;
-      // }
 
       if (serviceId && booking_date) {
         const now = moment().tz('Asia/Ho_Chi_Minh');
@@ -191,7 +167,6 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
 
     });
 
-    // const validatedOrderDetails = await Promise.all(orderDetailsPromises);
     const validatedOrderDetails = [];
     for (const promise of orderDetailsPromises) {
       const detail = await promise;
@@ -232,12 +207,30 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
     // order Code
     const orderCode = await generateOrderCode();
     // Tạo và lưu đơn hàng
+    let finalFullname: string | null = null;
+    let finalPhone: string | null = null;
+    let finalEmail: string | null = null;
+    if (userID) {
+      const user = await userModel.findById(userID).session(session);
+      if (!user) throw new Error('Không tìm thấy người dùng');
+
+      finalFullname = user.fullname || null;
+      finalPhone = user.phone || user.phone_number || null;
+      finalEmail = user.email || null;
+    }
+
+    if (infoUserGuest) {
+      finalFullname = infoUserGuest.fullName?.trim() || finalFullname;
+      finalPhone = infoUserGuest.phone?.trim() || finalPhone;
+      finalEmail = infoUserGuest.email?.trim() || finalEmail;
+    }
+
     const order = new orderModel({
       orderCode,
       userID: userID ? userID : null,
       fullname: infoUserGuest?.fullName || null,
       phone: infoUserGuest?.phone || null,
-      email: infoUserGuest?.email || null, // Thêm: Lưu email
+      email: infoUserGuest?.email || null,
       payment_typeID,
       deliveryID: isOrder ? deliveryID : null,
       couponID: couponID || null,
@@ -249,24 +242,13 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       bookingStatus: isBooking ? BookingStatus.CONFIRMED : null,
       payment_status:
         payment_typeID == '67d67442aeb5082f01074c28' ? PaymentStatus.CASH_ON_DELIVERY : PaymentStatus.PENDING,
-      inforUserGuest: infoUserGuest || null // Giữ nguyên để tương thích với logic cũ
+      // inforUserGuest: infoUserGuest || null 
+      inforUserGuest: userID ? null : infoUserGuest,
     });
 
     const savedOrder = await order.save({ session });
 
-    // Tạo và lưu chi tiết đơn hàng
     const orderDetailDocs = validatedOrderDetails.map((detail: any) => {
-      // return new orderDetailModel({
-      //   orderId: savedOrder._id,
-      //   productId: detail.productId || null,
-      //   serviceId: detail.serviceId || null,
-      //   quantity: detail.quantity,
-      //   product_price: isOrder ? detail.product_price : null,
-      //   total_price: isOrder ? detail.total_price : null,
-      //   booking_date: detail.booking_date,
-      //   petName: detail.petName,
-      //   petType: detail.petType
-      // });
       return new orderDetailModel({
         orderId: savedOrder._id,
         productId: detail.productId || null,
@@ -285,7 +267,6 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
 
     });
 
-    // await Promise.all(orderDetailDocs.map((detail: any) => detail.save({ session })));
     for (const detail of orderDetailDocs) {
       await detail.save({ session });
     }
@@ -404,7 +385,7 @@ export const getAvailableSlots = async (req: Request, res: Response): Promise<vo
       // Tạo các khung 00, 15, 30, 45 trong giờ đó
       for (const minute of [0, 15, 30, 45]) {
         const slotStartLocal = moment.tz(`${date} ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`, 'YYYY-MM-DD HH:mm', 'Asia/Ho_Chi_Minh');
-        
+
         // Nếu slot bắt đầu sau 17:00 thì bỏ qua (an toàn)
         if (slotStartLocal.hour() >= 18) continue;
 

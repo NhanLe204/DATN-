@@ -85,7 +85,6 @@ export const insertCategory = async (req: Request, res: Response): Promise<void>
 export const updateCategory = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    console.log(id, 'ID');
 
     // Kiểm tra xem ID có hợp lệ không
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -139,10 +138,6 @@ export const toggleCategory = async (req: AuthenticatedRequest, res: Response):P
   try {
     const { id } = req.params;
     const { status } = req.query;
-
-    console.log('ID Category:', id);
-    console.log('Status Category:', status);
-
     if (!id) {
       res.status(400).json({ message: 'Vui lòng cung cấp ID danh mục' });
       return;

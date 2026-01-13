@@ -84,7 +84,7 @@ const AdminLayout = () => {
   }, []);
   useEffect(() => {
     const handleStorageChange = (event: StorageEvent) => {
-      console.log("Storage event:", event);
+      // console.log("Storage event:", event);
       if (event.key === "accessToken" && event.newValue === null) {
         notification.info({
           message: "Phiên đăng nhập đã hết",
@@ -226,12 +226,12 @@ const AdminLayout = () => {
         trigger={null}
         collapsible
         collapsed={collapsed}
-        className="bg-white shadow-md fixed top-0 left-0 h-screen z-10"
+        className="fixed top-0 left-0 z-10 h-screen bg-white shadow-md"
         style={{
           overflow: "auto", // Allow scrolling within the sidebar if content overflows
         }}
       >
-        <div className="p-4 flex items-center space-x-2">
+        <div className="flex items-center p-4 space-x-2">
           <Avatar
             size={40}
             src={user?.avatar || "https://via.placeholder.com/40"}
@@ -268,7 +268,7 @@ const AdminLayout = () => {
           transition: "margin-left 0.2s", // Smooth transition when collapsing/expanding
         }}
       >
-        <Header className="bg-white px-4 flex items-center shadow-sm fixed top-0 w-full z-9">
+        <Header className="fixed top-0 flex items-center w-full px-4 bg-white shadow-sm z-9">
           <Button
             type="text"
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
@@ -284,7 +284,7 @@ const AdminLayout = () => {
             >
               Quay lại trang web
             </Button>
-            <div className="text-sm mr-24">
+            <div className="mr-24 text-sm">
               <span>
                 {currentDate} - {currentTime}
               </span>

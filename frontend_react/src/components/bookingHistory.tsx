@@ -104,7 +104,7 @@ const BookingHistory = () => {
           }));
 
         setBookings(userBookings);
-      } catch (error) {
+      } catch (error:any) {
         console.error('Failed to fetch bookings:', error);
         if (error.response?.status === 404) {
           setBookings([]);
@@ -171,7 +171,7 @@ const BookingHistory = () => {
           } else {
             message.error(response.message || 'Hủy lịch thất bại!');
           }
-        } catch (error) {
+        } catch (error:any) {
           console.error('Failed to cancel booking:', error);
           message.error(error.response?.data?.message || 'Có lỗi xảy ra khi hủy lịch!');
         } finally {
@@ -212,13 +212,13 @@ const BookingHistory = () => {
       title: 'Tên khách hàng',
       key: 'fullname',
       render: (_: any, record: Booking) => (
-        <span className="font-medium text-sm md:text-base">
+        <span className="text-sm font-medium md:text-base">
           {record.order && record.order[0]?.fullname
             ? record.order[0].fullname
             : 'Khách vãng lai'}
         </span>
       ),
-      responsive: ['md'], // Chỉ hiển thị trên màn hình medium trở lên
+      responsive: ['md'], 
     },
     {
       title: 'Ngày giờ đặt',
@@ -244,7 +244,7 @@ const BookingHistory = () => {
       render: (service: Service[]) => {
         const duration = service && service[0]?.duration;
         return (
-          <span className="text-sm md:text-base font-medium">
+          <span className="text-sm font-medium md:text-base">
             {duration ? `${duration} phút` : 'Chưa xác định'}
           </span>
         );
@@ -256,7 +256,7 @@ const BookingHistory = () => {
       dataIndex: 'realPrice',
       key: 'realPrice',
       render: (realPrice: number | null | undefined) => (
-        <span className="text-blue-500 font-medium text-sm md:text-base">
+        <span className="text-sm font-medium text-blue-500 md:text-base">
           {realPrice ? `${realPrice.toLocaleString()}đ` : 'Chưa tính'}
         </span>
       ),
@@ -277,7 +277,7 @@ const BookingHistory = () => {
       title: 'Thao tác',
       key: 'action',
       render: (_: any, record: Booking) => (
-        <div className="flex flex-col md:flex-row gap-2">
+        <div className="flex flex-col gap-2 md:flex-row">
           <Button
             danger
             disabled={!canCancel(record)}
@@ -321,9 +321,9 @@ const BookingHistory = () => {
   };
 
   return (
-    <Card className="p-2 md:p-4 w-full max-w-7xl mx-auto" bodyStyle={{ padding: '8px' }}>
-      <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-2 md:mb-4">Lịch đã đặt</h2>
-      <div className="text-xs md:text-sm text-red-600 mb-4 space-y-1">
+    <Card className="w-full p-2 mx-auto md:p-4 max-w-7xl" bodyStyle={{ padding: '8px' }}>
+      <h2 className="mb-2 text-lg font-bold text-gray-800 md:text-xl md:mb-4">Lịch đã đặt</h2>
+      <div className="mb-4 space-y-1 text-xs text-red-600 md:text-sm">
         <p>1. Chỉ có thể hủy lịch hẹn trước ít nhất 12 tiếng so với giờ thực hiện</p>
         <p>
           2. Nếu sau 15ph giờ hẹn mà quý khách không đến, và không có liên lạc
@@ -337,7 +337,7 @@ const BookingHistory = () => {
         activeKey={activeTab}
         onChange={setActiveTab}
         items={tabItems}
-       className="mb-2 text-xs md:text-sm hidden md:block"
+       className="hidden mb-2 text-xs md:text-sm md:block"
       />
       <Table
         columns={columns}

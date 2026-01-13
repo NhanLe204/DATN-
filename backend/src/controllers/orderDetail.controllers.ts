@@ -147,8 +147,6 @@ export const getBookingsByUserId = async (
       { $lookup: { from: 'services', localField: 'serviceId', foreignField: '_id', as: 'service' } }
     ]);
 
-    console.log('Raw bookings:', bookings);
-
     if (!bookings.length) {
       res.status(404).json({ success: false, message: 'No bookings found for this user' });
       return;
@@ -466,9 +464,6 @@ export const changeBookingStatus = async (req: Request, res: Response): Promise<
               ? { email: order.infoUserGuest.email, name: order.infoUserGuest.fullName }
               : null;
 
-          console.log('User data for email:', userData);
-          console.log('Order detail:', orderDetail);
-
           if (userData && userData.email && orderDetail) {
             const service = await ServiceModel.findById(orderDetail.serviceId).select('service_name');
             interface BookingEmailData {
@@ -543,7 +538,7 @@ export const changeBookingStatus = async (req: Request, res: Response): Promise<
 	</div>
               `
             });
-            console.log(`Completion email sent to ${userData.email} for order ${orderId}`);
+            // console.log(`Completion email sent to ${userData.email} for order ${orderId}`);
           } else {
             console.warn(`No valid email found for order ${orderId}. Skipping email.`);
           }
@@ -1118,8 +1113,11 @@ export const getBookingDetailsByUserId = async (
       return;
     }
 
-    // Bước 1: Tìm các đơn hàng của user
-    const userOrders = await orderModel.find({ userID: userId }).select('_id bookingStatus order_date').lean();
+    // Bước 1: Tìm các đơn hàng của user (thêm orderCode và các field cần thiết)
+    const userOrders = await orderModel
+      .find({ userID: userId })
+      .select('_id bookingStatus order_date orderCode fullname email phone status') // ← Thêm orderCode + các field quan trọng
+      .lean();
 
     if (!userOrders.length) {
       res.status(404).json({
@@ -1132,7 +1130,7 @@ export const getBookingDetailsByUserId = async (
     // Lấy danh sách orderId
     const orderIds = userOrders.map((order) => order._id);
 
-    // Bước 2: Tìm các orderDetail có serviceId từ các đơn hàng của user
+    // Bước 2: Aggregate chi tiết booking
     const bookings = await orderDetailModel.aggregate([
       {
         $match: {
@@ -1180,6 +1178,7 @@ export const getBookingDetailsByUserId = async (
         $project: {
           orderId: '$order._id',
           orderDetailId: '$_id',
+          orderCode: '$order.orderCode', // ← Thêm mã đơn hàng
           fullname: {
             $ifNull: ['$order.fullname', '$order.inforUserGuest.fullName', '$user.fullname', 'Khách vãng lai']
           },
@@ -1196,8 +1195,10 @@ export const getBookingDetailsByUserId = async (
             duration: '$service.duration'
           },
           booking_date: '$booking_date',
-          order_date: '$order.order_date',
-          bookingStatus: '$order.bookingStatus',
+          order_date: '$order.order_date', // ← Đảm bảo có thời gian tạo đơn
+          bookingStatus: {
+            $ifNull: ['$order.bookingStatus', '$order.status'] // fallback nếu bookingStatus null
+          },
           petName: '$petName',
           petType: '$petType',
           petWeight: '$petWeight',

@@ -6,7 +6,6 @@ dotenv.config();
 export const submitContactForm = async (req: Request, res: Response): Promise<void> => {
   try {
     const { name, email, phone, message } = req.body;
-    console.log(email, 'email');
     if (!name || !email || !phone || !message) {
       res.status(400).json({ success: false, message: 'Vui lòng điền đầy đủ thông tin!' });
     }

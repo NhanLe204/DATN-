@@ -129,7 +129,7 @@ export default function SignUp() {
         password: formData.password,
       }); // Thay fetch bằng signupApi.signup
 
-      console.log("Response:", data); // Giữ nguyên console.log
+      // console.log("Response:", data); // Giữ nguyên console.log
 
       if (!data.success) {
         // Kiểm tra success thay vì response.ok
@@ -168,7 +168,7 @@ export default function SignUp() {
 
   const handleGoogleLogin = (credentialResponse: GoogleCredentialResponse) => {
     const idToken = credentialResponse.credential;
-    console.log("Sending idToken to backend:", idToken); // Giữ nguyên console.log
+    // console.log("Sending idToken to backend:", idToken); // Giữ nguyên console.log
     signupApi
       .googleSignup(idToken) // Thay fetch bằng signupApi.googleSignup
       .then((response) => {
@@ -234,7 +234,7 @@ export default function SignUp() {
   return (
     <div className="px-2 py-4 sm:px-5 sm:py-6">
       {/* Title */}
-      <div className="mx-auto pb-4 text-center sm:pb-7">
+      <div className="pb-4 mx-auto text-center sm:pb-7">
         <Title level={4} className="text-xl sm:text-2xl">
           Đăng Ký
         </Title>
@@ -270,7 +270,7 @@ export default function SignUp() {
             <Title level={5} className="text-sm sm:text-base">
               Quyền lợi thành viên
             </Title>
-            <ul className="list-disc space-y-2 pl-4 sm:space-y-4">
+            <ul className="pl-4 space-y-2 list-disc sm:space-y-4">
               {[
                 "Mua hàng nhanh chóng, dễ dàng",
                 "Theo dõi đơn hàng, địa chỉ thanh toán dễ dàng",
@@ -287,7 +287,7 @@ export default function SignUp() {
         {/* Right */}
         <Col className="flex w-full flex-col justify-between shadow-inner lg:w-[400px] overflow-auto">
           <div>
-            <div className="mb-3 flex h-10 sm:h-12">
+            <div className="flex h-10 mb-3 sm:h-12">
               <button
                 onClick={() => navigate("/login")} // Dùng navigate thay window.location.href
                 className="h-full w-1/2 border border-[#686868] text-sm hover:border-[#22A6DF] hover:text-[#22A6DF] sm:text-base"
@@ -302,7 +302,7 @@ export default function SignUp() {
             <div className="p-3 sm:p-5">
               {["fullname", "email", "password", "confirmPassword"].map(
                 (field, index) => (
-                  <div key={index} className="mb-2 pb-2 text-sm sm:text-base">
+                  <div key={index} className="pb-2 mb-2 text-sm sm:text-base">
                     <label htmlFor={field} className="font-bold uppercase">
                       {field === "fullname"
                         ? "Họ và Tên"
@@ -329,7 +329,7 @@ export default function SignUp() {
                       }`}
                       value={formData[field as keyof typeof formData]}
                       onChange={handleChange}
-                      className="mt-2 h-9 text-sm sm:h-10 sm:text-base"
+                      className="mt-2 text-sm h-9 sm:h-10 sm:text-base"
                       suffix={
                         (field === "password" ||
                           field === "confirmPassword") && (
@@ -366,7 +366,7 @@ export default function SignUp() {
             <div className="flex flex-col items-center px-3 sm:px-5">
               <Flex
                 justify="space-between"
-                className="mb-2 w-full items-center"
+                className="items-center w-full mb-2"
               >
                 <button
                   onClick={handleSubmit}
@@ -375,7 +375,7 @@ export default function SignUp() {
                 >
                   {loading ? "Đang xử lý..." : "Tạo tài khoản"}
                 </button>
-                <span className="my-auto px-1 text-sm sm:text-base">Hoặc</span>
+                <span className="px-1 my-auto text-sm sm:text-base">Hoặc</span>
                 <GoogleOAuthProvider clientId={ENV_VARS.VITE_GOOGLE_CLIENT_ID}>
                   <GoogleLogin
                     onSuccess={handleGoogleLogin}

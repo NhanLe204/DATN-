@@ -109,7 +109,6 @@ export const deleteTag = async (req: Request, res: Response): Promise<void> => {
 export const updateTag = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    console.log(id, 'ID');
 
     // Kiểm tra xem ID có hợp lệ không
     if (!mongoose.Types.ObjectId.isValid(id)) {
