@@ -327,7 +327,7 @@ const SpaBookingForm: React.FC = () => {
         shipping_address: null,
         orderDetails,
         infoUserGuest: guestInfo,
-        fullname: values.fullName.trim(), 
+        booking_note: values.note?.trim() || null,
       };
 
 

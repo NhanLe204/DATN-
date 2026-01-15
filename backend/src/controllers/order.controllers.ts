@@ -16,10 +16,7 @@ import { BookingStatus } from '../enums/booking.enum.js';
 import sendBookingEmail from '../utils/sendBookingEmail.js';
 import sendEmail from '../utils/sendEmail.js';
 import moment from 'moment-timezone';
-import request from 'request';
-import { log } from 'console';
 import { generateOrderCode } from '@/controllers/orderCode.controller.js';
-import { checkBookingAvailability } from "../utils/checkBookingAvailability"
 
 export const createOrderAfterPayment = async (req: Request, res: Response): Promise<void> => {
   const session = await mongoose.startSession();
@@ -37,7 +34,8 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       shipping_address = null,
       orderDetails,
       paymentOrderCode = null,
-      infoUserGuest = null
+      infoUserGuest = null,
+      booking_note = null
     } = req.body;
 
     // Kiểm tra orderDetails
@@ -136,7 +134,6 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
         booking_end = endLocal.utc().toDate();
         standardizedBookingDate = booking_start;
 
-        // Check overlap (giữ nguyên, đã rất tốt)
         const overlappingCount = await orderDetailModel.countDocuments({
           $or: [
             { booking_start: { $lt: booking_end }, booking_end: { $gt: booking_start } }
@@ -244,6 +241,7 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
         payment_typeID == '67d67442aeb5082f01074c28' ? PaymentStatus.CASH_ON_DELIVERY : PaymentStatus.PENDING,
       // inforUserGuest: infoUserGuest || null 
       inforUserGuest: userID ? null : infoUserGuest,
+      booking_note: booking_note?.trim() || null
     });
 
     const savedOrder = await order.save({ session });
@@ -300,7 +298,6 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
         console.error('Gửi email xác nhận thất bại:', emailError);
       }
     }
-
     res.status(201).json({
       success: true,
       message: 'Tạo đơn hàng và chi tiết đơn hàng thành công',

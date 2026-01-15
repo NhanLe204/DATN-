@@ -1,33 +1,17 @@
 import ServiceModel from '../models/service.model.js';
-import nodemailer from 'nodemailer';
-
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
-
-transporter.verify((error, success) => {
-  if (error) {
-    console.error('SMTP connection error:', error);
-  } else {
-    console.log('SMTP connection is ready');
-  }
-});
+import sendEmail from './sendEmail.js';  // Import hàm chung của bạn
 
 export const sendBookingCompletionEmail = async (
   orderDetail: { realPrice: any; serviceId: any; petName: any; petType: any; booking_date: any },
-  order: { orderId: any, orderCode: string },
-  user: { email: any; name: any }
+  order: { orderId?: any; orderCode: string },
+  user: { email: any; name?: any }
 ) => {
   try {
     const { realPrice, serviceId, petName, petType, booking_date } = orderDetail;
-    const { orderId, orderCode } = order;
+    const { orderCode } = order;
     const { email, name } = user;
 
-    if (!email || !orderId || !serviceId) {
+    if (!email || !orderCode || !serviceId) {
       throw new Error('Missing required fields for email');
     }
 
@@ -38,56 +22,40 @@ export const sendBookingCompletionEmail = async (
 
     const formattedBookingDate = booking_date
       ? new Intl.DateTimeFormat('vi-VN', {
-        timeZone: 'Asia/Ho_Chi_Minh',
-        dateStyle: 'short',
-        timeStyle: 'short'
-      }).format(new Date(booking_date))
+          timeZone: 'Asia/Ho_Chi_Minh',
+          dateStyle: 'short',
+          timeStyle: 'short',
+        }).format(new Date(booking_date))
       : 'N/A';
+
     const petTypeMap: { [key: string]: string } = {
       cat: 'Mèo',
-      dog: 'Chó'
+      dog: 'Chó',
     };
     const petTypeInVietnamese = petTypeMap[petType?.toLowerCase()] || petType || 'N/A';
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: `Dịch vụ của bạn đã hoàn thành - Mã đơn hàng: ${orderCode}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
-          <h2 style="color: #333; text-align: center;">Xác nhận hoàn thành dịch vụ</h2>
-          <p style="color: #555; line-height: 1.6;">Kính gửi <strong>${name || 'Khách hàng'}</strong>,</p>
-          <p style="color: #555; line-height: 1.6;">Chúng tôi xin thông báo rằng dịch vụ của bạn đã được hoàn thành thành công. Dưới đây là thông tin chi tiết:</p>
-          <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-            <tr>
-              <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold; width: 30%;">Mã đơn hàng:</td>
-              <td style="padding: 10px; border: 1px solid #e0e0e0;">${orderCode}</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Dịch vụ:</td>
-              <td style="padding: 10px; border: 1px solid #e0e0e0;">${service?.service_name || 'Không xác định'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Thời gian:</td>
-              <td style="padding: 10px; border: 1px solid #e0e0e0;">${formattedBookingDate}</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Thú cưng:</td>
-              <td style="padding: 10px; border: 1px solid #e0e0e0;">${petName || 'N/A'} (${petTypeInVietnamese || 'N/A'})</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Giá thực tế:</td>
-              <td style="padding: 10px; border: 1px solid #e0e0e0;">${realPrice ? Number(realPrice).toLocaleString('vi-VN')
-          + ' VND' : 'N/A'}</td>
-            </tr>
-          </table>
-          <p style="color: #555; text-align: center;">Cảm ơn bạn đã tin tưởng và sử dụng dịch vụ của chúng tôi!</p>
-          <p style="color: #555; text-align: center;">Trân trọng,<br><strong>Pet Heaven</strong></p>
-        </div>
-      `
-    };
 
-    await transporter.sendMail(mailOptions);
-    // console.log(`Completion email sent to ${email} for order ${orderId}`);
+    const subject = `Dịch vụ đã hoàn thành - Mã đơn hàng: ${orderCode}`;
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+        <h2 style="color: #333; text-align: center;">Xác nhận hoàn thành dịch vụ</h2>
+        <p style="color: #555; line-height: 1.6;">Kính gửi <strong>${name || 'Khách hàng'}</strong>,</p>
+        <p style="color: #555; line-height: 1.6;">Dịch vụ cho thú cưng của bạn đã hoàn thành thành công. Chi tiết:</p>
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+          <tr><td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold; width: 30%;">Mã đơn hàng:</td><td style="padding: 10px; border: 1px solid #e0e0e0;">${orderCode}</td></tr>
+          <tr><td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Dịch vụ:</td><td style="padding: 10px; border: 1px solid #e0e0e0;">${service?.service_name || 'Không xác định'}</td></tr>
+          <tr><td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Thời gian:</td><td style="padding: 10px; border: 1px solid #e0e0e0;">${formattedBookingDate}</td></tr>
+          <tr><td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Thú cưng:</td><td style="padding: 10px; border: 1px solid #e0e0e0;">${petName || 'N/A'} (${petTypeInVietnamese})</td></tr>
+          <tr><td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Giá thực tế:</td><td style="padding: 10px; border: 1px solid #e0e0e0;">${realPrice ? Number(realPrice).toLocaleString('vi-VN') + ' ₫' : 'N/A'}</td></tr>
+        </table>
+        <p style="color: #555; text-align: center; margin-top: 30px;">Cảm ơn bạn đã tin tưởng Pet Heaven!</p>
+        <p style="color: #555; text-align: center;">Trân trọng,<br><strong>Đội ngũ Pet Heaven</strong></p>
+      </div>
+    `;
+
+    await sendEmail(email, subject, 'Dịch vụ hoàn thành (text fallback)', html);
+
+    // console.log(`Completion email sent to ${email} for order ${orderCode}`);
   } catch (error) {
     console.error('Error sending completion email:', error);
     throw new Error('Failed to send completion email');
