@@ -11,6 +11,7 @@ import {
   Drawer,
   Button,
   notification,
+  Popover
 } from "antd";
 import {
   FaTruck,
@@ -252,27 +253,37 @@ export default function Header() {
     }
   };
 
-  const userMenu = (
-    <Menu>
-      {(user?.role === "admin" || user?.role === "employee") && (
-        <Menu.Item key="1">
-          <a href="/admin">
-            <i className="mr-2 fas fa-cog"></i>Quản lý website
-          </a>
-        </Menu.Item>
-      )}
-      <Menu.Item key="2">
+  const userMenu = [
+    ...(user?.role === "admin" || user?.role === "employee"
+      ? [
+        {
+          key: "1",
+          label: (
+            <a href="/admin">
+              <i className="mr-2 fas fa-cog"></i>Quản lý website
+            </a>
+          ),
+        },
+      ]
+      : []),
+    {
+      key: "2",
+      label: (
         <a href={`/userprofile/account`}>
           <i className="mr-2 fas fa-user"></i>Tài khoản
         </a>
-      </Menu.Item>
-      <Menu.Item key="3" onClick={handleLogout}>
-        <a href="#">
+      ),
+    },
+    {
+      key: "3",
+      label: (
+        <span onClick={handleLogout}>  
           <i className="mr-2 fas fa-sign-out-alt"></i>Đăng xuất
-        </a>
-      </Menu.Item>
-    </Menu>
-  );
+        </span>
+      ),
+      danger: true, 
+    },
+  ];
 
   const searchDesktop = (
     <div
@@ -462,13 +473,14 @@ export default function Header() {
             />
           </a>
 
-          <Dropdown
-            overlay={searchDesktop}
+          <Popover
+            content={searchDesktop}
             trigger={["click"]}
             open={searchDesktopOpen}
             onOpenChange={setSearchDesktopOpen}
             placement="bottomLeft"
             overlayClassName="search-dropdown"
+            overlayStyle={{ maxWidth: '600px' }}
           >
             <Input.Search
               placeholder="Tìm kiếm..."
@@ -495,7 +507,7 @@ export default function Header() {
               value={keyword}
               onChange={(e) => handleSearchChange(e.target.value)}
             />
-          </Dropdown>
+          </Popover>
 
           <Space size={50} className="hidden xl:flex">
             <div className="flex flex-col items-center">
@@ -516,7 +528,7 @@ export default function Header() {
               </Badge>
             </a>
             {user ? (
-              <Dropdown overlay={userMenu} trigger={["hover"]}>
+              <Dropdown trigger={["hover"]} menu={{ items: userMenu }}>
                 <div className="flex items-center cursor-pointer">
                   <Avatar
                     src={user.avatar ? `${user.avatar}` : undefined}
@@ -546,7 +558,7 @@ export default function Header() {
               </Badge>
             </a>
             {user ? (
-              <Dropdown overlay={userMenu} trigger={["hover"]}>
+              <Dropdown trigger={["hover"]} menu={{ items: userMenu }}>
                 <div className="flex items-center cursor-pointer">
                   <Avatar
                     src={user.avatar ? `${user.avatar}` : undefined}

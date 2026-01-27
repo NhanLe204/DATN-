@@ -356,110 +356,110 @@ export default function Address() {
   return (
     <>
       <div className="p-6 bg-white shadow-sm rounded-2xl">
-      {/* Header Section */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <h3 className="text-xl font-bold text-gray-800">Địa chỉ của tôi</h3>
+        {/* Header Section */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <h3 className="text-xl font-bold text-gray-800">Địa chỉ của tôi</h3>
+          </div>
+
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="flex items-center gap-2 px-4 py-2 bg-[#22A6DF] hover:bg-[#1890ff] hover:border-[#22A6DF] text-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
+            onClick={() => setIsModalVisible(true)}
+          >
+            <PlusOutlined />
+            Thêm địa chỉ
+          </motion.button>
         </div>
-        
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className="flex items-center gap-2 px-4 py-2 bg-[#22A6DF] hover:bg-[#1890ff] hover:border-[#22A6DF] text-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
-          onClick={() => setIsModalVisible(true)}
-        >
-          <PlusOutlined />
-          Thêm địa chỉ
-        </motion.button>
-      </div>
 
-      <hr className="mt-2 border-gray-300" />
+        <hr className="mt-2 border-gray-300" />
 
-      <div className="mt-6 space-y-4">
-        <AnimatePresence>
-          {user?.address && user.address.length > 0 ? (
-            user.address.map((addr, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="relative p-6 transition-all duration-200 group bg-gray-50 rounded-xl hover:bg-gray-100"
-              >
-                {addr.isDefault && (
-                  <div className="absolute -top-2 -right-2">
-                    <Tooltip title="Địa chỉ mặc định">
-                      <div className="p-2 text-white bg-orange-500 rounded-full shadow-lg">
-                        <StarFilled />
-                      </div>
-                    </Tooltip>
-                  </div>
-                )}
-
-                <div className="flex items-start justify-between">
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3">
-                      <h4 className="text-lg font-semibold text-gray-800">{addr.name}</h4>
-                      <span className="text-gray-400">|</span>
-                      <span className="text-gray-600">{addr.phone}</span>
-                      {addr.isDefault && (
-                        <span className="px-3 py-1 text-xs font-medium text-orange-700 bg-orange-100 rounded-full">
-                          Mặc định
-                        </span>
-                      )}
+        <div className="mt-6 space-y-4">
+          <AnimatePresence>
+            {user?.address && user.address.length > 0 ? (
+              user.address.map((addr, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="relative p-6 transition-all duration-200 group bg-gray-50 rounded-xl hover:bg-gray-100"
+                >
+                  {addr.isDefault && (
+                    <div className="absolute -top-2 -right-2">
+                      <Tooltip title="Địa chỉ mặc định">
+                        <div className="p-2 text-white bg-orange-500 rounded-full shadow-lg">
+                          <StarFilled />
+                        </div>
+                      </Tooltip>
                     </div>
-                    <p className="max-w-2xl text-gray-600">{addr.address}</p>
-                  </div>
+                  )}
 
-                  <div className="flex items-center gap-2 transition-opacity duration-200 opacity-0 group-hover:opacity-100">
-                    <Tooltip title="Chỉnh sửa">
-                      <Button
-                        icon={<EditOutlined />}
-                        className="flex items-center justify-center w-9 h-9 text-[#22A6DF] border-[#22A6DF] hover:bg-blue-50"
-                        shape="circle"
-                        onClick={() => handleEditAddress(index)}
-                      />
-                    </Tooltip>
-                    
-                    <Tooltip title="Xóa">
-                      <Button
-                        icon={<DeleteOutlined />}
-                        className="flex items-center justify-center text-red-600 border-red-600 w-9 h-9 hover:bg-red-50"
-                        shape="circle"
-                        onClick={() => handleDeleteAddress(index)}
-                      />
-                    </Tooltip>
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <h4 className="text-lg font-semibold text-gray-800">{addr.name}</h4>
+                        <span className="text-gray-400">|</span>
+                        <span className="text-gray-600">{addr.phone}</span>
+                        {addr.isDefault && (
+                          <span className="px-3 py-1 text-xs font-medium text-orange-700 bg-orange-100 rounded-full">
+                            Mặc định
+                          </span>
+                        )}
+                      </div>
+                      <p className="max-w-2xl text-gray-600">{addr.address}</p>
+                    </div>
 
-                    {!addr.isDefault && (
-                      <Tooltip title="Đặt làm mặc định">
+                    <div className="flex items-center gap-2 transition-opacity duration-200 opacity-0 group-hover:opacity-100">
+                      <Tooltip title="Chỉnh sửa">
                         <Button
-                          icon={<StarOutlined />}
-                          className="flex items-center justify-center text-green-600 border-green-600 w-9 h-9 hover:bg-green-50"
+                          icon={<EditOutlined />}
+                          className="flex items-center justify-center w-9 h-9 text-[#22A6DF] border-[#22A6DF] hover:bg-blue-50"
                           shape="circle"
-                          onClick={() => handleSetDefaultAddress(index)}
+                          onClick={() => handleEditAddress(index)}
                         />
                       </Tooltip>
-                    )}
+
+                      <Tooltip title="Xóa">
+                        <Button
+                          icon={<DeleteOutlined />}
+                          className="flex items-center justify-center text-red-600 border-red-600 w-9 h-9 hover:bg-red-50"
+                          shape="circle"
+                          onClick={() => handleDeleteAddress(index)}
+                        />
+                      </Tooltip>
+
+                      {!addr.isDefault && (
+                        <Tooltip title="Đặt làm mặc định">
+                          <Button
+                            icon={<StarOutlined />}
+                            className="flex items-center justify-center text-green-600 border-green-600 w-9 h-9 hover:bg-green-50"
+                            shape="circle"
+                            onClick={() => handleSetDefaultAddress(index)}
+                          />
+                        </Tooltip>
+                      )}
+                    </div>
                   </div>
-                </div>
+                </motion.div>
+              ))
+            ) : (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="py-12"
+              >
+                <Empty
+                  description={
+                    <span className="text-gray-500">Chưa có địa chỉ nào</span>
+                  }
+                />
               </motion.div>
-            ))
-          ) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="py-12"
-            >
-              <Empty
-                description={
-                  <span className="text-gray-500">Chưa có địa chỉ nào</span>
-                }
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
-    </div>
 
       <Modal
         title={<span className="text-xl font-semibold text-gray-800">Thêm địa chỉ mới</span>}
@@ -478,7 +478,7 @@ export default function Address() {
           className: "bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg transition duration-200"
         }}
         width={600}
-        bodyStyle={{ padding: "24px" }}
+        styles={{ body: { padding: "24px" } }}
       >
         <Form
           form={addressForm}
@@ -604,7 +604,7 @@ export default function Address() {
           className: "bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg transition duration-200"
         }}
         width={600}
-        bodyStyle={{ padding: "24px" }}
+        styles={{ body: { padding: "24px" } }}
       >
         <Form
           form={addressForm}

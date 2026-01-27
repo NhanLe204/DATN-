@@ -20,7 +20,6 @@ interface Product {
 }
 
 export default function SaleProduct({ data }: { data: Product[] }) {
-  console.warn(data, "Thanh");
   const [windowWidth, setWindowWidth] = useState(0);
   const sliderRef = useRef<any>(null);
   const dispatch = useDispatch();
@@ -121,14 +120,14 @@ export default function SaleProduct({ data }: { data: Product[] }) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="relative ml-[15px] w-[200px] rounded-t-lg border-l border-r border-t border-[#22A6DF] px-2 py-2 sm:ml-[30px] sm:w-[250px] sm:px-4 md:w-[300px]">
-          <div className="absolute -top-7 left-3 z-10 bg-white px-2">
+          <div className="absolute z-10 px-2 bg-white -top-7 left-3">
             <img
               src="/images/icons/paw.png"
               alt="Paw Icon"
               className="h-8 w-8 sm:h-12 sm:w-12 md:h-[50px] md:w-[50px]"
             />
           </div>
-          <h2 className="relative z-20 text-center text-base font-semibold sm:text-lg">
+          <h2 className="relative z-20 text-base font-semibold text-center sm:text-lg">
             SẢN PHẨM GIẢM GIÁ
           </h2>
         </div>
@@ -167,13 +166,13 @@ export default function SaleProduct({ data }: { data: Product[] }) {
                     <img
                       src={`${product.image_url[0]}`}
                       alt={product.name}
-                      className="h-full w-full object-cover transition-transform duration-500 hover:scale-110"
+                      className="object-cover w-full h-full transition-transform duration-500 hover:scale-110"
                     />
                   </Link>
                 </div>
-                <div className="flex w-3/4 flex-col justify-between p-2">
+                <div className="flex flex-col justify-between w-3/4 p-2">
                   <p className="text-xs font-bold sm:text-sm">{product.name}</p>
-                  <div className="mt-2 flex items-center gap-2">
+                  <div className="flex items-center gap-2 mt-2">
                     <p className="text-sm font-bold text-[#22A6DF] transition-colors duration-300 sm:text-base">
                       {new Intl.NumberFormat("vi-VN", {
                         style: "currency",

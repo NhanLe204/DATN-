@@ -44,7 +44,6 @@ interface SpaBookingState {
     fullName?: string;
     phone?: string;
     email?: string;
-    note?: string;
   };
 }
 
@@ -97,7 +96,6 @@ const SpaBookingForm: React.FC = () => {
       fullName: allValues.fullName,
       phone: allValues.phone,
       email: allValues.email,
-      note: allValues.note,
     };
     debouncedSetGuestUserInfo(guestInfo);
     dispatch(setFormData(serializedValues));
@@ -201,6 +199,7 @@ const SpaBookingForm: React.FC = () => {
   };
 
   const onFinish = async (values: any) => {
+    console.log("Form values on submit:", values);
     // Kiểm tra thông tin khách hàng
     if (!values.fullName?.trim()) {
       message.error("Vui lòng nhập họ và tên!");
@@ -291,7 +290,6 @@ const SpaBookingForm: React.FC = () => {
         fullName: values.fullName.trim(),
         phone: values.phone.trim(),
         email: values.email.trim(),
-        note: values.note || "",
       };
       dispatch(setGuestUserInfo(guestInfo));
 
@@ -315,6 +313,7 @@ const SpaBookingForm: React.FC = () => {
           booking_date: booking_date,
           petName: pet.petName?.trim() || "",
           petType: pet.petType || "",
+          booking_note: values.note?.trim() || null,
         };
       });
 
@@ -513,7 +512,6 @@ const SpaBookingForm: React.FC = () => {
                   ? userData.phone_number
                   : spaBooking.guestUserInfo.phone || "",
               email: userData?.email || spaBooking.guestUserInfo.email || "",
-              note: spaBooking.guestUserInfo.note || "",
             }}
           />
           <PetFormContainer

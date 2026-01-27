@@ -14,7 +14,7 @@ const PetSpaServices = () => {
   return (
     <div className="min-h-screen bg-gray-50 px-[154px] py-8">
       {/* Call-to-Action Button and Header */}
-      <div className="text-center mb-8">
+      <div className="mb-8 text-center">
         <Title level={2} className="text-[#22A6DF] mb-4">
           DỊCH VỤ SPA CHUYÊN NGHIỆP CHO THÚ CƯNG TẠI PET HEAVEN
         </Title>
@@ -35,8 +35,8 @@ const PetSpaServices = () => {
             <Title level={3} className="text-[#22A6DF] mb-6">
               Quy trình tắm vệ sinh bao gồm 12 bước
             </Title>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-lg">
-              <ol className="list-decimal list-inside space-y-3 text-red-800">
+            <div className="grid grid-cols-1 gap-4 text-lg md:grid-cols-2">
+              <ol className="space-y-3 text-red-800 list-decimal list-inside">
                 {[
                   "Kiểm tra sức khỏe cơ bản",
                   "Vệ sinh tai, nhổ lông tai",
@@ -48,7 +48,7 @@ const PetSpaServices = () => {
                   <li key={index} className="font-medium">{step}</li>
                 ))}
               </ol>
-              <ol className="list-decimal list-inside space-y-3 text-red-800" start={7}>
+              <ol className="space-y-3 text-red-800 list-decimal list-inside" start={7}>
                 {[
                   "Tắm và dưỡng xả lông",
                   "Sấy khô lông",
@@ -57,9 +57,12 @@ const PetSpaServices = () => {
                   "Tỉa gọn lông vùng mắt",
                   "Thoa dưỡng và thơm lông",
                 ].map((step, index) => (
-                  <li  className="font-medium">{step}</li>
+                  <li key={index} className="font-medium">
+                    {step}
+                  </li>
                 ))}
               </ol>
+
             </div>
           </Card>
         </div>

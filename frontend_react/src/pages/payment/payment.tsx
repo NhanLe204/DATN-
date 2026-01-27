@@ -1256,7 +1256,7 @@ const Payment = () => {
             "bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg transition duration-200",
         }}
         width={600}
-        bodyStyle={{ padding: "24px" }}
+        styles={{ body: { padding: "24px" } }}
       >
         <Form form={addressForm} layout="vertical" className="space-y-6">
           <Item
@@ -1412,7 +1412,7 @@ const Payment = () => {
             "bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg transition duration-200",
         }}
         width={600}
-        bodyStyle={{ padding: "24px" }}
+        styles={{ body: { padding: "24px" } }}
       >
         <Form form={addressForm} layout="vertical" className="space-y-6">
           <Item

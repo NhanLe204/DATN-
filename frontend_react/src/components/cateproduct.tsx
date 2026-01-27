@@ -42,7 +42,7 @@ export default function CateProduct({ data }: { data: APIProduct[] }) {
 
   return (
     <div className="container md:px-4">
-      <div className="mt-4 grid grid-cols-2 gap-4 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 mt-4 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4">
         {data.map((product) => (
           <motion.div
             key={product._id.toString()}
@@ -53,8 +53,8 @@ export default function CateProduct({ data }: { data: APIProduct[] }) {
             className="h-full"
           >
             <Card
-              className="group relative h-full overflow-hidden rounded-xl border border-gray-100 bg-white p-3 shadow-sm transition-all duration-300 hover:shadow-xl"
-              bodyStyle={{ padding: 0 }}
+              className="relative h-full p-3 overflow-hidden transition-all duration-300 bg-white border border-gray-100 shadow-sm group rounded-xl hover:shadow-xl"
+              styles={{ body: { padding: 0 } }}
             >
 
               {/* Image Container */}
@@ -68,13 +68,13 @@ export default function CateProduct({ data }: { data: APIProduct[] }) {
                     <img
                       src={`${product.image_url[0]}`}
                       alt={product.name}
-                      className="h-full w-full object-contain transition-all duration-500"
+                      className="object-contain w-full h-full transition-all duration-500"
                     />
                     {product.image_url[1] && (
                       <img
                         src={`${product.image_url[1]}`}
                         alt={product.name}
-                        className="absolute inset-0 h-full w-full object-contain opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                        className="absolute inset-0 object-contain w-full h-full transition-opacity duration-300 opacity-0 group-hover:opacity-100"
                       />
                     )}
                   </motion.div>
@@ -97,11 +97,11 @@ export default function CateProduct({ data }: { data: APIProduct[] }) {
               )}
 
               {/* Product Info */}
-              <div className="space-y-3 px-2 text-center">
+              <div className="px-2 space-y-3 text-center">
                 {/* Rating */}
                 {/* <div className="flex items-center justify-center gap-1">
                   {[...Array(5)].map((_, index) => (
-                    <BsStarFill key={index} className="text-yellow-400 text-sm" />
+                    <BsStarFill key={index} className="text-sm text-yellow-400" />
                   ))}
                 </div> */}
 
@@ -136,7 +136,7 @@ export default function CateProduct({ data }: { data: APIProduct[] }) {
 
                 {/* Buy Button */}
                 <motion.div 
-                  className="relative overflow-hidden rounded-lg mt-auto"
+                  className="relative mt-auto overflow-hidden rounded-lg"
                   whileHover={{ scale: 1.02 }}
                 >
                     <Button 

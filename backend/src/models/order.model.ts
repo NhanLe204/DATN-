@@ -37,7 +37,13 @@ const orderSchema: Schema<IOrder> = new Schema<IOrder>(
       type: String,
       enum: [...Object.values(BookingStatus), null],
       default: null
-    }
+    },
+    booking_note: {
+      type: String,
+      required: false,
+      default: null
+    },
+
   },
   { timestamps: true }
 );

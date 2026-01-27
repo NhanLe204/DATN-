@@ -47,7 +47,7 @@ const publicPageNameMapping: { [key: string]: string } = {
   "change-password": "Đổi mật khẩu",
   "orders": "Đơn hàng",
   "bookings": "Lịch hẹn",
-  
+
 };
 
 const Navigation: React.FC = () => {
@@ -81,8 +81,7 @@ const Navigation: React.FC = () => {
           setProduct(response.data.product);
         } catch (err: any) {
           setError(
-            `Không thể tải thông tin sản phẩm: ${
-              err.message || "Lỗi không xác định"
+            `Không thể tải thông tin sản phẩm: ${err.message || "Lỗi không xác định"
             }`
           );
           setProduct(null);
@@ -117,7 +116,7 @@ const Navigation: React.FC = () => {
             title: blogData.title,
             blog_category_id:
               blogData.blog_category_id &&
-              typeof blogData.blog_category_id === "object"
+                typeof blogData.blog_category_id === "object"
                 ? { name: blogData.blog_category_id.name }
                 : undefined,
           });
@@ -125,15 +124,14 @@ const Navigation: React.FC = () => {
             title: blogData.title,
             blog_category_id:
               blogData.blog_category_id &&
-              typeof blogData.blog_category_id === "object"
+                typeof blogData.blog_category_id === "object"
                 ? { name: blogData.blog_category_id.name }
                 : undefined,
           });
         } catch (err: any) {
           console.error("Lỗi khi tải bài viết:", err);
           setError(
-            `Không thể tải thông tin bài viết: ${
-              err.message || "Lỗi không xác định"
+            `Không thể tải thông tin bài viết: ${err.message || "Lỗi không xác định"
             }`
           );
           setBlog(null);
@@ -179,8 +177,8 @@ const Navigation: React.FC = () => {
     isDetailPage && product
       ? product.name
       : isBlogDetailPage && blog
-      ? blog.title
-      : getDisplayName(pathnames[pathnames.length - 1] || "");
+        ? blog.title
+        : getDisplayName(pathnames[pathnames.length - 1] || "");
 
   const linkStyles =
     "text-gray-500 hover:text-gray-700 transition-colors duration-200";
@@ -188,100 +186,124 @@ const Navigation: React.FC = () => {
 
   const adminLayout = (
     <div className={containerStyles.admin}>
-      <Breadcrumb className={breadcrumbStyles.admin} separator=">">
-        {pathnames.map((value, index) => {
+      <Breadcrumb
+        className={breadcrumbStyles.admin}
+        separator=">"
+        items={pathnames.map((value, index) => {
           const last = index === pathnames.length - 1;
           const to = `/${pathnames.slice(0, index + 1).join("/")}`;
-          return last ? (
-            <Breadcrumb.Item key={to}>
-              <span className={currentPageStyles}>{getDisplayName(value)}</span>
-            </Breadcrumb.Item>
-          ) : (
-            <Breadcrumb.Item key={to}>
+
+          return {
+            title: last ? (
+              <span className={currentPageStyles}>
+                {getDisplayName(value)}
+              </span>
+            ) : (
               <Link to={to} className={linkStyles}>
                 {getDisplayName(value)}
               </Link>
-            </Breadcrumb.Item>
-          );
+            ),
+          };
         })}
-      </Breadcrumb>
+      />
+
       <Title level={3} className={titleStyles.admin}>
         {currentPageName}
       </Title>
     </div>
   );
 
+
   const publicLayout = (
     <div className={containerStyles.public}>
-      <Breadcrumb className={breadcrumbStyles.public} separator="/">
-        <Breadcrumb.Item>
-          <Link to="/" className={linkStyles}>
-            Trang chủ
-          </Link>
-        </Breadcrumb.Item>
+      <Breadcrumb
+        className={breadcrumbStyles.public}
+        separator="/"
+        items={[
+          {
+            title: (
+              <Link to="/" className={linkStyles}>
+                Trang chủ
+              </Link>
+            ),
+          },
 
-        {isDetailPage ? (
-          product ? (
-            <>
-              <Breadcrumb.Item>
-                <Link to="/product" className={linkStyles}>
-                  {product.category_id?.name || "Danh mục không xác định"}
-                </Link>
-              </Breadcrumb.Item>
-              <Breadcrumb.Item>
-                <span className="text-black max-w-[150px] sm:max-w-none truncate inline-block align-bottom">
-                  {product.name}
-                </span>
-              </Breadcrumb.Item>
-            </>
-          ) : (
-            <Breadcrumb.Item>
-              <span className={currentPageStyles}>Chi tiết sản phẩm</span>
-            </Breadcrumb.Item>
-          )
-        ) : isBlogDetailPage ? (
-          blog ? (
-            <>
-              <Breadcrumb.Item>
-                <Link to="/blogs" className={linkStyles}>
-                  {blog.blog_category_id?.name || "Bài viết"}
-                </Link>
-              </Breadcrumb.Item>
-              <Breadcrumb.Item>
-                <span className="text-black max-w-[150px] sm:max-w-none truncate inline-block align-bottom">
-                  {blog.title}
-                </span>
-              </Breadcrumb.Item>
-            </>
-          ) : (
-            <Breadcrumb.Item>
-              <span className={currentPageStyles}>Chi tiết bài viết</span>
-            </Breadcrumb.Item>
-          )
-        ) : (
-          pathnames.map((value, index) => {
-            const last = index === pathnames.length - 1;
-            const to = `/${pathnames.slice(0, index + 1).join("/")}`;
-            const displayName = getDisplayName(value);
+          ...(isDetailPage
+            ? product
+              ? [
+                {
+                  title: (
+                    <Link to="/product" className={linkStyles}>
+                      {product.category_id?.name || "Danh mục không xác định"}
+                    </Link>
+                  ),
+                },
+                {
+                  title: (
+                    <span className="text-black max-w-[150px] sm:max-w-none truncate inline-block align-bottom">
+                      {product.name}
+                    </span>
+                  ),
+                },
+              ]
+              : [
+                {
+                  title: (
+                    <span className={currentPageStyles}>
+                      Chi tiết sản phẩm
+                    </span>
+                  ),
+                },
+              ]
+            : isBlogDetailPage
+              ? blog
+                ? [
+                  {
+                    title: (
+                      <Link to="/blogs" className={linkStyles}>
+                        {blog.blog_category_id?.name || "Bài viết"}
+                      </Link>
+                    ),
+                  },
+                  {
+                    title: (
+                      <span className="text-black max-w-[150px] sm:max-w-none truncate inline-block align-bottom">
+                        {blog.title}
+                      </span>
+                    ),
+                  },
+                ]
+                : [
+                  {
+                    title: (
+                      <span className={currentPageStyles}>
+                        Chi tiết bài viết
+                      </span>
+                    ),
+                  },
+                ]
+              : pathnames.map((value, index) => {
+                const last = index === pathnames.length - 1;
+                const to = `/${pathnames.slice(0, index + 1).join("/")}`;
+                const displayName = getDisplayName(value);
 
-            return last ? (
-              <Breadcrumb.Item key={to}>
-                <span className="text-black max-w-[150px] sm:max-w-none truncate inline-block align-bottom">
-                  {displayName}
-                </span>
-              </Breadcrumb.Item>
-            ) : (
-              <Breadcrumb.Item key={to}>
-                <Link to={to} className={linkStyles}>
-                  {displayName}
-                </Link>
-              </Breadcrumb.Item>
-            );
-          })
-        )}
-      </Breadcrumb>
+                return {
+                  title: last ? (
+                    <span className="text-black max-w-[150px] sm:max-w-none truncate inline-block align-bottom">
+                      {displayName}
+                    </span>
+                  ) : (
+                    <Link to={to} className={linkStyles}>
+                      {displayName}
+                    </Link>
+                  ),
+                };
+              })),
+        ]}
+      />
     </div>
   );
+
 
   // Không hiển thị navigation trên các route cụ thể
   if (

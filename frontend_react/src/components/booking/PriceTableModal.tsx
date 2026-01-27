@@ -6,11 +6,11 @@ import { bathData, comboBathData, serviceBathData } from "../../components/booki
 const { Title, Paragraph } = Typography;
 
 interface PriceTableModalProps {
-  visible: boolean;
+  open: boolean;
   onClose: () => void;
 }
 
-const PriceTableModal: React.FC<PriceTableModalProps> = ({ visible, onClose }) => {
+const PriceTableModal: React.FC<PriceTableModalProps> = ({ open, onClose }) => {
   // Bảng giá tắm, vệ sinh
   const bathColumns = [
     {
@@ -67,17 +67,17 @@ const PriceTableModal: React.FC<PriceTableModalProps> = ({ visible, onClose }) =
   return (
     <Modal
       title={<Title level={3} className="text-[#22A6DF] text-center">BẢNG GIÁ DỊCH VỤ</Title>}
-      visible={visible}
+      open={open}
       onCancel={onClose}
       footer={null}
       width={1400}
       className="p-4"
     >
       <div className="p-4">
-        <Paragraph className="text-gray-700 mb-6 text-center">
+        <Paragraph className="mb-6 text-center text-gray-700">
           Bảng giá đã bao gồm đầy đủ quy trình 12 bước spa tại Pet Heaven. Dịch vụ có thể phát sinh thêm phụ phí theo yêu cầu thêm của Khách hàng như: Gỡ rối lông hay làm ngoài giờ.
         </Paragraph>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           <Card title="BẢNG GIÁ TẮM, VỆ SINH" bordered={false} className="shadow-md">
             <Table
               columns={bathColumns}

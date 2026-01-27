@@ -5,6 +5,7 @@ import dayjs from 'dayjs';
 import MultiPetFields from './MultiPetFields';
 import { BookingStatus, Service } from '../../booking/bookingTypes';
 import { TimePicker } from 'antd';
+import TextArea from 'antd/es/input/TextArea';
 
 interface BookingFormModalProps {
   visible: boolean;
@@ -23,6 +24,7 @@ interface BookingFormModalProps {
   onDateChange: (date: dayjs.Dayjs | null, index: number) => void;
   onTimeChange: (time: string, index: number) => void;
   onServiceChange: (value: string, index: number) => void;
+  booking_note?: string;
 }
 
 const BookingFormModal: React.FC<BookingFormModalProps> = ({
@@ -180,6 +182,19 @@ const BookingFormModal: React.FC<BookingFormModalProps> = ({
             ]}>
             <Input disabled={isViewMode} />
           </Form.Item>
+          <Form.Item
+            name="booking_note"
+            label="Ghi chú nội bộ"
+            className="md:col-span-3"
+          >
+            <TextArea
+              rows={5}
+              placeholder="Ghi chú cho admin (không hiển thị với khách)"
+              disabled={isViewMode}
+            />
+          </Form.Item>
+
+
         </div>
 
         {/* Danh sách nhiều pet */}

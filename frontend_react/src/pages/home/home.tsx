@@ -111,12 +111,12 @@ export default function Home() {
     fade: true,
     // Tùy chỉnh style cho dots
     appendDots: (dots) => (
-      <div className="custom-dots-container flex justify-center py-4">
+      <div className="flex justify-center py-4 custom-dots-container">
         <ul>{dots}</ul>
       </div>
     ),
     customPaging: () => (
-      <div className="w-3 h-3 rounded-full bg-white transition-all duration-300"></div>
+      <div className="w-3 h-3 transition-all duration-300 bg-white rounded-full"></div>
     ),
   };
 
@@ -130,7 +130,7 @@ export default function Home() {
               <img
                 src={image}
                 alt={`Banner ${index + 1}`}
-                className="w-full object-cover"
+                className="object-cover w-full"
               />
             </div>
           ))}
@@ -165,7 +165,7 @@ export default function Home() {
           <CateProduct data={productsByCategory[category.name] || []} />
 
           <div className="mt-6 text-center">
-            <Button className="rounded-md border border-gray-300 px-6 py-5 text-base hover:bg-gray-100">
+            <Button className="px-6 py-5 text-base border border-gray-300 rounded-md hover:bg-gray-100">
               <Link to={`/product?category=${category.name.toLowerCase()}`}>
                 Xem thêm sản phẩm{" "}
                 <span className="font-semibold">dành cho {category.name}</span>
@@ -178,7 +178,7 @@ export default function Home() {
       {/* PetNews */}
       <div className="w-full bg-white p-3 sm:p-4 md:p-6 lg:p-8 xl:px-[154px]">
         {/* Brand Logos Section */}
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:gap-6">
+        <div className="grid grid-cols-2 gap-3 mb-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:gap-6">
           {[
             { src: "/images/brands/royalcanin.png", alt: "Royal Canin" },
             { src: "/images/brands/kitcat.png", alt: "Kit Cat" },
@@ -188,7 +188,7 @@ export default function Home() {
           ].map((brand, index) => (
             <div
               key={index}
-              className="group flex items-center justify-center p-2 transition-transform duration-300 hover:scale-105"
+              className="flex items-center justify-center p-2 transition-transform duration-300 group hover:scale-105"
             >
               <img
                 src={brand.src}
@@ -201,10 +201,10 @@ export default function Home() {
         </div>
 
         {/* News Section */}
-        <div className="rounded-lg border bg-white p-4 shadow-sm sm:p-6 md:p-8 lg:p-10">
+        <div className="p-4 bg-white border rounded-lg shadow-sm sm:p-6 md:p-8 lg:p-10">
           {/* News Header */}
-          <div className="mb-4 flex items-center justify-between sm:mb-6">
-            <h3 className="text-sm font-bold uppercase tracking-wider sm:text-base md:text-lg">
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
+            <h3 className="text-sm font-bold tracking-wider uppercase sm:text-base md:text-lg">
               CÓ THỂ BẠN MUỐN BIẾT
             </h3>
             <a
@@ -224,7 +224,7 @@ export default function Home() {
                   <img
                     src={blogs[0].image_url || "/images/brands/concho.png"} // Dữ liệu động từ API
                     alt={blogs[0].title}
-                    className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+                    className="object-cover w-full h-full transition-transform duration-300 hover:scale-105"
                   />
                 </div>
               </div>
@@ -235,7 +235,7 @@ export default function Home() {
                   {blogs[0].title}
                 </h4>
 
-                <div className="mb-3 flex flex-wrap gap-3 text-xs text-gray-500 sm:text-sm">
+                <div className="flex flex-wrap gap-3 mb-3 text-xs text-gray-500 sm:text-sm">
                   <span className="flex items-center gap-2">
                     <FaUserEdit className="text-[#22A6DF]" />
                     <span className="flex gap-1">
@@ -251,15 +251,14 @@ export default function Home() {
                   </span>
                 </div>
 
-                <p className="mb-4 text-xs leading-relaxed text-gray-700 sm:text-sm md:mb-6">
-                  {parse(blogs[0].content.slice(0, 1000) + "...")}{" "}
-                  {/* Cắt ngắn nội dung */}
-                </p>
+                <div className="mb-4 text-xs leading-relaxed prose-sm prose text-gray-700 sm:text-sm md:mb-6 sm:prose-base">
+                  {parse(blogs[0].content.slice(0, 1000) + "...")}
+                </div>
 
                 <Link to={`/blogs/${blogs[0]._id}`}>
                   <button className="group flex items-center gap-2 self-start rounded-md border border-[#22A6DF] px-4 py-2 text-xs font-medium text-[#22A6DF] transition-all hover:bg-[#22A6DF] hover:text-white sm:text-sm">
                     Đọc thêm
-                    <span className="transform transition-transform group-hover:translate-x-1">
+                    <span className="transition-transform transform group-hover:translate-x-1">
                       »
                     </span>
                   </button>
@@ -273,18 +272,18 @@ export default function Home() {
           )}
 
           {/* Related Articles */}
-          <div className="mt-6 grid gap-4 sm:mt-8 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
+          <div className="grid gap-4 mt-6 sm:mt-8 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             {blogs.slice(1, 4).map((blog, index) => (
               <Link
                 to={`/blogs/${blog._id}`}
                 key={index}
-                className="group flex items-start gap-3 sm:gap-4"
+                className="flex items-start gap-3 group sm:gap-4"
               >
                 <div className="relative h-[80px] w-[100px] min-w-[100px] overflow-hidden rounded-lg sm:h-[100px] sm:w-[120px] sm:min-w-[120px] md:h-[120px] md:w-[140px] md:min-w-[140px]">
                   <img
                     src={blog.image_url || "/images/brands/concho.png"} // Dữ liệu động từ API
                     alt={blog.title}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
                   />
                 </div>
                 <div className="flex flex-col">

@@ -25,12 +25,7 @@ const orderDetailSchema = new Schema(
     isRated: { type: Boolean, default: false },
     petWeight: { type: Number, require: false, default: '' },
     realPrice: { type: Number, require: false, default: '' },
-    booking_note: {
-      type: String,
-      default: null,
-      trim: true,
-      maxlength: 1000
-    },
+   
   },
   { timestamps: true }
 );

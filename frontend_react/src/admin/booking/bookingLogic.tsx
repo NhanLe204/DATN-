@@ -94,6 +94,7 @@ export const useBookingLogic = () => {
             bookingStatus: detail.bookingStatus || BookingStatus.PENDING,
             petsCount: 0,
             details: [],
+            booking_note: detail.booking_note || '',
           };
         }
         grouped[orderId].petsCount += 1;
@@ -133,6 +134,7 @@ export const useBookingLogic = () => {
           realPrice: firstDetail.realPrice || undefined,
           petsCount: group.petsCount,
           bookingMoment,
+          booking_note: group.booking_note || '',
         };
       });
 
@@ -185,9 +187,12 @@ export const useBookingLogic = () => {
         ? dayjs(record.orderDate, 'DD/MM/YYYY HH:mm:ss').tz('Asia/Ho_Chi_Minh')
         : null,
       bookingStatus: record.bookingStatus as BookingStatus || BookingStatus.PENDING,
+      booking_note: record.booking_note || '',
     });
     try {
       const response = await orderDetailApi.getAllBookings();
+      console.log(response);
+      
       const allDetails = response.data;
       const orderDetails = allDetails.filter((detail: any) => detail.orderId === record.orderId);
 

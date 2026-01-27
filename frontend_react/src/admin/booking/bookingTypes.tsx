@@ -30,6 +30,7 @@ export interface Booking {
   realPrice?: number;
   bookingMoment?: dayjs.Dayjs | null;
   orderCode: string;
+  booking_note?: string;
 }
 
 export interface Service {

@@ -28,6 +28,7 @@ interface BookingDetail {
   petType: string | null;
   petWeight: number | null;
   realPrice: number | null;
+  booking_note: string | null;
 
 }
 interface BookingDetailPopupProps {
@@ -73,6 +74,8 @@ const BookingDetailPopup: React.FC<BookingDetailPopupProps> = ({ visible, onCanc
       setLoading(true);
       try {
         const response = await getDetailBooking(userId);
+        console.log(response,"popup data");
+        
         if (!response.data.success) {
           throw new Error(response.data.message || 'Lỗi khi lấy dữ liệu lịch hẹn');
         }
@@ -159,6 +162,7 @@ const BookingDetailPopup: React.FC<BookingDetailPopupProps> = ({ visible, onCanc
                 {statusText[detail.bookingStatus?.toLowerCase() as keyof typeof statusText] || 'Không xác định'}
               </Tag>
             </Descriptions.Item>
+            <Descriptions.Item label="Ghi chú">{detail.booking_note || 'Không có'}</Descriptions.Item>
           </Descriptions>
         ))
       )}

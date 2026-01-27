@@ -329,10 +329,10 @@ export const getAllOrders = async (req: Request, res: Response): Promise<void> =
     const orders = await orderDetailModel
       .find({ productId: { $ne: null }, serviceId: null })
       .populate({
-        path: 'orderId', // Populate orderId
+        path: 'orderId', 
         populate: {
-          path: 'userID', // Nested populate userID từ orderId
-          select: 'fullname email phone avatar' // Chỉ lấy các trường cần thiết
+          path: 'userID',
+          select: 'fullname email phone avatar' 
         }
       })
       .populate('productId', 'name price')
@@ -350,10 +350,10 @@ export const getOrderById = async (req: Request, res: Response): Promise<void> =
     const { id } = req.params;
     const order = await orderModel
       .findById(id)
-      .populate('userID', 'fullname email phone') // Populate userID với các trường cần thiết
-      .populate('payment_typeID', 'name') // Populate payment_typeID nếu cần
-      .populate('deliveryID', 'name delivery_fee') // Populate deliveryID nếu cần
-      .populate('couponID', 'code discount_value') // Populate couponID nếu cần
+      .populate('userID', 'fullname email phone') 
+      .populate('payment_typeID', 'name') 
+      .populate('deliveryID', 'name delivery_fee') 
+      .populate('couponID', 'code discount_value') 
       .lean();
     if (!order) {
       res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng' });

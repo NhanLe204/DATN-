@@ -18,4 +18,5 @@ export interface IOrder {
   bookingStatus?: BookingStatus;
   email?: string;
   orderCode: string;
+  booking_note?: string;
 }

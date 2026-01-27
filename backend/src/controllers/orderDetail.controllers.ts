@@ -234,7 +234,8 @@ export const getAllBookings = async (req: Request, res: Response): Promise<void>
           petWeight: '$petWeight',
           realPrice: '$realPrice',
           booking_start: '$booking_start',
-          booking_end: '$booking_end'
+          booking_end: '$booking_end',
+          booking_note: '$order.booking_note',
         }
       }
     ]);
@@ -1178,7 +1179,7 @@ export const getBookingDetailsByUserId = async (
         $project: {
           orderId: '$order._id',
           orderDetailId: '$_id',
-          orderCode: '$order.orderCode', // ← Thêm mã đơn hàng
+          orderCode: '$order.orderCode', 
           fullname: {
             $ifNull: ['$order.fullname', '$order.inforUserGuest.fullName', '$user.fullname', 'Khách vãng lai']
           },
@@ -1195,14 +1196,15 @@ export const getBookingDetailsByUserId = async (
             duration: '$service.duration'
           },
           booking_date: '$booking_date',
-          order_date: '$order.order_date', // ← Đảm bảo có thời gian tạo đơn
+          order_date: '$order.order_date', 
+          booking_note: '$order.booking_note',
           bookingStatus: {
-            $ifNull: ['$order.bookingStatus', '$order.status'] // fallback nếu bookingStatus null
+            $ifNull: ['$order.bookingStatus', '$order.status'] 
           },
           petName: '$petName',
           petType: '$petType',
           petWeight: '$petWeight',
-          realPrice: '$realPrice'
+          realPrice: '$realPrice',
         }
       }
     ]);

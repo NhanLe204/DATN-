@@ -60,7 +60,7 @@ export default function Products() {
         setLoading(true);
 
         const categoryResponse = await categoryApi.getCategoriesActive();    
-        console.log(categoryResponse);
+        // console.log(categoryResponse);
             
         const categoryData = categoryResponse.data;
         if (categoryData.result && Array.isArray(categoryData.result)) {
@@ -216,7 +216,7 @@ export default function Products() {
     <div className="mx-auto mb-4 mt-4 w-full max-w-full sm:px-3 md:px-7 lg:px-14 xl:px-[154px] bg-[#e8e8e8]/[0.5] py-3">
       <div className="mt-6">
         <div
-          className="flex flex-wrap lg:flex-nowrap gap-1 w-full"
+          className="flex flex-wrap w-full gap-1 lg:flex-nowrap"
           style={{ alignItems: "flex-start" }}
         >
           <Col
@@ -224,7 +224,7 @@ export default function Products() {
             sm={8}
             md={6}
             lg={4}
-            className="hidden px-2 lg:block bg-white mr-4 flex-shrink-0 rounded-lg shadow-md"
+            className="flex-shrink-0 hidden px-2 mr-4 bg-white rounded-lg shadow-md lg:block"
             style={{ position: "sticky", top: "20px" }}
           >
             <LeftProductList
@@ -247,17 +247,17 @@ export default function Products() {
           </Col>
 
           <Col
-            className="px-2 lg:px-4 py-4 bg-white flex-grow rounded-lg shadow-md"
+            className="flex-grow px-2 py-4 bg-white rounded-lg shadow-md lg:px-4"
             xs={24}
             sm={24}
             md={24}
             lg={20}
             style={{ height: "fit-content" }}
           >
-            <div className="flex w-full items-center justify-between pb-4">
+            <div className="flex items-center justify-between w-full pb-4">
               <div className="flex items-center gap-3">
                 <Button
-                  className="flex items-center gap-2 lg:hidden bg-blue-600 text-white hover:bg-blue-700 text-xs py-1 px-2"
+                  className="flex items-center gap-2 px-2 py-1 text-xs text-white bg-blue-600 lg:hidden hover:bg-blue-700"
                   onClick={() => setOpenFilter(true)}
                 >
                   <FaFilter /> Bộ lọc
@@ -280,7 +280,7 @@ export default function Products() {
             </div>
 
             {loading ? (
-              <div className="flex h-60 items-center justify-center">
+              <div className="flex items-center justify-center h-60">
                 <Loader />
               </div>
             ) : currentPageData.length > 0 ? (
@@ -294,11 +294,11 @@ export default function Products() {
                 <ListCard pros={{ data: currentPageData }} />
               </div>
             ) : (
-              <div className="flex h-60 flex-col items-center justify-center text-center">
-                <Title level={4} className="text-gray-600 text-sm">
+              <div className="flex flex-col items-center justify-center text-center h-60">
+                <Title level={4} className="text-sm text-gray-600">
                   Không tìm thấy sản phẩm nào
                 </Title>
-                <p className="text-gray-500 text-xs">
+                <p className="text-xs text-gray-500">
                   Vui lòng thử lại với bộ lọc khác
                 </p>
               </div>
@@ -308,7 +308,7 @@ export default function Products() {
       </div>
 
       {sortedData.length > 0 && (
-      <div className="mt-6 flex justify-center">
+      <div className="flex justify-center mt-6">
       <Pagination
         current={currentPage}
         total={sortedData.length}
@@ -354,7 +354,7 @@ export default function Products() {
         width={250}
         styles={{ body: { padding: "0" } }}
       >
-        <div className="flex h-full flex-col bg-white">
+        <div className="flex flex-col h-full bg-white">
           <div className="flex-grow overflow-auto">
             <LeftProductList
               expandCategories={expandCategories}
@@ -374,10 +374,10 @@ export default function Products() {
               categories={categories}
             />
           </div>
-          <div className="mt-auto p-3 border-t">
+          <div className="p-3 mt-auto border-t">
             <Button
               type="primary"
-              className="w-full bg-blue-600 hover:bg-blue-700 rounded-md text-xs"
+              className="w-full text-xs bg-blue-600 rounded-md hover:bg-blue-700"
               onClick={() => setOpenFilter(false)}
               size="small"
             >

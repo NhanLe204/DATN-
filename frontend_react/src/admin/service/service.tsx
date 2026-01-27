@@ -224,6 +224,7 @@ const ServiceList: React.FC = () => {
           ? { 
               ...service, 
               ...response.data, 
+              key: service.key,
               status: response.data.status === 'active' ? 'Hoạt động' : 'Ngừng hoạt động'
             } 
           : service

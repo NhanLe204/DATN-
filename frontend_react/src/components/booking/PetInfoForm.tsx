@@ -292,7 +292,7 @@ const PetInfoForm: React.FC<PetInfoFormProps> = ({
       )}
 
       <PriceTableModal
-        visible={isModalVisible}
+        open={isModalVisible}
         onClose={() => setIsModalVisible(false)}
       />
     </div>

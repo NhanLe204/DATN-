@@ -53,6 +53,7 @@ interface Booking {
   petName?: string;
   petType?: string;
   status: string;
+  booking_note: string;
 }
 
 const BookingHistory = () => {
@@ -74,6 +75,8 @@ const BookingHistory = () => {
       setLoading(true);
       try {
         const response = await orderDetailApi.getBookingsByUserId(userID);
+        // console.log(response, "user data");
+        
         const rawData = response.data;
 
         if (!rawData || rawData.length === 0) {
@@ -321,7 +324,7 @@ const BookingHistory = () => {
   };
 
   return (
-    <Card className="w-full p-2 mx-auto md:p-4 max-w-7xl" bodyStyle={{ padding: '8px' }}>
+    <Card className="w-full p-2 mx-auto md:p-4 max-w-7xl" styles={{ body: { padding: '8px' } }}>
       <h2 className="mb-2 text-lg font-bold text-gray-800 md:text-xl md:mb-4">Lịch đã đặt</h2>
       <div className="mb-4 space-y-1 text-xs text-red-600 md:text-sm">
         <p>1. Chỉ có thể hủy lịch hẹn trước ít nhất 12 tiếng so với giờ thực hiện</p>
