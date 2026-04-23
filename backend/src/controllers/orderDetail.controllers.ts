@@ -14,6 +14,9 @@ import ServiceModel from '../models/service.model.js';
 import serviceModel from '../models/service.model.js';
 dayjs.extend(utc);
 dayjs.extend(timezone);
+
+
+
 // Lấy danh sách tất cả order details
 export const getOrderDetails = async (req: Request, res: Response) => {
   try {
@@ -116,48 +119,111 @@ export const deleteOrderDetail = async (req: Request, res: Response) => {
   }
 };
 
-export const getBookingsByUserId = async (
-  req: Request<object, object, object, { userId?: string }>,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const getOrderByUserId = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId } = req.query;
 
-    if (!userId) {
-      res.status(400).json({ success: false, message: 'userId is required' });
+    if (!userId || typeof userId !== 'string' || !mongoose.Types.ObjectId.isValid(userId)) {
+      res.status(400).json({ success: false, message: 'Invalid user ID', data: [] });
       return;
     }
 
-    // Bước 1: Kiểm tra xem user có order nào không
-    const userOrders = await orderModel.find({ userID: userId }).select('_id');
+    const userOrders = await orderModel
+      .find({ userID: userId })
+      .populate('payment_typeID', 'payment_type_name')
+      .populate('deliveryID', 'delivery_fee')
+      .populate('couponID', 'discount_value coupon_code');
 
-    if (!userOrders.length) {
-      res.status(404).json({ success: false, message: 'No orders found for this user' });
+    if (!userOrders || userOrders.length === 0) {
+      res.status(404).json({ success: false, message: 'No orders found for this user', data: [] });
       return;
     }
 
-    // Lấy danh sách orderId
     const orderIds = userOrders.map((order) => order._id);
 
-    // Bước 2: Tìm orderDetail có serviceId từ các order của user
-    const bookings = await orderDetailModel.aggregate([
-      { $match: { orderId: { $in: orderIds }, serviceId: { $ne: null } } },
-      { $lookup: { from: 'orders', localField: 'orderId', foreignField: '_id', as: 'order' } },
-      { $lookup: { from: 'services', localField: 'serviceId', foreignField: '_id', as: 'service' } }
-    ]);
+    const orderDetails = await orderDetailModel
+      .find({
+        orderId: { $in: orderIds },
+        productId: { $ne: null },
+        serviceId: null
+      })
+      .populate('productId', 'name price image_url')
+      .populate('orderId');
 
-    if (!bookings.length) {
-      res.status(404).json({ success: false, message: 'No bookings found for this user' });
+    if (!orderDetails || orderDetails.length === 0) {
+      res.status(404).json({ success: false, message: 'No product orders found for this user', data: [] });
       return;
     }
 
-    res.status(200).json({ success: true, data: bookings });
+    const formattedOrders = userOrders
+      .map((order) => {
+        const relatedDetails = orderDetails.filter((detail) => detail.orderId._id.toString() === order._id.toString());
+
+        if (relatedDetails.length === 0) return null;
+
+        return {
+          id: order._id.toString(),
+          orderNumber: order.transaction || `${order._id}`,
+          date: order.order_date || order.createdAt,
+          status: order.status.toUpperCase(),
+          payment_status: order.payment_status,
+          total: order.total_price || 0,
+          items: relatedDetails.map((detail) => ({
+            productId: detail.productId?._id.toString(),
+            orderDetailId: detail._id.toString(),
+            id: detail.productId?._id.toString(),
+            name: detail.productId?.name,
+            quantity: detail.quantity,
+            price: detail.product_price,
+            image_url: detail.productId?.image_url || [],
+            isRated: detail.isRated || false
+          })),
+          paymentMethod: order.payment_typeID?.payment_type_name,
+          shippingAddress: order.shipping_address,
+          deliveryFee: order.deliveryID?.delivery_fee,
+          discountValue: order.couponID?.discount_value,
+          couponCode: order.couponID?.coupon_code
+        };
+      })
+      .filter((order) => order !== null);
+
+    res.status(200).json({ success: true, data: formattedOrders });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Error retrieving bookings', error });
+    res.status(500).json({ success: false, message: 'Error retrieving orders by user ID', data: [] });
   }
 };
 
+
+
+
+
+
+// Bảng giá
+const bathData = [
+  { weight: '< 5kg', price: 150000 },
+  { weight: '5 - 10kg', price: 200000 },
+  { weight: '10 - 20kg', price: 250000 },
+  { weight: '20 - 40kg', price: 300000 },
+  { weight: '> 40kg', price: 350000 }
+];
+
+const comboBathData = [
+  { weight: '< 5kg', price: 320000 },
+  { weight: '5 - 10kg', price: 520000 },
+  { weight: '10 - 20kg', price: 620000 },
+  { weight: '20 - 40kg', price: 720000 },
+  { weight: '> 40kg', price: 820000 }
+];
+
+const serviceBathData = [
+  { weight: '< 5kg', price: 150000 },
+  { weight: '5 - 10kg', price: 180000 },
+  { weight: '10 - 20kg', price: 210000 },
+  { weight: '20 - 40kg', price: 240000 },
+  { weight: '> 40kg', price: 270000 }
+];
+
+// booking
 export const getAllBookings = async (req: Request, res: Response): Promise<void> => {
   try {
     // Bước 1: Lấy tất cả các order có bookingStatus
@@ -250,7 +316,7 @@ export const getAllBookings = async (req: Request, res: Response): Promise<void>
 
     res.status(200).json({ success: true, data: bookings });
   } catch (error) {
-    console.error('Error retrieving bookings:', error);
+    console.error('Error retrieving bookings');
     res.status(500).json({
       success: false,
       message: 'Lỗi khi lấy danh sách lịch hẹn',
@@ -259,79 +325,48 @@ export const getAllBookings = async (req: Request, res: Response): Promise<void>
   }
 };
 
-export const getOrderByUserId = async (req: Request, res: Response): Promise<void> => {
+export const getBookingsByUserId = async (
+  req: Request<object, object, object, { userId?: string }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const { userId } = req.query;
 
-    if (!userId || typeof userId !== 'string' || !mongoose.Types.ObjectId.isValid(userId)) {
-      res.status(400).json({ success: false, message: 'Invalid user ID', data: [] });
+    if (!userId) {
+      res.status(400).json({ success: false, message: 'userId is required' });
       return;
     }
 
-    const userOrders = await orderModel
-      .find({ userID: userId })
-      .populate('payment_typeID', 'payment_type_name')
-      .populate('deliveryID', 'delivery_fee')
-      .populate('couponID', 'discount_value coupon_code');
+    // Bước 1: Kiểm tra xem user có order nào không
+    const userOrders = await orderModel.find({ userID: userId }).select('_id');
 
-    if (!userOrders || userOrders.length === 0) {
-      res.status(404).json({ success: false, message: 'No orders found for this user', data: [] });
+    if (!userOrders.length) {
+      res.status(404).json({ success: false, message: 'No orders found for this user' });
       return;
     }
 
+    // Lấy danh sách orderId
     const orderIds = userOrders.map((order) => order._id);
 
-    const orderDetails = await orderDetailModel
-      .find({
-        orderId: { $in: orderIds },
-        productId: { $ne: null },
-        serviceId: null
-      })
-      .populate('productId', 'name price image_url')
-      .populate('orderId');
+    // Bước 2: Tìm orderDetail có serviceId từ các order của user
+    const bookings = await orderDetailModel.aggregate([
+      { $match: { orderId: { $in: orderIds }, serviceId: { $ne: null } } },
+      { $lookup: { from: 'orders', localField: 'orderId', foreignField: '_id', as: 'order' } },
+      { $lookup: { from: 'services', localField: 'serviceId', foreignField: '_id', as: 'service' } }
+    ]);
 
-    if (!orderDetails || orderDetails.length === 0) {
-      res.status(404).json({ success: false, message: 'No product orders found for this user', data: [] });
+    if (!bookings.length) {
+      res.status(404).json({ success: false, message: 'No bookings found for this user' });
       return;
     }
 
-    const formattedOrders = userOrders
-      .map((order) => {
-        const relatedDetails = orderDetails.filter((detail) => detail.orderId._id.toString() === order._id.toString());
-
-        if (relatedDetails.length === 0) return null;
-
-        return {
-          id: order._id.toString(),
-          orderNumber: order.transaction || `${order._id}`,
-          date: order.order_date || order.createdAt,
-          status: order.status.toUpperCase(),
-          payment_status: order.payment_status,
-          total: order.total_price || 0,
-          items: relatedDetails.map((detail) => ({
-            productId: detail.productId?._id.toString(),
-            orderDetailId: detail._id.toString(),
-            id: detail.productId?._id.toString(),
-            name: detail.productId?.name,
-            quantity: detail.quantity,
-            price: detail.product_price,
-            image_url: detail.productId?.image_url || [],
-            isRated: detail.isRated || false
-          })),
-          paymentMethod: order.payment_typeID?.payment_type_name,
-          shippingAddress: order.shipping_address,
-          deliveryFee: order.deliveryID?.delivery_fee,
-          discountValue: order.couponID?.discount_value,
-          couponCode: order.couponID?.coupon_code
-        };
-      })
-      .filter((order) => order !== null);
-
-    res.status(200).json({ success: true, data: formattedOrders });
+    res.status(200).json({ success: true, data: bookings });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Error retrieving orders by user ID', data: [] });
+    res.status(500).json({ success: false, message: 'Error retrieving bookings', error });
   }
 };
+
 export const changeBookingStatus = async (req: Request, res: Response): Promise<void> => {
   try {
     const { orderId, bookingStatus } = req.body;
@@ -456,95 +491,51 @@ export const changeBookingStatus = async (req: Request, res: Response): Promise<
       // Gửi email khi trạng thái là COMPLETED
       if (bookingStatus === BookingStatus.COMPLETED) {
         try {
-          const user = await userModel.findById(order.userID).session(session);
-          const orderDetail = await orderDetailModel.findOne({ orderId, serviceId: { $ne: null } }).session(session);
+          const user = order.userID
+            ? await userModel.findById(order.userID).session(session)
+            : null;
+
+          const orderDetails = await orderDetailModel
+            .find({
+              orderId,
+              serviceId: { $ne: null }
+            })
+            .session(session);
 
           const userData = user
-            ? { email: user.email, name: user.fullname }
-            : order.infoUserGuest
-              ? { email: order.infoUserGuest.email, name: order.infoUserGuest.fullName }
-              : null;
-
-          if (userData && userData.email && orderDetail) {
-            const service = await ServiceModel.findById(orderDetail.serviceId).select('service_name');
-            interface BookingEmailData {
-              recipientEmail: string;
-              customerName: string;
-              orderDetails: Array<{
-                serviceId: string | null;
-                booking_date: Date | null;
-                petName: string | null;
-                petType: string | null;
-              }>;
-              orderId: string;
-              isCancellation: boolean;
+            ? {
+              email: user.email,
+              name: user.fullname,
             }
-
-            const emailData: BookingEmailData = {
-              recipientEmail: userData.email,
-              customerName: userData.name,
-              orderDetails: [
-                {
-                  serviceId: orderDetail.serviceId?.toString() || null,
-                  booking_date: orderDetail.booking_date || null,
-                  petName: orderDetail.petName || null,
-                  petType: orderDetail.petType || null
-                }
-              ],
-              orderId: orderId,
-              isCancellation: false
-            };
-
-            // Gửi email sử dụng sendBookingEmail với nội dung tùy chỉnh
+            : order.inforUserGuest
+              ? {
+                email: order.inforUserGuest.email,
+                name: order.inforUserGuest.fullName,
+              }
+              : null;
+         
+          if (userData?.email && orderDetails.length > 0) {
             await sendBookingEmail({
-              ...emailData,
-              subject: `Dịch vụ của bạn đã hoàn thành - Mã đơn hàng: ${orderId}`,
-              html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
-  <h2 style="color: #333; text-align: center;">Xác nhận hoàn thành dịch vụ</h2>
-  <p style="color: #555; line-height: 1.6;">Kính gửi <strong>${userData.name || 'Khách hàng'}</strong>,</p>
-  <p style="color: #555; line-height: 1.6;">Chúng tôi xin thông báo rằng dịch vụ của bạn đã được hoàn thành thành công!</p>
-  <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-    <tr>
-      <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold; width: 30%;">Mã đơn hàng:</td>
-      <td style="padding: 10px; border: 1px solid #e0e0e0;">${orderId}</td>
-    </tr>
-    <tr>
-      <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Dịch vụ:</td>
-      <td style="padding: 10px; border: 1px solid #e0e0e0;">${service?.service_name || 'Không xác định'}</td>
-    </tr>
-    <tr>
-      <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Thời gian:</td>
-      <td style="padding: 10px; border: 1px solid #e0e0e0;">${orderDetail.booking_date
-                  ? new Intl.DateTimeFormat('vi-VN', {
-                    timeZone: 'Asia/Ho_Chi_Minh',
-                    dateStyle: 'short',
-                    timeStyle: 'short'
-                  }).format(orderDetail.booking_date)
-                  : 'N/A'
-                }</td>
-			</tr>
-			<tr>
-				<td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Thú cưng:</td>
-				<td style="padding: 10px; border: 1px solid #e0e0e0;">${orderDetail.petName || 'N/A'} (${orderDetail.petType || 'N/A'})</td>
-			</tr>
-			<tr>
-				<td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Giá thực tế:</td>
-				<td style="padding: 10px; border: 1px solid #e0e0e0;">${orderDetail.realPrice ? orderDetail.realPrice.toLocaleString('vi-VN') + ' VND' : 'N/A'
-                }</td>
-			</tr>
-		</table>
-		<p style="color: #555; text-align: center;">Cảm ơn bạn đã tin tưởng và sử dụng dịch vụ của chúng tôi!</p>
-		<p style="color: #555; text-align: center;">Trân trọng,<br><strong>Pet Heaven</strong></p>
-	</div>
-              `
+              recipientEmail: userData.email,
+              customerName: userData.name || "Khách hàng",
+              orderDetails: orderDetails.map((detail) => ({
+                serviceId: detail.serviceId?.toString() || null,
+                booking_date: detail.booking_date || null,
+                petName: detail.petName || null,
+                petType: detail.petType || null,
+              })),
+              orderId,
+              isCancellation: false,
+              isCompleted: true,
             });
-            // console.log(`Completion email sent to ${userData.email} for order ${orderId}`);
+
           } else {
-            console.warn(`No valid email found for order ${orderId}. Skipping email.`);
+            console.warn("Không có email hợp lệ hoặc không có orderDetails");
           }
         } catch (emailError) {
-          console.error('Failed to send completion email:', emailError);
+          console.error(
+            "Failed to send completion email:",
+          );
         }
       }
 
@@ -567,7 +558,7 @@ export const changeBookingStatus = async (req: Request, res: Response): Promise<
       throw error;
     }
   } catch (error) {
-    console.error('Lỗi khi cập nhật trạng thái lịch hẹn:', error);
+    console.error('Lỗi khi cập nhật trạng thái lịch hẹn');
     res.status(500).json({
       success: false,
       message: 'Lỗi khi cập nhật trạng thái lịch hẹn',
@@ -576,6 +567,7 @@ export const changeBookingStatus = async (req: Request, res: Response): Promise<
   }
 };
 
+// hủy booking
 export const cancelBooking = async (req: Request, res: Response): Promise<void> => {
   try {
     const { orderId, orderDetailId } = req.body;
@@ -679,30 +671,6 @@ export const cancelBooking = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-// Bảng giá
-const bathData = [
-  { weight: '< 5kg', price: 150000 },
-  { weight: '5 - 10kg', price: 200000 },
-  { weight: '10 - 20kg', price: 250000 },
-  { weight: '20 - 40kg', price: 300000 },
-  { weight: '> 40kg', price: 350000 }
-];
-
-const comboBathData = [
-  { weight: '< 5kg', price: 320000 },
-  { weight: '5 - 10kg', price: 520000 },
-  { weight: '10 - 20kg', price: 620000 },
-  { weight: '20 - 40kg', price: 720000 },
-  { weight: '> 40kg', price: 820000 }
-];
-
-const serviceBathData = [
-  { weight: '< 5kg', price: 150000 },
-  { weight: '5 - 10kg', price: 180000 },
-  { weight: '10 - 20kg', price: 210000 },
-  { weight: '20 - 40kg', price: 240000 },
-  { weight: '> 40kg', price: 270000 }
-];
 
 // Hàm calculatePrice
 const calculatePrice = (serviceName: string, petWeight: number, petType: string): number => {
@@ -735,6 +703,7 @@ const calculatePrice = (serviceName: string, petWeight: number, petType: string)
   return 0;
 };
 
+// real rice
 export const updateRealPrice = async (req: Request, res: Response): Promise<void> => {
   try {
     const { orderId, petWeight, petType, serviceName } = req.body;
@@ -800,7 +769,7 @@ export const updateRealPrice = async (req: Request, res: Response): Promise<void
   }
 };
 
-// update
+// update booking
 export const updateBooking = async (req: Request, res: Response): Promise<void> => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -1179,7 +1148,7 @@ export const getBookingDetailsByUserId = async (
         $project: {
           orderId: '$order._id',
           orderDetailId: '$_id',
-          orderCode: '$order.orderCode', 
+          orderCode: '$order.orderCode',
           fullname: {
             $ifNull: ['$order.fullname', '$order.inforUserGuest.fullName', '$user.fullname', 'Khách vãng lai']
           },
@@ -1196,10 +1165,10 @@ export const getBookingDetailsByUserId = async (
             duration: '$service.duration'
           },
           booking_date: '$booking_date',
-          order_date: '$order.order_date', 
+          order_date: '$order.order_date',
           booking_note: '$order.booking_note',
           bookingStatus: {
-            $ifNull: ['$order.bookingStatus', '$order.status'] 
+            $ifNull: ['$order.bookingStatus', '$order.status']
           },
           petName: '$petName',
           petType: '$petType',

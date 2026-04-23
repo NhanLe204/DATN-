@@ -2,7 +2,9 @@ import sendEmail from './sendEmail.js';
 import ServiceModel from '../models/service.model.js';
 import userModel from '../models/user.model.js';
 import orderModel from '../models/order.model.js';
-import { generateBookingEmailHtml } from './bookingEmailTemplate.js';
+
+import BookingEmailTemplate from './bookingEmailTemplate.js';
+import { render } from '@react-email/render';
 
 interface BookingEmailData {
   recipientEmail: string;
@@ -12,9 +14,11 @@ interface BookingEmailData {
     booking_date: Date | null;
     petName: string | null;
     petType: string | null;
+    realPrice?: number | null;
   }>;
   orderId: string;
   isCancellation?: boolean;
+  isCompleted?: boolean;
 }
 
 const sendBookingEmail = async ({
@@ -23,22 +27,38 @@ const sendBookingEmail = async ({
   orderDetails,
   orderId,
   isCancellation = false,
+  isCompleted = false,
 }: BookingEmailData): Promise<void> => {
   let displayOrderCode = orderId;
   let finalCustomerName = inputCustomerName || 'Khách hàng';
 
   try {
-    const order = await orderModel.findById(orderId).select('orderCode userID fullname inforUserGuest').lean();
+    const order = await orderModel
+      .findById(orderId)
+      .select('orderCode userID fullname inforUserGuest')
+      .lean();
+
     if (order) {
       displayOrderCode = order.orderCode || orderId;
+
       if (!inputCustomerName) {
         finalCustomerName = order.userID
-          ? (await userModel.findById(order.userID).select('fullname').lean())?.fullname || order.fullname || order.inforUserGuest?.fullName || 'Khách hàng'
-          : order.fullname || order.inforUserGuest?.fullName || 'Khách hàng';
+          ? (
+              await userModel
+                .findById(order.userID)
+                .select('fullname')
+                .lean()
+            )?.fullname ||
+            order.fullname ||
+            order.inforUserGuest?.fullName ||
+            'Khách hàng'
+          : order.fullname ||
+            order.inforUserGuest?.fullName ||
+            'Khách hàng';
       }
     }
   } catch (error) {
-    console.error('Error fetching order for email:', error);
+    console.error('Lỗi khi lấy thông tin đơn hàng qua email:');
   }
 
   const enrichedDetails = await Promise.all(
@@ -47,7 +67,11 @@ const sendBookingEmail = async ({
       let duration: number | string = 'Không xác định';
 
       if (detail.serviceId) {
-        const service = await ServiceModel.findById(detail.serviceId).select('service_name duration').lean();
+        const service = await ServiceModel
+          .findById(detail.serviceId)
+          .select('service_name duration')
+          .lean();
+
         if (service) {
           serviceName = service.service_name;
           duration = service.duration || duration;
@@ -60,22 +84,40 @@ const sendBookingEmail = async ({
         petName: detail.petName,
         petType: detail.petType,
         duration,
+        realPrice: detail.realPrice || null,
       };
     })
   );
 
-  const subject = isCancellation ? 'Thông báo hủy lịch đặt dịch vụ' : 'Xác nhận đặt lịch thành công';
-  const text = 'Vui lòng xem email ở chế độ HTML để thấy nội dung chi tiết.';
+  let subject = 'Xác nhận đặt lịch thành công';
 
-  const html = generateBookingEmailHtml(
-    finalCustomerName,
-    enrichedDetails,
-    displayOrderCode,
-    isCancellation
+  if (isCancellation) {
+    subject = 'Thông báo hủy lịch đặt dịch vụ';
+  }
+
+  if (isCompleted) {
+    subject = 'Thông báo hoàn thành dịch vụ';
+  }
+
+  const html = await render(
+    BookingEmailTemplate({
+      customerName: finalCustomerName,
+      details: enrichedDetails,
+      orderCode: displayOrderCode,
+      isCancellation,
+      isCompleted,
+    })
   );
 
-  await sendEmail(recipientEmail, subject, text, html);
-  // console.log(`Email ${isCancellation ? 'hủy' : 'xác nhận'} gửi thành công đến: ${recipientEmail}`);
+  const text =
+    'Vui lòng xem email ở chế độ HTML để thấy nội dung chi tiết.';
+
+  await sendEmail(
+    recipientEmail,
+    subject,
+    text,
+    html
+  );
 };
 
 export default sendBookingEmail;

@@ -43,6 +43,20 @@ const orderSchema: Schema<IOrder> = new Schema<IOrder>(
       required: false,
       default: null
     },
+    inforUserGuest: {
+      fullName: {
+        type: String,
+        default: null
+      },
+      phone: {
+        type: String,
+        default: null
+      },
+      email: {
+        type: String,
+        default: null
+      }
+    },
 
   },
   { timestamps: true }

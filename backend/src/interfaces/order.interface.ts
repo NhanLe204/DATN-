@@ -19,4 +19,9 @@ export interface IOrder {
   email?: string;
   orderCode: string;
   booking_note?: string;
+  inforUserGuest?: {
+    fullName?: string | null;
+    phone?: string | null;
+    email?: string | null;
+  } | null;
 }

@@ -3,13 +3,13 @@ import React, { useState } from 'react';
 import { Card, Button, Spin } from 'antd';
 import { motion } from 'framer-motion';
 import dayjs from 'dayjs';
+
 import { FaPlus } from "react-icons/fa";
+
 import SearchBar from '../components/booking/SearchBar';
 import BookingTable from '../components/booking/BookingTable';
-import StartServiceModal from '../components/booking/StartServiceModal';
-// import EditBookingModal from '../components/booking/EditBookingModal';
-// import AddBookingModal from '../components/booking/AddBookingModal';
 
+import StartServiceModal from '../components/booking/StartServiceModal';
 import BookingFormModal from '../components/booking/BookingFormModal';
 
 import { useBookingLogic } from './bookingLogic';
@@ -20,7 +20,6 @@ const BookingManager: React.FC = () => {
   const [isStartModalVisible, setIsStartModalVisible] = useState(false);
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  // const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
   const {
     filteredBookings, services, searchText, setSearchText,
@@ -32,14 +31,12 @@ const BookingManager: React.FC = () => {
   } = useBookingLogic();
 
   const openEdit = (record: Booking) => {
-    // setSelectedBooking(record);
     setIsEditMode(false);
     handleEdit(record);
     setIsEditModalVisible(true);
   };
 
   const openStart = (record: Booking) => {
-    // setSelectedBooking(record);
     handleStart(record);
     setIsStartModalVisible(true);
   };
@@ -48,9 +45,6 @@ const BookingManager: React.FC = () => {
     handleAdd();
     setIsAddModalVisible(true);
   };
-
-  fetch('http://localhost:3000/api/services')
-
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
@@ -134,8 +128,6 @@ const BookingManager: React.FC = () => {
             setIsStartModalVisible(false);
           }}
         />
-
-
 
       </Spin>
     </motion.div>
