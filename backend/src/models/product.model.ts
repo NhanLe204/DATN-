@@ -16,7 +16,7 @@ const productSchema: Schema<IProduct> = new Schema<IProduct>(
       required: true
     },
     price: {
-      type: String,
+      type: Number,
       required: true
     },
     category_id: {

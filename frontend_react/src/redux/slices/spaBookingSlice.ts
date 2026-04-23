@@ -21,7 +21,6 @@ interface SpaBookingState {
   guestUserInfo: GuestUserInfo;
 }
 
-// Initialize guestUserInfo from localStorage if available
 const loadGuestUserInfo = (): GuestUserInfo => {
   const savedGuestInfo = localStorage.getItem("guestUserInfo");
   return savedGuestInfo ? JSON.parse(savedGuestInfo) : {};

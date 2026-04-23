@@ -9,7 +9,7 @@ export const generateOrderCode = async (): Promise<string> => {
     const today = dayjs().format('YYYYMMDD');
 
     // Đếm số order hôm nay
-    //   countDocuments của moongose đếm số lượng theo điều kiện
+    // countDocuments của moongose đếm số lượng theo điều kiện
     // trong trường hợp này $gte: lớn hơn hoặc bằng
     // $lte: nhỏ hơn hoặc bằng
     // dayjs().startOf('day'): 00:00:00 hôm nay

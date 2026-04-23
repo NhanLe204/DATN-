@@ -10,8 +10,6 @@ import {
   Avatar,
   Drawer,
   Button,
-  notification,
-  Popover
 } from "antd";
 import {
   FaTruck,
@@ -78,9 +76,11 @@ export default function Header() {
   const closeSearchMobile = () => setSearchMobileOpen(false);
 
   const showSearchDesktop = () => setSearchDesktopOpen(true);
+  const closeSearchDesktop = () => setSearchDesktopOpen(false);
 
   useEffect(() => {
     const storedHistory = localStorage.getItem("searchHistory");
+    console.log("Loaded searchHistory from localStorage on mount:", storedHistory);
     if (storedHistory) {
       try {
         const parsedHistory = JSON.parse(storedHistory);
@@ -98,6 +98,7 @@ export default function Header() {
   }, []);
 
   const saveSearchHistory = (history: string[]) => {
+    console.log("Saving searchHistory to localStorage:", history);
     localStorage.setItem("searchHistory", JSON.stringify(history));
   };
 
@@ -148,7 +149,7 @@ export default function Header() {
     try {
       const response = await productsApi.getProductActive();
       const data = await response.data.result;
-      // console.log("Dữ liệu từ API:", data);
+      console.log("Dữ liệu từ API:", data);
 
       const normalizedSearchTerm = removeDiacritics(searchTerm.toLowerCase());
       const filteredProducts = data.filter((product: Product) => {
@@ -158,7 +159,7 @@ export default function Header() {
         return normalizedProductName.includes(normalizedSearchTerm);
       });
 
-      // console.log("Sản phẩm sau lọc:", filteredProducts);
+      console.log("Sản phẩm sau lọc:", filteredProducts);
       setSearchResults(filteredProducts);
     } catch (error) {
       console.error("Error fetching products:", error);
@@ -181,6 +182,7 @@ export default function Header() {
     if (storedUserData) {
       try {
         const parsedUser = JSON.parse(storedUserData);
+        console.log("User data in header.js:", parsedUser);
         setUser(parsedUser);
       } catch (error) {
         console.error("Lỗi khi parse userData từ localStorage:", error);
@@ -218,11 +220,7 @@ export default function Header() {
           clearLocalStorageExceptCarts();
           setUser(null);
           dispatch(setUserId(null));
-          notification.info({
-            message: "Phiên đăng nhập đã hết hạn",
-            description: "Bạn có thể đăng nhập lại khi cần",
-            placement: "topRight",
-          });
+          navigate("/login");
         }
       });
   }, [dispatch, navigate]);
@@ -230,60 +228,38 @@ export default function Header() {
   const handleLogout = async () => {
     try {
       await loginApi.logout();
-
-      clearLocalStorageExceptCarts();
-
       localStorage.setItem("logoutEvent", Date.now().toString());
-
+      localStorage.clear();
       setUser(null);
       dispatch(setUserId(null));
       setIsUserLoaded(false);
-
-      notification.success({
-        message: "Đăng xuất thành công!",
-        placement: "topRight",
-        duration: 3,
-      });
-
+      navigate("/login");
     } catch (error) {
-      notification.error({
-        message: "Đăng xuất thất bại",
-        description: "Có lỗi xảy ra, vui lòng thử lại.",
-      });
+      console.error("Logout failed:", error);
     }
   };
 
-  const userMenu = [
-    ...(user?.role === "admin" || user?.role === "employee"
-      ? [
-        {
-          key: "1",
-          label: (
-            <a href="/admin">
-              <i className="mr-2 fas fa-cog"></i>Quản lý website
-            </a>
-          ),
-        },
-      ]
-      : []),
-    {
-      key: "2",
-      label: (
+  const userMenu = (
+    <Menu>
+      {(user?.role === "admin" || user?.role === "employee") && (
+        <Menu.Item key="1">
+          <a href="/admin">
+            <i className="mr-2 fas fa-cog"></i>Quản lý website
+          </a>
+        </Menu.Item>
+      )}
+      <Menu.Item key="2">
         <a href={`/userprofile/account`}>
           <i className="mr-2 fas fa-user"></i>Tài khoản
         </a>
-      ),
-    },
-    {
-      key: "3",
-      label: (
-        <span onClick={handleLogout}>  
+      </Menu.Item>
+      <Menu.Item key="3" onClick={handleLogout}>
+        <a href="#">
           <i className="mr-2 fas fa-sign-out-alt"></i>Đăng xuất
-        </span>
-      ),
-      danger: true, 
-    },
-  ];
+        </a>
+      </Menu.Item>
+    </Menu>
+  );
 
   const searchDesktop = (
     <div
@@ -316,7 +292,7 @@ export default function Header() {
                 <button
                   key={index}
                   className="px-4 py-2 bg-gray-100 rounded-full hover:bg-gray-200"
-                  onClick={() => handleSearchSubmit(item)}
+                  onClick={() => handleSearchSubmit(item)} // Sửa để gọi handleSearchSubmit
                 >
                   {item}
                 </button>
@@ -335,7 +311,7 @@ export default function Header() {
                   key={product._id}
                   className="p-4 rounded shadow-md cursor-pointer bg-gray-50 hover:bg-gray-100"
                   onClick={() => {
-                    // console.log("Navigating to:", `/detail/${product._id}`);
+                    console.log("Navigating to:", `/detail/${product._id}`);
                     navigate(`/detail/${product._id}`);
                     setSearchDesktopOpen(false);
                   }}
@@ -411,7 +387,7 @@ export default function Header() {
                 key={product._id}
                 className="p-4 rounded cursor-pointer bg-gray-50 hover:bg-gray-100"
                 onClick={() => {
-                  // console.log("Navigating to:", `/detail/${product._id}`);
+                  console.log("Navigating to:", `/detail/${product._id}`);
                   navigate(`/detail/${product._id}`);
                   setSearchMobileOpen(false);
                 }}
@@ -473,14 +449,13 @@ export default function Header() {
             />
           </a>
 
-          <Popover
-            content={searchDesktop}
+          <Dropdown
+            overlay={searchDesktop}
             trigger={["click"]}
             open={searchDesktopOpen}
             onOpenChange={setSearchDesktopOpen}
             placement="bottomLeft"
             overlayClassName="search-dropdown"
-            overlayStyle={{ maxWidth: '600px' }}
           >
             <Input.Search
               placeholder="Tìm kiếm..."
@@ -507,7 +482,7 @@ export default function Header() {
               value={keyword}
               onChange={(e) => handleSearchChange(e.target.value)}
             />
-          </Popover>
+          </Dropdown>
 
           <Space size={50} className="hidden xl:flex">
             <div className="flex flex-col items-center">
@@ -528,7 +503,7 @@ export default function Header() {
               </Badge>
             </a>
             {user ? (
-              <Dropdown trigger={["hover"]} menu={{ items: userMenu }}>
+              <Dropdown overlay={userMenu} trigger={["hover"]}>
                 <div className="flex items-center cursor-pointer">
                   <Avatar
                     src={user.avatar ? `${user.avatar}` : undefined}
@@ -558,7 +533,7 @@ export default function Header() {
               </Badge>
             </a>
             {user ? (
-              <Dropdown trigger={["hover"]} menu={{ items: userMenu }}>
+              <Dropdown overlay={userMenu} trigger={["hover"]}>
                 <div className="flex items-center cursor-pointer">
                   <Avatar
                     src={user.avatar ? `${user.avatar}` : undefined}
@@ -582,15 +557,15 @@ export default function Header() {
               <a key={item.path} href={item.path} className="relative group">
                 <Typography.Text
                   className={`text-sm font-bold transition-colors duration-300 lg:text-sm xl:text-lg relative z-10 ${currentPath === item.path
-                    ? "text-[#22A6DF]"
-                    : "text-black group-hover:text-[#22A6DF]"
+                      ? "text-[#22A6DF]"
+                      : "text-black group-hover:text-[#22A6DF]"
                     }`}
                 >
                   {item.label}
                   <span
                     className={`absolute bottom-0 left-0 h-[2px] bg-[#22A6DF] transition-all duration-300 ${currentPath === item.path
-                      ? "w-full"
-                      : "w-0 group-hover:w-full"
+                        ? "w-full"
+                        : "w-0 group-hover:w-full"
                       }`}
                   ></span>
                 </Typography.Text>
