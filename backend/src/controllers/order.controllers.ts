@@ -54,8 +54,12 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       petType: detail.petType
     }));
 
+    // ─── XÁC ĐỊNH LOẠI ĐƠN ───────────────────────────────────────────────────
+    // isBooking: tất cả item đều có serviceId và không có productId
+    // isOrder  : có ít nhất 1 item có productId
     const isBooking = normalizedOrderDetails.every((detail: any) => detail.serviceId && !detail.productId);
     const isOrder = normalizedOrderDetails.some((detail: any) => detail.productId);
+    // ─────────────────────────────────────────────────────────────────────────
 
     // Kiểm tra deliveryID và total_price cho đơn hàng
     if (isOrder && !deliveryID) {
@@ -90,6 +94,7 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
         throw new Error('Yêu cầu product_price và phải lớn hơn 0 cho đơn hàng sản phẩm');
       }
 
+      // ── [ORDER] Validate product & trừ stock ─────────────────────────────
       if (productId) {
         const product = await productModel
           .findOne({ _id: productId, status: ProductStatus.AVAILABLE })
@@ -100,14 +105,20 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
         }
         await productModel.findByIdAndUpdate(productId, { $inc: { stock: -quantity } }, { session });
       }
+      // ─────────────────────────────────────────────────────────────────────
 
+      // ── [BOOKING] Validate service & thông tin thú cưng ──────────────────
       if (serviceId) {
+        // Bước 1: Kiểm tra service có tồn tại và đang ACTIVE không
         const service = await serviceModel.findOne({ _id: serviceId, status: ServiceStatus.ACTIVE }).session(session);
         if (!service) throw new Error(`Không tìm thấy hoặc dịch vụ không hoạt động: ${serviceId}`);
+
+        // Bước 2: Bắt buộc có petName và petType
         if (!petName || !petType) {
           throw new Error('Yêu cầu petName và petType cho đặt dịch vụ');
         }
       }
+      // ─────────────────────────────────────────────────────────────────────
 
       let detailTotalPrice = 0;
       if (isOrder) {
@@ -115,25 +126,29 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
         calculatedTotalPrice += detailTotalPrice;
       }
 
+      // ── [BOOKING] Tính thời gian & kiểm tra slot trùng giờ ───────────────
       let booking_start = null;
       let booking_end = null;
       let standardizedBookingDate = null;
 
-
       if (serviceId && booking_date) {
+        // Bước 3: Tính booking_start và booking_end theo timezone VN rồi convert sang UTC
         const now = moment().tz('Asia/Ho_Chi_Minh');
         const startLocal = moment.tz(booking_date, 'Asia/Ho_Chi_Minh');
 
         const service = await serviceModel.findById(serviceId).session(session);
         if (!service) throw new Error('Dịch vụ không tồn tại');
 
-        const duration = service.duration || 60;
+        const duration = service.duration || 60; // mặc định 60 phút nếu không có duration
         const endLocal = startLocal.clone().add(duration, 'minutes');
 
         booking_start = startLocal.utc().toDate();
         booking_end = endLocal.utc().toDate();
         standardizedBookingDate = booking_start;
 
+        // Bước 4: Kiểm tra slot trùng giờ
+        // Logic overlap: start_A < end_B && end_A > start_B
+        // Tối đa 5 bé cùng 1 khung giờ
         const overlappingCount = await orderDetailModel.countDocuments({
           $or: [
             { booking_start: { $lt: booking_end }, booking_end: { $gt: booking_start } }
@@ -145,7 +160,7 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
           throw new Error('Khung giờ này đã hết chỗ (tối đa 5 bé cùng lúc)');
         }
       }
-
+      // ─────────────────────────────────────────────────────────────────────
 
       return {
         productId,
@@ -203,6 +218,7 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
 
     // order Code
     const orderCode = await generateOrderCode();
+
     // Tạo và lưu đơn hàng
     let finalFullname: string | null = null;
     let finalPhone: string | null = null;
@@ -222,6 +238,8 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       finalEmail = infoUserGuest.email?.trim() || finalEmail;
     }
 
+    // ── [BOOKING] Lưu Order với bookingStatus = CONFIRMED ─────────────────
+    // booking không có: total_price, deliveryID, couponID, status (order)
     const order = new orderModel({
       orderCode,
       userID: userID ? userID : null,
@@ -239,13 +257,14 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
       bookingStatus: isBooking ? BookingStatus.CONFIRMED : null,
       payment_status:
         payment_typeID == '67d67442aeb5082f01074c28' ? PaymentStatus.CASH_ON_DELIVERY : PaymentStatus.PENDING,
-      // inforUserGuest: infoUserGuest || null 
       inforUserGuest: userID ? null : infoUserGuest,
       booking_note: booking_note?.trim() || null
     });
+    // ─────────────────────────────────────────────────────────────────────
 
     const savedOrder = await order.save({ session });
 
+    // ── [BOOKING] Lưu OrderDetail với booking_start, booking_end, petName, petType ──
     const orderDetailDocs = validatedOrderDetails.map((detail: any) => {
       return new orderDetailModel({
         orderId: savedOrder._id,
@@ -262,8 +281,8 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
         petName: detail.petName,
         petType: detail.petType
       });
-
     });
+    // ─────────────────────────────────────────────────────────────────────
 
     for (const detail of orderDetailDocs) {
       await detail.save({ session });
@@ -273,7 +292,8 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
     await session.commitTransaction();
     transactionCommitted = true;
 
-    // Gửi email xác nhận đặt dịch vụ
+    // ── [BOOKING] Gửi email xác nhận sau khi commit thành công ───────────
+    // Ưu tiên: user đăng nhập → lấy email từ DB, guest → lấy từ infoUserGuest
     let recipientEmail: string | null = null;
     if (userID) {
       const user = await userModel.findById(userID);
@@ -298,6 +318,8 @@ export const createOrderAfterPayment = async (req: Request, res: Response): Prom
         console.error('Gửi email xác nhận thất bại:', emailError);
       }
     }
+    // ─────────────────────────────────────────────────────────────────────
+
     res.status(201).json({
       success: true,
       message: 'Tạo đơn hàng và chi tiết đơn hàng thành công',
