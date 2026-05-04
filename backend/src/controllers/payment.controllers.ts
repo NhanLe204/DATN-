@@ -20,8 +20,7 @@ export const createPayment = async (req: Request, res: Response): Promise<void> 
     const tmnCode = process.env.VNP_TMNCODE as string;
     const secretKey = process.env.VNP_HASHSECRET as string;
     let vnpUrl = process.env.VNP_URL as string;
-    // const returnUrl = process.env.VNP_RETURN_URL as string;
-    // Gửi dữ liệu lên VNPAY
+
     const { orderId, amount, bankCode, language, returnUrl } = req.body;
     const locale = language || 'vn';
     const currCode = 'VND';
@@ -33,7 +32,7 @@ export const createPayment = async (req: Request, res: Response): Promise<void> 
       vnp_Locale: locale,
       vnp_CurrCode: currCode,
       vnp_TxnRef: orderId,
-      vnp_OrderInfo: `Thanh+toan+cho+ma+GD:${orderId}`,
+      vnp_OrderInfo: `Thanh toan cho ma GD ${orderId}`,
       vnp_OrderType: 'other',
       vnp_Amount: (amount || 0) * 100,
       vnp_ReturnUrl: returnUrl,
@@ -53,6 +52,8 @@ export const createPayment = async (req: Request, res: Response): Promise<void> 
     vnp_Params['vnp_SecureHash'] = signed;
     vnpUrl += '?' + qs.stringify(vnp_Params, { encode: false });
 
+    console.log('PAY URL:', vnpUrl);
+
     res.status(200).json({ success: true, url: vnpUrl });
   } catch (error) {
     console.error('Error creating payment:', error);
@@ -60,12 +61,11 @@ export const createPayment = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-// Hàm sắp xếp object để tạo chữ ký đúng
 function sortObject(obj: Record<string, string | number>): Record<string, string> {
   const sorted: Record<string, string> = {};
-  const keys: string[] = Object.keys(obj).sort();
+  const keys = Object.keys(obj).sort();
   keys.forEach((key) => {
-    sorted[key] = encodeURIComponent(obj[key] as string).replace(/%20/g, '+');
+    sorted[key] = obj[key].toString(); 
   });
   return sorted;
 }
