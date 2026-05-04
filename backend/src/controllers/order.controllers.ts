@@ -388,7 +388,6 @@ export const getOrderById = async (req: Request, res: Response): Promise<void> =
     res.status(500).json({ success: false, message: 'Internal Server Error', details: errorMessage });
   }
 };
-
 export const getAvailableSlots = async (req: Request, res: Response): Promise<void> => {
   try {
     const { date } = req.query;
@@ -439,8 +438,6 @@ export const getAvailableSlots = async (req: Request, res: Response): Promise<vo
     res.status(400).json({ success: false, message: error instanceof Error ? error.message : 'Lỗi' });
   }
 };
-
-
 export const updateOrderStatus = async (req: Request, res: Response): Promise<void> => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -734,7 +731,6 @@ export const cancelServiceBooking = async (req: Request, res: Response): Promise
     });
   }
 };
-
 export const getPendingOrders = async (req: Request, res: Response): Promise<void> => {
   try {
     const pendingOrders = await orderModel
@@ -769,7 +765,6 @@ export const getPendingOrders = async (req: Request, res: Response): Promise<voi
     });
   }
 };
-
 export const checkRealtimeSlot = async (req: Request, res: Response): Promise<void> => {
   try {
     const { serviceId, booking_start } = req.body;

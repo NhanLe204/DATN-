@@ -593,6 +593,7 @@ const Payment = () => {
 
       if (selectedPayment === "67d67442aeb5082f01074c28") {
         // Thanh toán khi nhận hàng
+        dispatch(clearProduct());
         message.success("Đơn hàng của bạn đã được tạo thành công!");
         navigate("/userprofile/orders"); // Điều hướng đến trang thành công
       } else {
