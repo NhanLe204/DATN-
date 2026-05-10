@@ -154,7 +154,7 @@ const BlogModal: React.FC<BlogModalProps> = ({
           }
       
           // Log dữ liệu gửi đi
-          console.log("FormData entries:", [...formData.entries()]);
+        //   console.log("FormData entries:", [...formData.entries()]);
       
           if (blog) {
             await BlogApi.updateBlog(blog._id, formData);

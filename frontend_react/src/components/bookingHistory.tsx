@@ -75,7 +75,7 @@ const BookingHistory = () => {
       setLoading(true);
       try {
         const response = await orderDetailApi.getBookingsByUserId(userID);
-        // console.log(response, "user data");
+        console.log(response, "user data");
         
         const rawData = response.data;
 
@@ -111,7 +111,7 @@ const BookingHistory = () => {
         console.error('Failed to fetch bookings:', error);
         if (error.response?.status === 404) {
           setBookings([]);
-          console.log(error.response.data.message);
+          // console.log(error.response.data.message);
         } else {
           message.error('Không thể tải danh sách lịch đã đặt!');
         }

@@ -395,7 +395,7 @@ const Payment = () => {
         }
       })
       .catch((info) => {
-        console.log("Validate Failed:", info);
+        // console.log("Validate Failed:", info);
       });
   };
 

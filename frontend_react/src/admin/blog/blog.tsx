@@ -59,7 +59,7 @@ const BlogList: React.FC = () => {
     const pageSize = 10;
 
       const showModal = (blog?: Blog) => {
-        console.log("Product passed to modal:", blog);
+        // console.log("Product passed to modal:", blog);
         setEditingBlog(blog || null);
         setIsModalVisible(true);
       };

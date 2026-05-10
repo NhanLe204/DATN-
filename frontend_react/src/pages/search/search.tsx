@@ -151,7 +151,7 @@ export default function Search() {
       const updatedTags = prev.includes(tagId)
         ? prev.filter((id) => id !== tagId)
         : [...prev, tagId];
-      console.log("Tag được chọn:", updatedTags);
+      // console.log("Tag được chọn:", updatedTags);
       return updatedTags;
     });
   };

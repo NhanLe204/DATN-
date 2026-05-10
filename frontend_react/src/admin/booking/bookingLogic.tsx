@@ -191,7 +191,7 @@ export const useBookingLogic = () => {
     });
     try {
       const response = await orderDetailApi.getAllBookings();
-      console.log(response);
+      // console.log(response);
       
       const allDetails = response.data;
       const orderDetails = allDetails.filter((detail: any) => detail.orderId === record.orderId);

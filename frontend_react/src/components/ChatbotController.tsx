@@ -27,12 +27,12 @@ const ChatbotController = () => {
 
     const updateChatbotVisibility = () => {
       const isAllowed = isRouteAllowed();
-      console.log("Route allowed:", isAllowed, "Path:", location.pathname);
+      // console.log("Route allowed:", isAllowed, "Path:", location.pathname);
 
       // Tìm phần tử Preny trong DOM
       const prenyWidget = document.querySelector("div.preny-open");
       if (!prenyWidget) {
-        console.log("Preny widget not found");
+        // console.log("Preny widget not found");
         return;
       }
 

@@ -9,7 +9,7 @@ const userApi = {
   },
   getNewUsers: async () => {
     const response = await api.get("/v1/users/new");
-    console.log(response);
+    // console.log(response);
 
     return {
       data: response.data,
@@ -17,7 +17,7 @@ const userApi = {
   },
   getLoyalUsers: async () => {
     const response = await api.get("/v1/users/loyal");
-    console.log(response);
+    // console.log(response);
 
     return {
       data: response.data,
@@ -31,13 +31,13 @@ const userApi = {
     };
   },
   update: async (id, data) => {
-    console.log("Data being sent to update:", data);
+    // console.log("Data being sent to update:", data);
     const response = await api.patch(`/v1/users/${id}`, data, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
     });
-    console.log("Update response:", response.data);
+    // console.log("Update response:", response.data);
     return {
       data: response.data,
     };

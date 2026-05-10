@@ -166,7 +166,7 @@ const SpaBookingForm: React.FC = () => {
         if (Array.isArray(serviceData)) setServices(serviceData);
         else setServices([]);
       } catch (error) {
-        console.log("Error fetching services:", error);
+        // console.log("Error fetching services:", error);
         setServices([]);
       }
     };
@@ -199,7 +199,7 @@ const SpaBookingForm: React.FC = () => {
   };
 
   const onFinish = async (values: any) => {
-    console.log("Form values on submit:", values);
+    // console.log("Form values on submit:", values);
     // Kiểm tra thông tin khách hàng
     if (!values.fullName?.trim()) {
       message.error("Vui lòng nhập họ và tên!");

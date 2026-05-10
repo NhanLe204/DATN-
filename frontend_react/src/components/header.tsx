@@ -80,7 +80,7 @@ export default function Header() {
 
   useEffect(() => {
     const storedHistory = localStorage.getItem("searchHistory");
-    console.log("Loaded searchHistory from localStorage on mount:", storedHistory);
+    // console.log("Loaded searchHistory from localStorage on mount:", storedHistory);
     if (storedHistory) {
       try {
         const parsedHistory = JSON.parse(storedHistory);
@@ -98,7 +98,7 @@ export default function Header() {
   }, []);
 
   const saveSearchHistory = (history: string[]) => {
-    console.log("Saving searchHistory to localStorage:", history);
+    // console.log("Saving searchHistory to localStorage:", history);
     localStorage.setItem("searchHistory", JSON.stringify(history));
   };
 
@@ -132,7 +132,7 @@ export default function Header() {
   };
 
   const clearSearchHistory = () => {
-    console.log("Clearing searchHistory");
+    // console.log("Clearing searchHistory");
     setSearchHistory([]);
     localStorage.removeItem("searchHistory");
   };
@@ -149,7 +149,7 @@ export default function Header() {
     try {
       const response = await productsApi.getProductActive();
       const data = await response.data.result;
-      console.log("Dữ liệu từ API:", data);
+      // console.log("Dữ liệu từ API:", data);
 
       const normalizedSearchTerm = removeDiacritics(searchTerm.toLowerCase());
       const filteredProducts = data.filter((product: Product) => {
@@ -159,7 +159,7 @@ export default function Header() {
         return normalizedProductName.includes(normalizedSearchTerm);
       });
 
-      console.log("Sản phẩm sau lọc:", filteredProducts);
+      // console.log("Sản phẩm sau lọc:", filteredProducts);
       setSearchResults(filteredProducts);
     } catch (error) {
       console.error("Error fetching products:", error);
@@ -182,7 +182,7 @@ export default function Header() {
     if (storedUserData) {
       try {
         const parsedUser = JSON.parse(storedUserData);
-        console.log("User data in header.js:", parsedUser);
+        // console.log("User data in header.js:", parsedUser);
         setUser(parsedUser);
       } catch (error) {
         console.error("Lỗi khi parse userData từ localStorage:", error);
@@ -311,7 +311,7 @@ export default function Header() {
                   key={product._id}
                   className="p-4 rounded shadow-md cursor-pointer bg-gray-50 hover:bg-gray-100"
                   onClick={() => {
-                    console.log("Navigating to:", `/detail/${product._id}`);
+                    // console.log("Navigating to:", `/detail/${product._id}`);
                     navigate(`/detail/${product._id}`);
                     setSearchDesktopOpen(false);
                   }}
@@ -387,7 +387,7 @@ export default function Header() {
                 key={product._id}
                 className="p-4 rounded cursor-pointer bg-gray-50 hover:bg-gray-100"
                 onClick={() => {
-                  console.log("Navigating to:", `/detail/${product._id}`);
+                  // console.log("Navigating to:", `/detail/${product._id}`);
                   navigate(`/detail/${product._id}`);
                   setSearchMobileOpen(false);
                 }}
